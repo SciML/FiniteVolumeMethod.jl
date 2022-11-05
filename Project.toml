@@ -18,6 +18,15 @@ Unrolled = "9602ed7d-8fef-5bc8-8597-8f21381861e8"
 
 [compat]
 julia = "1"
+CommonSolve="0.2"
+DelaunayTriangulation="0.3"
+DifferentialEquations="6.0"
+FastClosures="0.3"
+FunctionWranglers="0.1"
+PreallocationTools="0.4"
+SimpleGraphs="0.8"
+StatsBase="0.33"
+Unrolled="0.1'
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
