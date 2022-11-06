@@ -1,7 +1,7 @@
 name = "FiniteVolumeMethod"
 uuid = "d4f04ab7-4f65-4d72-8a28-7087bc7f46f4"
 authors = ["DanielVandH <danj.vandenheuvel@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 CommonSolve = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
@@ -18,15 +18,6 @@ Unrolled = "9602ed7d-8fef-5bc8-8597-8f21381861e8"
 
 [compat]
 julia = "1"
-CommonSolve="0.2"
-DelaunayTriangulation="0.3"
-DifferentialEquations="6.0"
-FastClosures="0.3"
-FunctionWranglers="0.1"
-PreallocationTools="0.4"
-SimpleGraphs="0.8"
-StatsBase="0.33"
-Unrolled="0.1'
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

@@ -1,6 +1,7 @@
 [deps]
 BandedMatrices = "aae01518-5342-5314-be14-df237901396f"
 Bessels = "0e736298-9ec6-45e8-9647-e4fc86a2fe38"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Cubature = "667455a9-e2ce-5579-9412-b964f529a492"
 DelaunayTriangulation = "927a84f5-c5f4-47a5-9785-b46e178433df"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"

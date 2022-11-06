@@ -29,9 +29,9 @@
             1.40171952328728988135253530344925820827484130859375
             1.3003460296715585453597441301099024713039398193359375
             1.0033750702266530652195797301828861236572265625
-            0.903203087338031007647032311069779098033905029296875] rtol=1e-5
-        @test mean(all_abs_errs) ≈ 0.430375593567100922509638394330977462232112884521484375 rtol=1e-5
-        @test median(all_abs_errs) ≈ 0.104346566097678561391148832626640796661376953125 rtol=1e-5
+            0.903203087338031007647032311069779098033905029296875] rtol = 1e-5
+        @test mean(all_abs_errs) ≈ 0.430375593567100922509638394330977462232112884521484375 rtol = 1e-5
+        @test median(all_abs_errs) ≈ 0.104346566097678561391148832626640796661376953125 rtol = 1e-5
         algs = [AutoTsit5 ∘ Rosenbrock23,
             AutoVern7 ∘ Rodas4,
             AutoVern7 ∘ KenCarp4,
@@ -125,9 +125,9 @@ end
             1.8962984120646784180763688709703274071216583251953125
             2.28947336448180838175403550849296152591705322265625
             4.0120550223142412704646631027571856975555419921875
-            1.685695494202481992118691778159700334072113037109375] rtol=1e-3
-        @test mean(all_abs_errs) ≈ 0.0106766130777785316074979249378884560428559780120849609375 rtol=1e-3
-        @test median(all_abs_errs) ≈ 0.00485664461568117988843340526727843098342418670654296875 rtol=1e-3
+            1.685695494202481992118691778159700334072113037109375] rtol = 1e-3
+        @test mean(all_abs_errs) ≈ 0.0106766130777785316074979249378884560428559780120849609375 rtol = 1e-3
+        @test median(all_abs_errs) ≈ 0.00485664461568117988843340526727843098342418670654296875 rtol = 1e-3
         ## Test many algorithms 
         algs = [AutoTsit5 ∘ Rosenbrock23,
             AutoVern7 ∘ Rodas4,
@@ -222,9 +222,9 @@ end
             0.00607752421518026157698511013904862920753657817840576171875
             0.00978387538164124208328598086836791480891406536102294921875
             0.00979498798973023852842967329479506588540971279144287109375
-            0.007475913818963997141409105751108654658310115337371826171875] rtol=1e-3
-        @test mean(all_abs_errs) ≈ 8.427030552104572305553709110625959510798566043376922607421875e-05 rtol=1e-3
-        @test median(all_abs_errs) ≈ 5.352153060311781729296853882260620594024658203125e-05 rtol=1e-3
+            0.007475913818963997141409105751108654658310115337371826171875] rtol = 1e-3
+        @test mean(all_abs_errs) ≈ 8.427030552104572305553709110625959510798566043376922607421875e-05 rtol = 1e-3
+        @test median(all_abs_errs) ≈ 5.352153060311781729296853882260620594024658203125e-05 rtol = 1e-3
         ## Test many algorithms 
         algs = [AutoTsit5 ∘ Rosenbrock23,
             AutoVern7 ∘ Rodas4,
@@ -290,7 +290,7 @@ end
 
 @testset "Travelling wave problem" begin
     for iip in [false, true]
-        prob, DTx, DTy, diffus, prolif, Nx, Ny, a, b, c, d = TravellingWaveProblem(; iip_flux = iip)
+        prob, DTx, DTy, diffus, prolif, Nx, Ny, a, b, c, d = TravellingWaveProblem(; iip_flux=iip)
         C, D = c, d
         ## Solve the problem 
         #LinearAlgebra.BLAS.set_num_threads(1)
@@ -316,7 +316,7 @@ end
             335.87365611568048961999011225998401641845703125
             442.8160325876004890233161859214305877685546875
             553.31083008983705440186895430088043212890625
-        ] rtol=1e-5
+        ] rtol = 1e-5
         # x-invariance 
         function x_comparisons(i)
             solns = reshape(sol.u[time_idx[i]], (Nx, Ny))
@@ -333,7 +333,7 @@ end
             0.029490465304181055772314579144222079776227474212646484375
             0.03010694822566102601957283013689448125660419464111328125
             0.031911461980863094212157449192091007716953754425048828125
-            0.02832787634045620672740284362589591182768344879150390625] 
+            0.02832787634045620672740284362589591182768344879150390625]
         for i in 1:6
             @test abs(x_comparisons(i) - true_vals[i]) < 1e-3
         end
@@ -386,3 +386,18 @@ end
         end
     end
 end
+
+
+times = [0.0, 0.02, 0.04, 0.06, 0.08, 0.1]
+fig = Figure(fontsize=31, resolution=(1450, 1200))
+plot_idx = [(1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (2, 3)]
+tris = collect(prob.mesh.elements)
+tris = [tris[i][j] for i in eachindex(tris), j in 1:3]
+ax = Axis(fig[1, 1])
+for i in eachindex(times)
+    ax = Axis(fig[plot_idx[i][1], plot_idx[i][2]], xlabel=L"x",
+        ylabel=L"y", title=L"t = %$(times[i])", titlealign=:left,
+        width=350, height=350, aspect=1)
+    mesh!(ax, nodes, tris, color=errs[i], colormap=:viridis, colorrange=(0, 1))
+end
+Colorbar(fig[0, 1:3], limits=(0, 1), colormap=:viridis, labelsize=54, label=L"u(x, y)", vertical=false)
