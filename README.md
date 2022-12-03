@@ -15,6 +15,7 @@ $$
 u(x, y, t, u) = a(x, y, t, u),
 \end{array} \quad (x, y)^{\mathsf T} \in \partial\Omega.
 $$
+
 This first condition is a *homogeneous Neumann* boundary condition, letting $\hat{\boldsymbol{n}}(x, y)$ be the unit outward normal vector field on $\partial\Omega$; it is possible to extend this to the inhomogeneous case, it just has not been done yet. The second condition is a *time-dependent Dirichlet* condition, and the last condition is a *Dirichlet* condition. 
 
 An interface is also provided for solving equations of the form
