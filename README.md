@@ -157,7 +157,7 @@ The `chunk_size` argument sets the chunk size used for automatic differentiation
 
 Let us now give some examples. We give a variety of examples to illustrate the different ways for constructing the mesh, boundary conditions, etc. It is assumed that Gmsh is installed if you wish to run some of this code. I have set
 ```julia
-GMSH_PATH = "./gmsh-4.9.4-Windows64/gmsh.exe"
+GMSH_PATH = raw"./gmsh-4.9.4-Windows64/gmsh.exe"
 ```
 
 ## Diffusion equation on a square plate 
@@ -174,6 +174,7 @@ u(x, y, 0) &= & f(x, y) &(x,y)\in\Omega,
 \end{array}
 \end{equation*}
 $$
+
 where $\Omega = [0, 2]^2$ and $f(x, y) = 50$ if $y \leq 1$ and $f(x, y) = 0$ if $y>1$. (This problem has an exact solution 
 
 $$
