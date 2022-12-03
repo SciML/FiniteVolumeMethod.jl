@@ -15,6 +15,7 @@ using ForwardDiff
 using BandedMatrices
 using SparseArrays
 using DifferentialEquations
+using LinearSolve
 
 const GMSH_PATH = "C:/Users/licer/.julia/dev/FiniteVolumeMethod/gmsh-4.9.4-Windows64/gmsh.exe"
 const FVM = FiniteVolumeMethod

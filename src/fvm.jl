@@ -11,12 +11,20 @@ using PreallocationTools
 using Unrolled
 using FastClosures
 using CommonSolve 
-using DifferentialEquations
+using OrdinaryDiffEq 
+using StaticArraysCore
+using DiffEqBase
 import SimpleGraphs: adjacency
 import SparseArrays: sparse
 const DIRICHLET_ARGS = 4
 const NEUMANN_ARGS = 3
 const DUDT_ARGS = 5
+
+##############################################################################
+##
+## STRUCTURES
+##
+##############################################################################
 
 ##############################################################################
 ##
@@ -1544,8 +1552,8 @@ end
     eval_interpolant(interp::Dict{Int64, FVMInterpolant{T}}, x::Real, y::Real, k::Int) where {T}
     eval_interpolant(interp::Dict{Int64, FVMInterpolant{T}}, x::AbstractVector, y::AbstractVector, k::Int) where {T}
     eval_interpolant(interp::Dict{Int64, FVMInterpolant{T}}, p) where {T}
-    eval_interpolant(interp::Dict{Int64, FVMInterpolant{T}}, p, k::Int) where {T}
-    eval_interpolant(interp::Dict{Int64, FVMInterpolant{T}}, p, k::Int) where {T}
+    eval_interpolant(interp::Dict{Int64, FVMInterpolant{T}}, p, k) where {T}
+    eval_interpolant(interp::Dict{Int64, FVMInterpolant{T}}, p, k) where {T}
 
 Evaluate the [`FVMInterpolant`](@ref) `interp`, or the collection of, at the given points in `(x, y)` or in the point `p`. For the scalar cases,
 a scalar is returned. For the vector case, a vector is returned such that `res[k]` is the value of the `k`th interpolant evaluated at the `k`th point.
@@ -1557,7 +1565,7 @@ end
 @inline function eval_interpolant(interp::FVMInterpolant, p) 
     return interp(p)
 end
-@inline function eval_interpolant(interp::Dict{NTuple{3,Int64},FVMInterpolant{T,P}}, x::Real, y::Real, k::Int) where {T,P}
+@inline function eval_interpolant(interp::Dict{NTuple{3,Int64},FVMInterpolant{T,P}}, x::Real, y::Real, k) where {T,P}
     return eval_interpolant(interp[k], x, y)
 end
 
