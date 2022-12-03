@@ -20,7 +20,7 @@ This first condition is a *homogeneous Neumann* boundary condition, letting $\ha
 An interface is also provided for solving equations of the form
 
 $$
-\frac{\partial u(x, y, t)}{\partial t} = \left\{\boldsymbol{\nabla} \boldsymbol{\cdot} \left[T(x, y, t, u)D(x, y, t, u)\boldsymbol{\nabla} u(x, y, t)\right] + T(x, y, t, u)R(x, y, t, u)\right\},
+\frac{\partial u(x, y, t)}{\partial t} = \left[\boldsymbol{\nabla} \boldsymbol{\cdot} \left[T(x, y, t, u)D(x, y, t, u)\boldsymbol{\nabla} u(x, y, t)\right] + T(x, y, t, u)R(x, y, t, u)\right],
 $$
 
 where $T$ is called the *delay function*, $D$ the *diffusion function*, and $R$ the *reaction function*; the same delay is assumed to scale both diffusion and reaction. The conversion is done by noting that the corresponding flux function $\boldsymbol{q} = (q_1, q_2)^{\mathsf T}$ is simply $q_i(x, y, t, u) = T(x, y, t, u)D(x, y, t, u)g_i$, $i=1,2$, where $(g_1, g_2)^{\mathsf T} \equiv \boldsymbol{\nabla}u(x, y, t)$ (gradients are approximated using linear interpolants; more on this in the Mathematical Details section). Similarly, the reaction function is modified so that $\tilde{R}(x, y, t, u) = T(x, y, t, u)R(x, y, t, u)$.
@@ -39,7 +39,7 @@ FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV; coordinate_type=Vector{number_type(
 
 Here, `T`, `adj`, `adj2v`, and `DG` are structs representing the triangles, adjacent map, adjacent-to-vertex map, and the Delaunay graph, as defined in [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl). The argument `pts` represents the points of the mesh, and lastly `BNV` is used to define the nodes for the separate boundary segments. For example, suppose we have the following domain with boundary $\Gamma_1 \cup \Gamma_2 \cup \Gamma_3 \cup \Gamma_4$:
 
-![A segmented boundary](https://github.com/DanielVandH/FVM.jl/blob/main/boundary_condition_example.png?raw=true)
+![A segmented boundary](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/boundary_condition_example.png?raw=true)
 
 The colours ae used to distinguish between different segments of the boundaries. The boundary node vector `BNV` would thus be defined as:
 
@@ -266,4 +266,4 @@ xlims!(ax, a, b)
 ylims!(ax, c, d)
 mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(0, 50), colormap=:matter)
 ```
-![Heat equation solution](https://github.com/DanielVandH/FVM.jl/blob/main/heat_equation_test.png?raw=true)
+![Heat equation solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/heat_equation_test.png?raw=true)
