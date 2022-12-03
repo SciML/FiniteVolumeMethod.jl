@@ -165,11 +165,11 @@ GMSH_PATH = "./gmsh-4.9.4-Windows64/gmsh.exe"
 We first consider the problem of diffusion on a square plate,
 
 $$
-\begin{equation*}%http://ramanujan.math.trinity.edu/rdaileda/teach/s12/m3357/lectures/lecture_3_6_short.pdf
+\begin{equation*}
 \begin{array}{rcll}
 \displaystyle
-\frac{\partial u(x, y, t)}{\partial t} &=& \dfrac19\boldsymbol{\nabla}^2 u(x, y, t) & (x, y) \in \Omega,\,t>0, \\[6pt]
-u(x, y, t) &= & 0 & (x, y) \in \partial \Omega,\,t>0, \\[6pt]
+\frac{\partial u(x, y, t)}{\partial t} &=& \dfrac19\boldsymbol{\nabla}^2 u(x, y, t) & (x, y) \in \Omega,\,t>0, \\
+u(x, y, t) &= & 0 & (x, y) \in \partial \Omega,\,t>0, \\
 u(x, y, 0) &= & f(x, y) &(x,y)\in\Omega,
 \end{array}
 \end{equation*}
@@ -180,7 +180,7 @@ $$
 u(x, y, t) = \dfrac{200}{\mathrm{\pi}^2}\sum_{m=1}^\infty\sum_{n=1}^\infty \frac{\left[1+(-1)^{m+1}\right]\left[1-\cos\left(\frac{n\mathrm{\pi}}{2}\right)\right]}{mn}\sin\left(\frac{m\mathrm{\pi}x}{2}\right)\sin\left(\frac{n\mathrm{\pi}y}{2}\right)\mathrm{e}^{-\frac{1}{36}\mathrm{\pi}^2(m^2+n^2)t},
 $$
 
-and we compare our results to this exact solution in the tests. Not shown here.)
+and we compare our results to this exact solution in the tests. See e.g. [here](%http://ramanujan.math.trinity.edu/rdaileda/teach/s12/m3357/lectures/lecture_3_6_short.pdf) for a derivation of the exact solution. Comparisons not shown here.)
 
 The first step is to define the mesh:
 ```julia
