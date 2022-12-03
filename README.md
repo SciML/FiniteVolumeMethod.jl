@@ -36,12 +36,12 @@ The struct that defines the underlying geometry is `FVMProblem`, storing informa
 
 ```julia
 FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV; 
-coordinate_type=Vector{number_type(pts)}, 
-control_volume_storage_type_vector=NTuple{3,coordinate_type}, 
-control_volume_storage_type_scalar=NTuple{3,number_type(pts)}, 
-shape_function_coefficient_storage_type=NTuple{9,number_type(pts)}, 
-interior_edge_storage_type=NTuple{2,Int64}, 
-interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type}) where {Ts}
+    coordinate_type=Vector{number_type(pts)}, 
+    control_volume_storage_type_vector=NTuple{3,coordinate_type}, 
+    control_volume_storage_type_scalar=NTuple{3,number_type(pts)}, 
+    shape_function_coefficient_storage_type=NTuple{9,number_type(pts)}, 
+    interior_edge_storage_type=NTuple{2,Int64}, 
+    interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type}) where {Ts}
 ```
 
 Here, `T`, `adj`, `adj2v`, and `DG` are structs representing the triangles, adjacent map, adjacent-to-vertex map, and the Delaunay graph, as defined in [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl). The argument `pts` represents the points of the mesh, and lastly `BNV` is used to define the nodes for the separate boundary segments. For example, suppose we have the following domain with boundary $\Gamma_1 \cup \Gamma_2 \cup \Gamma_3 \cup \Gamma_4$:
