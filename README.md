@@ -523,7 +523,7 @@ $$
 u(x, y, t) = \mathrm{e}^{\lambda t}v\left(x, y, \frac{D}{\lambda(m-1)}\left[\mathrm{e}^{\lambda(m-1)t} - 1\right]\right),
 $$
 
-where $u(x, y, 0) = M\delta(x, y)$ and $v$ is the exact solution we gave above except with $D=1$. This is what we use for assessing the solution in the tests - not shown here. The domain we use is now $\Omega = [-R_{m, M}^{1/2}\tau(T)^{1/2m}, R_{m,M}^{1/2}\tau(T)^{1/2m}]^2$, where $\tau(T) = \frac{D}{\lambda(m-1)}[\mathrm{e}^{\lambda(m-1)t}-1]$. The code below solves this problem.
+where $u(x, y, 0) = M\delta(x, y)$ and $v$ is the exact solution we gave above except with $D=1$. This is what we use for assessing the solution in the tests - not shown here. The domain we use is now $\Omega = [-R_{m, M}^{1/2}\tau(T)^{1/2m}, R_{m,M}^{1/2}\tau(T)^{1/2m}]^2$, where $\tau(T) = \frac{D}{\lambda(m-1)}[\mathrm{e}^{\lambda(m-1)T}-1]$. The code below solves this problem.
 ```julia
 ## Step 0: Define all the parameters 
 m = 3.4
