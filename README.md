@@ -338,7 +338,7 @@ $$
 where, assuming $f$ can be expanded into a Fourier-Bessel series,
 
 $$
-A_{n, m} = \frac{4}{\alpha J_{n\mathrm{\pi}/\alpha + 1}^2\left(\zeta_{n\mathrm{\pi}/\alpha,m}\right)}\int_0^1\int_0^\alpha f(r, \theta)J_{n\mathrm{\pi}/\alpha}\left(\zeta_{n\mathrm{\pi}/\alpha,m}r\right)\cos\left(\frac{n\mathrm{\pi}\theta}{\alpha}\right)r\mathrm{d}r\mathrm{d}\theta, \quad n=0,1,2,\ldots,m=1,2,\ldots,
+A_{n, m} = \frac{4}{\alpha J_{n\mathrm{\pi}/\alpha + 1}^2\left(\zeta_{n\mathrm{\pi}/\alpha,m}\right)}\int_0^1\int_0^\alpha f(r, \theta)J_{n\mathrm{\pi}/\alpha}\left(\zeta_{n\mathrm{\pi}/\alpha,m}r\right)\cos\left(\frac{n\mathrm{\pi}\theta}{\alpha}\right)r~\mathrm{d}r~\mathrm{d}\theta, \quad n=0,1,2,\ldots,m=1,2,\ldots,
 $$
 
 and we write the roots of $J_\mu$, the $\zeta_{\mu, m}$ such that $J_\mu(\zeta_{\mu, m}) = 0$, in the form $0 < \zeta_{\mu, 1} < \zeta_{\mu, 2} < \cdots$ with $\zeta_{\mu, m} \to \infty$ as $m \to \infty$. This is the exact solution we compare to in the tests; comparisons not shown here.) We take $\alpha = \mathrm{\pi}/4$ and $f(r, \theta) = 1 - r$. 
@@ -466,7 +466,7 @@ $$
 \dfrac{\partial u}{\partial t} = D\boldsymbol{\nabla} \boldsymbol{\cdot} \left[u^{m-1} \boldsymbol{u}\right],
 $$
 
-with initial condition $u(x, y, 0) = M\delta(x, y)$ where $\delta(x, y)$ is the Dirac delta function and $M = \iint_{\mathbb R^2} u(x, y, t)\mathrm{d}A$. The diffusion function here is $D(x, y, t, u) = Du^{m-1}$. We approximate $\delta(x, y)$ by 
+with initial condition $u(x, y, 0) = M\delta(x, y)$ where $\delta(x, y)$ is the Dirac delta function and $M = \iint_{\mathbb R^2} u(x, y, t)~\mathrm{d}A$. The diffusion function here is $D(x, y, t, u) = Du^{m-1}$. We approximate $\delta(x, y)$ by 
 
 $$
 \delta(x, y) \approx g(x, y) = \frac{1}{\varepsilon^2 \mathrm{\pi}}\exp\left[-\frac{1}{\varepsilon^2}\left(x^2 + y^2\right)\right],
@@ -799,7 +799,7 @@ $$
 \end{equation} 
 $$
 
-Using the divergence theorem, the second integral in (1) becomes
+Using the divergence theorem, the second integral becomes
 
 $$
 \begin{equation}
@@ -807,7 +807,7 @@ $$
 \end{equation}
 $$
 
-where the last equality in (2) follows from integrating over each individual line segment that defines $\partial\Omega_i$. We now define the control volume averages,
+where the last equality follows from integrating over each individual line segment that defines $\partial\Omega_i$. We now define the control volume averages,
 
 $$
 \begin{equation}
@@ -823,7 +823,7 @@ $$
 \end{equation}
 $$
 
-The line integrals in (4) can be approximated using a midpoint rule, 
+The line integrals can be approximated using a midpoint rule, 
 
 $$
 \begin{equation}
@@ -839,7 +839,7 @@ $$
 \end{equation} 
 $$
 
-where $\tilde R\_i$ is the approximation to $\bar R\_i$ at $(x\_i, y\_i)$. This approximation (6) is what we use in the interior of $\Omega$ for approximating the value of $u$ at each node. 
+where $\tilde R\_i$ is the approximation to $\bar R\_i$ at $(x\_i, y\_i)$. This approximation is what we use in the interior of $\Omega$ for approximating the value of $u$ at each node. 
 
 We still need to discuss how we compute $\boldsymbol{q}(x\_{\sigma}, y\_{\sigma}, t, u)$. To deal with this function, let $\mathcal T\_i$ be the set of triangles in $\mathcal T(\Omega)$ that have $\boldsymbol{x}\_i$ as a node, and consider a triangle $T\_k \in \mathcal T\_i$. We will inteprolate $\tilde u$ with a linear shape function in $T_k$, so that 
 
@@ -857,7 +857,7 @@ $$
 \end{equation} 
 $$ 
 
-where $x_{v_{ki}}$ and $y_{v_{ki}}$ denote the $x$- and $y$-coordinates of the point $v\_{ki}$, respectively, for $i=1,2,3$. The system (8) can be written in matrix form as 
+where $x_{v_{ki}}$ and $y_{v_{ki}}$ denote the $x$- and $y$-coordinates of the point $v\_{ki}$, respectively, for $i=1,2,3$. The system can be written in matrix form as 
 
 ```math
 \begin{bmatrix} 
@@ -897,7 +897,8 @@ $$
 \end{equation} 
 $$ 
 
-With these coefficients, (6) becomes 
+With these coefficients, our approximation becomes 
+
 $$ 
 \begin{equation} 
 \frac{\mathrm du_i}{\mathrm dt} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\boldsymbol{q}\left(x_\sigma, y_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_{k(\sigma)}\right) \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}\right] L_\sigma = R_i,
