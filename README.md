@@ -15,6 +15,7 @@
   - [Porous-Fisher equation and travelling waves](#porous-fisher-equation-and-travelling-waves)
   - [Using the linear interpolants](#using-the-linear-interpolants)
 - [Mathematical Details](#mathematical-details)
+  - [Interior discretisation](#interior-discretisation)
 
 This is a package for solving partial differential equations (PDEs) of the form 
 
@@ -778,7 +779,11 @@ end
 
 # Mathematical Details
 
-We now describe the mathematical details involved with the finite volume method as we have applied it. We assume that we have some triangulation of $\Omega$, like a (constrained) Delaunay triangulation $\mathcal D\mathcal T(\Omega)$. This triangulation is used to define control volumes around each point. This is illustrated in the following figure, where (a) shows the domain $\Omega$ and its triangulation $\mathcal T(\Omega)$, together with the boundary $\partial\Omega$ shown in blue. (b) shows the mesh in (a) along with the dual mesh shown in blue, with red points showing the centroids of each triangle in $\mathcal T(\Omega)$. The blue polygons around each nodal point are the control volumes, and we denote the control volume around the $i$th point by $\Omega_i$ and its boundary is $\partial\Omega_i$. (Note that this is the so-called ``vertex-centred approach'' to the finite volume method.)
+We now describe the mathematical details involved with the finite volume method as we have applied it. We assume that we have some triangulation of $\Omega$, like a (constrained) Delaunay triangulation $\mathcal D\mathcal T(\Omega)$. 
+
+## Interior discretisation
+
+This triangulation is used to define control volumes around each point. This is illustrated in the following figure, where (a) shows the domain $\Omega$ and its triangulation $\mathcal T(\Omega)$, together with the boundary $\partial\Omega$ shown in blue. (b) shows the mesh in (a) along with the dual mesh shown in blue, with red points showing the centroids of each triangle in $\mathcal T(\Omega)$. The blue polygons around each nodal point are the control volumes, and we denote the control volume around the $i$th point by $\Omega_i$ and its boundary is $\partial\Omega_i$. (Note that this is the so-called ``vertex-centred approach'' to the finite volume method.)
 
 ![Dual mesh](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/triangulation_example.png?raw=true)
 
