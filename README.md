@@ -859,10 +859,8 @@ $$
 
 where $x_{v_{ki}}$ and $y_{v_{ki}}$ denote the $x$- and $y$-coordinates of the point $v\_{ki}$, respectively, for $i=1,2,3$. The system (8) can be written in matrix form as 
 
-$$
-\begin{equation} 
+```math
 \begin{bmatrix} 
 x_{v_{k1}} & y_{v_{k1}} & 1 \\ x_{v_{k2}} & y_{v_{k2}} & 1 \\ x_{v_{k3}} & y_{v_{k3}} & 1 \end{bmatrix}\begin{bmatrix} \alpha_k \\ \beta_k \\ \gamma_k \end{bmatrix} = \begin{bmatrix} \tilde u_{v_{k1}} \\ \tilde u_{v_{k2}} \\ \tilde u_{k3}
 \end{bmatrix} 
-\end{equation} 
-$$
+```
