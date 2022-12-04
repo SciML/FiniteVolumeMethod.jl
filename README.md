@@ -605,7 +605,7 @@ $$
 which has travelling wave solutions. Following the analysis from Section 13.4 of *Mathematical biology I: An introduction* by J. D. Murray (2002), we can show that a travelling wave solution to the one-dimensional problem above is
 
 $$
-u(y, t) = \left(1 - \mathrm{e}^{c_{\min}z}\right\right)\left[z \leq 0\right]
+u(y, t) = \left(1 - \mathrm{e}^{c_{\min}z}\right)\left[z \leq 0\right]
 $$
 
 where $c_{\min} = \sqrt{\lambda/(2D)}$, $c = \sqrt{D\lambda/2}$, and $z = x - ct$ is the travelling wave coordinate. This travelling wave would match our problem exactly if the rectangle were instead $[0, a] \times \mathbb R$, but by choosing $b$ large enough we can at least emulate the travelling wave behaviour closely; homogeneous Neumann conditions are to ensure no energy is lost, thus allowing the travelling waves to exist. Note also that the approximations of the solution with $u(y, t)$ above will only be accurate for large time.
