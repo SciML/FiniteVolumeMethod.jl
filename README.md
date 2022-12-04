@@ -281,14 +281,12 @@ mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(0, 50), colormap=:matter)
 Now we consider the following problem defined on a wedge with angle $\alpha$ and mixed boundary conditions:
 
 $$
-\begin{equation*}
 \begin{array}{rcll}
 \dfrac{\partial u(r, \theta, t)}{\partial t} &=& \boldsymbol{\nabla}^2 u(r, \theta, t), & 0 < r < 1,\,0<\theta<\alpha,\,t>0, \\
 \dfrac{\partial u(r, 0, t)}{\partial \theta} & = & 0, & 0<r<1,\,t>0, \\
 \dfrac{\partial u(r,\alpha,t)}{\partial\theta}&=&0,&0<\theta<\alpha,\,t>0, \\
 u(r,\theta,0) & = & f(r, \theta), & 0<r<1,\,0<\theta<\alpha.
 \end{array}
-\end{equation*}
 $$
 
 (The exact solution to this problem, found by writing $u(r, \theta, t) = \mathrm{e}^{-\lambda t}v(r, \theta)$ and then using separation of variables, can be shown to take the form
