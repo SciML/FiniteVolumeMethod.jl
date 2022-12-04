@@ -10,7 +10,7 @@
   - [Diffusion equation on a square plate](#diffusion-equation-on-a-square-plate)
   - [Diffusion equation in a wedge with mixed boundary conditions](#diffusion-equation-in-a-wedge-with-mixed-boundary-conditions)
   - [Reaction-diffusion equation with a time-dependent Dirichlet boundary condition on a disk](#reaction-diffusion-equation-with-a-time-dependent-dirichlet-boundary-condition-on-a-disk)
-  - [Porous-Medium equation](#porous-medium-equation)
+  - [Porous medium equation](#porous-medium-equation)
 
 This is a package for solving partial differential equations (PDEs) of the form 
 
@@ -440,9 +440,9 @@ sol = solve(prob, alg; saveat=0.025)
 ```
 ![Reaction-diffusion equation on a circle solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/reaction_diffusion_equation_test.png?raw=true)
 
-## Porous-Medium equation 
+## Porous medium equation 
 
-We now consider the Porous-Medium equation,
+We now consider the Porous medium equation,
 
 $$
 \dfrac{\partial u}{\partial t} = D\boldsymbol{\nabla} \boldsymbol{\cdot} \left[u^{m-1} \boldsymbol{u}\right],
@@ -511,7 +511,7 @@ sol = solve(prob, alg; saveat=3.0)
 ```
 ![Porous-medium equation with m=2](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/porous_medium_test.png?raw=true)
 
-We can continue this example with the Porous-Medium equation by considering the same equation except with a linear source:
+We can continue this example with the Porous medium equation by considering the same equation except with a linear source:
 
 $$
 \dfrac{\partial u}{\partial t} = D\boldsymbol{\nabla} \boldsymbol{\cdot} \left[u^{m-1}\boldsymbol{\nabla} u\right] + \lambda u, \quad \lambda>0. 
@@ -523,7 +523,7 @@ $$
 u(x, y, t) = \mathrm{e}^{\lambda t}v\left(x, y, \frac{D}{\lambda(m-1)}\left[\mathrm{e}^{\lambda(m-1)t} - 1\right]\right),
 $$
 
-where $u(x, y, 0) = M\delta(x, y)$ and $v$ is the exact solution we gave above except with $D=1$. This is what we use for assessing the solution in the tests - not shown here. The domain we use is now $\Omega = [-R_{m, M}^{1/2}\tau(T)^{1/2m}, R_{m,M}^{1/2}\tau(T)^{1/2m}]^2$, where $\tau(T) = D/[\lambda(m-1)](\mathrm{e}^{\lambda(m-1)t}-1)$. The code below solves this problem.
+where $u(x, y, 0) = M\delta(x, y)$ and $v$ is the exact solution we gave above except with $D=1$. This is what we use for assessing the solution in the tests - not shown here. The domain we use is now $\Omega = [-R_{m, M}^{1/2}\tau(T)^{1/2m}, R_{m,M}^{1/2}\tau(T)^{1/2m}]^2$, where $\tau(T) = [D/\lambda(m-1)](\mathrm{e}^{\lambda(m-1)t}-1)$. The code below solves this problem.
 ```julia
 ## Step 0: Define all the parameters 
 m = 3.4
