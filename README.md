@@ -284,8 +284,8 @@ $$
 \begin{equation*}
 \begin{array}{rcll}
 \dfrac{\partial u(r, \theta, t)}{\partial t} &=& \boldsymbol{\nabla}^2 u(r, \theta, t), & 0 < r < 1,\,0<\theta<\alpha,\,t>0, \\
-\dfrac{\partial u(r, 0, t)}{\partial \theta} & = & 0 & 0<r<1,\,t>0, \\
-\dfrac{\partial u(r,\alpha,t)}{\partial\theta}&=&0&0<\theta<\alpha,\,t>0,\\
+\dfrac{\partial u(r, 0, t)}{\partial \theta} & = & 0, & 0<r<1,\,t>0, \\
+\dfrac{\partial u(r,\alpha,t)}{\partial\theta}&=&0,&0<\theta<\alpha,\,t>0, \\
 u(r,\theta,0) & = & f(r, \theta), & 0<r<1,\,0<\theta<\alpha.
 \end{array}
 \end{equation*}
@@ -305,7 +305,7 @@ $$
 
 and we write the roots of $J_\mu$, the $\zeta_{\mu, m}$ such that $J_\mu(\zeta_{\mu, m}) = 0$, in the form $0 < \zeta_{\mu, 1} < \zeta_{\mu, 2} < \cdots$ with $\zeta_{\mu, m} \to \infty$ as $m \to \infty$. This is the exact solution we compare to in the tests; comparisons not shown here.) We take $\alpha = \mathrm{\pi}/4$ and $f(r, \theta) = 1 - r$. 
 
-Note that the PDE is provided in polar form, but Cartesian coordinates are assumed for the operators in our code. The conversion is easy, noting that the two Neumann conditions are just equations of the form $\boldsymbol{\nabla} u \boldsymbol{\cdot} \hat{\boldsymbol{n}} = 0$. Moreover, although the right-hand side of the PDE is given as a Laplacian, recall that $\boldsymbol{\nabla}^2 = \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{\nabla}$, so we can write $\partial u/\partial t + \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q} = 0$, where $\boldsymbol{q} = -\boldsymbol{\nabla} \boldsymbol u$, or `q(x, y, t, α, β, γ, p) = (-α, -β)` in the notation in our code.
+Note that the PDE is provided in polar form, but Cartesian coordinates are assumed for the operators in our code. The conversion is easy, noting that the two Neumann conditions are just equations of the form $\boldsymbol{\nabla} u \boldsymbol{\cdot} \hat{\boldsymbol{n}} = 0$. Moreover, although the right-hand side of the PDE is given as a Laplacian, recall that $\boldsymbol{\nabla}^2 = \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{\nabla}$, so we can write $\partial u/\partial t + \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q} = 0$, where $\boldsymbol{q} = -\boldsymbol{\nabla} u$, or `q(x, y, t, α, β, γ, p) = (-α, -β)` in the notation in our code.
 
 Let us now solve the problem. Again, we start by defining the mesh. Since the boundary condition is different on each segment, we keep each segment as a different vector.
 ```julia
