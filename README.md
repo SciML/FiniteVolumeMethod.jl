@@ -870,9 +870,9 @@ Using Cramer's rule, we can define
 $$
 \begin{equation} 
 \begin{array}{lcllcllcl}
-s_{k1} &=& \frac{y_{v_{k2}} - y_{v_{k3}}}{\Delta_k}, & s_{k2} &=& \frac{y_{v_{k3}}-y_{v_{k1}}}{\Delta_k}, & s_{k3} &=& \frac{y_{v_{k1}}-y_{v_{k2}}}{\Delta_k}, \\
-s_{k4} &=& \frac{x_{v_{k3}}-x_{v_{k2}}}{\Delta_k},& s_{k5} &=& \frac{x_{v_{k1}}-x_{v_{k3}}}{\Delta_k}, & s_{k6} &=& \frac{x_{v_{k2}}-x_{v_{k1}}}{\Delta_k}, \\
-s_{k7} &=& \frac{x_{v_{k2}}y_{v_{k3}}-x_{v_{k3}}y_{v_{k2}}}{\Delta_k}, & s_{k8} &=& \frac{x_{v_{k3}}y_{v_{k1}}-x_{v_{k1}}y_{v_{k3}}}{\Delta_k},& s_{k9} &= &\frac{x_{v_{k1}}y_{v_{k2}}-x_{v_{k2}}y_{v_{k1}}}{\Delta_k}, 
+s_{k1} &=& \dfrac{y_{v_{k2}} - y_{v_{k3}}}{\Delta_k}, & s_{k2} &=& \dfrac{y_{v_{k3}}-y_{v_{k1}}}{\Delta_k}, & s_{k3} &=& \dfrac{y_{v_{k1}}-y_{v_{k2}}}{\Delta_k}, \\
+s_{k4} &=& \dfrac{x_{v_{k3}}-x_{v_{k2}}}{\Delta_k},& s_{k5} &=& \dfrac{x_{v_{k1}}-x_{v_{k3}}}{\Delta_k}, & s_{k6} &=& \dfrac{x_{v_{k2}}-x_{v_{k1}}}{\Delta_k}, \\
+s_{k7} &=& \dfrac{x_{v_{k2}}y_{v_{k3}}-x_{v_{k3}}y_{v_{k2}}}{\Delta_k}, & s_{k8} &=& \dfrac{x_{v_{k3}}y_{v_{k1}}-x_{v_{k1}}y_{v_{k3}}}{\Delta_k},& s_{k9} &= &\dfrac{x_{v_{k1}}y_{v_{k2}}-x_{v_{k2}}y_{v_{k1}}}{\Delta_k}, 
 \end{array} 
 \end{equation} 
 $$
@@ -901,8 +901,8 @@ With these coefficients, our approximation becomes
 
 $$ 
 \begin{equation} 
-\frac{\mathrm du_i}{\mathrm dt} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\boldsymbol{q}\left(x_\sigma, y_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_{k(\sigma)}\right) \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}\right] L_\sigma = R_i,
+\frac{\mathrm du_i}{\mathrm dt} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\boldsymbol{q}\left(x_\sigma, y_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_{k(\sigma)}\right) \boldsymbol{\cdot} \hat{\boldsymbol{n}}\_{i, \sigma}\right] L\_\sigma = R_i,
 \end{equation} 
 $$ 
 
-where we now drop the tilde notation and make the approximations implicit, and now the $k(\sigma)$ notation is used to refer to the edge $\sigma$ from triangle $T_{k(\sigma)}$. This linear shape function also allows to compute gradients like $\boldsymbol{\nabla} u(x_\sigma, y_\sigma)$, since $\boldsymbol{\nabla} u(x_\sigma, y_\sigma) = (\alpha_{k(\sigma)}, \beta_{k(\sigma)})^{\mathsf T}$.
+where we now drop the tilde notation and make the approximations implicit, and now the $k(\sigma)$ notation is used to refer to the edge $\sigma$ inside triangle $T_{k(\sigma)}$. This linear shape function also allows to compute gradients like $\boldsymbol{\nabla} u(x_\sigma, y_\sigma)$, since $\boldsymbol{\nabla} u(x_\sigma, y_\sigma) = (\alpha_{k(\sigma)}, \beta_{k(\sigma)})^{\mathsf T}$.
