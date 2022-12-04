@@ -171,6 +171,14 @@ Let us now give some examples. We give a variety of examples to illustrate the d
 ```julia
 GMSH_PATH = "./gmsh-4.9.4-Windows64/gmsh.exe"
 ```
+We also have the following packages loaded:
+```julia
+using FiniteVolumeMethod
+using OrdinaryDiffEq 
+using LinearSolve 
+using CairoMakie 
+using Bessels
+```
 
 ## Diffusion equation on a square plate 
 
