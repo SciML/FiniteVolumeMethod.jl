@@ -181,6 +181,7 @@ using CairoMakie
 using Bessels
 using Test
 ```
+See the tests for more detail.
 
 ## Diffusion equation on a square plate 
 
@@ -687,6 +688,6 @@ end
 exact_z_vals = collect(LinRange(extrema(z_vals)..., 500))
 exact_travelling_wave_values = exact_solution.(exact_z_vals)
 ```
-The results we obtain are shown below,with the exact travelling wave from the one-dimensional problem shown in red in the fourth plot and the numerical solutions are the other curves.
+The results we obtain are shown below,with the exact travelling wave from the one-dimensional problem shown in red in the fourth plot and the numerical solutions are the other curves. 
 
 ![Travelling wave problem](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/travelling_wave_problem_test.png?raw=true)
