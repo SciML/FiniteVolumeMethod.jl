@@ -596,7 +596,7 @@ u(x, y, 0) & = & f(y) & 0 \leq x \leq a, 0 \leq y \leq b.
 \end{equation*}
 $$
 
-This problem is defined on the rectangle $[0, a] \times [0, b]$, and we assume that $b \gg a$ so that the rectangle is much taller than it is wide. This problem has $u$ ranging from $u=1$ at the bottom of the rectangle down to $u=0$ at the top of the rectangle, with no flux conditions on the two vertical walls. The problem $f(y)$ is taken to be independent of $x$. This setup implies that the solution along each constant line $x = x_0$ should be about the same, i.e. the problem is invariant in $x$. If indeed we have $u(x, y, t) \equiv u(y, t)$, then the PDE becomes
+This problem is defined on the rectangle $[0, a] \times [0, b]$, and we assume that $b \gg a$ so that the rectangle is much taller than it is wide. This problem has $u$ ranging from $u=1$ at the bottom of the rectangle down to $u=0$ at the top of the rectangle, with no flux conditions on the two vertical walls. The function $f(y)$ is taken to be independent of $x$. This setup implies that the solution along each constant line $x = x_0$ should be about the same, i.e. the problem is invariant in $x$. If indeed we have $u(x, y, t) \equiv u(y, t)$, then the PDE becomes
 
 $$
 \dfrac{\partial u(y, t)}{\partial t} = D\dfrac{\partial}{\partial y}\left(u\dfrac{\partial u}{\partial y}\right) + \lambda u(1-u),
