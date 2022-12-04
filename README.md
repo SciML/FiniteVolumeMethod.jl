@@ -1,5 +1,17 @@
 # FiniteVolumeMethod
 
+- [FiniteVolumeMethod](#finitevolumemethod)
+- [Interface](#interface)
+  - [The mesh](#the-mesh)
+  - [The boundary conditions](#the-boundary-conditions)
+  - [The problem](#the-problem)
+  - [Solving the problem](#solving-the-problem)
+- [Examples](#examples)
+  - [Diffusion equation on a square plate](#diffusion-equation-on-a-square-plate)
+  - [Diffusion equation in a wedge with mixed boundary conditions](#diffusion-equation-in-a-wedge-with-mixed-boundary-conditions)
+  - [Reaction-diffusion equation with a time-dependent Dirichlet boundary condition on a disk](#reaction-diffusion-equation-with-a-time-dependent-dirichlet-boundary-condition-on-a-disk)
+  - [Porous-Medium equation](#porous-medium-equation)
+
 This is a package for solving partial differential equations (PDEs) of the form 
 
 $$
@@ -419,3 +431,74 @@ alg = FBDF(linsolve=UMFPACKFactorization())
 sol = solve(prob, alg; saveat=0.025)
 ```
 ![Reaction-diffusion equation on a circle solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/reaction_diffusion_equation_test.png?raw=true)
+
+## Porous-Medium equation 
+
+We now consider the Porous-Medium equation,
+
+$$
+\dfrac{\partial u}{\partial t} = D\boldsymbol{\nabla} \boldsymbol{\cdot} \left[u^{m-1} \boldsymbol{u}\right],
+$$
+
+with initial condition $u(x, y, 0) = M\delta(x, y)$ where $\delta(x, y)$ is the Dirac delta function and $M = \iint_{\mathbb R^2} u(x, y, t)\,\mathrm{d}A$. The diffusion function here is $D(x, y, t, u) = Du^{m-1}$. We approximate $\delta(x, y)$ by 
+
+$$
+\delta(x, y) \approx g(x, y) = \frac{1}{\varepsilon^2 \mathrm{\pi}}\exp\left[-\frac{1}{\varepsilon^2}\left(x^2 + y^2\right)\right],
+$$
+
+taking $\varepsilon = 0.1$. This equation has an exact solution (see e.g. Section 17.5 of the *The porous medium equation: Mathematical theory* by J. L. Vázquez (2007)) 
+
+$$
+u(x, y, t) = \begin{cases} (Dt)^{-1/m}\left[\left(\dfrac{M}{4\mathrm{\pi}}\right)^{(m-1)/m} - \dfrac{m-1}{4m}\left(x^2+y^2\right)(Dt)^{-1/m}\right]^{1/(m-1)} & x^2 + y^2 < R_{m, M}(Dt)^{1/m}, \\
+0 & x^2 + y^2 \geq R_{m, M}(Dt)^{1/m},\end{cases}
+$$
+
+where $R_{m, M} = [4m/(m-1)][M/(4\mathrm{\pi})]^{(m-1)/m}$. This equation has compact support, so we replace $\mathbb R^2$ by the domain $\Omega = [-R_{m, M}^{1/2}(DT)^{1/2m}, R_{m, M}^{1/2}(DT)^{1/2m}]^2$, where $T$ is the time that we solve up to, and we take Dirichlet boundary conditions on $\partial\Omega$. We solve this problem as follows, taking $m = 2$, $M = 0.37$, $D = 2.53$, and $T = 12$. Note the use of the parameters.
+```julia
+## Step 0: Define all the parameters 
+m = 2
+M = 0.37
+D = 2.53
+final_time = 12.0
+ε = 0.1
+
+## Step 1: Define the mesh 
+RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
+L = sqrt(RmM) * (D * final_time)^(1 / (2m))
+n = 500
+x₁ = LinRange(-L, L, n)
+x₂ = LinRange(L, L, n)
+x₃ = LinRange(L, -L, n)
+x₄ = LinRange(-L, -L, n)
+y₁ = LinRange(-L, -L, n)
+y₂ = LinRange(-L, L, n)
+y₃ = LinRange(L, L, n)
+y₄ = LinRange(L, -L, n)
+x = reduce(vcat, [x₁, x₂, x₃, x₄])
+y = reduce(vcat, [y₁, y₂, y₃, y₄])
+xy = [(x, y) for (x, y) in zip(x, y)]
+unique!(xy)
+x = getx.(xy)
+y = gety.(xy)
+r = 0.1
+T, adj, adj2v, DG, points, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+
+## Step 2: Define the boundary conditions 
+bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
+types = :D
+BCs = BoundaryConditions(mesh, bc, types, BN)
+
+## Step 3: Define the actual PDE  
+f = (x, y) -> M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
+diff_fnc = (x, y, t, u, p) -> p[1] * u^(p[2] - 1)
+diff_parameters = (D, m)
+u₀ = [f(points[:, i]...) for i in axes(points, 2)]
+prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc,
+    diffusion_parameters=diff_parameters, initial_condition=u₀, final_time)
+
+## Step 4: Solve
+alg = TRBDF2(linsolve=KLUFactorization())
+sol = solve(prob, alg; saveat=3.0)
+```
+![Porous-medium equation with m=2](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/porous_medium_test.png?raw=true)
