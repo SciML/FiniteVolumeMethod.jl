@@ -6,12 +6,14 @@
   - [The boundary conditions](#the-boundary-conditions)
   - [The problem](#the-problem)
   - [Solving the problem](#solving-the-problem)
+  - [Linear interpolants](#linear-interpolants)
 - [Examples](#examples)
   - [Diffusion equation on a square plate](#diffusion-equation-on-a-square-plate)
   - [Diffusion equation in a wedge with mixed boundary conditions](#diffusion-equation-in-a-wedge-with-mixed-boundary-conditions)
   - [Reaction-diffusion equation with a time-dependent Dirichlet boundary condition on a disk](#reaction-diffusion-equation-with-a-time-dependent-dirichlet-boundary-condition-on-a-disk)
   - [Porous medium equation](#porous-medium-equation)
   - [Porous-Fisher equation and travelling waves](#porous-fisher-equation-and-travelling-waves)
+  - [Using the linear interpolants](#using-the-linear-interpolants)
 
 This is a package for solving partial differential equations (PDEs) of the form 
 
@@ -165,6 +167,18 @@ The `parallel` keyword is not currently used. One day!
 The `specialization` keyword can be used to set the specialization level for the `ODEProblem`. [See here for more details](https://diffeq.sciml.ai/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation).
 
 The `chunk_size` argument sets the chunk size used for automatic differentiation when defining the cache vectors. 
+
+## Linear interpolants 
+
+We also provide an interface for evaluating the solutions at any point $(x, y)$, or at least evaluating the solution's associated linear interpolant. As described in the Mathematical Details section, the solution $u(x, y, t)$ is assumed to be linear inside a given triangular element $T$, i.e. $u(x, y, t) \approx \alpha(t) x + \beta(t) y + \gamma(t)$ for $(x, y) \in T$. We provide two methods for evaluating this interpolant for a given $(x, y)$ and a given $T$:
+```julia
+eval_interpolant(sol, x, y, t_idx::Integer, T) 
+eval_interpolant(sol, x, y, t::Number, T) 
+eval_interpolant!(αβγ, prob::FVMProblem, x, y, T, u)
+```
+The first method takes a given solution `sol` (as defined in the last section), a given coordinate `(x, y)`, an index `t_idx` such that `sol.t[t_idx]` is the time of interest, and `T` is the triangle that `(x, y)` is inside of. The second method takes in a number for the time, instead computing the solution using `sol(t)`. The third method is the one that the first and second call into, where `αβγ` is a cache vector to store the coefficients of the interpolant, `prob` is the `FVMProblem`, and `u` is the vector of the solution values (i.e. `sol.u[t_idx]`, or `sol(t)` for example). It is up to you to provide the triangle `T` that `(x, y)` is inside of, but the tools in DelaunayTriangulation.jl can make this efficient. Note that `αβγ` is stored inside `sol`, so the first and second methods do not have to create an extra cache vector on each call. 
+
+An example of how to efficiently evaluate these interpolants is given in the Examples section.
 
 # Examples 
 
@@ -691,3 +705,72 @@ exact_travelling_wave_values = exact_solution.(exact_z_vals)
 The results we obtain are shown below,with the exact travelling wave from the one-dimensional problem shown in red in the fourth plot and the numerical solutions are the other curves. 
 
 ![Travelling wave problem](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/travelling_wave_problem_test.png?raw=true)
+
+## Using the linear interpolants 
+
+We now give an example of how one can efficiently evaluate the linear interpolants for a given solution. We illustrate this using the porous medium equation with a linear source example. Letting `prob` be as we computed in that example, we find the solution:
+
+```julia
+alg = TRBDF2(linsolve=KLUFactorization(), autodiff=true)
+sol = solve(prob, alg, saveat=2.5)
+```
+
+If we just have a single point $(x, y)$ to evaluate the interpolant at, for a given $t$, we can do the following. First, we define the triple $(x, y, t)$:
+
+```julia
+x = 0.37 
+y = 0.58
+t_idx = 5 # t = sol.t[t_idx]
+```
+
+Next, we must find what triangle contains `(x, y)`. This is done by calling into the point location method provided by DelaunayTriangulation.jl, namely `jump_and_march`. We provide a simple interface for this using `FVMProblem`, which we use as follows:
+```julia
+V = jump_and_march(x, y, prob)
+@test DelaunayTriangulation.isintriangle(get_point(points, V...)..., (x, y)) == 1
+```
+(You can also provide keyword arguments to `jump_and_march`, matching those from DelaunayTriangulation.jl.) Now we can evaluate the interpolant at this point:
+```
+val = eval_interpolant(sol, x, y, t_idx, V)
+# or eval_interpolant(sol, x, y, sol.t[t_idx], V)
+```
+This is our approximation to $u(0.37, 0.58, 0.2)$.
+
+A more typical example would involve evaluating this interpolant over a much larger set of points. A good way to do this is to first find all the triangles that correspond to each point. In what follows, we define a lattice of points, and then we find the triangle for each point. To accelerate the procedure, when initiating the `jump_and_march` function we will tell it to also try starting at the previously found triangle. Note that we also put the grid slightly off the boundary since the generated mesh doesn't exactly lie on the square $[0, 2]^2$, hence some points wouldn't be in any triangle if we put some points exactly on this boundary.
+```julia
+nx = 250
+ny = 250
+grid_x = LinRange(-L + 1e-1, L - 1e-1, nx)
+grid_y = LinRange(-L + 1e-1, L - 1e-1, ny)
+V_mat = Matrix{NTuple{3, Int64}}(undef, nx, ny)
+last_triangle = rand(FVM.get_elements(prob)) # initiate 
+for j in 1:ny 
+    for i in 1:nx 
+        V_mat[i, j] = jump_and_march(grid_x[i], grid_y[j], prob; try_points = last_triangle)
+        last_triangle = V_mat[i, j]
+    end
+end
+```
+
+Now let's evaluate the interpolant at each time.
+```julia 
+u_vals = zeros(nx, ny, length(sol))
+for k in eachindex(sol)
+    for j in 1:ny
+        for i in 1:nx
+            V = V_mat[i, j]
+            u_vals[i, j, k] = eval_interpolant(sol, grid_x[i], grid_y[j], k, V)
+        end
+    end
+end
+```
+
+This setup now makes it easy to use `surface!` from Makie.jl to visualise the solution, thanks to our regular grid.
+```julia
+fig = Figure(resolution=(2744.0f0, 692.0f0))
+for k in 1:4
+    ax = Axis3(fig[1, k])
+    zlims!(ax, 0, 1), xlims!(ax, -L - 1e-1, L + 1e-1), ylims!(ax, -L - 1e-1, L + 1e-1)
+    surface!(ax, grid_x, grid_y, u_vals[:, :, k+1], colormap=:matter)
+end 
+```
+![Surface plots](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/surface_plots_travelling_wave.png?raw=true)

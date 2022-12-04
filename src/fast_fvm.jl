@@ -3,22 +3,6 @@
 ## SETUP
 ##
 ##############################################################################
-#=
-using StatsBase
-using LinearAlgebra
-using DelaunayTriangulation
-using FunctionWrappers
-import FunctionWrappers: FunctionWrapper
-using PreallocationTools
-using Unrolled
-using FastClosures
-using CommonSolve
-using OrdinaryDiffEq
-using StaticArraysCore
-using DiffEqBase
-import SimpleGraphs: adjacency
-import SparseArrays: sparse
-=#
 using DelaunayTriangulation
 using FunctionWrappersWrappers
 using PreallocationTools
@@ -28,6 +12,12 @@ using SparseArrays
 using SciMLBase
 using DiffEqBase
 import DiffEqBase: dualgen
+
+export FVMGeometry
+export BoundaryConditions
+export FVMProblem
+export eval_interpolant
+export eval_interpolant!
 
 ##############################################################################
 ##
@@ -93,6 +83,10 @@ end
 get_neighbours(MI::MeshInformation) = MI.neighbours
 DelaunayTriangulation.get_point(MI::MeshInformation, j) = get_point(MI.points, j)
 get_points(MI::MeshInformation) = MI.points
+get_adjacent(MI::MeshInformation) = MI.adjacent
+get_adjacent2vertex(MI::MeshInformation) = MI.adjacent2vertex
+get_elements(MI::MeshInformation) = MI.elements
+get_element_type(::MeshInformation{EL,P,Adj,Adj2V,NGH,TAR}) where {EL,P,Adj,Adj2V,NGH,TAR} = DelaunayTriangulation.triangle_type(EL)
 struct ElementInformation{CoordinateType,VectorStorage,ScalarStorage,CoefficientStorage,FloatType}
     centroid::CoordinateType
     midpoints::VectorStorage
@@ -141,8 +135,13 @@ get_interior_elements(geo::FVMGeometry) = get_interior_elements(get_interior_inf
 get_interior_edges(geo::FVMGeometry, T) = get_interior_edges(get_interior_information(geo), T)
 get_boundary_elements(geo::FVMGeometry) = get_boundary_elements(get_boundary_information(geo))
 get_neighbours(geo::FVMGeometry) = get_neighbours(get_mesh_information(geo))
+get_adjacent(geo::FVMGeometry) = get_adjacent(get_mesh_information(geo))
+get_adjacent2vertex(geo::FVMGeometry) = get_adjacent2vertex(get_mesh_information(geo))
 DelaunayTriangulation.get_point(geo::FVMGeometry, j) = get_point(get_mesh_information(geo), j)
 get_points(geo::FVMGeometry) = get_points(get_mesh_information(geo))
+get_elements(geo::FVMGeometry) = get_elements(get_mesh_information(geo))
+get_element_type(geo::FVMGeometry) = get_element_type(get_mesh_information(geo))
+
 function FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV;
     coordinate_type=Vector{number_type(pts)},
     control_volume_storage_type_vector=NTuple{3,coordinate_type},
@@ -678,7 +677,7 @@ get_time_span(prob::FVMProblem) = (get_initial_time(prob), get_final_time(prob))
 
 store_q(::Type{A}, x, y) where {A} = A((x, y))
 store_q(::Type{Vector{F}}, x, y) where {F} = F[x, y]
-store_q(::Type{Vector{F}}, x::H, y::H) where {F, H <: DiffEqBase.ForwardDiff.Dual} = H[x, y]
+store_q(::Type{Vector{F}}, x::H, y::H) where {F,H<:DiffEqBase.ForwardDiff.Dual} = H[x, y]
 
 function construct_flux_function(iip_flux,
     flux_function,
@@ -776,6 +775,11 @@ end
 @inline evaluate_boundary_function(prob::FVMProblem, idx, x, y, t, u) = evaluate_boundary_function(get_boundary_conditions(prob), idx, x, y, t, u)
 @inline DelaunayTriangulation.num_points(prob::FVMProblem) = DelaunayTriangulation.num_points(get_points(prob))
 @inline num_boundary_edges(prob::FVMProblem) = num_boundary_edges(get_mesh(prob)) # This will be the same value as the above, but this makes the code clearer to read
+@inline get_adjacent(prob::FVMProblem) = get_adjacent(get_mesh(prob))
+@inline get_adjacent2vertex(prob::FVMProblem) = get_adjacent2vertex(get_mesh(prob))
+@inline get_elements(prob::FVMProblem) = get_elements(get_mesh(prob))
+@inline get_element_type(prob::FVMProblem) = get_element_type(get_mesh(prob))
+
 ##############################################################################
 ##
 ## FVM Equations 
@@ -930,15 +934,15 @@ function jacobian_sparsity(prob::FVMProblem)
     V = ones(num_nnz)           # values (all 1)
     ctr = 1
     for i in DelaunayTriangulation._eachindex(get_points(prob))
-        I[ctr] = i 
+        I[ctr] = i
         J[ctr] = i
         ctr += 1
         ngh = DelaunayTriangulation.get_neighbour(DG, i)
-        for j in ngh 
+        for j in ngh
             if has_ghost_edges && j ≠ DelaunayTriangulation.BoundaryIndex
-                I[ctr] = i 
-                J[ctr] = j 
-                ctr += 1 
+                I[ctr] = i
+                J[ctr] = j
+                ctr += 1
             end
         end
     end
@@ -978,4 +982,49 @@ function SciMLBase.solve(prob::FVMProblem, alg;
     ode_problem = ODEProblem(prob; cache_eltype, jac_prototype, parallel, no_saveat, specialization, chunk_size)
     sol = solve(ode_problem, alg; kwargs...)
     return sol
+end
+
+##############################################################################
+##
+## Interpolant 
+##
+##############################################################################
+@inline function eval_interpolant!(αβγ, prob::FVMProblem, x, y, T, u)
+    if T ∉ get_elements(prob)
+        T = DelaunayTriangulation.shift_triangle_1(T)
+    end
+    if T ∉ get_elements(prob)
+        T = DelaunayTriangulation.shift_triangle_1(T)
+    end
+    linear_shape_function_coefficients!(αβγ, u, prob, T)
+    α = getα(αβγ)
+    β = getβ(αβγ)
+    γ = getγ(αβγ)
+    return α * x + β * y + γ
+end
+@inline function eval_interpolant(sol, x, y, t_idx::Integer, T)
+    prob = sol.prob.p[1]
+    shape_coeffs = sol.prob.p[3]
+    new_shape_coeffs = get_tmp(shape_coeffs, x)
+    return eval_interpolant!(new_shape_coeffs, prob, x, y, T, sol.u[t_idx])
+end
+@inline function eval_interpolant(sol, x, y, t::Number, T)
+    prob = sol.prob.p[1]
+    shape_coeffs = sol.prob.p[3]
+    new_shape_coeffs = get_tmp(shape_coeffs, x)
+    return eval_interpolant!(new_shape_coeffs, prob, x, y, T, sol(t))
+end
+
+function DelaunayTriangulation.jump_and_march(x, y, prob::FVMProblem;
+    pt_idx=DelaunayTriangulation._eachindex(get_points(prob)),
+    m=ceil(Int64, length(pt_idx)^(1 / 3)),
+    try_points=(),
+    k=DelaunayTriangulation.select_initial_point(get_points(prob), (x, y); m, pt_idx, try_points),
+    TriangleType::Type{V}=get_element_type(prob)) where {V}
+    adj = get_adjacent(prob)
+    adj2v = get_adjacent2vertex(prob)
+    DG = get_neighbours(prob)
+    pts = get_points(prob)
+    q = (x, y)
+    return jump_and_march(q, adj, adj2v, DG, pts; pt_idx, m, k, TriangleType)
 end
