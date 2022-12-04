@@ -510,3 +510,70 @@ alg = TRBDF2(linsolve=KLUFactorization())
 sol = solve(prob, alg; saveat=3.0)
 ```
 ![Porous-medium equation with m=2](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/porous_medium_test.png?raw=true)
+
+We can continue this example with the Porous-Medium equation by considering the same equation except with a linear source:
+
+$$
+\dfrac{\partial u}{\partial t} = D\boldsymbol{\nabla} \boldsymbol{\cdot} \left[u^{m-1}\boldsymbol{\nabla} u\right] + \lambda u, \quad \lambda>0. 
+$$
+
+This equation has an exact solution given by 
+
+$$
+u(x, y, t) = \mathrm{e}^{\lambda t}v\left(x, y, \frac{D}{\lambda(m-1)}\left[\mathrm{e}^{\lambda(m-1)t} - 1\right]\right),
+$$
+
+where $u(x, y, 0) = M\delta(x, y)$ and $v$ is the exact solution we gave above except with $D=1$. This is what we use for assessing the solution in the tests - not shown here. The domain we use is now $\Omega = [-R_{m, M}^{1/2}\tau(T)^{1/2m}, R_{m,M}^{1/2}\tau(T)^{1/2m}]^2$, where $\tau(T) = D/[\lambda(m-1)](\mathrm{e}^{\lambda(m-1)t}-1)$. The code below solves this problem.
+```julia
+## Step 0: Define all the parameters 
+m = 3.4
+M = 2.3
+D = 0.581
+λ = 0.2
+final_time = 10.0
+ε = 0.1
+
+## Step 1: Define the mesh 
+RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
+L = sqrt(RmM) * (D / (λ * (m - 1)) * (exp(λ * (m - 1) * final_time) - 1))^(1 / (2m))
+n = 500
+x₁ = LinRange(-L, L, n)
+x₂ = LinRange(L, L, n)
+x₃ = LinRange(L, -L, n)
+x₄ = LinRange(-L, -L, n)
+y₁ = LinRange(-L, -L, n)
+y₂ = LinRange(-L, L, n)
+y₃ = LinRange(L, L, n)
+y₄ = LinRange(L, -L, n)
+x = reduce(vcat, [x₁, x₂, x₃, x₄])
+y = reduce(vcat, [y₁, y₂, y₃, y₄])
+xy = [(x, y) for (x, y) in zip(x, y)]
+unique!(xy)
+x = getx.(xy)
+y = gety.(xy)
+r = 0.07
+T, adj, adj2v, DG, points, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+
+## Step 2: Define the boundary conditions 
+bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
+types = :D
+BCs = BoundaryConditions(mesh, bc, types, BN)
+
+## Step 3: Define the actual PDE  
+f = (x, y) -> M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
+diff_fnc = (x, y, t, u, p) -> p[1] * abs(u)^(p[2] - 1)
+reac_fnc = (x, y, t, u, p) -> p[1] * u
+diff_parameters = (D, m)
+react_parameter = λ
+u₀ = [f(points[:, i]...) for i in axes(points, 2)]
+prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc,
+    diffusion_parameters=diff_parameters,
+    reaction_function=reac_fnc, reaction_parameters=react_parameter,
+    initial_condition=u₀, final_time)
+
+## Step 4: Solve
+alg = TRBDF2(linsolve=KLUFactorization())
+sol = solve(prob, alg; saveat=2.5)
+```
+![Porous-medium equation with linear source](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/porous_medium_linear_source_test.png?raw=true)
