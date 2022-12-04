@@ -790,3 +790,77 @@ This triangulation is used to define control volumes around each point. This is 
 To be more precise, consider some interior point $\boldsymbol{x}\_{i}  = (x\_i, y\_i)^{\mathsf T} \in \Omega$ which is a point in $\mathcal T(\Omega)$, i.e. one of the black points on the figure above. We take the centroids of the neighbouring triangles of $\boldsymbol{x}\_i$ and connect these centroids to the midpoints of the associated triangle. These connections defined a closed polygon around $\boldsymbol{x}\_i$ which we denote by $\partial\Omega_i$, and its interior will be $\Omega\_i$ with some volume $V\_i$. This polygon will be comprised of a set of edges $\mathcal E_i$, and for each $\boldsymbol{x}\_{\sigma} \in\mathcal E\_i$ there will be a length $L\_\sigma$, a midpoint $\boldsymbol{x}\_{\sigma}$, and a unit normal vector $\hat{\boldsymbol{n}}\_{i, \sigma}$ which is normal to $\sigma$ and directed outwards to $\Omega\_i$ with $\|\hat{\boldsymbol{n}}\_{i,\sigma}\| = 1$. This notication is elucidated in the figure below. In this figure, the green area shows $\Omega_i$, and its boundary $\partial\Omega_i$ is in blue. The edge $\sigma$ is shown in blue. Lastly, the cyan points show an example ordering $(v_{k1}, v_{k2}, v_{k3})$ of a triangle $T_k \in \mathcal T(\Omega)$. It is with these control volumes that we can now discretise our PDE $\partial_t u + \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q} = R$.
 
 ![Control volume](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/control_volume_example.png?raw=true)
+
+Let us start by integrating our equations around $\Omega\_i$ and moving the time-derivative outside the integral:
+
+$$
+\begin{equation}
+\dfrac{\mathrm d}{\mathrm dt}\iint_{\Omega_i} u~ \mathrm{d}V + \iint_{\Omega_i} \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q}~ \mathrm{d}V = \iint_{\Omega_i} R~ \mathrm{d}V. 
+\end{equation} 
+$$
+
+Using the divergence theorem, the second integral in (1) becomes
+
+$$
+\begin{equation}
+\iint_{\Omega_i}  \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q}~\mathrm{d}V = \oint_{\partial\Omega_i} \boldsymbol{q} \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}~\mathrm{d}s = \sum_{\sigma\in \mathcal E_i} \int_\sigma \boldsymbol{q} \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}~\mathrm{d}s,
+\end{equation}
+$$
+
+where the last equality in (2) follows from integrating over each individual line segment that defines $\partial\Omega_i$. We now define the control volume averages,
+
+$$
+\begin{equation}
+\bar u_i = \frac{1}{V_i}\iint_{\Omega_i} u~\mathrm dV, \qquad \bar R_i = \frac{1}{V_i}\iint_{\Omega_i} R~\mathrm dV,
+\end{equation}
+$$
+
+so that (2) becomes
+
+$$
+\begin{equation}
+\dfrac{\mathrm d\bar u_i}{\mathrm dt} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i}\int_{\sigma} \boldsymbol{q} \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}~\mathrm ds = \bar R_i. 
+\end{equation}
+$$
+
+The line integrals in (4) can be approximated using a midpoint rule, 
+
+$$
+\begin{equation}
+\int_\sigma \boldsymbol{q} \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}~\mathrm ds \approx \left[\boldsymbol{q}(x_\sigma, y_\sigma, t, u) \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}\right] L_\sigma. 
+\end{equation} 
+$$
+
+Lastly, the control volume averages can be approximated by simply replacing them by their value at $(x\_i, y\_i)$. We thus obtain the following approximation, where $\tilde u\_i$ denotes an approximation to the exact solution $u$ at $(x_i, y_i)$:
+
+$$ 
+\begin{equation} 
+\frac{\mathrm d\tilde u_i}{\mathrm dt} + \frac{1}{V_i}\sum_{\sigma \in \mathcal E_i} \left[\boldsymbol{q}(x_\sigma, y_\sigma, t, u) \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}\right] L_\sigma = \tilde R_i,
+\end{equation} 
+$$
+
+where $\tilde R\_i$ is the approximation to $\bar R\_i$ at $(x\_i, y\_i)$. This approximation (6) is what we use in the interior of $\Omega$ for approximating the value of $u$ at each node. 
+
+We still need to discuss how we compute $\boldsymbol{q}(x\_{\sigma}, y\_{\sigma}, t, u)$. To deal with this function, let $\mathcal T\_i$ be the set of triangles in $\mathcal T(\Omega)$ that have $\boldsymbol{x}\_i$ as a node, and consider a triangle $T\_k \in \mathcal T\_i$ for $k \in \{1, \ldots, |\mathcal T_i|\}$. We will inteprolate $\tilde u$ with a linear shape function in $T_k$, so that 
+
+$$ 
+\begin{equation}
+\tilde u(x, y, t) = \alpha_k x + \beta_ky + \gamma_k, \quad (x, y) \in T_k.
+\end{equation} 
+$$
+
+(The dependence of the coefficients $\alpha\_k$, $\beta\_k$, and $\gamma\_k$ on $t$ is suppressed.) We suppose that the three nodes defining $T_k$ are $(v\_{k1}, v\_{k2}, v\_{k3})$, and these points are given in a counter-clockwise order. An example of how these points are defined was shown in the control volume schematic figure. We can find $\alpha\_k$, $\beta\_k$, and $\gamma\_k$ by noting that we know the values of $\tilde u$ at the nodes $v\_{k1}$, $v\_{k2}$, and $v\_{k3}$, either from the initial condition or from the previous time-step of the integration. We will denote the value of $\tilde u$ at $v\_{ki}$ by $\tilde u\_{v_{ki}}$, $i=1,2,3$. We then have the system of equations, 
+
+$$ 
+\begin{equation} 
+\tilde u_{v_{ki}} = \alpha_k x_{v_{ki}} + \beta_k y_{v_{ki}} + \gamma_k, \quad i=1,2,3, 
+\end{equation} 
+$$ 
+
+where $x_{v_{ki}}$ and $y_{v_{ki}}$ denote the $x$- and $y$-coordinates of the point $v\_{ki}$, respectively, for $i=1,2,3$. The system (8) can be written in matrix form as 
+
+```math 
+\begin{bmatrix} 
+x_{v_{k1}} & y_{v_{k1}} & 1 \\ x_{v_{k2}} & y_{v_{k2}} & 1 \\ x_{v_{k3}} & y_{v_{k3}} & 1 \end{bmatrix}\begin{bmatrix} \alpha_k \\ \beta_k \\ \gamma_k \end{bmatrix} = \begin{bmatrix} \tilde u_{v_{k1}} \\ \tilde u_{v_{k2}} \\ \tilde u_{k3}}
+\end{bmatrix} 
+```
