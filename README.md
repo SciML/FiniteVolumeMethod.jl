@@ -418,4 +418,4 @@ prob = FVMProblem(mesh, BCs; diffusion_function=D, reaction_function=R, initial_
 alg = FBDF(linsolve=UMFPACKFactorization())
 sol = solve(prob, alg; saveat=0.025)
 ```
-![Reaction-diffusion equation on a circle solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/reaction_diffusion_equation_test.png.png?raw=true)
+![Reaction-diffusion equation on a circle solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/reaction_diffusion_equation_test.png?raw=true)
