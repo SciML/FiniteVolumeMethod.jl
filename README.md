@@ -14,6 +14,7 @@
   - [Porous medium equation](#porous-medium-equation)
   - [Porous-Fisher equation and travelling waves](#porous-fisher-equation-and-travelling-waves)
   - [Using the linear interpolants](#using-the-linear-interpolants)
+- [Mathematical Details](#mathematical-details)
 
 This is a package for solving partial differential equations (PDEs) of the form 
 
@@ -774,3 +775,13 @@ for k in 1:4
 end 
 ```
 ![Surface plots](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/surface_plots_travelling_wave.png?raw=true)
+
+# Mathematical Details
+
+We now describe the mathematical details involved with the finite volume method as we have applied it. We assume that we have some triangulation of $\Omega$, like a (constrained) Delaunay triangulation $\mathcal D\mathcal T(\Omega)$. This triangulation is used to define control volumes around each point. This is illustrated in the following figure, where (a) shows the domain $\Omega$ and its triangulation $\mathcal T(\Omega)$, together with the boundary $\partial\Omega$ shown in blue. (b) shows the mesh in (a) along with the dual mesh shown in blue, with red points showing the centroids of each triangle in $\mathcal T(\Omega)$. The blue polygons around each nodal point are the control volumes, and we denote the control volume around the $i$th point by $\Omega_i$ and its boundary is $\partial\Omega_i$. (Note that this is the so-called ``vertex-centred approach'' to the finite volume method.)
+
+![Dual mesh](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/triangulation_example.png?raw=true)
+
+To be more precise, consider some interior point $\boldsymbol{x}_i = (x_i, y_i)^{\mathsf T} \in \Omega$ which is a point in $\mathcal T(\Omega)$, i.e. one of the black points on the figure above. We take the centroids of the neighbouring triangles of $\boldsymbol{x}_i$ and connect these centroids to the midpoints of the associated triangle. These connections defined a closed polygon around $\boldsymbol{x}_i$ which we denote by $\partial\Omega_i$, and its interior will be the $i$th control volume $\Omega_i$ with some volume $V_i$. This polygon will be comprised of a set of edges $\mathcal E_i$, and for each $\boldsymbol{x}_\sigma\in\mathcal E_i$ there will be a length $L_\sigma$, a midpoint $\boldsymbol{x}_\sigma$, and a unit normal vector $\hat{\boldsymbol{n}}_{i, \sigma}$ which is normal to $\sigma$ and directed outwards to $\Omega_i$ with $\|\hat{\boldsymbol{n}}_{i,\sigma}\| = 1$. This notication is elucidated in the figure below. In this figure, the green area shows $\Omega_i$, and its boundary $\partial\Omega_i$ is in blue. The edge $\sigma$ is shown in blue. Lastly, the cyan points show an example ordering $(v_{k1}, v_{k2}, v_{k3})$ of a triangle $T_k \in \mathcal T(\Omega)$. It is with these control volumes that we can now discretise our PDE $\partial_t u + \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q} = R$.
+
+![Control volume](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/control_volume_example.png?raw=true)
