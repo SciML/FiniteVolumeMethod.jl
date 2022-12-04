@@ -11,7 +11,7 @@
   - [Diffusion equation in a wedge with mixed boundary conditions](#diffusion-equation-in-a-wedge-with-mixed-boundary-conditions)
   - [Reaction-diffusion equation with a time-dependent Dirichlet boundary condition on a disk](#reaction-diffusion-equation-with-a-time-dependent-dirichlet-boundary-condition-on-a-disk)
   - [Porous medium equation](#porous-medium-equation)
-  - [Porous-Fisher equatioon and travelling waves](#porous-fisher-equatioon-and-travelling-waves)
+  - [Porous-Fisher equation and travelling waves](#porous-fisher-equation-and-travelling-waves)
 
 This is a package for solving partial differential equations (PDEs) of the form 
 
@@ -579,7 +579,7 @@ sol = solve(prob, alg; saveat=2.5)
 ```
 ![Porous-medium equation with linear source](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/porous_medium_linear_source_test.png?raw=true)
 
-## Porous-Fisher equatioon and travelling waves 
+## Porous-Fisher equation and travelling waves 
 
 We now consider a more involved example, where we discuss the travelling wave solutions of the Porous-Fisher equation and discuss how we test a more complicated problem. We consider:
 
