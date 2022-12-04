@@ -386,7 +386,7 @@ $$
 where $I_0$ is the modified Bessel function of the first kind of order zero. (The solution to this problem is $u(r, \theta, t) = \mathrm{e}^t\sqrt{I_0(\sqrt{2}r)}$ (see [Bokhari et al. (2008)](https://doi.org/10.1016/j.na.2007.11.012)) This is what we compare to in the tests, and again these comparisons are not shown here.) In this case, the diffusion function is $D(x, y, t, u) = u$ and the reaction function is $R(x, y, t, u) = u(1-u)$, or equivalently the flux function is 
 
 $$
-\boldsymbol{q}(x, y, t, \alpha, \beta, \gamma) = \begin{bmatrix} -\alpha\left(\alpha x + \beta y + \gamma\right) \\ -\beta\left(\alpha x + \beta y + \gamma\right) \end{bmatrix}. 
+\boldsymbol{q}(x, y, t, \alpha, \beta, \gamma) = \left(-\alpha\left(\alpha x + \beta y + \gamma\right), -\beta\left(\alpha x + \beta y + \gamma\right)\right)^{\mathsf T}. 
 $$
 
 The following code solves this problem numerically.
