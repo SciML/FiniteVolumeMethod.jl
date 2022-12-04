@@ -14,8 +14,11 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 
 [compat]
-DelaunayTriangulation = "^0.4"
+DiffEqBase = "^6.0"
+FunctionWrappersWrappers = "^0.1"
 PreallocationTools = "^0.4"
+SciMLBase = "^1.77"
+StaticArraysCore = "^1.4"
 julia = "^1"
 
 [extras]
