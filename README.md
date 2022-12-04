@@ -835,13 +835,13 @@ Lastly, the control volume averages can be approximated by simply replacing them
 
 $$ 
 \begin{equation} 
-\frac{\mathrm d\tilde u_i}{\mathrm dt} + \frac{1}{V_i}\sum_{\sigma \in \mathcal E_i} \left[\boldsymbol{q}(x_\sigma, y_\sigma, t, u) \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}\right] L_\sigma = \tilde R_i,
+\frac{\mathrm d\tilde u_i}{\mathrm dt} + \frac{1}{V_i}\sum_{\sigma \in \mathcal E_i} \left[\boldsymbol{q}(x_\sigma, y_\sigma, t, u) \boldsymbol{\cdot} \hat{\boldsymbol{n}}\_{i, \sigma}\right] L\_\sigma = \tilde R_i,
 \end{equation} 
 $$
 
 where $\tilde R\_i$ is the approximation to $\bar R\_i$ at $(x\_i, y\_i)$. This approximation (6) is what we use in the interior of $\Omega$ for approximating the value of $u$ at each node. 
 
-We still need to discuss how we compute $\boldsymbol{q}(x\_{\sigma}, y\_{\sigma}, t, u)$. To deal with this function, let $\mathcal T\_i$ be the set of triangles in $\mathcal T(\Omega)$ that have $\boldsymbol{x}\_i$ as a node, and consider a triangle $T\_k \in \mathcal T\_i$ for $k \in \{1, \ldots, |\mathcal T_i|\}$. We will inteprolate $\tilde u$ with a linear shape function in $T_k$, so that 
+We still need to discuss how we compute $\boldsymbol{q}(x\_{\sigma}, y\_{\sigma}, t, u)$. To deal with this function, let $\mathcal T\_i$ be the set of triangles in $\mathcal T(\Omega)$ that have $\boldsymbol{x}\_i$ as a node, and consider a triangle $T\_k \in \mathcal T\_i$. We will inteprolate $\tilde u$ with a linear shape function in $T_k$, so that 
 
 $$ 
 \begin{equation}
@@ -864,3 +864,44 @@ where $x_{v_{ki}}$ and $y_{v_{ki}}$ denote the $x$- and $y$-coordinates of the p
 x_{v_{k1}} & y_{v_{k1}} & 1 \\ x_{v_{k2}} & y_{v_{k2}} & 1 \\ x_{v_{k3}} & y_{v_{k3}} & 1 \end{bmatrix}\begin{bmatrix} \alpha_k \\ \beta_k \\ \gamma_k \end{bmatrix} = \begin{bmatrix} \tilde u_{v_{k1}} \\ \tilde u_{v_{k2}} \\ \tilde u_{k3}
 \end{bmatrix} 
 ```
+
+Using Cramer's rule, we can define 
+
+$$
+\begin{equation} 
+\begin{array}{lcllcllcl}
+s_{k1} &=& \frac{y_{v_{k2}} - y_{v_{k3}}}{\Delta_k}, & s_{k2} &=& \frac{y_{v_{k3}}-y_{v_{k1}}}{\Delta_k}, & s_{k3} &=& \frac{y_{v_{k1}}-y_{v_{k2}}}{\Delta_k}, \\
+s_{k4} &=& \frac{x_{v_{k3}}-x_{v_{k2}}}{\Delta_k},& s_{k5} &=& \frac{x_{v_{k1}}-x_{v_{k3}}}{\Delta_k}, & s_{k6} &=& \frac{x_{v_{k2}}-x_{v_{k1}}}{\Delta_k}, \\
+s_{k7} &=& \frac{x_{v_{k2}}y_{v_{k3}}-x_{v_{k3}}y_{v_{k2}}}{\Delta_k}, & s_{k8} &=& \frac{x_{v_{k3}}y_{v_{k1}}-x_{v_{k1}}y_{v_{k3}}}{\Delta_k},& s_{k9} &= &\frac{x_{v_{k1}}y_{v_{k2}}-x_{v_{k2}}y_{v_{k1}}}{\Delta_k}, 
+\end{array} 
+\end{equation} 
+$$
+
+and 
+
+$$ 
+\begin{equation}
+\Delta_k = x_{v_{k1}}y_{v_{k2}}-x_{v_{k2}}y_{v_{k1}}-x_{v_{k1}}y_{v_{k3}}+x_{v_{k3}}y_{v_{k1}}+x_{v_{k2}}y_{v_{k3}}-x_{v_{k3}}y_{v_{k2}}.
+\end{equation}
+$$
+
+With this notation, 
+
+$$
+\begin{equation} 
+\begin{array}{rcl}
+\alpha_k &=& s_{k1}\tilde u_{v_{k1}} + s_{k2}\tilde u_{v_{k2}} + s_{k3}\tilde u_{v_{k3}}, \\
+\beta_k &= & s_{k4}\tilde u_{v_{k1}} + s_{k5}\tilde u_{v_{k2}} + s_{k6}\tilde u_{v_{k3}}, \\
+\gamma_k &=& s_{k7}\tilde u_{v_{k1}} + s_{k8}\tilde u_{v_{k2}} + s_{k9}\tilde u_{v_{k3}}.
+\end{array}
+\end{equation} 
+$$ 
+
+With these coefficients, (6) becomes 
+$$ 
+\begin{equation} 
+\frac{\mathrm du_i}{\mathrm dt} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\boldsymbol{q}\left(x_\sigma, y_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_{k(\sigma)}\right) \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}\right] L_\sigma = R_i,
+\end{equation} 
+$$ 
+
+where we now drop the tilde notation and make the approximations implicit, and now the $k(\sigma)$ notation is used to refer to the edge $\sigma$ from triangle $T_{k(\sigma)}$. This linear shape function also allows to compute gradients like $\boldsymbol{\nabla} u(x_\sigma, y_\sigma)$, since $\boldsymbol{\nabla} u(x_\sigma, y_\sigma) = (\alpha_{k(\sigma)}, \beta_{k(\sigma)})^{\mathsf T}$.
