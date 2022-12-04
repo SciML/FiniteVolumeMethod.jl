@@ -3,7 +3,7 @@
 This is a package for solving partial differential equations (PDEs) of the form 
 
 $$
-\frac{\partial u(x, y, t)}{\partial t} + \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q}(x, y, t, u) = R(x, y, t, u), \quad (x, y)^{\mathsf T} \in \Omega \subset \mathbb R^2,\,t>0,
+\dfrac{\partial u(x, y, t)}{\partial t} + \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q}(x, y, t, u) = R(x, y, t, u), \quad (x, y)^{\mathsf T} \in \Omega \subset \mathbb R^2,\,t>0,
 $$
 
 with flux and reaction functions $\boldsymbol{q}$ and $R$, respectively, using the finite volume method. The boundary conditions are assumed to take on any of the three forms:
