@@ -11,8 +11,8 @@ with flux and reaction functions $\boldsymbol{q}$ and $R$, respectively, using t
 $$
 \begin{array}{rcl}
 \boldsymbol{q}(x, y, t, u) \boldsymbol{\cdot} \hat{\boldsymbol{n}}(x, y) = 0, \\
-\mathrm du(x, y, t, u)/\mathrm dt = a(x, y, t, u), \\
-u(x, y, t, u) = a(x, y, t, u),
+\mathrm du(x, y, t)/\mathrm dt = a(x, y, t, u), \\
+u(x, y, t) = a(x, y, t, u),
 \end{array} \quad (x, y)^{\mathsf T} \in \partial\Omega.
 $$
 
