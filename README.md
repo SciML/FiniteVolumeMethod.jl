@@ -16,6 +16,7 @@
   - [Using the linear interpolants](#using-the-linear-interpolants)
 - [Mathematical Details](#mathematical-details)
   - [Interior discretisation](#interior-discretisation)
+  - [Boundary conditions](#boundary-conditions)
 
 This is a package for solving partial differential equations (PDEs) of the form 
 
@@ -815,7 +816,7 @@ $$
 \end{equation}
 $$
 
-so that (2) becomes
+so that our integral formulation becomes
 
 $$
 \begin{equation}
@@ -906,3 +907,29 @@ $$
 $$ 
 
 where we now drop the tilde notation and make the approximations implicit, and now the $k(\sigma)$ notation is used to refer to the edge $\sigma$ inside triangle $T_{k(\sigma)}$. This linear shape function also allows to compute gradients like $\boldsymbol{\nabla} u(x_\sigma, y_\sigma)$, since $\boldsymbol{\nabla} u(x_\sigma, y_\sigma) = (\alpha_{k(\sigma)}, \beta_{k(\sigma)})^{\mathsf T}$.
+
+## Boundary conditions 
+
+As discussed at the start, we only support boundary conditions of the form 
+
+$$
+\begin{array}{rcl}
+\boldsymbol{q}(x, y, t, u) \boldsymbol{\cdot} \hat{\boldsymbol{n}}(x, y) = 0, \\
+\mathrm du(x, y, t)/\mathrm dt = a(x, y, t, u), \\
+u(x, y, t) = a(x, y, t, u),
+\end{array} \quad (x, y)^{\mathsf T} \in \partial\Omega.
+$$
+
+For the Neumann boundary condition, recall that the integral form of our PDE was 
+
+$$
+\begin{equation}
+\dfrac{\mathrm d\bar u_i}{\mathrm dt} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i}\int_{\sigma} \boldsymbol{q} \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}~\mathrm ds = \bar R_i. 
+\end{equation}
+$$
+
+Thus, if $\sigma$ is an edge such that $\boldsymbol{q} \boldsymbol{\cdot} \hat{\boldsymbol{n}} = 0$, then the contribution from $\sigma$ to the above sum is zero. Thus, in our code, we simply skip over such a $\sigma$ when computing the sum. 
+
+For the time-dependent Dirichlet boundary condition, we can skip over nodes with this condition and simply set $\mathrm du\_i/\mathrm dt = a(x, y, t, u)$. 
+
+Lastly, for the Dirichlet boundary conditions, we leave $\mathrm du\_i/\mathrm dt = 0$ and simply update the value of $u\_i$ with $a(x, y, t, u\_i)$ at the end of each iteration. This is done using callbacks.
