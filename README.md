@@ -368,3 +368,54 @@ alg = Rosenbrock23(linsolve=UMFPACKFactorization())
 sol = solve(prob, alg; saveat=0.025)
 ```
 ![Heat equation on a wedge solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/diffusion_equation_wedge_test.png?raw=true)
+
+## Reaction-diffusion equation with a time-dependent Dirichlet boundary condition on a disk 
+
+Now we consider
+
+$$
+\begin{equation*}
+\begin{array}{rcll}
+\dfrac{\partial u(r, \theta, t)}{\partial t} & = & \boldsymbol{\nabla} \boldsymbol{\cdot} [u\boldsymbol{\nabla} u] + u(1-u), & 0 < r < 1,\, 0 < \theta < 2\mathrm{\pi}, \\
+\dfrac{\mathrm{d}u(1, \theta, t)}{\mathrm{d}t} & = & u(1, \theta, t), & 0 < \theta < 2\mathrm{\pi},\, t > 0,  \\
+u(r, \theta, 0) & = & \sqrt{I_0(\sqrt{2}r)},
+\end{array}
+\end{equation*}
+$$
+
+where $I_0$ is the modified Bessel function of the first kind of order zero. The solution to this problem is $u(r, \theta, t) = \mathrm{e}^t\sqrt{I_0(\sqrt{2}r)}$ (see [Bokhari et al. (2008)](https://doi.org/10.1016/j.na.2007.11.012)). In this case, the diffusion function is $D(x, y, t, u) = u$ and the reaction function is $R(x, y, t, u) = u(1-u)$, or equivalently the flux function is 
+
+$$
+\boldsymbol{q}(x, y, t, \alpha, \beta, \gamma) = \begin{bmatrix} -\alpha\left(\alpha x + \beta y + \gamma\right) \\ -\beta\left(\alpha x + \beta y + \gamma\right) \end{bmatrix}. 
+$$
+
+The following code solves this problem numerically.
+```julia 
+## Step 1: Generate the mesh 
+n = 500
+r = LinRange(1, 1, 1000)
+θ = LinRange(0, 2π, 1000)
+x = @. r * cos(θ)
+y = @. r * sin(θ)
+r = 0.05
+T, adj, adj2v, DG, points, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+
+## Step 2: Define the boundary conditions 
+bc = (x, y, t, u, p) -> u
+types = :dudt
+BCs = BoundaryConditions(mesh, bc, types, BN)
+
+## Step 3: Define the actual PDE  
+f = (x, y) -> sqrt(besseli(0.0, sqrt(2) * sqrt(x^2 + y^2)))
+D = (x, y, t, u, p) -> u
+R = (x, y, t, u, p) -> u * (1 - u)
+u₀ = [f(points[:, i]...) for i in axes(points, 2)]
+final_time = 0.10
+prob = FVMProblem(mesh, BCs; diffusion_function=D, reaction_function=R, initial_condition=u₀, final_time)
+
+## Step 4: Solve
+alg = FBDF(linsolve=UMFPACKFactorization())
+sol = solve(prob, alg; saveat=0.025)
+```
+![Reaction-diffusion equation on a circle solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/reaction_diffusion_equation_test.png.png?raw=true)
