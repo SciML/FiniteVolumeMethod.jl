@@ -6,7 +6,7 @@ $$
 \frac{\partial u(x, y, t)}{\partial t} + \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q}(x, y, t, u) = R(x, y, t, u), \quad (x, y)^{\mathsf T} \in \Omega \subset \mathbb R^2,\,t>0,
 $$
 
-with flux and reaction functions $\boldsymbol{q}$ and $R$, respectively. The boundary conditions are assumed to take on any of the three forms:
+with flux and reaction functions $\boldsymbol{q}$ and $R$, respectively, using the finite volume method. The boundary conditions are assumed to take on any of the three forms:
 
 $$
 \begin{array}{rcl}
@@ -16,7 +16,7 @@ u(x, y, t, u) = a(x, y, t, u),
 \end{array} \quad (x, y)^{\mathsf T} \in \partial\Omega.
 $$
 
-This first condition is a *homogeneous Neumann* boundary condition, letting $\hat{\boldsymbol{n}}(x, y)$ be the unit outward normal vector field on $\partial\Omega$; it is possible to extend this to the inhomogeneous case, it just has not been done yet. The second condition is a *time-dependent Dirichlet* condition, and the last condition is a *Dirichlet* condition. 
+This first condition is a *homogeneous Neumann* boundary condition, letting $\hat{\boldsymbol{n}}(x, y)$ be the unit outward normal vector field on $\partial\Omega$ (the boundary of $\Omega$); it is possible to extend this to the inhomogeneous case, it just has not been done yet. The second condition is a *time-dependent Dirichlet* condition, and the last condition is a *Dirichlet* condition. 
 
 An interface is also provided for solving equations of the form
 
@@ -24,7 +24,7 @@ $$
 \frac{\partial u(x, y, t)}{\partial t} = \boldsymbol{\nabla} \boldsymbol{\cdot} \left[T(x, y, t, u)D(x, y, t, u)\boldsymbol{\nabla} u(x, y, t)\right] + T(x, y, t, u)R(x, y, t, u),
 $$
 
-where $T$ is called the *delay function*, $D$ the *diffusion function*, and $R$ the *reaction function*; the same delay is assumed to scale both diffusion and reaction. The conversion is done by noting that the corresponding flux function $\boldsymbol{q} = (q_1, q_2)^{\mathsf T}$ is simply $q_i(x, y, t, u) = T(x, y, t, u)D(x, y, t, u)g_i$, $i=1,2$, where $(g_1, g_2)^{\mathsf T} \equiv \boldsymbol{\nabla}u(x, y, t)$ (gradients are approximated using linear interpolants; more on this in the Mathematical Details section). Similarly, the reaction function is modified so that $\tilde{R}(x, y, t, u) = T(x, y, t, u)R(x, y, t, u)$.
+where $T$ is called the *delay function*, $D$ the *diffusion function*, and $R$ the *reaction function*; the same delay is assumed to scale both diffusion and reaction. The conversion is done by noting that the corresponding flux function $\boldsymbol{q} = (q_1, q_2)^{\mathsf T}$ is simply $q_i(x, y, t, u) = -T(x, y, t, u)D(x, y, t, u)g_i$, $i=1,2$, where $(g_1, g_2)^{\mathsf T} \equiv \boldsymbol{\nabla}u(x, y, t)$ (gradients are approximated using linear interpolants; more on this in the Mathematical Details section). Similarly, the reaction function is modified so that $\tilde{R}(x, y, t, u) = T(x, y, t, u)R(x, y, t, u)$.
 
 # Interface 
 
@@ -157,7 +157,7 @@ The `chunk_size` argument sets the chunk size used for automatic differentiation
 
 Let us now give some examples. We give a variety of examples to illustrate the different ways for constructing the mesh, boundary conditions, etc. It is assumed that Gmsh is installed if you wish to run some of this code. I have set
 ```julia
-GMSH_PATH = raw"./gmsh-4.9.4-Windows64/gmsh.exe"
+GMSH_PATH = "./gmsh-4.9.4-Windows64/gmsh.exe"
 ```
 
 ## Diffusion equation on a square plate 
@@ -275,3 +275,96 @@ ylims!(ax, c, d)
 mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(0, 50), colormap=:matter)
 ```
 ![Heat equation solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/heat_equation_test.png?raw=true)
+
+## Diffusion equation in a wedge with mixed boundary conditions 
+
+Now we consider the following problem defined on a wedge with angle $\alpha$ and mixed boundary conditions:
+
+$$
+\begin{equation*}
+\begin{array}{rcll}
+\dfrac{\partial u(r, \theta, t)}{\partial t} &=& \boldsymbol{\nabla}^2 u(r, \theta, t), & 0 < r < 1,\,0<\theta<\alpha,\,t>0, \\
+\dfrac{\partial u(r, 0, t)}{\partial \theta} & = & 0 & 0<r<1,\,t>0, \\
+\dfrac{\partial u(r,\alpha,t)}{\partial\theta}&=&0&0<\theta<\alpha,\,t>0,\\
+u(r,\theta,0) & = & f(r, \theta), & 0<r<1,\,0<\theta<\alpha.
+\end{array}
+\end{equation*}
+$$
+
+(The exact solution to this problem, found by writing $u(r, \theta, t) = \mathrm{e}^{-\lambda t}v(r, \theta)$ and then using separation of variables, can be shown to take the form
+
+$$
+u(r, \theta, t) = \frac12\sum_{m=1}^\infty A_{0,m}\mathrm{e}^{-\zeta_{0,m}^2t}J_0\left(\zeta_{0,m}r\right) + \sum_{n=1}^\infty\sum_{m=1}^\infty A_{n,m}\mathrm{e}^{-\zeta_{n,m}^2t}J_{n\mathrm{\pi}/\alpha}\left(\zeta_{n\mathrm{\pi}/\alpha, m}r\right)\cos\left(\frac{n\mathrm{\pi}\theta}{\alpha}\right),
+$$
+
+where, assuming $f$ can be expanded into a Fourier-Bessel series,
+
+$$
+A_{n, m} = \frac{4}{\alpha J_{n\mathrm{\pi}/\alpha + 1}^2\left(\zeta_{n\mathrm{\pi}/\alpha,m}\right)}\int_0^1\int_0^\alpha f(r, \theta)J_{n\mathrm{\pi}/\alpha}\left(\zeta_{n\mathrm{\pi}/\alpha,m}r\right)\cos\left(\frac{n\mathrm{\pi}\theta}{\alpha}\right)r\,\mathrm{d}r\,\mathrm{d}\theta, \quad n=0,1,2,\ldots,\,m=1,2,\ldots,
+$$
+
+and we write the roots of $J_\mu$, the $\zeta_{\mu, m}$ such that $J_\mu(\zeta_{\mu, m}) = 0$, in the form $0 < \zeta_{\mu, 1} < \zeta_{\mu, 2} < \cdots$ with $\zeta_{\mu, m} \to \infty$ as $m \to \infty$. This is the exact solution we compare to in the tests; comparisons not shown here.) We take $\alpha = \mathrm{\pi}/4$ and $f(r, \theta) = 1 - r$. 
+
+Note that the PDE is provided in polar form, but Cartesian coordinates are assumed for the operators in our code. The conversion is easy, noting that the two Neumann conditions are just equations of the form $\boldsymbol{\nabla} u \boldsymbol{\cdot} \hat{\boldsymbol{n}} = 0$. Moreover, although the right-hand side of the PDE is given as a Laplacian, recall that $\boldsymbol{\nabla}^2 = \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{\nabla}$, so we can write $\partial u/\partial t + \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q} = 0$, where $\boldsymbol{q} = -\boldsymbol{\nabla} \boldsymbol u$, or `q(x, y, t, α, β, γ, p) = (-α, -β)` in the notation in our code.
+
+Let us now solve the problem. Again, we start by defining the mesh. Since the boundary condition is different on each segment, we keep each segment as a different vector.
+```julia
+n = 500
+α = π / 4
+
+# The bottom edge 
+r₁ = LinRange(0, 1, n)
+θ₁ = LinRange(0, 0, n)
+x₁ = @. r₁ * cos(θ₁)
+y₁ = @. r₁ * sin(θ₁)
+
+# Arc 
+r₂ = LinRange(1, 1, n)
+θ₂ = LinRange(0, α, n)
+x₂ = @. r₂ * cos(θ₂)
+y₂ = @. r₂ * sin(θ₂)
+
+# Upper edge 
+r₃ = LinRange(1, 0, n)
+θ₃ = LinRange(α, α, n)
+x₃ = @. r₃ * cos(θ₃)
+y₃ = @. r₃ * sin(θ₃)
+
+# Combine and create the mesh 
+x = [x₁, x₂, x₃]
+y = [y₁, y₂, y₃]
+r = 0.01
+T, adj, adj2v, DG, points, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+```
+
+Now we define the boundary conditions.
+```julia
+lower_bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
+arc_bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
+upper_bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
+types = (:N, :D, :N)
+boundary_functions = (lower_bc, arc_bc, upper_bc)
+BCs = BoundaryConditions(mesh, boundary_functions, types, BN)
+```
+
+Next, the PDE itself:
+```julia
+f = (x, y) -> 1 - sqrt(x^2 + y^2)
+D = ((x, y, t, u::T, p) where {T}) -> one(T)
+u₀ = f.(points[1, :], points[2, :])
+final_time = 0.1 # Do not need iip_flux = true or R(x, y, t, u, p) = 0, these are defaults 
+prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition=u₀, final_time)
+```
+This formulation uses the diffusion function rather than the flux function, but you could also use the flux function formulation:
+```julia 
+flux = (q, x, y, t, α, β, γ, p) -> (q[1] = -α; q[2] = -β; nothing)
+prob2 = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition=u₀, final_time)
+```
+
+Finally, we can solve and visualise the problem. The visualisation code is the essentially the same as it was for the first example, so we do not repeat it.
+```julia 
+alg = Rosenbrock23(linsolve=UMFPACKFactorization())
+sol = solve(prob, alg; saveat=0.025)
+```
+![Heat equation on a wedge solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/diffusion_equation_wedge_test.png?raw=true)
