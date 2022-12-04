@@ -58,7 +58,7 @@ FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV;
 
 Here, `T`, `adj`, `adj2v`, and `DG` are structs representing the triangles, adjacent map, adjacent-to-vertex map, and the Delaunay graph, as defined in [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl). The argument `pts` represents the points of the mesh, and lastly `BNV` is used to define the nodes for the separate boundary segments. For example, suppose we have the following domain with boundary $\Gamma_1 \cup \Gamma_2 \cup \Gamma_3 \cup \Gamma_4$:
 
-![A segmented boundary](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/boundary_condition_example.png?raw=true)
+![A segmented boundary](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/boundary_condition_example.png?raw=true)
 
 The colours ae used to distinguish between different segments of the boundaries. The boundary node vector `BNV` would thus be defined as:
 
@@ -294,7 +294,7 @@ xlims!(ax, a, b)
 ylims!(ax, c, d)
 mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(0, 50), colormap=:matter)
 ```
-![Heat equation solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/heat_equation_test.png?raw=true)
+![Heat equation solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/heat_equation_test.png?raw=true)
 
 ## Diffusion equation in a wedge with mixed boundary conditions 
 
@@ -387,7 +387,7 @@ Finally, we can solve and visualise the problem. The visualisation code is the e
 alg = Rosenbrock23(linsolve=UMFPACKFactorization())
 sol = solve(prob, alg; saveat=0.025)
 ```
-![Heat equation on a wedge solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/diffusion_equation_wedge_test.png?raw=true)
+![Heat equation on a wedge solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/diffusion_equation_wedge_test.png?raw=true)
 
 ## Reaction-diffusion equation with a time-dependent Dirichlet boundary condition on a disk 
 
@@ -438,7 +438,7 @@ prob = FVMProblem(mesh, BCs; diffusion_function=D, reaction_function=R, initial_
 alg = FBDF(linsolve=UMFPACKFactorization())
 sol = solve(prob, alg; saveat=0.025)
 ```
-![Reaction-diffusion equation on a circle solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/reaction_diffusion_equation_test.png?raw=true)
+![Reaction-diffusion equation on a circle solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/reaction_diffusion_equation_test.png?raw=true)
 
 ## Porous-Medium equation 
 
@@ -509,7 +509,7 @@ prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc,
 alg = TRBDF2(linsolve=KLUFactorization())
 sol = solve(prob, alg; saveat=3.0)
 ```
-![Porous-medium equation with m=2](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/porous_medium_test.png?raw=true)
+![Porous-medium equation with m=2](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/porous_medium_test.png?raw=true)
 
 We can continue this example with the Porous-Medium equation by considering the same equation except with a linear source:
 
@@ -576,4 +576,4 @@ prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc,
 alg = TRBDF2(linsolve=KLUFactorization())
 sol = solve(prob, alg; saveat=2.5)
 ```
-![Porous-medium equation with linear source](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/porous_medium_linear_source_test.png?raw=true)
+![Porous-medium equation with linear source](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/porous_medium_linear_source_test.png?raw=true)

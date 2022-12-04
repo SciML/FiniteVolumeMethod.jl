@@ -1157,7 +1157,7 @@ end
     xlims!(ax, a, b)
     ylims!(ax, c, d)
     mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(0, 50), colormap=:matter)
-    SAVE_FIGURE && save("heat_equation_test.png", fig)
+    SAVE_FIGURE && save("figures/heat_equation_test.png", fig)
 
     ## Step 6: Define the exact solution for comparison later 
     function diffusion_equation_on_a_square_plate_exact_solution(x, y, t, N, M)
@@ -1215,7 +1215,7 @@ end
     mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 4], colorrange=(0, 0.5), colormap=:matter)
     ax = Axis(fig[2, 5], width=600, height=600, title=L"(j):$ $ Numerical solution, $t = %$(sol.t[5])$", titlealign=:left)
     mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 5], colorrange=(0, 0.5), colormap=:matter)
-    SAVE_FIGURE && save("heat_equation_test_error.png", fig)
+    SAVE_FIGURE && save("figures/heat_equation_test_error.png", fig)
 end
 
 ###########################################################
@@ -1286,7 +1286,7 @@ end
     mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(0, 0.5), colormap=:matter)
     ax = Axis(fig[1, 3], width=600, height=600)
     mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0, 0.5), colormap=:matter)
-    SAVE_FIGURE && save("diffusion_equation_wedge_test.png", fig)
+    SAVE_FIGURE && save("figures/diffusion_equation_wedge_test.png", fig)
 
     ## Step 6: Define the exact solution for comparison later 
     function diffusion_equation_on_a_wedge_exact_solution(x, y, t, α, N, M)
@@ -1364,7 +1364,7 @@ end
     mesh!(ax, pt_mat, T_mat, color=sol.u[4], colorrange=(0, 0.5), colormap=:matter)
     ax = Axis(fig[2, 5], width=600, height=600, title=L"(j):$ $ Numerical solution, $t = %$(sol.t[5])$", titlealign=:left)
     mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0, 0.5), colormap=:matter)
-    SAVE_FIGURE && save("heat_equation_wedge_test_error.png", fig)
+    SAVE_FIGURE && save("figures/heat_equation_wedge_test_error.png", fig)
 end
 
 ###########################################################
@@ -1410,7 +1410,7 @@ end
     mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(1, 1.1), colormap=:matter)
     ax = Axis(fig[1, 3], width=600, height=600)
     mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(1, 1.1), colormap=:matter)
-    SAVE_FIGURE && save("reaction_diffusion_equation_test.png", fig)
+    SAVE_FIGURE && save("figures/reaction_diffusion_equation_test.png", fig)
 
     ## Step 6: Define the exact solution for comparison later 
     function reaction_diffusion_exact_solution(x, y, t)
@@ -1454,7 +1454,7 @@ end
     mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 4], colorrange=(1, 1.1), colormap=:matter)
     ax = Axis(fig[2, 5], width=600, height=600, title=L"(j):$ $ Numerical solution, $t = %$(sol.t[5])$", titlealign=:left)
     mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 5], colorrange=(1, 1.1), colormap=:matter)
-    SAVE_FIGURE && save("reaction_heat_equation_test_error.png", fig)
+    SAVE_FIGURE && save("figures/reaction_heat_equation_test_error.png", fig)
 end
 
 ###########################################################
@@ -1519,7 +1519,7 @@ end
     mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(0.0, 0.05), colormap=:matter)
     ax = Axis(fig[1, 3], width=600, height=600)
     mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0.0, 0.05), colormap=:matter)
-    SAVE_FIGURE && save("porous_medium_test.png", fig)
+    SAVE_FIGURE && save("figures/porous_medium_test.png", fig)
 
     ## Step 6: Define the exact solution for comparison later 
     function porous_medium_exact_solution(x, y, t, m, M, D)
@@ -1568,7 +1568,7 @@ end
     mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 4], colorrange=(0, 0.05), colormap=:matter)
     ax = Axis(fig[2, 5], width=600, height=600, title=L"(j):$ $ Numerical solution, $t = %$(sol.t[5])$", titlealign=:left)
     mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 5], colorrange=(0, 0.05), colormap=:matter)
-    SAVE_FIGURE && save("porous_medium_test_error.png", fig)
+    SAVE_FIGURE && save("figures/porous_medium_test_error.png", fig)
 end
 
 ###########################################################
@@ -1654,7 +1654,7 @@ ax = Axis(fig[1, 2], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(0.0, 0.5), colormap=:matter)
 ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0.0, 0.5), colormap=:matter)
-SAVE_FIGURE && save("porous_medium_linear_source_test.png", fig)
+SAVE_FIGURE && save("figures/porous_medium_linear_source_test.png", fig)
 
 ## Step 7: Compare the results
 all_errs = [Float64[] for _ in eachindex(sol)]
@@ -1689,4 +1689,4 @@ ax = Axis(fig[2, 4], width=600, height=600, title=L"(i):$ $ Numerical solution, 
 mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 4], colorrange=(0, 0.05), colormap=:matter)
 ax = Axis(fig[2, 5], width=600, height=600, title=L"(j):$ $ Numerical solution, $t = %$(sol.t[5])$", titlealign=:left)
 mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 5], colorrange=(0, 0.05), colormap=:matter)
-SAVE_FIGURE && save("porous_medium_linear_source_test_error.png", fig)
+SAVE_FIGURE && save("figures/porous_medium_linear_source_test_error.png", fig)
