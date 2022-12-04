@@ -827,7 +827,7 @@ The line integrals in (4) can be approximated using a midpoint rule,
 
 $$
 \begin{equation}
-\int_\sigma \boldsymbol{q} \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}~\mathrm ds \approx \left[\boldsymbol{q}(x_\sigma, y_\sigma, t, u) \boldsymbol{\cdot} \hat{\boldsymbol{n}}_{i, \sigma}\right] L_\sigma. 
+\int_\sigma \boldsymbol{q} \boldsymbol{\cdot} \hat{\boldsymbol{n}}\_{i, \sigma}~\mathrm ds \approx \left[\boldsymbol{q}(x\_\sigma, y\_\sigma, t, u) \boldsymbol{\cdot} \hat{\boldsymbol{n}}\_{i, \sigma}\right] L_\sigma. 
 \end{equation} 
 $$
 
