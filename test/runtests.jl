@@ -20,7 +20,7 @@ using InteractiveUtils
 const DT = DelaunayTriangulation
 const FVM = FiniteVolumeMethod
 global SHOW_WARNTYPE = false
-global SAVE_FIGURE = true
+global SAVE_FIGURE = false
 const GMSH_PATH = "./gmsh-4.9.4-Windows64/gmsh.exe"
 function example_triangulation()
     a, b, c, d = 0.0, 2.0, 0.0, 5.0
