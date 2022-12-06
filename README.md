@@ -149,7 +149,7 @@ alg = TRBDF2(linsolve=KLUFactorization(), autodiff=true)
 sol = solve(prob, alg)
 ```
 
-The solution will be the same type of result returned from `OrdinaryDiffEq.jl`, with `sol.u[i]` the solution at `sol.t[i]` and at the point `(x, y) = get_point(pts, i)`.
+The solution will be the same type of result returned from `OrdinaryDiffEq.jl`, with `sol.u[i]` the solution at `sol.t[i]`, and `get_point(sol.u[i], j)` is the solution at `(x, y, t) = (get_point(pts, j)..., sol.t[i])`.
 
 The `solve` command is defined as follows:
 ```julia
