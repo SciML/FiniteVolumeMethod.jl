@@ -732,7 +732,7 @@ V = jump_and_march(x, y, prob)
 @test DelaunayTriangulation.isintriangle(get_point(points, V...)..., (x, y)) == 1
 ```
 (You can also provide keyword arguments to `jump_and_march`, matching those from DelaunayTriangulation.jl.) Now we can evaluate the interpolant at this point:
-```
+```julia
 val = eval_interpolant(sol, x, y, t_idx, V)
 # or eval_interpolant(sol, x, y, sol.t[t_idx], V)
 ```
