@@ -20,7 +20,7 @@ using InteractiveUtils
 const DT = DelaunayTriangulation
 const FVM = FiniteVolumeMethod
 global SHOW_WARNTYPE = false
-global SAVE_FIGURE = false
+global SAVE_FIGURE = true
 const GMSH_PATH = "./gmsh-4.9.4-Windows64/gmsh.exe"
 function example_triangulation()
     a, b, c, d = 0.0, 2.0, 0.0, 5.0
@@ -329,6 +329,9 @@ end
                                 @test all(element.midpoints[1] .≈ m₁)
                                 @test all(element.midpoints[2] .≈ m₂)
                                 @test all(element.midpoints[3] .≈ m₃)
+                                @test all(element.control_volume_edge_midpoints[1] .≈ (5p + 5q + 2r)/12) # (m₁ + c) = (p + q)/2 + (p+q+r)/3 = (5p + 5q + 2r)/6
+                                @test all(element.control_volume_edge_midpoints[2] .≈ (2p + 5q + 5r)/12) # (m₁ + c) = (p + q)/2 + (p+q+r)/3 = (5p + 5q + 2r)/6
+                                @test all(element.control_volume_edge_midpoints[3] .≈ (5p + 2q + 5r)/12) # (m₁ + c) = (p + q)/2 + (p+q+r)/3 = (5p + 5q + 2r)/6
                                 @test element.lengths[1] ≈ norm((p + q) / 2 - (p + q + r) / 3)
                                 @test element.lengths[2] ≈ norm((q + r) / 2 - (p + q + r) / 3)
                                 @test element.lengths[3] ≈ norm((r + p) / 2 - (p + q + r) / 3)
@@ -830,6 +833,10 @@ end
                                 @test FVM.get_midpoints(prob, V) == prob.mesh.element_information_list[V].midpoints
                                 for i in 1:3
                                     @test FVM.get_midpoints(prob, V, i) == prob.mesh.element_information_list[V].midpoints[i]
+                                end
+                                @test FVM.get_control_volume_edge_midpoints(prob, V) == prob.mesh.element_information_list[V].control_volume_edge_midpoints
+                                for i in 1:3
+                                    @test FVM.get_control_volume_edge_midpoints(prob, V, i) == prob.mesh.element_information_list[V].control_volume_edge_midpoints[i]
                                 end
                                 @test FVM.get_normals(prob, V) == prob.mesh.element_information_list[V].normals
                                 for i in 1:3
@@ -1547,8 +1554,8 @@ end
     errs = reduce(hcat, [100abs.(u - û) / maximum(abs.(u)) for (u, û) in zip(eachcol(u_exact[:, 2:end]), eachcol(u_fvm[:, 2:end]))])
     @test all(<(0.1), mean.(eachcol(errs)))
     @test all(<(0.1), median.(eachcol(errs)))
-    @test mean(errs) < 0.05
-    @test median(errs) < 0.05
+    @test mean(errs) < 0.06
+    @test median(errs) < 0.06
 
     ## Step 8: Visualise the comparison 
     fig = Figure(fontsize=42, resolution=(3586.6597f0, 1466.396f0))

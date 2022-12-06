@@ -64,7 +64,7 @@ FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV;
 
 Here, `T`, `adj`, `adj2v`, and `DG` are structs representing the triangles, adjacent map, adjacent-to-vertex map, and the Delaunay graph, as defined in [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl). The argument `pts` represents the points of the mesh, and lastly `BNV` is used to define the nodes for the separate boundary segments. For example, suppose we have the following domain with boundary $\Gamma_1 \cup \Gamma_2 \cup \Gamma_3 \cup \Gamma_4$:
 
-![A segmented boundary](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/boundary_condition_example.png?raw=true)
+![A segmented boundary](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/boundary_condition_example.png?raw=true)
 
 The colours ae used to distinguish between different segments of the boundaries. The boundary node vector `BNV` would thus be defined as:
 
@@ -313,7 +313,7 @@ xlims!(ax, a, b)
 ylims!(ax, c, d)
 mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(0, 50), colormap=:matter)
 ```
-![Heat equation solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/heat_equation_test.png?raw=true)
+![Heat equation solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/heat_equation_test.png?raw=true)
 
 ## Diffusion equation in a wedge with mixed boundary conditions 
 
@@ -406,7 +406,7 @@ Finally, we can solve and visualise the problem. The visualisation code is the e
 alg = Rosenbrock23(linsolve=UMFPACKFactorization())
 sol = solve(prob, alg; saveat=0.025)
 ```
-![Heat equation on a wedge solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/diffusion_equation_wedge_test.png?raw=true)
+![Heat equation on a wedge solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/diffusion_equation_wedge_test.png?raw=true)
 
 ## Reaction-diffusion equation with a time-dependent Dirichlet boundary condition on a disk 
 
@@ -457,7 +457,7 @@ prob = FVMProblem(mesh, BCs; diffusion_function=D, reaction_function=R, initial_
 alg = FBDF(linsolve=UMFPACKFactorization())
 sol = solve(prob, alg; saveat=0.025)
 ```
-![Reaction-diffusion equation on a circle solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/reaction_diffusion_equation_test.png?raw=true)
+![Reaction-diffusion equation on a circle solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/reaction_diffusion_equation_test.png?raw=true)
 
 ## Porous medium equation 
 
@@ -528,7 +528,7 @@ prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc,
 alg = TRBDF2(linsolve=KLUFactorization())
 sol = solve(prob, alg; saveat=3.0)
 ```
-![Porous-medium equation with m=2](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/porous_medium_test.png?raw=true)
+![Porous-medium equation with m=2](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/porous_medium_test.png?raw=true)
 
 We can continue this example with the Porous medium equation by considering the same equation except with a linear source:
 
@@ -595,7 +595,7 @@ prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc,
 alg = TRBDF2(linsolve=KLUFactorization())
 sol = solve(prob, alg; saveat=2.5)
 ```
-![Porous-medium equation with linear source](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/porous_medium_linear_source_test.png?raw=true)
+![Porous-medium equation with linear source](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/porous_medium_linear_source_test.png?raw=true)
 
 ## Porous-Fisher equation and travelling waves 
 
@@ -707,7 +707,7 @@ exact_travelling_wave_values = exact_solution.(exact_z_vals)
 ```
 The results we obtain are shown below,with the exact travelling wave from the one-dimensional problem shown in red in the fourth plot and the numerical solutions are the other curves. 
 
-![Travelling wave problem](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/travelling_wave_problem_test.png?raw=true)
+![Travelling wave problem](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/travelling_wave_problem_test.png?raw=true)
 
 ## Using the linear interpolants 
 
@@ -776,7 +776,7 @@ for k in 1:4
     surface!(ax, grid_x, grid_y, u_vals[:, :, k+1], colormap=:matter)
 end 
 ```
-![Surface plots](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/surface_plots_travelling_wave.png?raw=true)
+![Surface plots](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/surface_plots_travelling_wave.png?raw=true)
 
 # Mathematical Details
 
@@ -786,11 +786,11 @@ We now describe the mathematical details involved with the finite volume method 
 
 This triangulation is used to define control volumes around each point. This is illustrated in the following figure, where (a) shows the domain $\Omega$ and its triangulation $\mathcal T(\Omega)$, together with the boundary $\partial\Omega$ shown in blue. (b) shows the mesh in (a) along with the dual mesh shown in blue, with red points showing the centroids of each triangle in $\mathcal{T}(\Omega)$. The blue polygons around each nodal point are the control volumes, and we denote the control volume around some point $\boldsymbol{x}_i$ by $\Omega_i$ and its boundary is $\partial\Omega_i$. (Note that this is the so-called ``vertex-centred approach'' to the finite volume method.)
 
-![Dual mesh](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/triangulation_example.png?raw=true)
+![Dual mesh](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/triangulation_example.png?raw=true)
 
 To be more precise, consider some interior point $\boldsymbol{x}\_{i}  = (x\_i, y\_i)^{\mathsf T} \in \Omega$ which is a point in $\mathcal T(\Omega)$, i.e. one of the black points on the figure above. We take the centroids of the neighbouring triangles of $\boldsymbol{x}\_i$ and connect these centroids to the midpoints of the associated triangle. These connections defined a closed polygon around $\boldsymbol{x}\_i$ which we denote by $\partial\Omega_i$, and its interior will be $\Omega\_i$ with some volume $V\_i$. This polygon will be comprised of a set of edges $\mathcal E_i$, and for each $\boldsymbol{x}\_{\sigma} \in\mathcal E\_i$ there will be a length $L\_\sigma$, a midpoint $\boldsymbol{x}\_{\sigma}$, and a unit normal vector $\hat{\boldsymbol{n}}\_{i, \sigma}$ which is normal to $\sigma$ and directed outwards to $\Omega\_i$ with $\|\hat{\boldsymbol{n}}\_{i,\sigma}\| = 1$. This notication is elucidated in the figure below. In this figure, the green area shows $\Omega_i$, and its boundary $\partial\Omega_i$ is in blue. The edge $\sigma$ is shown in blue. Lastly, the cyan points show an example ordering $(v_{k1}, v_{k2}, v_{k3})$ of a triangle $T_k \in \mathcal T(\Omega)$. It is with these control volumes that we can now discretise our PDE $\partial_t u + \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q} = R$.
 
-![Control volume](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/figures/control_volume_example.png?raw=true)
+![Control volume](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/control_volume_example.png?raw=true)
 
 Let us start by integrating our equations around $\Omega\_i$ and moving the time-derivative outside the integral:
 

@@ -1,7 +1,7 @@
 name = "FiniteVolumeMethod"
 uuid = "d4f04ab7-4f65-4d72-8a28-7087bc7f46f4"
 authors = ["DanielVandH <danj.vandenheuvel@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 DelaunayTriangulation = "927a84f5-c5f4-47a5-9785-b46e178433df"

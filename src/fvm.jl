@@ -69,7 +69,8 @@ get_element_type(::MeshInformation{EL,P,Adj,Adj2V,NGH,TAR}) where {EL,P,Adj,Adj2
 struct ElementInformation{CoordinateType,VectorStorage,ScalarStorage,CoefficientStorage,FloatType}
     centroid::CoordinateType
     midpoints::VectorStorage
-    lengths::ScalarStorage
+    control_volume_edge_midpoints::VectorStorage
+    lengths::ScalarStorage # are lengths even needed? It just scales the normals when we multiply later, but this just means we undo the normalisation (i.e. we do n̂ * ℓ = (n/ℓ)ℓ = n later)
     shape_function_coefficients::CoefficientStorage
     normals::VectorStorage
     area::FloatType
@@ -77,6 +78,8 @@ end
 get_centroid(EI::ElementInformation) = EI.centroid
 get_midpoints(EI::ElementInformation) = EI.midpoints
 get_midpoints(EI::ElementInformation, i) = get_midpoints(EI)[i]
+get_control_volume_edge_midpoints(EI::ElementInformation) = EI.control_volume_edge_midpoints
+get_control_volume_edge_midpoints(EI::ElementInformation, i) = get_control_volume_edge_midpoints(EI)[i]
 get_lengths(EI::ElementInformation) = EI.lengths
 get_lengths(EI::ElementInformation, i) = get_lengths(EI)[i]
 gets(EI::ElementInformation) = EI.shape_function_coefficients
@@ -106,6 +109,8 @@ gets(geo::FVMGeometry, T) = gets(get_element_information(geo, T))
 gets(geo::FVMGeometry, T, i) = gets(get_element_information(geo, T), i)
 get_midpoints(geo::FVMGeometry, T) = get_midpoints(get_element_information(geo, T))
 get_midpoints(geo::FVMGeometry, T, i) = get_midpoints(get_element_information(geo, T), i)
+get_control_volume_edge_midpoints(geo::FVMGeometry, T) = get_control_volume_edge_midpoints(get_element_information(geo, T))
+get_control_volume_edge_midpoints(geo::FVMGeometry, T, i) = get_control_volume_edge_midpoints(get_element_information(geo, T), i)
 get_normals(geo::FVMGeometry, T) = get_normals(get_element_information(geo, T))
 get_normals(geo::FVMGeometry, T, i) = get_normals(get_element_information(geo, T), i)
 get_lengths(geo::FVMGeometry, T) = get_lengths(get_element_information(geo, T))
@@ -147,6 +152,7 @@ function FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV;
         _pts = (get_point(pts, v₁), get_point(pts, v₂), get_point(pts, v₃))
         centroid = compute_centroid(_pts; coordinate_type)
         midpoints = compute_midpoints(_pts; coordinate_type, control_volume_storage_type_vector)
+        control_volume_midpoints = compute_control_volume_edge_midpoints(centroid, midpoints; coordinate_type, control_volume_storage_type_vector)
         edges = control_volume_edges(centroid, midpoints)
         lengths = compute_edge_lengths(edges; control_volume_storage_type_scalar)
         normals = compute_edge_normals(edges, lengths; coordinate_type, control_volume_storage_type_vector)
@@ -159,7 +165,7 @@ function FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV;
         element_area = S[1] + S[2] + S[3]
         s = compute_shape_function_coefficients(_pts; shape_function_coefficient_storage_type)
         total_area += element_area
-        element_infos[τ] = ElementInformation(centroid, midpoints, lengths, s, normals, element_area)
+        element_infos[τ] = ElementInformation(centroid, midpoints, control_volume_midpoints, lengths, s, normals, element_area)
     end
     boundary_info = boundary_information(T, adj, pts, BNV)
     boundary_nodes = get_boundary_nodes(boundary_info)
@@ -202,6 +208,20 @@ function compute_midpoints(pts; coordinate_type, control_volume_storage_type_vec
     m₃ = compute_midpoint(pts[3], pts[1]; coordinate_type)
     midpoints = construct_control_volume_storage(control_volume_storage_type_vector, m₁, m₂, m₃)
     return midpoints
+end
+
+function compute_control_volume_edge_midpoints(m::A, c::A; coordinate_type) where {A} # use ::A to avoid methods being overwritten
+    xσ = (getx(m) + getx(c)) / 2
+    yσ = (gety(m) + gety(c)) / 2
+    σ = construct_coordinate(coordinate_type, xσ, yσ)
+    return σ
+end
+function compute_control_volume_edge_midpoints(centroid, midpoints; coordinate_type, control_volume_storage_type_vector)
+    σ₁ = compute_control_volume_edge_midpoints(midpoints[1], centroid; coordinate_type)
+    σ₂ = compute_control_volume_edge_midpoints(midpoints[2], centroid; coordinate_type)
+    σ₃ = compute_control_volume_edge_midpoints(midpoints[3], centroid; coordinate_type)
+    edge_midpoints = construct_control_volume_storage(control_volume_storage_type_vector, σ₁, σ₂, σ₃)
+    return edge_midpoints
 end
 
 function compute_control_volume_edge(centroid, m)
@@ -729,6 +749,8 @@ end
 @inline gets(prob::FVMProblem, T, i) = gets(prob, T)[i]
 @inline get_midpoints(prob::FVMProblem, T) = get_midpoints(get_mesh(prob), T)
 @inline get_midpoints(prob::FVMProblem, T, i) = get_midpoints(prob, T)[i]
+@inline get_control_volume_edge_midpoints(prob::FVMProblem, T) = get_control_volume_edge_midpoints(get_mesh(prob), T)
+@inline get_control_volume_edge_midpoints(prob::FVMProblem, T, i) = get_control_volume_edge_midpoints(prob, T)[i]
 @inline get_normals(prob::FVMProblem, T) = get_normals(get_mesh(prob), T)
 @inline get_normals(prob::FVMProblem, T, i) = get_normals(prob, T)[i]
 @inline get_lengths(prob::FVMProblem, T) = get_lengths(get_mesh(prob), T)
@@ -777,7 +799,7 @@ getγ(shape_coeffs) = shape_coeffs[3]
 end
 
 function fvm_eqs_edge!(du, t, (vj, j), (vjnb, jnb), α, β, γ, prob, flux_cache, T)
-    x, y = get_midpoints(prob, T, j)
+    x, y = get_control_volume_edge_midpoints(prob, T, j)
     xn, yn = get_normals(prob, T, j)
     ℓ = get_lengths(prob, T, j)
     if isinplace(prob)
