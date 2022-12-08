@@ -10,7 +10,12 @@ using SciMLBase
 using DiffEqBase
 import DiffEqBase: dualgen
 
-include("fvm.jl")
+include("geometry.jl")
+include("boundary_conditions.jl")
+include("problem.jl")
+include("equations.jl")
+include("solve.jl")
+include("interpolant.jl")
 
 export FVMGeometry
 export BoundaryConditions
