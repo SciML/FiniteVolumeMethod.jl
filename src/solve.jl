@@ -68,7 +68,8 @@ function SciMLBase.ODEProblem(prob::FVMProblem;
     parallel=false,
     no_saveat=true,
     specialization::Type{S}=SciMLBase.AutoSpecialize,
-    chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob)))) where {S,F}
+    chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob))),
+    kwargs...) where {S,F}
     time_span = get_time_span(prob)
     initial_condition = get_initial_condition(prob)
     cb = dirichlet_callback(no_saveat)
@@ -80,7 +81,7 @@ function SciMLBase.ODEProblem(prob::FVMProblem;
         f = ODEFunction{true,S}(fvm_eqs!; jac_prototype)
     end
     p = (prob, flux_cache, shape_coeffs)
-    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb)
+    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb, kwargs...)
     return ode_problem
 end
 
