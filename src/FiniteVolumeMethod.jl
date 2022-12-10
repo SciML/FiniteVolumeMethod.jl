@@ -20,9 +20,6 @@ include("interpolant.jl")
 export FVMGeometry
 export BoundaryConditions
 export FVMProblem
-export FVMGeometry
-export BoundaryConditions
-export FVMProblem
 export eval_interpolant
 export eval_interpolant!
 
