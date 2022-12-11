@@ -395,7 +395,8 @@ function control_volume_connect_midpoints(midpoints)
 end
 
 function compute_sub_control_volume_area(p, q)
-    S = 0.5 * abs(getx(p) * gety(q) - gety(p) * getx(q))
+    F = number_type(p)
+    S = oneunit(F)/2 * abs(getx(p) * gety(q) - gety(p) * getx(q))
     return S
 end
 function sub_control_volume_areas(p, q)

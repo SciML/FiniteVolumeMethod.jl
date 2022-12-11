@@ -120,11 +120,10 @@ FVMProblem(mesh, boundary_conditions;
     initial_condition,
     initial_time=0.0,
     final_time,
-    steady=false,
-    q_storage=SVector{2,Float64})
+    steady=false)
 ```
 
-The arguments `mesh` and `boundary_conditions` are the `FVMGeometry` and `BoundaryConditions` objects defined above. The `flux_function` keyword argument must take the form `flux!(q, x, y, t, α, β, γ, p)` (`iip_flux = true`) or `flux!(x, y, t, α, β, γ, p)` (`iip_flux = false`), where `p` are some parameters (provided by `flux_parameters`) and `q` is a cache vector of size 2 (defined in the solver). If `iip_flux = false`, then you can set the storage (i.e. the vector that `q[1]` and `q[2]` are placed in) for the result `q` using the keyword argument `q_storage`. The arguments `α`, `β`, and `γ` in the flux function represent the linear interpolant used, $u(x, y, t) \approx \alpha x + \beta y + \gamma$, for approximating $u$ over a single element, so that $\boldsymbol{\nabla} u(x, y, t)$ is given by $(\alpha, \beta)^{\mathsf T}$ and any instance of $u$ should be replaced by $\alpha x + \beta y + \gamma$.
+The arguments `mesh` and `boundary_conditions` are the `FVMGeometry` and `BoundaryConditions` objects defined above. The `flux_function` keyword argument must take the form `flux!(q, x, y, t, α, β, γ, p)` (`iip_flux = true`) or `flux!(x, y, t, α, β, γ, p)` (`iip_flux = false`), where `p` are some parameters (provided by `flux_parameters`) and `q` is a cache vector of size 2 (defined in the solver). If `iip_flux = false`, then the flux vector should be returned as a tuple `(q1, q2)`. The arguments `α`, `β`, and `γ` in the flux function represent the linear interpolant used, $u(x, y, t) \approx \alpha x + \beta y + \gamma$, for approximating $u$ over a single element, so that $\boldsymbol{\nabla} u(x, y, t)$ is given by $(\alpha, \beta)^{\mathsf T}$ and any instance of $u$ should be replaced by $\alpha x + \beta y + \gamma$.
 
 If `flux_function === nothing`, then a flux function is constructed using the delay and diffusion functions (`delay_function` and `diffusion_function`, respectively), each assumed to take the form `f(x, y, t, u, p)`, with the parameters `p` given by `delay_parameters` and `diffusion_parameters` for the delay and diffusion functions, respectively. If `delay_function === nothing`, it is assumed that the delay fnuction is the identity. The flux function is constructed using the diffusion function as described at the start of the README. 
 

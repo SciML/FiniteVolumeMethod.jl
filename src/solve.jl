@@ -73,16 +73,27 @@ function SciMLBase.ODEProblem(prob::FVMProblem;
     time_span = get_time_span(prob)
     initial_condition = get_initial_condition(prob)
     cb = dirichlet_callback(no_saveat)
-    flux_cache = PreallocationTools.DiffCache(zeros(F, 2), chunk_size)
-    shape_coeffs = PreallocationTools.DiffCache(zeros(F, 3), chunk_size)
-    if parallel
-        f = ODEFunction{true,S}(par_fvm_eqs!; jac_prototype)
-    else
+    if !parallel
+        flux_cache = PreallocationTools.DiffCache(zeros(F, 2), chunk_size)
+        shape_coeffs = PreallocationTools.DiffCache(zeros(F, 3), chunk_size)
         f = ODEFunction{true,S}(fvm_eqs!; jac_prototype)
+        p = (prob, flux_cache, shape_coeffs)
+        ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb, kwargs...)
+        return ode_problem
+    else
+        f = ODEFunction{true,S}(par_fvm_eqs!; jac_prototype)
+        p = (
+            prob,
+            collect(get_dudt_nodes(prob)),
+            collect(get_interior_or_neumann_nodes(prob)),
+            collect(get_boundary_elements(prob)),
+            collect(get_interior_elements(prob)),
+            collect(get_elements(prob)),
+            collect(get_dirichlet_nodes(prob))
+        )
+        ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb, kwargs...)
+        return ode_problem
     end
-    p = (prob, flux_cache, shape_coeffs)
-    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb, kwargs...)
-    return ode_problem
 end
 
 """
@@ -118,6 +129,9 @@ function SciMLBase.solve(prob::FVMProblem, alg;
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob))),
     kwargs...) where {S,F}
+    if parallel && isinplace(prob)
+        throw("The flux vector must be computed out-of-place to use the parallel equations.")
+    end
     no_saveat = :saveat ∉ keys(Dict(kwargs))
     ode_problem = ODEProblem(prob; cache_eltype, jac_prototype, parallel, no_saveat, specialization, chunk_size)
     sol = solve(ode_problem, alg; kwargs...)
