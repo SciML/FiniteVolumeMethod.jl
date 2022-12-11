@@ -11,7 +11,6 @@ using Base.Threads
 using DiffEqBase
 using FLoops
 using MuladdMacro
-using LoopVectorization
 import DiffEqBase: dualgen
 using DelaunayTriangulation: indices
 
