@@ -65,7 +65,6 @@ Constructor for the [`FVMProblem`](@ref).
 - `initial_time=0.0`: The time to start solving the PDE at. 
 - `final_time`: The time to stop solving the PDE at. 
 - `steady::Bool`: Whether `∂u/∂t = 0` or not. Not currently used; only non-steady problems are currently supported.
-- `q_storage=SVector{2,Float64}`: If `!iip_flux`, this is the type of the container that should be used for storing the flux vector. 
 
 # Outputs 
 Returns the [`FVMProblem`](@ref) object.
@@ -83,12 +82,10 @@ function FVMProblem(mesh, boundary_conditions;
     initial_condition,
     initial_time=0.0,
     final_time,
-    steady=false,
-    q_storage=SVector{2,Float64})
+    steady=false)
     updated_flux_fnc = construct_flux_function(iip_flux, flux_function,
         delay_function, delay_parameters,
-        diffusion_function, diffusion_parameters;
-        q_storage)
+        diffusion_function, diffusion_parameters)
     updated_reaction_fnc = construct_reaction_function(reaction_function, reaction_parameters,
         delay_function, delay_parameters)
     return FVMProblem{iip_flux,
@@ -112,15 +109,11 @@ get_initial_time(prob::FVMProblem) = prob.initial_time
 get_final_time(prob::FVMProblem) = prob.final_time
 get_time_span(prob::FVMProblem) = (get_initial_time(prob), get_final_time(prob))
 
-store_q(::Type{A}, x, y) where {A} = A((x, y))
-store_q(::Type{Vector{F}}, x, y) where {F} = F[x, y]
-store_q(::Type{Vector{F}}, x::H, y::H) where {F,H<:DiffEqBase.ForwardDiff.Dual} = H[x, y]
-
 """
     construct_flux_function(iip_flux,
         flux_function,
         delay_function, delay_parameters,
-        diffusion_function, diffusion_parameters; q_storage::Type{A}=SVector{2,Float64}) where {A}
+        diffusion_function, diffusion_parameters)
 
 Constructs the flux function. The arguments are as in [`FVMProblem`](@ref), and the output depends on the following, where `D`
 denotes the diffusion function, `T` the delay function, `dₚ` the diffusion parameters, and `tₚ` the delay parameters: 
@@ -128,13 +121,13 @@ denotes the diffusion function, `T` the delay function, `dₚ` the diffusion par
 - If `flux_function===nothing` and `delay_function===nothing`, defines the flux function as `(x, y, t, α, β, γ, _) -> -D(x, y, t, αx + βy + γ, dₚ)[α, β]`.
 - If `flux_function===nothing`, defines the flux function as `(x, y, t, α, β, γ, _) -> -T(x, y, t, αx + βy + γ, tₚ)D(x, y, t, αx + βy + γ, dₚ)[α, β]`.
 
-If `iip_flux`, then the functions above have an extra argument in the first position, `q`, that the flux vectors are stored in. Otherwise, the flux vector is placed 
-in a container of type `q_storage`. If `flux_function !== nothing`, then just returns `flux_function`.
+If `iip_flux`, then the functions above have an extra argument in the first position, `q`, that the flux vectors are stored in. Otherwise, the flux vector is 
+returned as a tuple `(q1, q2)`. If `flux_function !== nothing`, then just returns `flux_function`.
 """
 function construct_flux_function(iip_flux,
     flux_function,
     delay_function, delay_parameters,
-    diffusion_function, diffusion_parameters; q_storage::Type{A}=SVector{2,Float64}) where {A}
+    diffusion_function, diffusion_parameters) 
     if isnothing(flux_function)
         if !isnothing(delay_function)
             if iip_flux
@@ -150,7 +143,7 @@ function construct_flux_function(iip_flux,
                     u = α * x + β * y + γ
                     q1 = -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α
                     q2 = -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β
-                    return store_q(A, q1, q2)
+                    return q1, q2
                 end
                 return flux_fnc
             end
@@ -169,7 +162,7 @@ function construct_flux_function(iip_flux,
                     u = α * x + β * y + γ
                     q1 = -diffusion_function(x, y, t, u, diffusion_parameters) * α
                     q2 = -diffusion_function(x, y, t, u, diffusion_parameters) * β
-                    return store_q(A, q1, q2)
+                    return q1, q2
                 end
                 return flux_fnc
             end

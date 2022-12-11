@@ -39,7 +39,7 @@
     final_time = 0.5
     prob = FVMProblem(mesh, BCs; iip_flux,
         diffusion_function=D, reaction_function=R,
-        initial_condition=u₀, final_time, q_storage=Vector{Float64})
+        initial_condition=u₀, final_time)
 
     ## Step 4: Solve
     alg = TRBDF2(linsolve=KLUFactorization(), autodiff=true)

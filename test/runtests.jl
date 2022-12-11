@@ -222,3 +222,6 @@ end
 @testset "Interpolants" begin
     include("interpolants.jl")
 end
+@testset "Parallel" begin
+    include("parallel.jl")
+end

@@ -1,13 +1,12 @@
 ## Make sure that the flux function is being constructed correctly
 for iip_flux in (true, false)
-    for q_storage in (SVector{2,Float64}, Vector{Float64}, NTuple{2,Float64})
         flux_function = nothing
         flux_parameters = nothing
         delay_function = nothing
         delay_parameters = nothing
         diffusion_function = (x, y, t, u, p) -> x * y
         diffusion_parameters = nothing
-        flux_fnc = FVM.construct_flux_function(iip_flux, flux_function, delay_function, delay_parameters, diffusion_function, diffusion_parameters; q_storage)
+        flux_fnc = FVM.construct_flux_function(iip_flux, flux_function, delay_function, delay_parameters, diffusion_function, diffusion_parameters)
         x, y, t, α, β, γ, p = rand(), rand(), rand(), rand(), rand(), rand(), nothing
         if iip_flux
             q = zeros(2)
@@ -132,7 +131,6 @@ for iip_flux in (true, false)
         flux_function = (x, y, t, α, β, γ, p) -> x * y * t + α * β * γ + p[1]
         flux_fnc = FVM.construct_flux_function(iip_flux, flux_function, delay_function, delay_parameters, diffusion_function, diffusion_parameters)
         @test flux_fnc === flux_function
-    end
 end
 
 ## Make sure the reaction function is being constructed correctly
@@ -311,10 +309,10 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                         FVM.get_flux!(flux_cache, prob, x, y, t, α, β, γ)
                         flux_cache_2 = zeros(2)
                         prob.flux_function(flux_cache_2, x, y, t, α, β, γ, prob.flux_parameters)
-                        @test flux_cache ≈ flux_cache_2
+                        @test all(flux_cache .≈ flux_cache_2)
                         prob = FVMProblem(geo, BCs; iip_flux=false, diffusion_function, diffusion_parameters, initial_condition, delay_function, delay_parameters, reaction_function, reaction_parameters, final_time, initial_time=3.71)
                         flux_cache = FVM.get_flux(prob, x, y, t, α, β, γ)
-                        @test flux_cache ≈ flux_cache_2
+                        @test all(flux_cache .≈ flux_cache_2)
                         SHOW_WARNTYPE && @code_warntype FVM.get_flux(prob, x, y, t, α, β, γ)
                         @test FVM.get_interior_or_neumann_nodes(prob) == prob.boundary_conditions.interior_or_neumann_nodes
                         for j ∈ FVM.get_interior_or_neumann_nodes(prob)
