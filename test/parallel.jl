@@ -187,13 +187,13 @@ R = (x, y, t, u, p) -> u * (1 - u)
 u₀ = [f(points[:, i]...) for i in axes(points, 2)]
 final_time = 0.5
 prob = FVMProblem(mesh, BCs; iip_flux=false, diffusion_function=D, reaction_function=R, initial_condition=u₀, final_time)
-alg = TRBDF2(linsolve=KLUFactorization(;reuse_symbolic=false))
+alg = TRBDF2(linsolve=KLUFactorization(; reuse_symbolic=false))
 sol_par = solve(prob, alg; parallel=true, saveat=0.05)
 sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
 @test sol_par.u ≈ sol_ser.u
 
 prob = FVMProblem(mesh, BCs; iip_flux=true, diffusion_function=D, reaction_function=R, initial_condition=u₀, final_time)
-alg = TRBDF2(linsolve=KLUFactorization(;reuse_symbolic=false))
+alg = TRBDF2(linsolve=KLUFactorization(; reuse_symbolic=false))
 sol_par = solve(prob, alg; parallel=true, saveat=0.05)
 sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
 @test sol_par.u ≈ sol_ser.u
@@ -205,3 +205,106 @@ sol_serf = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(), autodiff
 sol_par_flux2 = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(;reuse_symbolic=false), autodiff=$true); parallel=$true, saveat=$0.05)
 sol_serf2 = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(;reuse_symbolic=false), autodiff=$true); parallel=$false, saveat=$0.05)
 =#
+
+## Cell model 
+function select_refinement_parameter(x, y, left_r, right_r, target_n; tol=200, max_iters=50)
+    f = r -> size(generate_mesh(x, y, r; gmsh_path=GMSH_PATH)[5], 2) - target_n
+    iters = 1
+    fleft = f(left_r)
+    fright = f(right_r)
+    while iters ≤ max_iters
+        middle_r = (left_r + right_r) / 2
+        fmiddle = f(middle_r)
+        if abs(fmiddle) < tol
+            return middle_r
+        end
+        iters += 1
+        if sign(fmiddle) == sign(fleft)
+            left_r = middle_r
+            fleft = fmiddle
+        else
+            right_r = middle_r
+            fright = fmiddle
+        end
+    end
+    throw("Failed.")
+end
+a = c = 0.0
+b = d = 500.0
+_n = 500
+x₁ = LinRange(a, b, _n)
+y₁ = LinRange(c, c, _n)
+x₂ = LinRange(b, b, _n)
+y₂ = LinRange(c, d, _n)
+x₃ = LinRange(b, a, _n)
+y₃ = LinRange(d, d, _n)
+x₄ = LinRange(a, a, _n)
+y₄ = LinRange(d, c, _n)
+x = reduce(vcat, [x₁, x₂, x₃, x₄])
+y = reduce(vcat, [y₁, y₂, y₃, y₄])
+xy = [[x[i], y[i]] for i in eachindex(x)]
+unique!(xy)
+x = [xy[i][1] for i in eachindex(xy)]
+y = [xy[i][2] for i in eachindex(xy)]
+r = select_refinement_parameter(x, y, 2.0, 1000.0, 10_000)
+T, adj, adj2v, DG, pts, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+msh = FVMGeometry(T, adj, adj2v, DG, pts, BN)
+functions = (x, y, t, u, p) -> p[1] * u * (1 - u)
+type = :dudt
+params = [[0.5]]
+BC = BoundaryConditions(msh, functions, type, BN; params)
+Rf = (x, y, t, u, p) -> p[1] * u * (1 - u)
+function flux_fnc!(q, x, y, t, α, β, γ, p)
+    local D
+    D = p[1]
+    u = α * x + β * y + γ
+    q[1] = -D * u * α
+    q[2] = -D * u * β
+    return nothing
+end
+flux_parameters = [150.0]
+reaction_parameters = [0.5]
+initial_condition = zeros(num_points(pts))
+initial_condition[BC.boundary_node_vector[1]] .= 0.25
+prob = FVMProblem(msh, BC;
+    flux_function=flux_fnc!,
+    reaction_function=Rf,
+    flux_parameters=flux_parameters,
+    reaction_parameters=reaction_parameters,
+    initial_time=4.0,
+    final_time=48.0,
+    initial_condition=initial_condition)
+
+alg = TRBDF2(linsolve=KLUFactorization())
+sol_par = solve(prob, alg; parallel=true, saveat=0.05)
+sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
+@test sol_par.u ≈ sol_ser.u
+
+#par_t = @benchmark solve($prob, $alg; parallel=$true, saveat=$4.0)
+#ser_t = @benchmark solve($prob, $alg; parallel=$false, saveat=$4.0)
+
+alg = TRBDF2(linsolve=KLUFactorization(; reuse_symbolic=false))
+sol_par = solve(prob, alg; parallel=true, saveat=0.05)
+sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
+@test sol_par.u ≈ sol_ser.u
+
+#par_t = @benchmark solve($prob, $alg; parallel=$true, saveat=$4.0)
+#ser_t = @benchmark solve($prob, $alg; parallel=$false, saveat=$4.0)
+
+alg = TRBDF2(linsolve=KLUFactorization(), autodiff=false)
+sol_par = solve(prob, alg; parallel=true, saveat=0.05)
+sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
+@test sol_par.u ≈ sol_ser.u
+
+#par_t = @benchmark solve($prob, $alg; parallel=$true, saveat=$4.0)
+#ser_t = @benchmark solve($prob, $alg; parallel=$false, saveat=$4.0)
+
+alg = TRBDF2(linsolve=KLUFactorization(;reuse_symbolic=false), autodiff=false)
+sol_par = solve(prob, alg; parallel=true, saveat=0.05)
+sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
+@test sol_par.u ≈ sol_ser.u
+
+#par_t = @benchmark solve($prob, $alg; parallel=$true, saveat=$4.0)
+#ser_t = @benchmark solve($prob, $alg; parallel=$false, saveat=$4.0)
+
+
