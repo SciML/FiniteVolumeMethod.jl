@@ -4,9 +4,9 @@ authors = ["DanielVandH <danj.vandenheuvel@gmail.com> and contributors"]
 version = "0.3.0"
 
 [deps]
+ChunkSplitters = "ae650224-84b6-46f8-82ea-d812ca08434e"
 DelaunayTriangulation = "927a84f5-c5f4-47a5-9785-b46e178433df"
 DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
-FLoops = "cc61a311-1640-44b5-9fba-1b764f453329"
 FunctionWrappersWrappers = "77dc65aa-8811-40c2-897b-53d922fa7daf"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
@@ -18,13 +18,13 @@ StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 [compat]
 DelaunayTriangulation = "^0.1"
 DiffEqBase = "^6.0"
-FLoops = "^0.2"
 FunctionWrappersWrappers = "^0.1"
 MuladdMacro = "^0.2"
 PreallocationTools = "^0.4"
 SciMLBase = "^1.77"
 StaticArraysCore = "^1.4"
 julia = "^1"
+ChunkSplitters = "^0.1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

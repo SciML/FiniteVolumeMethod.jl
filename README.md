@@ -164,7 +164,7 @@ This `cache_eltype` keyword sets the element type for the caches used for the fl
 
 The `jac_prototype` keyword allows for a prototype of the Jacobian to be provided. This is easy to construct with our function `jacobian_sparsity`, since the Jacobian's non-zero structure is the same as $\boldsymbol{A} + \boldsymbol{I}$, where $\boldsymbol{A}$ is the adjacency matrix of the triangulation. 
 
-The `parallel` keyword is not currently used. One day!
+The `parallel` keyword is supported as of v3.0. Be careful that your flux vector is thread-safe if you compute it in-place. This seems to make the code run around 4x as fast in the benchmarks I've run.
 
 The `specialization` keyword can be used to set the specialization level for the `ODEProblem`. [See here for more details](https://diffeq.sciml.ai/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation).
 

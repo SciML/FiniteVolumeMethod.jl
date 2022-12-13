@@ -17,7 +17,7 @@ xy = [[x[i], y[i]] for i in eachindex(x)]
 unique!(xy)
 x = getx.(xy)
 y = gety.(xy)
-r = 0.02
+r = 0.017
 T, adj, adj2v, DG, points, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
 mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
 bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
@@ -32,7 +32,93 @@ final_time = 48.0
 prob = FVMProblem(mesh, BCs; iip_flux=true,
     diffusion_function=D, reaction_function=R,
     initial_condition=u₀, final_time)
-@test_throws "The flux vector" solve(prob, TRBDF2(linsolve=KLUFactorization()); parallel=true)
+
+u0 = FiniteVolumeMethod.get_initial_condition(prob)
+du_copies,
+flux_caches,
+shape_coeffs,
+dudt_nodes,
+interior_or_neumann_nodes,
+boundary_elements,
+interior_elements,
+elements,
+dirichlet_nodes,
+chunked_boundary_elements,
+chunked_interior_elements,
+chunked_elements = FiniteVolumeMethod.prepare_vectors_for_multithreading(u0, prob, Float64; chunk_size=12)
+p = (
+    prob,
+    du_copies,
+    flux_caches,
+    shape_coeffs,
+    dudt_nodes,
+    interior_or_neumann_nodes,
+    boundary_elements,
+    interior_elements,
+    elements,
+    dirichlet_nodes,
+    chunked_boundary_elements,
+    chunked_interior_elements,
+    chunked_elements
+)
+prob,#1
+du_copies,#2
+flux_caches,#3
+shape_coeffs,#4
+dudt_nodes,#5
+interior_or_neumann_nodes,#6
+boundary_elements,#7
+interior_elements,#8
+elements,#9
+dirichlet_nodes,#10
+chunked_boundary_elements,#11
+chunked_interior_elements,#12
+chunked_elements = p
+
+flux_cache = PreallocationTools.DiffCache(zeros(Float64, 2), 12)
+shape_coeff = PreallocationTools.DiffCache(zeros(Float64, 3), 12)
+
+u = deepcopy(prob.initial_condition)
+du_serial = zero(u)
+fill!(du_serial, 0.0)
+
+du_parallel = get_tmp(du_copies, u)
+flat_du_parallel = zero(u)
+fill!(du_parallel, 0.0)
+
+FiniteVolumeMethod.par_fvm_eqs_interior_element!(du_parallel, u, 0.0, prob, interior_elements, chunked_interior_elements, flux_caches, shape_coeffs)
+tmp_flux_cache = get_tmp(flux_cache, u)
+tmp_shape_coeffs = get_tmp(shape_coeff, u)
+FiniteVolumeMethod.fvm_eqs_interior_element!(du_serial, u, 0.0, prob, tmp_shape_coeffs, tmp_flux_cache)
+@test sum(du_parallel; dims=2) ≈ du_serial
+
+FiniteVolumeMethod.par_fvm_eqs_boundary_element!(du_parallel, u, 0.0, prob, boundary_elements, chunked_boundary_elements, flux_caches, shape_coeffs)
+FiniteVolumeMethod.fvm_eqs_boundary_element!(du_serial, u, 0.0, prob, tmp_shape_coeffs, tmp_flux_cache)
+@test sum(du_parallel; dims=2) ≈ du_serial
+
+for _du in eachcol(du_parallel)
+    flat_du_parallel .+= _du
+end
+
+@test flat_du_parallel ≈ du_serial
+
+FiniteVolumeMethod.par_fvm_eqs_source_contribution!(flat_du_parallel, u, 0.0, prob, interior_or_neumann_nodes)
+FiniteVolumeMethod.fvm_eqs_source_contribution!(du_serial, u, 0.0, prob)
+@test flat_du_parallel ≈ du_serial
+
+FiniteVolumeMethod.par_update_dudt_node!(flat_du_parallel, u, 0.0, prob, dudt_nodes)
+FiniteVolumeMethod.update_dudt_nodes!(du_serial, u, 0.0, prob)
+@test flat_du_parallel ≈ du_serial
+
+sol_par = solve(prob, TRBDF2(linsolve=KLUFactorization(), autodiff=true); parallel=true, saveat=0.05)
+sol_ser = solve(prob, TRBDF2(linsolve=KLUFactorization(), autodiff=true); parallel=false, saveat=0.05)
+@test sol_par.u ≈ sol_ser.u
+
+using BenchmarkTools
+
+#sol_par = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(), autodiff=$false); parallel=$true,specialization=$SciMLBase.FullSpecialize, saveat=$0.05)
+#sol_ser = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(), autodiff=$false); parallel=$false,specialization=$SciMLBase.FullSpecialize, saveat=$0.05)
+
 
 prob = FVMProblem(mesh, BCs; iip_flux=false,
     diffusion_function=D, reaction_function=R,
@@ -41,6 +127,9 @@ prob = FVMProblem(mesh, BCs; iip_flux=false,
 sol_par = solve(prob, TRBDF2(linsolve=KLUFactorization(), autodiff=true); parallel=true, saveat=0.05)
 sol_ser = solve(prob, TRBDF2(linsolve=KLUFactorization(), autodiff=true); parallel=false, saveat=0.05)
 @test sol_par.u ≈ sol_ser.u
+
+#sol_par_flux_oop = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(), autodiff=$true); parallel=$true,specialization=$SciMLBase.FullSpecialize, saveat=$0.05)
+#sol_ser_flux_oop = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(), autodiff=$true); parallel=$false,specialization=$SciMLBase.FullSpecialize, saveat=$0.05)
 
 ## Diffusion equation on a wedge 
 n = 500
@@ -72,10 +161,13 @@ f = (x, y) -> 1 - sqrt(x^2 + y^2)
 D = ((x, y, t, u::T, p) where {T}) -> one(T)
 u₀ = f.(points[1, :], points[2, :])
 final_time = 20.0
-prob = FVMProblem(mesh, BCs; iip_flux=false, diffusion_function=D, initial_condition=u₀, final_time)
+prob = FVMProblem(mesh, BCs; iip_flux=true, diffusion_function=D, initial_condition=u₀, final_time)
 sol_par = solve(prob, TRBDF2(linsolve=KLUFactorization(), autodiff=true); parallel=true, saveat=0.05)
 sol_ser = solve(prob, TRBDF2(linsolve=KLUFactorization(), autodiff=true); parallel=false, saveat=0.05)
 @test sol_par.u ≈ sol_ser.u
+
+#sol_par_flux = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(), autodiff=$true); parallel=$true, saveat=$0.05)
+#sol_serf = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(), autodiff=$true); parallel=$false, saveat=$0.05)
 
 ## Reaction-diffusion equation 
 n = 500
@@ -95,8 +187,21 @@ R = (x, y, t, u, p) -> u * (1 - u)
 u₀ = [f(points[:, i]...) for i in axes(points, 2)]
 final_time = 0.5
 prob = FVMProblem(mesh, BCs; iip_flux=false, diffusion_function=D, reaction_function=R, initial_condition=u₀, final_time)
-alg = FBDF(linsolve=UMFPACKFactorization())
+alg = TRBDF2(linsolve=KLUFactorization(;reuse_symbolic=false))
 sol_par = solve(prob, alg; parallel=true, saveat=0.05)
 sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
 @test sol_par.u ≈ sol_ser.u
 
+prob = FVMProblem(mesh, BCs; iip_flux=true, diffusion_function=D, reaction_function=R, initial_condition=u₀, final_time)
+alg = TRBDF2(linsolve=KLUFactorization(;reuse_symbolic=false))
+sol_par = solve(prob, alg; parallel=true, saveat=0.05)
+sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
+@test sol_par.u ≈ sol_ser.u
+
+#=
+sol_par_flux = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(), autodiff=$true); parallel=$true, saveat=$0.05)
+sol_serf = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(), autodiff=$true); parallel=$false, saveat=$0.05)
+
+sol_par_flux2 = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(;reuse_symbolic=false), autodiff=$true); parallel=$true, saveat=$0.05)
+sol_serf2 = @benchmark solve($prob, $TRBDF2(linsolve=KLUFactorization(;reuse_symbolic=false), autodiff=$true); parallel=$false, saveat=$0.05)
+=#

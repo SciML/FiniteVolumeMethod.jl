@@ -9,10 +9,9 @@ using SparseArrays
 using SciMLBase
 using Base.Threads
 using DiffEqBase
-using FLoops
 using MuladdMacro
 import DiffEqBase: dualgen
-using DelaunayTriangulation: indices
+using ChunkSplitters
 
 include("geometry.jl")
 include("boundary_conditions.jl")
