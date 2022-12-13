@@ -51,7 +51,7 @@ Constructs the `ODEProblem` for the system of ODEs defined by the finite volume 
 # Keyword Arguments 
 - `cache_eltype::Type{F}=eltype(get_initial_condition(prob))`: The element type used for the cache vectors. 
 - `jac_prototype=float.(jacobian_sparsity(prob))`: The prototype for the sparsity pattern of the Jacobian. 
-- `parallel=false`: Whether to use multithreading for evaluating the equations. Not currently used.
+- `parallel=false`: Whether to use multithreading for evaluating the equations.
 - `no_saveat=true`: Whether the solution is saving at specific points. 
 - `specialization::Type{S}=SciMLBase.AutoSpecialize`: The specialisation level for the `ODEProblem`.
 - `chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob))))`: The chunk size for the dual numbers used in the cache vector.
