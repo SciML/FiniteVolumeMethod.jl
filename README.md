@@ -1,5 +1,7 @@
 # FiniteVolumeMethod
 
+[![DOI](https://zenodo.org/badge/561533716.svg)](https://zenodo.org/badge/latestdoi/561533716)
+
 - [FiniteVolumeMethod](#finitevolumemethod)
 - [Interface](#interface)
   - [The mesh](#the-mesh)
