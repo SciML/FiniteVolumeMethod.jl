@@ -13,7 +13,7 @@ Struct representing the PDE problem.
 - `initial_condition::IC`: The initial condition for the problem, with `initial_condition[i]` the initial value at the `i`th node of the mesh. 
 - `initial_time::FT`: The time to start solving the PDE at. 
 - `final_time::FT`: The time to stop solving the PDE at. 
-- `steady::Bool`: Whether `∂u/∂t = 0` or not. Not currently used; only non-steady problems are currently supported.
+- `steady::Bool`: Whether `∂u/∂t = 0` or not. Not currently used; only non-steady problems are currently supported (see https://github.com/DanielVandH/FiniteVolumeMethod.jl/issues/16).
 """
 struct FVMProblem{iip_flux,FG,BC,F,FP,R,RP,IC,FT}
     mesh::FG
