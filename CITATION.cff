@@ -3,7 +3,7 @@ message: "Cite this DOI whenever you use this package."
 authors:
   - given-names: "Daniel"
     family-names: "VandenHeuvel"
-    orcid: "https://orcid.org/0000-0001-6462-01"
+    orcid: "https://orcid.org/0000-0001-6462-0135"
 title: "FiniteVolumeMethod.jl: Numerical solution of 2D
   PDEs with the finite volume method"
 version: "0.3"
