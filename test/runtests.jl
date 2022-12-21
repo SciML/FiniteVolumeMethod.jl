@@ -25,7 +25,7 @@ function example_triangulation()
     a, b, c, d = 0.0, 2.0, 0.0, 5.0
     nx = 5
     ny = 6
-    T, adj, adj2v, DG, pts, BN = triangulate_structured(a, b, c, d, nx, ny; return_boundary_types=true)
+    (T, adj, adj2v, DG, pts), BN = triangulate_structured(a, b, c, d, nx, ny; return_boundary_types=true)
     return a, b, c, d, nx, ny, T, adj, adj2v, DG, pts, BN
 end
 function get_interior_identifier_for_example_triangulation(interior_edge_pair_storage_type)

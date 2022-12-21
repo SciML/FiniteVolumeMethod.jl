@@ -193,6 +193,7 @@ GMSH_PATH = "./gmsh-4.9.4-Windows64/gmsh.exe"
 We also have the following packages loaded:
 ```julia
 using FiniteVolumeMethod
+using DelaunayTriangulation
 using OrdinaryDiffEq 
 using LinearSolve 
 using CairoMakie 
@@ -243,7 +244,7 @@ unique!(xy)
 x = getx.(xy)
 y = gety.(xy)
 r = 0.03
-T, adj, adj2v, DG, points, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
 mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
 ```
 Here I start by defining the square boundary as four segments, but then to have a single boundary segment I combine the segments into a single vector. I then create the mesh using `generate_mesh`, and then put the geometry together using `FVMGeometry`. 
@@ -374,8 +375,11 @@ y₃ = @. r₃ * sin(θ₃)
 x = [x₁, x₂, x₃]
 y = [y₁, y₂, y₃]
 r = 0.01
-T, adj, adj2v, DG, points, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
 mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+# You could also do:
+# tri, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+# mesh = FVMGeometry(tri, BN) # for DelaunayTriangulation >= v0.3)
 ```
 
 Now we define the boundary conditions.
@@ -438,7 +442,7 @@ r = LinRange(1, 1, 1000)
 x = @. r * cos(θ)
 y = @. r * sin(θ)
 r = 0.05
-T, adj, adj2v, DG, points, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
 mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
 
 ## Step 2: Define the boundary conditions 
@@ -509,7 +513,7 @@ unique!(xy)
 x = getx.(xy)
 y = gety.(xy)
 r = 0.1
-T, adj, adj2v, DG, points, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
 mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
 
 ## Step 2: Define the boundary conditions 
@@ -572,7 +576,7 @@ unique!(xy)
 x = getx.(xy)
 y = gety.(xy)
 r = 0.07
-T, adj, adj2v, DG, points, BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
 mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
 
 ## Step 2: Define the boundary conditions 
@@ -634,7 +638,7 @@ Let us now solve the problem. For this problem, rather than using `generate_mesh
 ```julia
 ## Step 1: Define the mesh 
 a, b, c, d, Nx, Ny = 0.0, 3.0, 0.0, 40.0, 60, 80
-T, adj, adj2v, DG, points, BN = triangulate_structured(a, b, c, d, Nx, Ny; return_boundary_types=true)
+(T, adj, adj2v, DG, points), BN = triangulate_structured(a, b, c, d, Nx, Ny; return_boundary_types=true)
 mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
 
 ## Step 2: Define the boundary conditions 

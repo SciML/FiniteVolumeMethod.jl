@@ -228,6 +228,8 @@ Constructor for [`FVMGeometry`](@ref).
 - `pts`: The points for the mesh. 
 - `BNV`: The boundary node vector. This should be a vector of vectors, where each nested vector is a list of indices that define the nodes for the corresponding segment, and `first(BNV[i]) == last(BNV[i-1])`. The nodes must be listed in counter-clockwise order.
 
+There is also a constructor where these arguments are `FVMGeometry(tri::Triangulation, BNV; same kwargs as below)`.
+
 # Keyword Arguments 
 - `coordinate_type=Vector{number_type(pts)}`: How coordinates are represented.
 - `control_volume_storage_type_vector=NTuple{3,coordinate_type}`: How information for triples of coordinates is represented. The element type must be `coordinate_type`.
@@ -291,6 +293,28 @@ function FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV;
         interior_information=interior_info,
         element_information_list=element_infos,
         volumes=vols)
+end
+function FVMGeometry(tri::Triangulation, BNV;
+    coordinate_type=Vector{number_type(DelaunayTriangulation.get_points(tri))},
+    control_volume_storage_type_vector=NTuple{3,coordinate_type},
+    control_volume_storage_type_scalar=NTuple{3,number_type(DelaunayTriangulation.get_points(tri))},
+    shape_function_coefficient_storage_type=NTuple{9,number_type(DelaunayTriangulation.get_points(tri))},
+    interior_edge_storage_type=NTuple{2,Int64},
+    interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type})
+    return FVMGeometry(
+        DelaunayTriangulation.get_triangles(tri),
+        DelaunayTriangulation.get_adjacent(tri),
+        DelaunayTriangulation.get_adjacent2vertex(tri),
+        DelaunayTriangulation.get_graph(tri),
+        DelaunayTriangulation.get_points(tri),
+        BNV;
+        coordinate_type,
+        control_volume_storage_type_vector,
+        control_volume_storage_type_scalar,
+        shape_function_coefficient_storage_type,
+        interior_edge_storage_type,
+        interior_edge_pair_storage_type
+    )
 end
 
 function compute_centroid(p₁, p₂, p₃; coordinate_type)
@@ -396,7 +420,7 @@ end
 
 function compute_sub_control_volume_area(p, q)
     F = number_type(p)
-    S = oneunit(F)/2 * abs(getx(p) * gety(q) - gety(p) * getx(q))
+    S = oneunit(F) / 2 * abs(getx(p) * gety(q) - gety(p) * getx(q))
     return S
 end
 function sub_control_volume_areas(p, q)
