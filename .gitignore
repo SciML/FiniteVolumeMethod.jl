@@ -6,3 +6,5 @@ test/meshgeometry.msh
 meshgeometry.geo
 meshgeometry.msh
 dev/Manifest.toml
+docs/build/
+docs/site/

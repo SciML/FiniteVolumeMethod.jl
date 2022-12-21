@@ -1,20 +1,3 @@
-"""
-    FVMProblem{iip_flux,FG,BC,F,FP,R,RP,IC,FT}
-
-Struct representing the PDE problem. 
-
-# Fields 
-- `mesh::FG`: The underlying mesh, given as a [`FVMGeometry`](@ref) struct. 
-- `boundary_conditions::BC`: The boundary conditions, given a a [`BoundaryConditions`](@ref) struct. 
-- `flux_function::F`: The function for the flux vector, taking either of the forms `flux!(q, x, y, t, α, β, γ, p)` (if `iip_flux`) and `flux(x, y, t, α, β, γ, p)` (if `!iip_flux`), where `u = αx + βy + γ`.
-- `flux_parameters::FP`: The argument `p` in `flux_function`.
-- `reaction_function::R`: The function for the reaction term, taking the form `R(x, y, t, u, p)`.
-- `reaction_parameters::RP`: The argument `p` in `reaction_function`.
-- `initial_condition::IC`: The initial condition for the problem, with `initial_condition[i]` the initial value at the `i`th node of the mesh. 
-- `initial_time::FT`: The time to start solving the PDE at. 
-- `final_time::FT`: The time to stop solving the PDE at. 
-- `steady::Bool`: Whether `∂u/∂t = 0` or not. Not currently used; only non-steady problems are currently supported (see https://github.com/DanielVandH/FiniteVolumeMethod.jl/issues/16).
-"""
 struct FVMProblem{iip_flux,FG,BC,F,FP,R,RP,IC,FT}
     mesh::FG
     boundary_conditions::BC
@@ -29,6 +12,44 @@ struct FVMProblem{iip_flux,FG,BC,F,FP,R,RP,IC,FT}
 end
 
 """
+    FVMProblem{iip_flux,FG,BC,F,FP,R,RP,IC,FT}
+
+Struct representing the PDE problem. 
+
+# Fields 
+- `mesh::FG`
+
+The underlying mesh, given as a [`FVMGeometry`](@ref) struct. 
+- `boundary_conditions::BC`
+
+The boundary conditions, given a a [`BoundaryConditions`](@ref) struct. 
+- `flux_function::F`
+
+The function for the flux vector, taking either of the forms `flux!(q, x, y, t, α, β, γ, p)` (if `iip_flux`) and `flux(x, y, t, α, β, γ, p)` (if `!iip_flux`), where `u = αx + βy + γ`.
+- `flux_parameters::FP`
+
+The argument `p` in `flux_function`.
+- `reaction_function::R`
+
+The function for the reaction term, taking the form `R(x, y, t, u, p)`.
+- `reaction_parameters::RP`
+
+The argument `p` in `reaction_function`.
+- `initial_condition::IC`
+
+The initial condition for the problem, with `initial_condition[i]` the initial value at the `i`th node of the mesh. 
+- `initial_time::FT`
+
+The time to start solving the PDE at. 
+- `final_time::FT`
+
+The time to stop solving the PDE at. 
+- `steady::Bool`
+
+Whether `∂u/∂t = 0` or not. Not currently used; only non-steady problems are currently supported (see https://github.com/DanielVandH/FiniteVolumeMethod.jl/issues/16).
+
+# Constructor 
+
     FVMProblem(mesh, boundary_conditions;
         iip_flux=true,
         diffusion_function=nothing,
@@ -69,6 +90,7 @@ Constructor for the [`FVMProblem`](@ref).
 # Outputs 
 Returns the [`FVMProblem`](@ref) object.
 """
+function FVMProblem end
 function FVMProblem(mesh, boundary_conditions;
     iip_flux=true,
     diffusion_function=nothing,
