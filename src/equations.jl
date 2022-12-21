@@ -101,14 +101,6 @@ end
     return nothing
 end
 
-"""
-    fvm_eqs!(du::AbstractVector{T}, u, p, t) where {T}
-
-Evaluates the system of ODEs from the finite volume approximation, where 
-the parameters `p` are `(prob, flux_cache, shape_coeffs)`, where `prob` is the 
-corresponding [`FVMProblem`](@ref), `flux_cache` is a cache for storing the flux vector, 
-and `shape_coeffs` is a cache for storing the shape function coefficients `(α, β, γ)`.
-"""
 function fvm_eqs!(du::AbstractVector{T}, u, p, t) where {T}
     prob, flux_cache, shape_coeffs = p
     tmp_flux_cache = get_tmp(flux_cache, u)

@@ -26,5 +26,6 @@ export BoundaryConditions
 export FVMProblem
 export eval_interpolant
 export eval_interpolant!
+export jacobian_sparsity
 
 end

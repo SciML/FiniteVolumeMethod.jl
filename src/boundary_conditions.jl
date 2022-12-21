@@ -1,5 +1,20 @@
+"""
+    is_dirichlet_type(type)
+
+Returns `type ∈ (:Dirichlet, :D, :dirichlet, "Dirichlet", "D", "dirichlet")`.
+"""
 is_dirichlet_type(type) = type ∈ (:Dirichlet, :D, :dirichlet, "Dirichlet", "D", "dirichlet")
+"""
+    is_neumann_type(type)
+
+Returns `type ∈ (:Neumann, :N, :neumann, "Neumann", "N", "neumann")`.
+"""
 is_neumann_type(type) = type ∈ (:Neumann, :N, :neumann, "Neumann", "N", "neumann")
+"""
+    is_dudt_type(type)
+
+Returns `type ∈ (:Dudt, :dudt, "Dudt", "dudt", "du/dt")`.
+"""
 is_dudt_type(type) = type ∈ (:Dudt, :dudt, "Dudt", "dudt", "du/dt")
 
 """
@@ -33,26 +48,65 @@ struct BoundaryConditions{BNV,F,P,DN,NN,DuN,INN,BMI,MBI,TM}
 end
 
 """
+    BoundaryConditions{BNV,F,P,DN,NN,DuN,INN,BMI,MBI,TM}
+
+Information representing the boundary conditions for the PDE. 
+
+# Fields 
+- `boundary_node_vector::BNV`
+
+The vector of vectors such that each nested vector is the list of nodes for each segment, given in counter-clockwise order, and such that `first(BNV[i]) == last(BNV[i-1])`.
+- `functions::F`
+
+The `Tuple` of boundary condition functions for each boundary segment, with `functions[i]` corresponding to the `i`th segment. These functions must take the form `f(x, y, t, u, p)`.
+- `parameters::P`
+
+The `Tuple` of arguments `p` for each boundary condition function, with `parameters[i]` corresponding to `functions[i]`.
+- `dirichlet_nodes::DN`
+
+The indices of the nodes on the boundary that are of Dirichlet type. 
+- `neumann_nodes::NN`
+
+The indices of the nodes on the boundary that are of Neumann type. 
+- `dudt_nodes::DuN`
+
+The indices of the nodes on the boundary that are of time-dependent Dirichlet type, i.e. of the form `du/dt = f(x, y, t, u, p)`.
+- `interior_or_neumann_nodes`::INN`
+
+The nodes that are either interior or neumann nodes. 
+- `boundary_to_mesh_idx::BMI`
+
+If the boundary nodes are in the order `(b₁, b₂, …, bᵢ, …)`, then this is a map that takes the index order `i` to the corresponding index in the mesh, i.e. to `bᵢ`.
+- `mesh_to_boundary_idx::MBI`
+
+The inverse map of `boundary_to_mesh_idx`.
+- `type_map::TM`
+
+Given a node, maps it to the segment number that it belongs to.
+
+# Constructors 
+
     BoundaryConditions(mesh::FVMGeometry, functions, types, boundary_node_vector;
         params=Tuple(nothing for _ in (functions isa Function ? [1] : eachindex(functions))),
         u_type=Float64, float_type=Float64)
 
 Constructor for the [`BoundaryConditions`](@ref) struct. 
 
-# Arguments 
+## Arguments 
 - `mesh::FVMGeometry`: The [`FVMGeometry`](@ref) for the mesh. 
 - `functions`: The functions for each boundary segment, taking the forms `f(x, y, t, u, p)`. Can be a single function, doesn't have to be in a container (as long as only one segment is needed).
 - `types`: The classification for the boundary condition type on each segment. See [`is_dirichlet_type`](@ref), [`is_neumann_type`](@ref), and [`is_dudt_type`](@ref) for the possible values here. `types[i]` is the classification for the `i`th segment. 
 - `boundary_node_vector`: The boundary node vector for the struct: The vector of vectors such that each nested vector is the list of nodes for each segment, given in counter-clockwise order, and such that `first(boundary_node_vector[i]) == last(boundary_node_vector[i-1])`.
 
-# Keyword Arguments 
+## Keyword Arguments 
 - `params=Tuple(nothing for _ in (functions isa Function ? [1] : eachindex(functions)))`: The parameters for the functions, with `params[i]` giving the argument `p` in `functions[i]`.
 - `u_type=Float64`: The number type used for the solution. 
 - `float_type=Float64`: The number type used for representing the coordinates of points. 
 
-# Outputs 
+## Outputs 
 The returned value is the corresponding [`BoundaryConditions`](@ref) struct. 
 """
+function BoundaryConditions end 
 function BoundaryConditions(mesh::FVMGeometry, functions, types, boundary_node_vector;
     params=Tuple(nothing for _ in (functions isa Function ? [1] : eachindex(functions))),
     u_type=Float64, float_type=Float64)

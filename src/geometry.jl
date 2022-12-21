@@ -80,9 +80,15 @@ num_boundary_edges(BI::BoundaryInformation) = length(get_edge_information(BI))
 Information for the interior of the domain. 
 
 # Fields 
-- `nodes::Vector{Int64}`: Indices for the all the nodes that are in the interior of the domain. 
-- `elements::EL`: The elements of the underlying triangular mesh that share no edges with the boundary. 
-- `interior_edge_boundary_element_identifier::IEBEI`: Given a boundary element `V` (see [`BoundaryInformation`](@ref)), this maps `V` to a list of tuples of the form `((v₁, j₁), (v₂, j₂))`, where `(v₁, v₂)` is an edge such that `v₁` is a boundary node and `v₂` is an interior node, and `j₁` and `j₂` give the positions of `v₁` and `v₂`, respectively, in `V`, e.g. `V[j₁] == v₁`. See also [`construct_interior_edge_boundary_element_identifier`](@ref).
+- `nodes::Vector{Int64}`
+
+Indices for the all the nodes that are in the interior of the domain. 
+- `elements::EL`
+
+The elements of the underlying triangular mesh that share no edges with the boundary. 
+- `interior_edge_boundary_element_identifier::IEBEI`
+
+Given a boundary element `V` (see [`BoundaryInformation`](@ref)), this maps `V` to a list of tuples of the form `((v₁, j₁), (v₂, j₂))`, where `(v₁, v₂)` is an edge such that `v₁` is a boundary node and `v₂` is an interior node, and `j₁` and `j₂` give the positions of `v₁` and `v₂`, respectively, in `V`, e.g. `V[j₁] == v₁`. See also [`construct_interior_edge_boundary_element_identifier`](@ref).
 """
 struct InteriorInformation{EL,IEBEI}
     nodes::Vector{Int64}
@@ -99,12 +105,24 @@ get_interior_edges(II::InteriorInformation, T) = II.interior_edge_boundary_eleme
 Information about the underlying triangular mesh. 
 
 # Fields 
-- `elements::EL`: All elements of the mesh. 
-- `points::P`: The coordinates for the nodes of the mesh. 
-- `adjacent::Adj`: The adjacent map for the triangulation. 
-- `adjacent2vertex::Adj2V`: The adjacent-to-vertex map for the triangulation. 
-- `neighbours::NGH`: The neighbour map for the triangulation, mapping mesh nodes to all other nodes that share an edge with it. 
-- `total_area::TAR`: The total area of the mesh.
+- `elements::EL`
+
+All elements of the mesh. 
+- `points::P`
+
+The coordinates for the nodes of the mesh. 
+- `adjacent::Adj`
+
+The adjacent map for the triangulation. 
+- `adjacent2vertex::Adj2V`
+
+The adjacent-to-vertex map for the triangulation. 
+- `neighbours::NGH`
+
+The neighbour map for the triangulation, mapping mesh nodes to all other nodes that share an edge with it. 
+- `total_area::TAR`
+
+The total area of the mesh.
 """
 struct MeshInformation{EL,P,Adj,Adj2V,NGH,TAR}
     elements::EL
@@ -128,13 +146,27 @@ get_element_type(::MeshInformation{EL,P,Adj,Adj2V,NGH,TAR}) where {EL,P,Adj,Adj2
 Information for an individual element.
 
 # Fields 
-- `centroid::CoordinateType`: The centroid of the element. 
-- `midpoints::VectorStorage`: The coordinates for the midpoints of each edge. 
-- `control_volume_edge_midpoints::VectorStorage`: For each edge, this is the midpoint of the line that connects the edge to the centroid. 
-- `lengths::ScalarStorage`: The lengths for each edge. 
-- `shape_function_coefficients::CoefficientStorage`: These are the `sᵢⱼ` coefficients for the element; see their definition in the README.
-- `normals::VectorStorage`: The outward unit normals to each edge.
-- `area::FloatType`: The area of the element.
+- `centroid::CoordinateType`
+
+The centroid of the element. 
+- `midpoints::VectorStorage`
+
+The coordinates for the midpoints of each edge. 
+- `control_volume_edge_midpoints::VectorStorage`
+
+For each edge, this is the midpoint of the line that connects the edge to the centroid. 
+- `lengths::ScalarStorage`
+
+The lengths for each edge. 
+- `shape_function_coefficients::CoefficientStorage`
+
+These are the `sᵢⱼ` coefficients for the element; see their definition in the README.
+- `normals::VectorStorage`
+
+The outward unit normals to each edge.
+- `area::FloatType`
+
+The area of the element.
 """
 struct ElementInformation{CoordinateType,VectorStorage,ScalarStorage,CoefficientStorage,FloatType}
     centroid::CoordinateType
@@ -158,18 +190,6 @@ get_normals(EI::ElementInformation) = EI.normals
 get_normals(EI::ElementInformation, i) = get_normals(EI)[i]
 get_area(EI::ElementInformation) = EI.area
 
-"""
-    FVMGeometry{EL,P,Adj,Adj2V,NGH,TAR,N,BE,IEBEI,T,CT,VS,SS,CS,FT}
-
-Geometric information about the underlying triangular mesh, as needed for the finite volume method. 
-
-# Fields 
-- `mesh_information::MeshInformation`: Information about the underlying triangular mesh; see [`MeshInformation`](@ref).
-- `boundary_information::BoundaryInformation`: Information about the boundary of the underlying triangular mesh; see [`BoundaryInformation`](@ref).
-- `interior_information::InteriorInformation`: Information about the interior of the underlying triangular mesh; see [`InteriorInformation`](@ref).
-- `element_information_list::Dict{T, ElementInformation}`: List that maps each element to the information about that mesh; see [`ElementInformation`](@ref).
-- `volumes::Dict{Int64,FT}`: Maps node indices to the volume of its corresponding control volume.
-"""
 Base.@kwdef struct FVMGeometry{EL,P,Adj,Adj2V,NGH,TAR,N,BE,IEBEI,T,CT,VS,SS,CS,FT}
     mesh_information::MeshInformation{EL,P,Adj,Adj2V,NGH,TAR}
     boundary_information::BoundaryInformation{N,BE}
@@ -210,6 +230,30 @@ get_elements(geo::FVMGeometry) = get_elements(get_mesh_information(geo))
 get_element_type(geo::FVMGeometry) = get_element_type(get_mesh_information(geo))
 
 """
+
+    FVMGeometry{EL,P,Adj,Adj2V,NGH,TAR,N,BE,IEBEI,T,CT,VS,SS,CS,FT}
+
+Geometric information about the underlying triangular mesh, as needed for the finite volume method. 
+
+# Fields 
+- `mesh_information::MeshInformation`
+
+Information about the underlying triangular mesh; see [`MeshInformation`](@ref).
+- `boundary_information::BoundaryInformation`
+
+Information about the boundary of the underlying triangular mesh; see [`BoundaryInformation`](@ref).
+- `interior_information::InteriorInformation`
+
+Information about the interior of the underlying triangular mesh; see [`InteriorInformation`](@ref).
+- `element_information_list::Dict{T, ElementInformation}`
+
+List that maps each element to the information about that mesh; see [`ElementInformation`](@ref).
+- `volumes::Dict{Int64,FT}`
+
+Maps node indices to the volume of its corresponding control volume.
+
+# Constructors 
+
     FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV;
         coordinate_type=Vector{number_type(pts)},
         control_volume_storage_type_vector=NTuple{3,coordinate_type},
@@ -217,20 +261,33 @@ get_element_type(geo::FVMGeometry) = get_element_type(get_mesh_information(geo))
         shape_function_coefficient_storage_type=NTuple{9,number_type(pts)},
         interior_edge_storage_type=NTuple{2,Int64},
         interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type}) where {Ts}
+    FVMGeometry(tri::Triangulation, BNV;
+        coordinate_type=Vector{number_type(DelaunayTriangulation.get_points(tri))},
+        control_volume_storage_type_vector=NTuple{3,coordinate_type},
+        control_volume_storage_type_scalar=NTuple{3,number_type(DelaunayTriangulation.get_points(tri))},
+        shape_function_coefficient_storage_type=NTuple{9,number_type(DelaunayTriangulation.get_points(tri))},
+        interior_edge_storage_type=NTuple{2,Int64},
+        interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type})
 
 Constructor for [`FVMGeometry`](@ref).
 
-# Arguments 
+## Arguments 
+
+For the first constructor:
+
 - `T::Ts`: The list of triangles. 
-- `adj`: The adjacent map; see [`DelaunayTriangulation.Adjacent`](@ref).
-- `adj2v`: The adjacent-to-vertex map; see [`DelaunayTriangulation.Adjacent2Vertex`](@ref).
-- `DG`: The graph for the mesh connectivity; see [`DelaunayTriangulation.DelaunayGraph`](@ref).
+- `adj`: The adjacent map; see `DelaunayTriangulation.Adjacent`.
+- `adj2v`: The adjacent-to-vertex map; see `DelaunayTriangulation.Adjacent2Vertex`.
+- `DG`: The graph for the mesh connectivity; see `DelaunayTriangulation.DelaunayGraph`.
 - `pts`: The points for the mesh. 
 - `BNV`: The boundary node vector. This should be a vector of vectors, where each nested vector is a list of indices that define the nodes for the corresponding segment, and `first(BNV[i]) == last(BNV[i-1])`. The nodes must be listed in counter-clockwise order.
 
-There is also a constructor where these arguments are `FVMGeometry(tri::Triangulation, BNV; same kwargs as below)`.
+For the second constructor:
 
-# Keyword Arguments 
+- `tri::Triangulation`: A triangulation of the domain; see `DelaunayTriangulation.Triangulation`.
+- `BNV`: As above. 
+
+## Keyword Arguments 
 - `coordinate_type=Vector{number_type(pts)}`: How coordinates are represented.
 - `control_volume_storage_type_vector=NTuple{3,coordinate_type}`: How information for triples of coordinates is represented. The element type must be `coordinate_type`.
 - `control_volume_storage_type_scalar=NTuple{3,number_type(pts)}`: How information triples of scalars is represented. The element type must be the same as the element type used for `pts`.
@@ -238,9 +295,10 @@ There is also a constructor where these arguments are `FVMGeometry(tri::Triangul
 - `interior_edge_storage_type=NTuple{2,Int64}`: How the tuples `(v, j)`, as defined for the interior edge identifier in [`InteriorInformation`](@ref), are stored.
 - `interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type}`: How the list of tuples for the interior edge tuples, as defined for the interior edge identifier in [`InteriorInformation`](@ref), are stored. The element type must be `interior_edge_pair_storage_type`.
 
-# Outputs 
+## Outputs 
 The returned value is the [`FVMGeometry`](@ref) object storing information about the underlying triangular mesh.
 """
+function FVMGeometry end
 function FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV;
     coordinate_type=Vector{number_type(pts)},
     control_volume_storage_type_vector=NTuple{3,coordinate_type},
