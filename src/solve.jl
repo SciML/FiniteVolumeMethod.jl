@@ -121,7 +121,7 @@ end
         chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob))),
         kwargs...)
 
-Solves the [`FVMProblem`](@ref) given by `prob` using the algorithm `alg`.
+Solves the [`FVMProblem`](@ref) given by `prob` using the ODE algorithm `alg`.
 
 # Arguments 
 - `prob::FVMProblem`: The [`FVMProblem`](@ref).
