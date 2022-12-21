@@ -1,7 +1,7 @@
 name = "FiniteVolumeMethod"
 uuid = "d4f04ab7-4f65-4d72-8a28-7087bc7f46f4"
 authors = ["DanielVandH <danj.vandenheuvel@gmail.com> and contributors"]
-version = "0.3.3"
+version = "0.3.4"
 
 [deps]
 ChunkSplitters = "ae650224-84b6-46f8-82ea-d812ca08434e"
