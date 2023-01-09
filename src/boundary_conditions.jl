@@ -17,23 +17,6 @@ Returns `type ∈ (:Dudt, :dudt, "Dudt", "dudt", "du/dt")`.
 """
 is_dudt_type(type) = type ∈ (:Dudt, :dudt, "Dudt", "dudt", "du/dt")
 
-"""
-    BoundaryConditions{BNV,F,P,DN,NN,DuN,INN,BMI,MBI,TM}
-
-Information representing the boundary conditions for the PDE. 
-
-# Fields 
-- `boundary_node_vector::BNV`: The vector of vectors such that each nested vector is the list of nodes for each segment, given in counter-clockwise order, and such that `first(BNV[i]) == last(BNV[i-1])`.
-- `functions::F`: The `Tuple` of boundary condition functions for each boundary segment, with `functions[i]` corresponding to the `i`th segment. These functions must take the form `f(x, y, t, u, p)`.
-- `parameters::P`: The `Tuple` of arguments `p` for each boundary condition function, with `parameters[i]` corresponding to `functions[i]`.
-- `dirichlet_nodes::DN`: The indices of the nodes on the boundary that are of Dirichlet type. 
-- `neumann_nodes::NN`: The indices of the nodes on the boundary that are of Neumann type. 
-- `dudt_nodes::DuN`: The indices of the nodes on the boundary that are of time-dependent Dirichlet type, i.e. of the form `du/dt = f(x, y, t, u, p)`.
-- `interior_or_neumann_nodes`::INN`: The nodes that are either interior or neumann nodes. 
-- `boundary_to_mesh_idx::BMI`: If the boundary nodes are in the order `(b₁, b₂, …, bᵢ, …)`, then this is a map that takes the index order `i` to the corresponding index in the mesh, i.e. to `bᵢ`.
-- `mesh_to_boundary_idx::MBI`: The inverse map of `boundary_to_mesh_idx`.
-- `type_map::TM`: Given a node, maps it to the segment number that it belongs to.
-"""
 struct BoundaryConditions{BNV,F,P,DN,NN,DuN,INN,BMI,MBI,TM}
     boundary_node_vector::BNV
     functions::F
