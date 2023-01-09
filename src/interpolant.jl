@@ -22,10 +22,11 @@ function eval_interpolant end
 end
 @inline function eval_interpolant(sol, x, y, t_idx::Integer, T)
     prob = sol.prob.p[1]
-    shape_coeffs = sol.prob.p[3]
-    if shape_coeffs isa DiffCache # need to handle the parallel case
+    if length(sol.prob.p) == 3 # need to handle the parallel case
+        shape_coeffs = sol.prob.p[3]
         new_shape_coeffs = get_tmp(shape_coeffs, x)
     else
+        shape_coeffs = sol.prob.p[4]
         new_shape_coeffs = get_tmp(first(shape_coeffs), x)
     end
     return eval_interpolant!(new_shape_coeffs, prob, x, y, T, sol.u[t_idx])
