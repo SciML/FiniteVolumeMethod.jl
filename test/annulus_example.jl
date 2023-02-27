@@ -56,16 +56,3 @@ mesh!(ax, pt_mat, T_mat, color=sol.u[6], colorrange=(-10, 20), colormap=:viridis
 ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(-10, 20), colormap=:viridis)
 SAVE_FIGURE && save("figures/annulus_test.png", fig)
-
-if SAVE_FIGURE
-    fig = Figure()
-    t_rng = LinRange(0, 2, 361)
-    j = Observable(1)
-    ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y",
-        title=Makie.lift(_j -> L"t = %$(rpad(round(t_rng[_j], digits = 5), 7, '0'))", j),
-        titlealign=:left)
-    mesh!(ax, pt_mat, T_mat, color=@lift(sol(t_rng[$j])), colorrange=(-10, 20), colormap=:viridis)
-    record(fig, "figures/annulus_test.mp4", eachindex(t_rng)) do _j
-        j[] = _j
-    end
-end

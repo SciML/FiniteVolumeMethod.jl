@@ -123,7 +123,7 @@ The purpose of this example is to show how we can solve problems on a multiply-c
 \begin{equation*}
 \begin{array}{rcll}
 \dfrac{\partial u}{\partial t} & = & \boldsymbol{\nabla}^2 u & \boldsymbol{x} \in \Omega, t>0, \\
-\boldsymbol{\nabla} u \boldsymbol{\cdot}  \hat{\boldsymbol n} = 0 & \boldsymbol{x} \in \mathcal D(0, 1), t>0, \\
+\boldsymbol{\nabla} u \boldsymbol{\cdot}  \hat{\boldsymbol n} & = & 0 & \boldsymbol{x} \in \mathcal D(0, 1), t>0, \\
 u(x, y, t) & = & c(t) & \boldsymbol{x} \in \mathcal D(0, 0.2),  t>0, \\
 u(x, y, 0) & = & u_0(x, y) & \boldsymbol{x} \in \Omega,
 \end{array}
@@ -144,8 +144,8 @@ The purpose of this example is to show how we can solve a steady problem. We sol
 \begin{equation*}
 \begin{array}{rcll}
 \boldsymbol{\nabla}^2 u(x, y) & = & 0 & 0 < x, y < \pi, \\
-u(x, 0) & = & \sinh(x) & 0 < x < \pi,
-u(x, \pi) & = & -\sinh(x) & 0 < x < \pi, 
+u(x, 0) & = & \sinh(x) & 0 < x < \pi, \\
+u(x, \pi) & = & -\sinh(x) & 0 < x < \pi, \\
 u(0, y) & = & 0 & 0 < y < \pi, \\
 u(\pi, y) & = & \sinh(\pi)\cos(y) & 0 < x < \pi,
 \end{array}
@@ -166,4 +166,4 @@ D\boldsymbol{\nabla}^2 T & = & -1,
 \end{equation*}
 ```
 
-where the boundary conditions could be either absorbing, reflecting, or a combination of the two, and $T$ is the mean exit time of a particle with diffusivity $D$ out of the given domain. We cover many examples, reproducing some of the work in my papers at https://iopscience.iop.org/article/10.1088/1367-2630/abe60d and https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d.
+where the boundary conditions could be either absorbing, reflecting, or a combination of the two, and $T$ is the mean exit time of a particle with diffusivity $D$ out of the given domain. We cover many examples, reproducing some of the work in my papers at [https://iopscience.iop.org/article/10.1088/1367-2630/abe60d](https://iopscience.iop.org/article/10.1088/1367-2630/abe60d) and [https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d](https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d).

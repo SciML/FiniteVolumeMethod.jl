@@ -6,8 +6,8 @@ Now we consider Laplace's equaton. This is a steady problem, whereas all previou
 \begin{equation*}
 \begin{array}{rcll}
 \boldsymbol{\nabla}^2 u(x, y) & = & 0 & 0 < x, y < \pi, \\
-u(x, 0) & = & \sinh(x) & 0 < x < \pi,
-u(x, \pi) & = & -\sinh(x) & 0 < x < \pi, 
+u(x, 0) & = & \sinh(x) & 0 < x < \pi,\\
+u(x, \pi) & = & -\sinh(x) & 0 < x < \pi, \\
 u(0, y) & = & 0 & 0 < y < \pi, \\
 u(\pi, y) & = & \sinh(\pi)\cos(y) & 0 < x < \pi,
 \end{array}
@@ -32,7 +32,7 @@ we are solving problems with $\partial u/\partial t = 0$ so that
 \end{equation*}
 ```
 
-For the reaction-diffusion formula, this is instead given by $0 = \boldsymbol\nabla[D\boldsymbol\nabla u] + R$. Moreover, the initial condition that we provide is now actually used as an initial estimate in the nonlinear solver that computes the steady state (defined via NonlinearSolve.jl). Lastly, the final time that we provide is replaced with infinity. With this in mind, the code for solving the above problem is given below.
+For the reaction-diffusion formula, this is instead given by $0 = \boldsymbol\nabla\boldsymbol\cdot[D\boldsymbol\nabla u] + R$. Moreover, the initial condition that we provide is now actually used as an initial estimate in the nonlinear solver that computes the steady state (defined via NonlinearSolve.jl). Lastly, the final time that we provide is replaced with infinity. With this in mind, the code for solving the above problem is given below.
 
 ```julia
 using FiniteVolumeMethod

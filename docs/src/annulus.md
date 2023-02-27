@@ -2,13 +2,13 @@
 
 Please ensure you have read the List of Examples section before proceeding.
 
-We now consider another diffusion problem, except now we demonstrate how we can solve a problem on a multiply-connected domain. The problem we consider comes from http://onelab.info/wiki/Tutorial/Heat_equation_with_Dirichlet_boundary_control, namely
+We now consider another diffusion problem, except now we demonstrate how we can solve a problem on a multiply-connected domain. The problem we consider comes from [http://onelab.info/wiki/Tutorial/Heat_equation_with_Dirichlet_boundary_control](http://onelab.info/wiki/Tutorial/Heat_equation_with_Dirichlet_boundary_control), namely
 
 ```math
 \begin{equation*}
 \begin{array}{rcll}
 \dfrac{\partial u}{\partial t} & = & \boldsymbol{\nabla}^2 u & \boldsymbol{x} \in \Omega, t>0, \\
-\boldsymbol{\nabla} u \boldsymbol{\cdot}  \hat{\boldsymbol n} = 0 & \boldsymbol{x} \in \mathcal D(0, 1), t>0, \\
+\boldsymbol{\nabla} u \boldsymbol{\cdot}  \hat{\boldsymbol n} &=& 0 & \boldsymbol{x} \in \mathcal D(0, 1), t>0, \\
 u(x, y, t) & = & c(t) & \boldsymbol{x} \in \mathcal D(0, 0.2),  t>0, \\
 u(x, y, 0) & = & u_0(x, y) & \boldsymbol{x} \in \Omega,
 \end{array}
@@ -21,7 +21,7 @@ where $\mathcal D(0, r)$ is a circle of radius $r$ centred at the origin, $\Omeg
 u_0(x) =10\mathrm{e}^{-25\left(\left(x + \frac12\right)^2 + \left(y + \frac12\right)^2\right)} - 10\mathrm{e}^{-45\left(\left(x - \frac12\right)^2 + \left(y - \frac12\right)^2\right)} - 5\mathrm{e}^{-50\left(\left(x + \frac{3}{10}\right)^2 + \left(y + \frac12\right)^2\right)}.
 ```
 
-To define this problem, we define the problem as we have been doing, but now we take special care to define the multiply-connected domain. In particular, we define the boundary nodes according to the specification in DelaunayTriangulation.jl (see the boundary nodes discussion here https://danielvandh.github.io/DelaunayTriangulation.jl/stable/interface/interface/). The complete code is below, where we generate the mesh, visualise the solution, and also animate it.
+To define this problem, we define the problem as we have been doing, but now we take special care to define the multiply-connected domain. In particular, we define the boundary nodes according to the specification in DelaunayTriangulation.jl (see the boundary nodes discussion here [https://danielvandh.github.io/DelaunayTriangulation.jl/stable/interface/interface/](https://danielvandh.github.io/DelaunayTriangulation.jl/stable/interface/interface/)). The complete code is below, where we generate the mesh, and then visualise the solution.
 
 ```julia 
 ## Generate the mesh. 
@@ -75,19 +75,6 @@ mesh!(ax, pt_mat, T_mat, color=sol.u[6], colorrange=(-10, 20), colormap=:viridis
 ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(-10, 20), colormap=:viridis)
 save("figures/annulus_test.png", fig)
-
-fig = Figure()
-t_rng = LinRange(0, 2, 361)
-j = Observable(1)
-ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y",
-    title=Makie.lift(_j -> L"t = %$(rpad(round(t_rng[_j], digits = 5), 7, '0'))", j),
-    titlealign=:left)
-mesh!(ax, pt_mat, T_mat, color=@lift(sol(t_rng[$j])), colorrange=(-10, 20), colormap=:viridis)
-record(fig, "figures/annulus_test.mp4", eachindex(t_rng)) do _j
-    j[] = _j
-end
 ```
 
 ![Annulus solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/annulus_test.png?raw=true)
-
-![Annulus animation](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/annulus_test.mp4?raw=true)

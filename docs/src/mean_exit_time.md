@@ -1,6 +1,6 @@
 # Example IX: Mean exit time problems
 
-In this example, we will investigate some simple mean exit time problems. In particular, the aim is to reproduce some of the figures from the numerical solutions in my other work on mean exit time at https://iopscience.iop.org/article/10.1088/1367-2630/abe60d and https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d.
+In this example, we will investigate some simple mean exit time problems. In particular, the aim is to reproduce some of the figures from the numerical solutions in my other work on mean exit time at [https://iopscience.iop.org/article/10.1088/1367-2630/abe60d](https://iopscience.iop.org/article/10.1088/1367-2630/abe60d) and [https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d](https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d).
 
 Fistly, mean exit time problems with linear diffusion can be defined according to
 
@@ -254,7 +254,7 @@ resize_to_layout!(fig)
 
 ## Annulus
 
-Now we consider mean exit time on an annulus. The paper https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d also considers heterogeneous annuli, but we will not do that here. We will consider a reflecting inner boundary condition with an absorbing outer boundary condition, so that $\boldsymbol{\nabla}^2 T = -1/D$ in the annulus, $\boldsymbol{\nabla} T \vdot \hat{\boldsymbol n} = 0$ on the inner ring, and $T = 0$ on the outer ring. The annulus we consider is $R_1 < r < R_2$ with $R_1 = 2$ and $R_2 = 3$, which corresponds to an exact solution $T(x, y) = (R_2^2 - r^2)/(4D) + R_1^2\log(r/R_2)/(2D)$, where $r = \sqrt{x^2 + y^2}$.
+Now we consider mean exit time on an annulus. The paper [https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d](https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d) also considers heterogeneous annuli, but we will not do that here. We will consider a reflecting inner boundary condition with an absorbing outer boundary condition, so that $\boldsymbol{\nabla}^2 T = -1/D$ in the annulus, $\boldsymbol{\nabla} T \boldsymbol{\cdot} \hat{\boldsymbol n} = 0$ on the inner ring, and $T = 0$ on the outer ring. The annulus we consider is $R_1 < r < R_2$ with $R_1 = 2$ and $R_2 = 3$, which corresponds to an exact solution $T(x, y) = (R_2^2 - r^2)/(4D) + R_1^2\log(r/R_2)/(2D)$, where $r = \sqrt{x^2 + y^2}$.
 
 ```julia 
 using FiniteVolumeMethod
@@ -370,4 +370,4 @@ Colorbar(fig[1, 2], msh)
 resize_to_layout!(fig)
 ```
 
-![Perturbed annulus mean exit time](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/annulus_mean_exit_time.png?raw=true)
+![Perturbed annulus mean exit time](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/perturbed_annulus_mean_exit_time.png?raw=true)
