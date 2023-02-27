@@ -22,9 +22,10 @@ t_idx = 5 # t = sol.t[t_idx]
 Next, we must find what triangle contains `(x, y)`. This is done by calling into the point location method provided by DelaunayTriangulation.jl, namely `jump_and_march`. We provide a simple interface for this using `FVMProblem`, which we use as follows:
 ```julia
 using DelaunayTriangulation, Test
+const DT = DelaunayTriangulation
 
-V = jump_and_march(x, y, prob)
-@test DelaunayTriangulation.isintriangle(get_point(points, V...)..., (x, y)) == 1
+V = jump_and_march(prob, (x, y))
+@test DT.is_inside(DT.point_position_relative_to_triangle(get_point(prob, V...)..., (x, y)))
 ```
 (You can also provide keyword arguments to `jump_and_march`, matching those from DelaunayTriangulation.jl.) Now we can evaluate the interpolant at this point:
 ```julia
@@ -33,17 +34,17 @@ val = eval_interpolant(sol, x, y, t_idx, V)
 ```
 This is our approximation to $u(0.37, 0.58, 0.2)$.
 
-A more typical example would involve evaluating this interpolant over a much larger set of points. A good way to do this is to first find all the triangles that correspond to each point. In what follows, we define a lattice of points, and then we find the triangle for each point. To accelerate the procedure, when initiating the `jump_and_march` function we will tell it to also try starting at the previously found triangle. Note that we also put the grid slightly off the boundary since the generated mesh doesn't exactly lie on the square $[0, 2]^2$, hence some points wouldn't be in any triangle if we put some points exactly on this boundary.
+A more typical example would involve evaluating this interpolant over a much larger set of points. A good way to do this is to first find all the triangles that correspond to each point. In what follows, we define a lattice of points, and then we find the triangle for each point. To accelerate the procedure, when initiating the `jump_and_march` function we will tell it to also try starting at the previously found triangle. Note that we also put the grid slightly off the boundary so that all points in a triangle, including those on the boundary.
 ```julia
 nx = 250
 ny = 250
 grid_x = LinRange(-L + 1e-1, L - 1e-1, nx)
 grid_y = LinRange(-L + 1e-1, L - 1e-1, ny)
 V_mat = Matrix{NTuple{3, Int64}}(undef, nx, ny)
-last_triangle = rand(FVM.get_elements(prob)) # initiate 
+last_triangle = first(FiniteVolumeMethod.get_elements(prob)) # initiate 
 for j in 1:ny 
     for i in 1:nx 
-        V_mat[i, j] = jump_and_march(grid_x[i], grid_y[j], prob; try_points = last_triangle)
+        V_mat[i, j] = jump_and_march(prob, (grid_x[i], grid_y[j]); try_points = last_triangle)
         last_triangle = V_mat[i, j]
     end
 end

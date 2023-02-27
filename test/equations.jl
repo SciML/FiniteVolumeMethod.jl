@@ -1,5 +1,12 @@
+using ..FiniteVolumeMethod
+using Test
+include("test_setup.jl")
+using PreallocationTools
+using SparseArrays
+using LinearAlgebra
+
 ## Define the example problem 
-a, b, c, d, nx, ny, T, adj, adj2v, DG, pts, BN = example_triangulation()
+a, b, c, d, nx, ny, tri = example_triangulation()
 for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
     for control_volume_storage_type_vector in (Vector{coordinate_type}, SVector{3,coordinate_type})
         for control_volume_storage_type_scalar in (Vector{Float64}, SVector{3,Float64})
@@ -7,12 +14,7 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                 for interior_edge_storage_type in (Vector{Int64}, NTuple{2,Int64},)
                     for interior_edge_pair_storage_type in (Vector{interior_edge_storage_type}, NTuple{2,interior_edge_storage_type})
                         geo = FVMGeometry(
-                            T,
-                            adj,
-                            adj2v,
-                            DG,
-                            pts,
-                            BN;
+                            tri;
                             coordinate_type, control_volume_storage_type_vector,
                             control_volume_storage_type_scalar, shape_function_coefficient_storage_type,
                             interior_edge_storage_type, interior_edge_pair_storage_type)
@@ -24,9 +26,8 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                         dudt_dirichlet_f2 = (x, y, t, u, p) -> u + y * t
                         functions = (dirichlet_f2, neumann_f1, dudt_dirichlet_f1, dudt_dirichlet_f2)
                         types = (:D, :N, :dudt, :dudt)
-                        boundary_node_vector = BN
                         params = ((1.0, 2.0), nothing, nothing, nothing)
-                        BCs = FVM.BoundaryConditions(geo, functions, types, boundary_node_vector; params)
+                        BCs = FVM.BoundaryConditions(geo, functions, types; params)
                         iip_flux = true
                         flux_function = (q, x, y, t, α, β, γ, p) -> (q[1] = x * y * t; q[2] = t; nothing)
                         initial_condition = zeros(20)
@@ -35,8 +36,9 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
 
                         ## Now do some testing 
                         shape_cache = zeros(3)
-                        u = rand(size(pts, 2))
-                        for V in T
+                        u = rand(num_points(tri))
+                        pts = get_points(tri)
+                        for V in each_solid_triangle(tri)
                             FVM.linear_shape_function_coefficients!(shape_cache, u, prob, V)
                             interp = (x, y) -> shape_cache[1] * x + shape_cache[2] * y + shape_cache[3]
                             @test interp(pts[1, geti(V)], pts[2, geti(V)]) ≈ u[geti(V)]
@@ -172,8 +174,7 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                         @test jac[:, 28].nzind == [23, 24, 27, 28, 29]
                         @test jac[:, 29].nzind == [24, 25, 28, 29, 30]
                         @test jac[:, 30].nzind == [25, 29, 30]
-                        @test nnz(jac) == 2(length(edges(DG)) - FVM.num_boundary_edges(prob)) + FVM.num_points(prob)
-                        @test jac == sparse((DelaunayTriangulation.adjacency(DelaunayTriangulation.graph(DG))+I)[2:end, 2:end]) # 2:end because of the BoundaryIndex
+                        @test jac == sparse((DelaunayTriangulation.SimpleGraphs.adjacency(get_graph(get_graph(tri)))+I)[5:end, 5:end]) # 5:end because of the boundary indices
                     end
                 end
             end

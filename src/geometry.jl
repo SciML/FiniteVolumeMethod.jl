@@ -1,12 +1,12 @@
 """
     BoundaryEdgeMatrix
 
-Information for the boundary edges. Boundaries are to be interpreted as being counter-clockwise, 
-so that an edge has a left and a right node.
+Information for the boundary edges. Boundaries are to be interpreted according to the specification in 
+DelaunayTriangulation.jl.
 
 # Fields 
 - `left_nodes::Vector{Int64}`: The left nodes for each edge, given as indices for the points.
-- `right_nodes::Vector{Int64}`: The right nodes for each edge, given as indices for the points. 
+- `right_nodes::Vector{Int64}`: The right nodes for each edge, given as indices for the points. (Actually, this orientation switches on inner boundaries since those are oriented clockwise rather than counter-clockwise.)
 - `adjacent_nodes::Vector{Int64}`: The adjacent node to each edge, i.e. the node such that `(left_nodes[i], right_nodes[i], adjacent_nodes[i])` is a positively oriented triangle in the underlying triangular mesh.
 - `types::Vector{Int64}`: The boundaries are split into segments, so `types[i]` says what segment number the `i`th edge is on.
 """
@@ -21,7 +21,7 @@ Base.eachindex(BEM::BoundaryEdgeMatrix) = eachindex(BEM.left_nodes)
 Base.firstindex(BEM::BoundaryEdgeMatrix) = firstindex(BEM.left_nodes)
 Base.lastindex(BEM::BoundaryEdgeMatrix) = lastindex(BEM.left_nodes)
 get_left_nodes(BEM::BoundaryEdgeMatrix) = BEM.left_nodes
-get_boundary_nodes(BEM::BoundaryEdgeMatrix) = get_left_nodes(BEM::BoundaryEdgeMatrix)
+DelaunayTriangulation.get_boundary_nodes(BEM::BoundaryEdgeMatrix) = get_left_nodes(BEM::BoundaryEdgeMatrix)
 get_right_nodes(BEM::BoundaryEdgeMatrix) = BEM.right_nodes
 get_adjacent_nodes(BEM::BoundaryEdgeMatrix) = BEM.adjacent_nodes
 get_types(BEM::BoundaryEdgeMatrix) = BEM.types
@@ -60,7 +60,7 @@ Information for the boundary of the domain.
 # Fields 
 - `edge_information::BoundaryEdgeMatrix`: The [`BoundaryEdgeMatrix`](@ref).
 - `normal_information::OutwardNormalBoundary{N}`: The [`OutwardNormalBoundary`](@ref).
-- `boundary_nodes::Vector{Int64}`: The indices for the nodes on the boundary, given in a counter-clockwise order.
+- `boundary_nodes::Vector{Int64}`: The indices for the nodes on the boundary, collected into a single vector.
 - `boundary_elements::BE`: The elements of the underlying triangular mesh that share at least one edge with the boundary.
 """
 struct BoundaryInformation{N,BE}
@@ -69,10 +69,10 @@ struct BoundaryInformation{N,BE}
     boundary_nodes::Vector{Int64}
     boundary_elements::BE
 end
-get_boundary_nodes(BI::BoundaryInformation) = BI.boundary_nodes
+DelaunayTriangulation.get_boundary_nodes(BI::BoundaryInformation) = BI.boundary_nodes
 get_boundary_elements(BI::BoundaryInformation) = BI.boundary_elements
 get_edge_information(BI::BoundaryInformation) = BI.edge_information
-num_boundary_edges(BI::BoundaryInformation) = length(get_edge_information(BI))
+DelaunayTriangulation.num_boundary_edges(BI::BoundaryInformation) = length(get_edge_information(BI))
 
 """
     InteriorInformation{EL,IEBEI}
@@ -100,45 +100,30 @@ get_interior_elements(II::InteriorInformation) = II.elements
 get_interior_edges(II::InteriorInformation, T) = II.interior_edge_boundary_element_identifier[T]
 
 """ 
-    MeshInformation{EL,P,Adj,Adj2V,NGH,TAR}
+    MeshInformation{T<:Triangulation,TAR}
 
 Information about the underlying triangular mesh. 
 
 # Fields 
-- `elements::EL`
+- `triangulation::T`
 
-All elements of the mesh. 
-- `points::P`
-
-The coordinates for the nodes of the mesh. 
-- `adjacent::Adj`
-
-The adjacent map for the triangulation. 
-- `adjacent2vertex::Adj2V`
-
-The adjacent-to-vertex map for the triangulation. 
-- `neighbours::NGH`
-
-The neighbour map for the triangulation, mapping mesh nodes to all other nodes that share an edge with it. 
+The mesh, given with `T <: Triangulation`.
 - `total_area::TAR`
 
 The total area of the mesh.
 """
-struct MeshInformation{EL,P,Adj,Adj2V,NGH,TAR}
-    elements::EL
-    points::P
-    adjacent::Adj
-    adjacent2vertex::Adj2V
-    neighbours::NGH
+struct MeshInformation{T<:Triangulation,TAR}
+    triangulation::T
     total_area::TAR
 end
-get_neighbours(MI::MeshInformation) = MI.neighbours
-DelaunayTriangulation.get_point(MI::MeshInformation, j) = get_point(MI.points, j)
-get_points(MI::MeshInformation) = MI.points
-get_adjacent(MI::MeshInformation) = MI.adjacent
-get_adjacent2vertex(MI::MeshInformation) = MI.adjacent2vertex
-get_elements(MI::MeshInformation) = MI.elements
-get_element_type(::MeshInformation{EL,P,Adj,Adj2V,NGH,TAR}) where {EL,P,Adj,Adj2V,NGH,TAR} = DelaunayTriangulation.triangle_type(EL)
+get_triangulation(MI::MeshInformation) = MI.triangulation 
+DelaunayTriangulation.get_neighbours(MI::MeshInformation) = get_graph(get_triangulation(MI))
+DelaunayTriangulation.get_point(MI::MeshInformation, j) = get_point(get_triangulation(MI), j)
+DelaunayTriangulation.get_points(MI::MeshInformation) = get_points(get_triangulation(MI))
+DelaunayTriangulation.get_adjacent(MI::MeshInformation) = get_adjacent(get_triangulation(MI))
+DelaunayTriangulation.get_adjacent2vertex(MI::MeshInformation) = get_adjacent2vertex(get_triangulation(MI))
+get_elements(MI::MeshInformation) = each_solid_triangle(get_triangulation(MI))
+get_element_type(MI::MeshInformation) = DelaunayTriangulation.triangle_type(get_triangulation(MI))
 
 """
     ElementInformation{CoordinateType,VectorStorage,ScalarStorage,CoefficientStorage,FloatType}
@@ -190,8 +175,8 @@ get_normals(EI::ElementInformation) = EI.normals
 get_normals(EI::ElementInformation, i) = get_normals(EI)[i]
 get_area(EI::ElementInformation) = EI.area
 
-Base.@kwdef struct FVMGeometry{EL,P,Adj,Adj2V,NGH,TAR,N,BE,IEBEI,T,CT,VS,SS,CS,FT}
-    mesh_information::MeshInformation{EL,P,Adj,Adj2V,NGH,TAR}
+Base.@kwdef struct FVMGeometry{Tri,TAR,EL,N,BE,IEBEI,T,CT,VS,SS,CS,FT}
+    mesh_information::MeshInformation{Tri,TAR}
     boundary_information::BoundaryInformation{N,BE}
     interior_information::InteriorInformation{EL,IEBEI}
     element_information_list::Dict{T,ElementInformation{CT,VS,SS,CS,FT}}
@@ -206,8 +191,8 @@ get_volumes(geo::FVMGeometry) = geo.volumes
 get_volumes(geo::FVMGeometry, i) = get_volumes(geo)[i]
 get_boundary_edge_information(geo::FVMGeometry) = get_edge_information(get_boundary_information(geo))
 get_interior_nodes(geo::FVMGeometry) = get_interior_nodes(geo.interior_information)
-get_boundary_nodes(geo::FVMGeometry) = get_boundary_nodes(geo.boundary_information)
-num_boundary_edges(geo::FVMGeometry) = num_boundary_edges(get_boundary_information(geo))
+DelaunayTriangulation.get_boundary_nodes(geo::FVMGeometry) = get_boundary_nodes(geo.boundary_information)
+DelaunayTriangulation.num_boundary_edges(geo::FVMGeometry) = num_boundary_edges(get_boundary_information(geo))
 gets(geo::FVMGeometry, T) = gets(get_element_information(geo, T))
 gets(geo::FVMGeometry, T, i) = gets(get_element_information(geo, T), i)
 get_midpoints(geo::FVMGeometry, T) = get_midpoints(get_element_information(geo, T))
@@ -221,11 +206,11 @@ get_lengths(geo::FVMGeometry, T, i) = get_lengths(get_element_information(geo, T
 get_interior_elements(geo::FVMGeometry) = get_interior_elements(get_interior_information(geo))
 get_interior_edges(geo::FVMGeometry, T) = get_interior_edges(get_interior_information(geo), T)
 get_boundary_elements(geo::FVMGeometry) = get_boundary_elements(get_boundary_information(geo))
-get_neighbours(geo::FVMGeometry) = get_neighbours(get_mesh_information(geo))
-get_adjacent(geo::FVMGeometry) = get_adjacent(get_mesh_information(geo))
-get_adjacent2vertex(geo::FVMGeometry) = get_adjacent2vertex(get_mesh_information(geo))
+DelaunayTriangulation.get_neighbours(geo::FVMGeometry) = get_neighbours(get_mesh_information(geo))
+DelaunayTriangulation.get_adjacent(geo::FVMGeometry) = get_adjacent(get_mesh_information(geo))
+DelaunayTriangulation.get_adjacent2vertex(geo::FVMGeometry) = get_adjacent2vertex(get_mesh_information(geo))
 DelaunayTriangulation.get_point(geo::FVMGeometry, j) = get_point(get_mesh_information(geo), j)
-get_points(geo::FVMGeometry) = get_points(get_mesh_information(geo))
+DelaunayTriangulation.get_points(geo::FVMGeometry) = get_points(get_mesh_information(geo))
 get_elements(geo::FVMGeometry) = get_elements(get_mesh_information(geo))
 get_element_type(geo::FVMGeometry) = get_element_type(get_mesh_information(geo))
 
@@ -254,38 +239,19 @@ Maps node indices to the volume of its corresponding control volume.
 
 # Constructors 
 
-    FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV;
+    FVMGeometry(tri::Triangulation;
         coordinate_type=Vector{number_type(pts)},
         control_volume_storage_type_vector=NTuple{3,coordinate_type},
         control_volume_storage_type_scalar=NTuple{3,number_type(pts)},
         shape_function_coefficient_storage_type=NTuple{9,number_type(pts)},
         interior_edge_storage_type=NTuple{2,Int64},
         interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type}) where {Ts}
-    FVMGeometry(tri::Triangulation, BNV;
-        coordinate_type=Vector{number_type(DelaunayTriangulation.get_points(tri))},
-        control_volume_storage_type_vector=NTuple{3,coordinate_type},
-        control_volume_storage_type_scalar=NTuple{3,number_type(DelaunayTriangulation.get_points(tri))},
-        shape_function_coefficient_storage_type=NTuple{9,number_type(DelaunayTriangulation.get_points(tri))},
-        interior_edge_storage_type=NTuple{2,Int64},
-        interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type})
 
 Constructor for [`FVMGeometry`](@ref).
 
 ## Arguments 
 
-For the first constructor:
-
-- `T::Ts`: The list of triangles. 
-- `adj`: The adjacent map; see `DelaunayTriangulation.Adjacent`.
-- `adj2v`: The adjacent-to-vertex map; see `DelaunayTriangulation.Adjacent2Vertex`.
-- `DG`: The graph for the mesh connectivity; see `DelaunayTriangulation.DelaunayGraph`.
-- `pts`: The points for the mesh. 
-- `BNV`: The boundary node vector. This should be a vector of vectors, where each nested vector is a list of indices that define the nodes for the corresponding segment, and `first(BNV[i]) == last(BNV[i-1])`. The nodes must be listed in counter-clockwise order.
-
-For the second constructor:
-
-- `tri::Triangulation`: A triangulation of the domain; see `DelaunayTriangulation.Triangulation`.
-- `BNV`: As above. 
+- `tri::Triangulation`: The mesh.
 
 ## Keyword Arguments 
 - `coordinate_type=Vector{number_type(pts)}`: How coordinates are represented.
@@ -299,80 +265,69 @@ For the second constructor:
 The returned value is the [`FVMGeometry`](@ref) object storing information about the underlying triangular mesh.
 """
 function FVMGeometry end
-function FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV;
-    coordinate_type=Vector{number_type(pts)},
+function FVMGeometry(tri;
+    coordinate_type=Vector{number_type(tri)},
     control_volume_storage_type_vector=NTuple{3,coordinate_type},
-    control_volume_storage_type_scalar=NTuple{3,number_type(pts)},
-    shape_function_coefficient_storage_type=NTuple{9,number_type(pts)},
+    control_volume_storage_type_scalar=NTuple{3,number_type(tri)},
+    shape_function_coefficient_storage_type=NTuple{9,number_type(tri)},
     interior_edge_storage_type=NTuple{2,Int64},
-    interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type}) where {Ts}
-    ## Setup
-    num_elements = num_triangles(T)
-    num_nodes = num_points(pts)
-    float_type = number_type(pts)
-    element_type = DelaunayTriangulation.triangle_type(Ts)
+    interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type})
+    ## Setup 
+    has_ghost = DelaunayTriangulation.has_ghost_triangles(tri)
+    has_ghost || add_ghost_triangles!(tri)
+    num_elements = num_triangles(tri)
+    num_nodes = num_points(tri)
+    float_type = number_type(tri)
+    element_type = DelaunayTriangulation.triangle_type(tri)
+
     ## Construct the arrays 
-    element_infos = Dict{element_type,
-        ElementInformation{coordinate_type,control_volume_storage_type_vector,
-            control_volume_storage_type_scalar,shape_function_coefficient_storage_type,
-            float_type}}()
-    vols = Dict{Int64,float_type}(DelaunayTriangulation._eachindex(pts) .=> zero(float_type))
+    element_infos = Dict{
+        element_type,
+        ElementInformation{
+            coordinate_type,
+            control_volume_storage_type_vector,
+            control_volume_storage_type_scalar,
+            shape_function_coefficient_storage_type,
+            float_type
+        }
+    }()
+    vols = Dict{Int64,float_type}(
+        each_point_index(tri) .=> zero(float_type)
+    )
     sizehint!(element_infos, num_elements)
     total_area = zero(float_type)
-    ## Loop over each triangle 
-    for τ in T
+
+    ## Loop over each triangle
+    for τ in each_solid_triangle(tri)
         v₁, v₂, v₃ = indices(τ)
-        _pts = (get_point(pts, v₁), get_point(pts, v₂), get_point(pts, v₃))
-        centroid = compute_centroid(_pts; coordinate_type)
-        midpoints = compute_midpoints(_pts; coordinate_type, control_volume_storage_type_vector)
+        pts = get_point(tri, v₁, v₂, v₃)
+        centroid = compute_centroid(pts; coordinate_type)
+        midpoints = compute_midpoints(pts; coordinate_type, control_volume_storage_type_vector)
         control_volume_midpoints = compute_control_volume_edge_midpoints(centroid, midpoints; coordinate_type, control_volume_storage_type_vector)
         edges = control_volume_edges(centroid, midpoints)
         lengths = compute_edge_lengths(edges; control_volume_storage_type_scalar)
         normals = compute_edge_normals(edges, lengths; coordinate_type, control_volume_storage_type_vector)
-        p = control_volume_node_centroid(centroid, _pts)
+        p = control_volume_node_centroid(centroid, pts)
         q = control_volume_connect_midpoints(midpoints)
         S = sub_control_volume_areas(p, q)
         vols[v₁] += S[1]
         vols[v₂] += S[2]
         vols[v₃] += S[3]
         element_area = S[1] + S[2] + S[3]
-        s = compute_shape_function_coefficients(_pts; shape_function_coefficient_storage_type)
+        s = compute_shape_function_coefficients(pts; shape_function_coefficient_storage_type)
         total_area += element_area
         element_infos[τ] = ElementInformation(centroid, midpoints, control_volume_midpoints, lengths, s, normals, element_area)
     end
-    boundary_info = boundary_information(T, adj, pts, BNV)
-    boundary_nodes = get_boundary_nodes(boundary_info)
-    boundary_elements = get_boundary_elements(boundary_info)
-    interior_info = interior_information(boundary_nodes, num_nodes, T, boundary_elements, DG, pts; interior_edge_storage_type, interior_edge_pair_storage_type)
-    mesh_info = MeshInformation(T, pts, adj, adj2v, DG, total_area)
+    boundary_info = boundary_information(tri)
+    interior_info = interior_information(boundary_info, num_nodes, tri; interior_edge_storage_type, interior_edge_pair_storage_type)
+    mesh_info = MeshInformation(tri, total_area)
+    has_ghost || delete_ghost_triangles!(tri)
     return FVMGeometry(;
         mesh_information=mesh_info,
         boundary_information=boundary_info,
         interior_information=interior_info,
         element_information_list=element_infos,
         volumes=vols)
-end
-function FVMGeometry(tri::Triangulation, BNV;
-    coordinate_type=Vector{number_type(DelaunayTriangulation.get_points(tri))},
-    control_volume_storage_type_vector=NTuple{3,coordinate_type},
-    control_volume_storage_type_scalar=NTuple{3,number_type(DelaunayTriangulation.get_points(tri))},
-    shape_function_coefficient_storage_type=NTuple{9,number_type(DelaunayTriangulation.get_points(tri))},
-    interior_edge_storage_type=NTuple{2,Int64},
-    interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type})
-    return FVMGeometry(
-        DelaunayTriangulation.get_triangles(tri),
-        DelaunayTriangulation.get_adjacent(tri),
-        DelaunayTriangulation.get_adjacent2vertex(tri),
-        DelaunayTriangulation.get_graph(tri),
-        DelaunayTriangulation.get_points(tri),
-        BNV;
-        coordinate_type,
-        control_volume_storage_type_vector,
-        control_volume_storage_type_scalar,
-        shape_function_coefficient_storage_type,
-        interior_edge_storage_type,
-        interior_edge_pair_storage_type
-    )
 end
 
 function compute_centroid(p₁, p₂, p₃; coordinate_type)
@@ -518,30 +473,33 @@ function compute_shape_function_coefficients(pts; shape_function_coefficient_sto
     return s
 end
 
-function boundary_information(T::Ts, adj, pts, BNV) where {Ts}
-    boundary_edges = boundary_edge_matrix(adj, BNV)
-    boundary_normals = outward_normal_boundary(pts, boundary_edges)
+function boundary_information(tri::Triangulation)
+    boundary_edges = boundary_edge_matrix(tri)
+    boundary_normals = outward_normal_boundary(tri, boundary_edges)
     boundary_nodes = get_left_nodes(boundary_edges)
-    V = construct_triangles(Ts)
-    Ttype = DelaunayTriangulation.triangle_type(Ts)
+    Ts = typeof(get_triangles(tri))
+    V = DelaunayTriangulation.initialise_triangles(Ts)
+    Ttype = DelaunayTriangulation.triangle_type(tri)
     for n in eachindex(boundary_edges)
         i = get_left_nodes(boundary_edges, n)
         j = get_right_nodes(boundary_edges, n)
         k = get_adjacent_nodes(boundary_edges, n)
-        τ = construct_triangle(Ttype, i, j, k)
+        τ = DelaunayTriangulation.construct_triangle(Ttype, i, j, k)
         DelaunayTriangulation.add_triangle!(V, τ)
     end
     boundary_elements = DelaunayTriangulation.remove_duplicate_triangles(V) # also sorts
-    F = DelaunayTriangulation.triangle_type(Ts)
-    for τ in boundary_elements
+    F = DelaunayTriangulation.triangle_type(tri)
+    for τ in each_solid_triangle(boundary_elements)
         i, j, k = indices(τ)
-        if (i, j, k) ∈ T
+        τ′, _ = DelaunayTriangulation.contains_triangle(tri, τ)
+        i′, j′, k′ = indices(τ′)
+        if (i, j, k) == (i′, j′, k′)
             continue
-        elseif (j, k, i) ∈ T
+        elseif (i′, j′, k′) == (j, k, i)
             DelaunayTriangulation.delete_triangle!(boundary_elements, τ)
             σ = DelaunayTriangulation.construct_triangle(F, j, k, i)
             DelaunayTriangulation.add_triangle!(boundary_elements, σ)
-        elseif (k, i, j) ∈ T
+        elseif (i′, j′, k′) == (k, i, j)
             DelaunayTriangulation.delete_triangle!(boundary_elements, τ)
             σ = DelaunayTriangulation.construct_triangle(F, k, i, j)
             DelaunayTriangulation.add_triangle!(boundary_elements, σ)
@@ -550,42 +508,45 @@ function boundary_information(T::Ts, adj, pts, BNV) where {Ts}
     return BoundaryInformation(boundary_edges, boundary_normals, boundary_nodes, boundary_elements)
 end
 
-function boundary_edge_matrix(adj, BNV)
-    E = Matrix{Int64}(undef, 4, length(unique(reduce(vcat, BNV)))) #[left;right;adjacent[left,right];type]
-    all_boundary_nodes = Int64[]
-    edge_types = Int64[]
-    sizehint!(all_boundary_nodes, size(E, 2))
-    sizehint!(edge_types, size(E, 2))
-    ## Start by extracting the boundary nodes, and enumerate each edge
-    if length(BNV) > 1
-        for (n, edge) in enumerate(BNV)
-            push!(all_boundary_nodes, edge[1:end-1]...)
-            push!(edge_types, repeat([n], length(edge[1:end-1]))...)
+function boundary_edge_matrix(tri::Triangulation)
+    E = NTuple{4,Int64}[]
+    if DelaunayTriangulation.has_boundary_nodes(tri)
+        bn_map = get_boundary_map(tri)
+        for (type, (boundary_index, segment_index)) in enumerate(bn_map)
+            bn_nodes = get_boundary_nodes(tri, segment_index)
+            nedges = num_boundary_edges(bn_nodes)
+            for edge_idx in 1:nedges
+                left_node = get_boundary_nodes(bn_nodes, edge_idx)
+                right_node = DelaunayTriangulation.get_right_boundary_node(tri, left_node, boundary_index)
+                adjacent_node = get_adjacent(tri, left_node, right_node)
+                push!(E, (left_node, right_node, adjacent_node, type))
+            end
         end
     else
-        push!(all_boundary_nodes, BNV[1]...)
-        push!(edge_types, repeat([1], length(BNV[1]))...)
+        bn_nodes = get_convex_hull_indices(tri)
+        nedges = num_boundary_edges(bn_nodes)
+        for edge_idx in 1:nedges
+            left_node = get_boundary_node(bn_nodes, edge_idx)
+            right_node = get_right_boundary_node(tri, edge_idx, boundary_index)
+            adjacent_node = get_adjacent(tri, left_node, right_node)
+            push!(E, (left_node, right_node, adjacent_node, type))
+        end
     end
-    ## Now process the rows
-    E[1, :] .= all_boundary_nodes
-    E[2, :] .= [all_boundary_nodes[2:end]..., all_boundary_nodes[1]]
-    for n = 1:size(E, 2)
-        E[3, n] = get_edge(adj, E[1, n], E[2, n])
-    end
-    E[4, :] .= edge_types
-    return BoundaryEdgeMatrix(E[1, :], E[2, :], E[3, :], E[4, :])
+    E = reinterpret(reshape, Int64, E) # converts vector of Tuples to matrix with each column one of the Tuples
+    BEM = BoundaryEdgeMatrix(E[1, :], E[2, :], E[3, :], E[4, :])
+    return BEM
 end
 
-function outward_normal_boundary(pts, E)
-    F = number_type(pts)
+function outward_normal_boundary(tri::Triangulation, E)
+    F = number_type(tri)
     x_normals = zeros(F, length(E))
     y_normals = zeros(F, length(E))
     normal_types = zeros(Int64, length(E))
     for n in eachindex(E)
         v₁ = get_left_nodes(E, n)
         v₂ = get_right_nodes(E, n)
-        p = get_point(pts, v₁)
-        q = get_point(pts, v₂)
+        p = get_point(tri, v₁)
+        q = get_point(tri, v₂)
         rx = getx(q) - getx(p)
         ry = gety(q) - gety(p)
         ℓ = norm((rx, ry))
@@ -597,31 +558,36 @@ function outward_normal_boundary(pts, E)
     return N
 end
 
-function interior_information(boundary_nodes, num_nodes, T::Ts, boundary_elements, DG, pts;
-    interior_edge_storage_type, interior_edge_pair_storage_type) where {Ts}
+function interior_information(boundary_info, num_nodes, tri::Triangulation;
+    interior_edge_storage_type, interior_edge_pair_storage_type)
+    boundary_nodes = get_boundary_nodes(boundary_info)
+    boundary_elements = get_boundary_elements(boundary_info)
+    boundary_edges = get_edge_information(boundary_info)
     interior_nodes = setdiff(1:num_nodes, boundary_nodes)
-    sorted_T = DelaunayTriangulation.sort_triangles(T)
+    sorted_T = DelaunayTriangulation.sort_triangles(each_solid_triangle(tri))
     sorted_boundary_elements = DelaunayTriangulation.sort_triangles(boundary_elements)
     for τ in sorted_boundary_elements
         DelaunayTriangulation.delete_triangle!(sorted_T, τ)
     end
     interior_elements = sorted_T # need to put this back into the original sorting, so that we can use the correct keys 
-    V = DelaunayTriangulation.triangle_type(Ts)
+    V = DelaunayTriangulation.triangle_type(tri)
     for τ in interior_elements
         i, j, k = indices(τ)
-        if (i, j, k) ∈ T
+        τ′, _ = DelaunayTriangulation.contains_triangle(tri, τ)
+        i′, j′, k′ = τ′
+        if (i′, j′, k′) == (i, j, k)
             continue
-        elseif (j, k, i) ∈ T
+        elseif (i′, j′, k′) == (j, k, i)
             DelaunayTriangulation.delete_triangle!(interior_elements, τ)
             σ = DelaunayTriangulation.construct_triangle(V, j, k, i)
             DelaunayTriangulation.add_triangle!(interior_elements, σ)
-        elseif (k, i, j) ∈ T
+        elseif (i′, j′, k′) == (k, i, j)
             DelaunayTriangulation.delete_triangle!(interior_elements, τ)
             σ = DelaunayTriangulation.construct_triangle(V, k, i, j)
             DelaunayTriangulation.add_triangle!(interior_elements, σ)
         end
     end
-    interior_edge_boundary_element_identifier = construct_interior_edge_boundary_element_identifier(boundary_elements, T, DG, pts;
+    interior_edge_boundary_element_identifier = construct_interior_edge_boundary_element_identifier(boundary_elements, boundary_edges, tri;
         interior_edge_storage_type, interior_edge_pair_storage_type)
     return InteriorInformation(interior_nodes, interior_elements, interior_edge_boundary_element_identifier)
 end
@@ -632,25 +598,27 @@ construct_interior_edge_storage(::Type{NTuple{2,F}}, v, j) where {F} = NTuple{2,
 construct_interior_edge_pair_storage(::Type{NTuple{2,F}}, vj₁, vj₂) where {F} = NTuple{2,F}((vj₁, vj₂))
 
 """
-    construct_interior_edge_boundary_element_identifier(boundary_elements, interior_nodes, DT)
+    construct_interior_edge_boundary_element_identifier(boundary_elements, boundary_edges, tri;
+        interior_edge_storage_type, interior_edge_pair_storage_type)
 
 Creates a `Dict` that maps a set of nodal indices `v` for some boundary element to the the 
 interior edges, represented as `((v₁, j₁), (v₂, j₂))` (a vector of), with `v[j₁] = v₁ → v[j₂] = v₂` an edge of the element that 
 is in the interior.
 """
-function construct_interior_edge_boundary_element_identifier(boundary_elements, ::Ts, DG, pts;
-    interior_edge_storage_type, interior_edge_pair_storage_type) where {Ts}
-    V = DelaunayTriangulation.triangle_type(Ts)
+function construct_interior_edge_boundary_element_identifier(boundary_elements, boundary_edges, tri;
+    interior_edge_storage_type, interior_edge_pair_storage_type)
+    V = DelaunayTriangulation.triangle_type(tri)
     interior_edge_boundary_element_identifier = Dict{V,Vector{interior_edge_pair_storage_type}}()
     sizehint!(interior_edge_boundary_element_identifier, length(boundary_elements))
-    idx = convex_hull(DG, pts)
-    ch_edges = [(idx[i], idx[i == length(idx) ? 1 : i + 1]) for i in eachindex(idx)]
-    for τ in boundary_elements
+    edge_tuples = Set{NTuple{2,Int64}}(
+        (get_left_nodes(boundary_edges, n), get_right_nodes(boundary_edges, n)) for n in eachindex(boundary_edges)
+    )
+    for τ in each_solid_triangle(boundary_elements)
         v = indices(τ)
         res = Vector{interior_edge_pair_storage_type}()
-        sizehint!(res, 2) # # can't have 3 edges in the interior, else it's not a boundary edge
-        for (vᵢ, vⱼ) in edges(τ)
-            if (vᵢ, vⱼ) ∉ ch_edges # # if this line is an edge of the convex hull, obviously it's not an interior edge
+        sizehint!(res, 2) # can't have 3 edges in the interior, else it's not a boundary edge
+        for (vᵢ, vⱼ) in DelaunayTriangulation.triangle_edges(τ)
+            if (vᵢ, vⱼ) ∉ edge_tuples # if this line is an edge of the boundary, obviously it's not an interior edge
                 j₁ = findfirst(vᵢ .== v)
                 j₂ = findfirst(vⱼ .== v)
                 vᵢj₁ = construct_interior_edge_storage(interior_edge_storage_type, vᵢ, j₁)
@@ -658,8 +626,8 @@ function construct_interior_edge_boundary_element_identifier(boundary_elements, 
                 vᵢj₁vⱼj₂ = construct_interior_edge_pair_storage(interior_edge_pair_storage_type, vᵢj₁, vⱼj₂)
                 push!(res, vᵢj₁vⱼj₂)
             end
+            interior_edge_boundary_element_identifier[τ] = res
         end
-        interior_edge_boundary_element_identifier[τ] = res
     end
     return interior_edge_boundary_element_identifier
 end

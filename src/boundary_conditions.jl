@@ -17,8 +17,8 @@ Returns `type ∈ (:Dudt, :dudt, "Dudt", "dudt", "du/dt")`.
 """
 is_dudt_type(type) = type ∈ (:Dudt, :dudt, "Dudt", "dudt", "du/dt")
 
-struct BoundaryConditions{BNV,F,P,DN,NN,DuN,INN,BMI,MBI,TM}
-    boundary_node_vector::BNV
+struct BoundaryConditions{Tri,F,P,DN,NN,DuN,INN,BMI,MBI,TM}
+    triangulation::Tri
     functions::F
     parameters::P
     dirichlet_nodes::DN
@@ -31,14 +31,14 @@ struct BoundaryConditions{BNV,F,P,DN,NN,DuN,INN,BMI,MBI,TM}
 end
 
 """
-    BoundaryConditions{BNV,F,P,DN,NN,DuN,INN,BMI,MBI,TM}
+    BoundaryConditions{Tri,F,P,DN,NN,DuN,INN,BMI,MBI,TM}
 
 Information representing the boundary conditions for the PDE. 
 
 # Fields 
-- `boundary_node_vector::BNV`
+- `triangulation::Tri`
 
-The vector of vectors such that each nested vector is the list of nodes for each segment, given in counter-clockwise order, and such that `first(BNV[i]) == last(BNV[i-1])`.
+The mesh.
 - `functions::F`
 
 The `Tuple` of boundary condition functions for each boundary segment, with `functions[i]` corresponding to the `i`th segment. These functions must take the form `f(x, y, t, u, p)`.
@@ -69,7 +69,7 @@ Given a node, maps it to the segment number that it belongs to.
 
 # Constructors 
 
-    BoundaryConditions(mesh::FVMGeometry, functions, types, boundary_node_vector;
+    BoundaryConditions(mesh::FVMGeometry, functions, types;
         params=Tuple(nothing for _ in (functions isa Function ? [1] : eachindex(functions))),
         u_type=Float64, float_type=Float64)
 
@@ -79,7 +79,6 @@ Constructor for the [`BoundaryConditions`](@ref) struct.
 - `mesh::FVMGeometry`: The [`FVMGeometry`](@ref) for the mesh. 
 - `functions`: The functions for each boundary segment, taking the forms `f(x, y, t, u, p)`. Can be a single function, doesn't have to be in a container (as long as only one segment is needed).
 - `types`: The classification for the boundary condition type on each segment. See [`is_dirichlet_type`](@ref), [`is_neumann_type`](@ref), and [`is_dudt_type`](@ref) for the possible values here. `types[i]` is the classification for the `i`th segment. 
-- `boundary_node_vector`: The boundary node vector for the struct: The vector of vectors such that each nested vector is the list of nodes for each segment, given in counter-clockwise order, and such that `first(boundary_node_vector[i]) == last(boundary_node_vector[i-1])`.
 
 ## Keyword Arguments 
 - `params=Tuple(nothing for _ in (functions isa Function ? [1] : eachindex(functions)))`: The parameters for the functions, with `params[i]` giving the argument `p` in `functions[i]`.
@@ -90,7 +89,7 @@ Constructor for the [`BoundaryConditions`](@ref) struct.
 The returned value is the corresponding [`BoundaryConditions`](@ref) struct. 
 """
 function BoundaryConditions end 
-function BoundaryConditions(mesh::FVMGeometry, functions, types, boundary_node_vector;
+function BoundaryConditions(mesh::FVMGeometry, functions, types;
     params=Tuple(nothing for _ in (functions isa Function ? [1] : eachindex(functions))),
     u_type=Float64, float_type=Float64)
     if !(types isa AbstractVector || types isa Tuple)
@@ -101,7 +100,7 @@ function BoundaryConditions(mesh::FVMGeometry, functions, types, boundary_node_v
     interior_or_neumann_nodes = Set{Int64}(union(get_interior_nodes(mesh), neumann_nodes))
     ∂, ∂⁻¹ = boundary_index_maps(get_boundary_edge_information(mesh))
     type_map = construct_type_map(dirichlet_nodes, neumann_nodes, dudt_nodes, ∂⁻¹, get_boundary_edge_information(mesh), types)
-    return BoundaryConditions(boundary_node_vector, classified_functions, params,
+    return BoundaryConditions(get_triangulation(get_mesh_information(mesh)), classified_functions, params,
         dirichlet_nodes, neumann_nodes, dudt_nodes, interior_or_neumann_nodes,
         ∂, ∂⁻¹, type_map
     )

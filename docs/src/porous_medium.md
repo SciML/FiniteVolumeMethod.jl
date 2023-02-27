@@ -37,7 +37,7 @@ final_time = 12.0
 ## Step 1: Define the mesh 
 RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
 L = sqrt(RmM) * (D * final_time)^(1 / (2m))
-n = 500
+n = 5
 x₁ = LinRange(-L, L, n)
 x₂ = LinRange(L, L, n)
 x₃ = LinRange(L, -L, n)
@@ -53,13 +53,14 @@ unique!(xy)
 x = getx.(xy)
 y = gety.(xy)
 r = 0.1
-(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
-mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+mesh = FVMGeometry(tri)
+points = get_points(tri)
 
 ## Step 2: Define the boundary conditions 
 bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
 types = :D
-BCs = BoundaryConditions(mesh, bc, types, BN)
+BCs = BoundaryConditions(mesh, bc, types)
 
 ## Step 3: Define the actual PDE  
 f = (x, y) -> M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
@@ -79,7 +80,7 @@ sol = solve(prob, alg; saveat=3.0)
 using CairoMakie
 
 pt_mat = Matrix(points')
-T_mat = [collect(T)[i][j] for i in 1:length(T), j in 1:3]
+T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 fig = Figure(resolution=(2131.8438f0, 684.27f0), fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(0.0, 0.05), colormap=:matter)
@@ -120,7 +121,7 @@ final_time = 10.0
 ## Step 1: Define the mesh 
 RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
 L = sqrt(RmM) * (D / (λ * (m - 1)) * (exp(λ * (m - 1) * final_time) - 1))^(1 / (2m))
-n = 500
+n = 5
 x₁ = LinRange(-L, L, n)
 x₂ = LinRange(L, L, n)
 x₃ = LinRange(L, -L, n)
@@ -136,13 +137,14 @@ unique!(xy)
 x = getx.(xy)
 y = gety.(xy)
 r = 0.07
-(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
-mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+mesh = FVMGeometry(tri)
+points = get_points(tri)
 
 ## Step 2: Define the boundary conditions 
 bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
 types = :D
-BCs = BoundaryConditions(mesh, bc, types, BN)
+BCs = BoundaryConditions(mesh, bc, types)
 
 ## Step 3: Define the actual PDE  
 f = (x, y) -> M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
@@ -162,7 +164,7 @@ sol = solve(prob, alg; saveat=2.5)
 
 ## Step 5: Visualisation 
 pt_mat = Matrix(points')
-T_mat = [collect(T)[i][j] for i in 1:length(T), j in 1:3]
+T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 fig = Figure(resolution=(2131.8438f0, 684.27f0), fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(0.0, 0.5), colormap=:matter)

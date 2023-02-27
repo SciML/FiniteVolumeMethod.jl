@@ -8,12 +8,7 @@ Evaluates the interpolant corresponding to the `FVMProblem` at the point `(x, y)
 """
 function eval_interpolant end
 @inline function eval_interpolant!(αβγ, prob::FVMProblem, x, y, T, u)
-    if T ∉ get_elements(prob)
-        T = DelaunayTriangulation.shift_triangle_1(T)
-    end
-    if T ∉ get_elements(prob)
-        T = DelaunayTriangulation.shift_triangle_1(T)
-    end
+    T, _ = DelaunayTriangulation.contains_triangle(T, get_elements(prob))
     linear_shape_function_coefficients!(αβγ, u, prob, T)
     α = getα(αβγ)
     β = getβ(αβγ)
@@ -43,16 +38,10 @@ end
     return eval_interpolant!(new_shape_coeffs, prob, x, y, T, sol(t))
 end
 
-function DelaunayTriangulation.jump_and_march(x, y, prob::FVMProblem;
-    pt_idx=DelaunayTriangulation._eachindex(get_points(prob)),
-    m=ceil(Int64, length(pt_idx)^(1 / 3)),
+function DelaunayTriangulation.jump_and_march(prob::FVMProblem, q;
+    point_indices=each_point_index(prob),
+    m=DelaunayTriangulation.default_num_samples(length(point_indices)),
     try_points=(),
-    k=DelaunayTriangulation.select_initial_point(get_points(prob), (x, y); m, pt_idx, try_points),
-    TriangleType::Type{V}=get_element_type(prob)) where {V}
-    adj = get_adjacent(prob)
-    adj2v = get_adjacent2vertex(prob)
-    DG = get_neighbours(prob)
-    pts = get_points(prob)
-    q = (x, y)
-    return jump_and_march(q, adj, adj2v, DG, pts; pt_idx, m, k, TriangleType)
+    k=DelaunayTriangulation.select_initial_point(get_points(prob), q; m, point_indices, try_points))
+    return jump_and_march(get_triangulation(prob), q; point_indices, m, try_points, k)
 end

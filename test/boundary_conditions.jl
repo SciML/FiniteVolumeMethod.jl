@@ -1,3 +1,9 @@
+using ..FiniteVolumeMethod
+include("test_setup.jl")
+using Test
+using DiffEqBase
+using DiffEqBase: dualgen
+
 ## Need to start by testing the wrapper functions 
 # Test the argument type constructors 
 for T in (Float64, Float32, Int64, Float16)
@@ -92,8 +98,8 @@ end
 @test FVM.classify_edge_type(:N, :N) == :N
 
 ## Check that we can correctly classify the edges 
-a, b, c, d, nx, ny, T, adj, adj2v, DG, pts, BN = example_triangulation()
-geo = FVMGeometry(T, adj, adj2v, DG, pts, BN)
+a, b, c, d, nx, ny, tri = example_triangulation()
+geo = FVMGeometry(tri)
 edge_information = FVM.get_boundary_edge_information(geo)
 edge_types = [:N, :D, :dudt, :D]
 dirichlet_nodes, neumann_nodes, dudt_nodes = FVM.classify_edges(edge_information, edge_types)
@@ -146,10 +152,9 @@ end
 ## Check that we get the boundary condition object correct 
 functions = (dirichlet_f2, neumann_f1, dudt_dirichlet_f1, dudt_dirichlet_f2)
 types = (:D, :N, :dudt, :dudt)
-boundary_node_vector = BN
 params = ((1.0, 2.0), nothing, nothing, nothing)
-BCs = FVM.BoundaryConditions(geo, functions, types, boundary_node_vector; params)
-@test BCs.boundary_node_vector == BN
+BCs = FVM.BoundaryConditions(geo, functions, types; params)
+@test BCs.triangulation == tri
 x, y, t, u = rand(4)
 @test all(BCs.functions[i](x, y, t, u, params[i]) == functions[i](x, y, t, u, params[i]) for i in eachindex(functions))
 @test BCs.dirichlet_nodes == [1, 2, 3, 4, 5]

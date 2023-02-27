@@ -38,8 +38,9 @@ using DelaunayTriangulation, FiniteVolumeMethod
 
 ## Step 1: Define the mesh 
 a, b, c, d, Nx, Ny = 0.0, 3.0, 0.0, 40.0, 60, 80
-(T, adj, adj2v, DG, points), BN = triangulate_structured(a, b, c, d, Nx, Ny; return_boundary_types=true)
-mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+tri = triangulate_rectangle(a, b, c, d, Nx, Ny; single_boundary = false)
+mesh = FVMGeometry(tri)
+points = get_points(tri)
 
 ## Step 2: Define the boundary conditions 
 a₁ = ((x, y, t, u::T, p) where {T}) -> one(T)
@@ -48,7 +49,7 @@ a₃ = ((x, y, t, u::T, p) where {T}) -> zero(T)
 a₄ = ((x, y, t, u::T, p) where {T}) -> zero(T)
 bc_fncs = (a₁, a₂, a₃, a₄)
 types = (:D, :N, :D, :N)
-BCs = BoundaryConditions(mesh, bc_fncs, types, BN)
+BCs = BoundaryConditions(mesh, bc_fncs, types)
 
 ## Step 3: Define the actual PDE  
 f = ((x::T, y::T) where {T}) -> zero(T)
@@ -72,7 +73,7 @@ sol = solve(prob, alg; saveat=0.5)
 
 This gives us our solution. To verify the $x$-invariance, something like the following suffices:
 ```julia
-using Test 
+using Test, StatsBase
 
 u_mat = [reshape(u, (Nx, Ny)) for u in sol.u]
 all_errs = zeros(length(sol))
@@ -121,7 +122,8 @@ using CairoMakie
 
 # The solution 
 pt_mat = Matrix(points')
-T_mat = [collect(T)[i][j] for i in 1:length(T), j in 1:3]
+T_mat = [[T...] for T in each_solid_triangle(tri)] # each_solid since tri contains some ghost triangles
+T_mat = reduce(hcat, T_mat)'
 fig = Figure(resolution=(3023.5881f0, 684.27f0), fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(0.0, 1.0), colormap=:matter)
