@@ -28,25 +28,9 @@ and we compare our results to this exact solution in the tests. See e.g. [here](
 The first step is to define the mesh:
 ```julia
 using FiniteVolumeMethod, DelaunayTriangulation
-
 a, b, c, d = 0.0, 2.0, 0.0, 2.0
-n = 5
-x₁ = LinRange(a, b, n)
-x₂ = LinRange(b, b, n)
-x₃ = LinRange(b, a, n)
-x₄ = LinRange(a, a, n)
-y₁ = LinRange(c, c, n)
-y₂ = LinRange(c, d, n)
-y₃ = LinRange(d, d, n)
-y₄ = LinRange(d, c, n)
-x = reduce(vcat, [x₁, x₂, x₃, x₄])
-y = reduce(vcat, [y₁, y₂, y₃, y₄])
-xy = [[x[i], y[i]] for i in eachindex(x)]
-unique!(xy)
-x = getx.(xy)
-y = gety.(xy)
 r = 0.03
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+tri = generate_mesh(a, b, c, d, r; gmsh_path=GMSH_PATH)
 mesh = FVMGeometry(tri)
 ```
 

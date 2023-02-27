@@ -74,7 +74,6 @@ ax = Axis(fig[1, 2], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[6], colorrange=(-10, 20), colormap=:viridis)
 ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(-10, 20), colormap=:viridis)
-save("figures/annulus_test.png", fig)
 ```
 
 ![Annulus solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/annulus_test.png?raw=true)
