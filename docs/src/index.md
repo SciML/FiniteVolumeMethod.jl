@@ -11,7 +11,7 @@ This is a package for solving partial differential equations (PDEs) of the form
 or
 
 ```math
-\boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q}(x, y, t, u) = R(x, y, t, u), \quad (x, y)^{\mathsf T} \in \Omega \subset \mathbb R^2,t>0,
+\boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q}(x, y, u) = R(x, y, u), \quad (x, y)^{\mathsf T} \in \Omega \subset \mathbb R^2,
 ```
 
 
