@@ -106,23 +106,8 @@ final_time = 10.0
 ## Step 1: Define the mesh 
 RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
 L = sqrt(RmM) * (D / (λ * (m - 1)) * (exp(λ * (m - 1) * final_time) - 1))^(1 / (2m))
-n = 5
-x₁ = LinRange(-L, L, n)
-x₂ = LinRange(L, L, n)
-x₃ = LinRange(L, -L, n)
-x₄ = LinRange(-L, -L, n)
-y₁ = LinRange(-L, -L, n)
-y₂ = LinRange(-L, L, n)
-y₃ = LinRange(L, L, n)
-y₄ = LinRange(L, -L, n)
-x = reduce(vcat, [x₁, x₂, x₃, x₄])
-y = reduce(vcat, [y₁, y₂, y₃, y₄])
-xy = [(x, y) for (x, y) in zip(x, y)]
-unique!(xy)
-x = getx.(xy)
-y = gety.(xy)
 r = 0.07
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+tri = generate_mesh(-L, L, -L, L, r; gmsh_path=GMSH_PATH)
 mesh = FVMGeometry(tri)
 points = get_points(tri)
 
