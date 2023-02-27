@@ -100,6 +100,7 @@ using CairoMakie
 using OrdinaryDiffEq
 using SteadyStateDiffEq
 using LinearSolve
+using LinearAlgebra
 using FastLapackInterface
 
 R = 1.0
@@ -359,7 +360,7 @@ prob = FVMProblem(mesh, BCs;
     final_time=final_time,
     initial_condition=initial_guess,
     steady=true)
-sol = solve(prob, DynamicSS(TRBDF2(linsolve=KrylovJL_GMRES())))
+sol = solve(prob, DynamicSS(TRBDF2(linsolve=KrylovJL_GMRES())), parallel = true)
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y", width=600, height=300)
 pt_mat = Matrix(get_points(tri)')
