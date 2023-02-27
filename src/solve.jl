@@ -12,22 +12,19 @@ corresponding to the [`FVMProblem`](@ref) given by `prob`.
 """
 function jacobian_sparsity(prob::FVMProblem)
     DG = get_neighbours(prob)
-    has_ghost_edges = DelaunayTriangulation.BoundaryIndex ∈ DelaunayTriangulation.graph(DG).V
-    num_nnz = 2(length(edges(DG)) - num_boundary_edges(prob) * has_ghost_edges) + num_points(prob) # Logic: For each edge in the triangulation we obtain two non-zero entries. If each boundary edge is adjoined with a ghost edge, though, then we need to make sure we don't count the contributions from those edges - hence why we subtract it off. Finally, the Jacobian needs to also include the node's relationship with itself, so we add on the number of points.
-    I = zeros(Int64, num_nnz)   # row indices 
-    J = zeros(Int64, num_nnz)   # col indices 
-    V = ones(num_nnz)           # values (all 1)
-    ctr = 1
-    for i in DelaunayTriangulation._eachindex(get_points(prob))
-        I[ctr] = i
-        J[ctr] = i
-        ctr += 1
-        ngh = DelaunayTriangulation.get_neighbour(DG, i)
+    I = Int64[]   # row indices 
+    J = Int64[]   # col indices 
+    V = Float64[] # values (all 1)
+    for i in each_point_index(prob)
+        push!(I, i)
+        push!(J, i)
+        push!(V, 1.0)
+        ngh = get_neighbours(DG, i)
         for j in ngh
-            if has_ghost_edges && j ≠ DelaunayTriangulation.BoundaryIndex
-                I[ctr] = i
-                J[ctr] = j
-                ctr += 1
+            if !DelaunayTriangulation.is_boundary_index(j)
+                push!(I, i)
+                push!(J, j)
+                push!(V, 1.0)
             end
         end
     end
@@ -125,7 +122,7 @@ Solves the [`FVMProblem`](@ref) given by `prob` using the algorithm `alg`.
 
 # Arguments 
 - `prob::FVMProblem`: The [`FVMProblem`](@ref).
-- `alg`: The algorithm to use for solving. See the DifferentialEquations.jl documentation for this.
+- `alg`: The algorithm to use for solving. See the DifferentialEquations.jl documentation for this. If your problem is a steady problem, then you should use an algorithm from NonlinearSolve.jl instead - note that the initial estimate in this case comes from the initial condition.
 
 # Keyword Arguments 
 - `cache_eltype::Type{F}=eltype(get_initial_condition(prob))`: The element type used for the cache vectors. 
@@ -133,10 +130,11 @@ Solves the [`FVMProblem`](@ref) given by `prob` using the algorithm `alg`.
 - `parallel=false`: Whether to use multithreading for evaluating the equations. Not currently used.
 - `specialization::Type{S}=SciMLBase.AutoSpecialize`: The specialisation level for the `ODEProblem`.
 - `chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob))))`: The chunk size for the dual numbers used in the cache vector.
-- `kwargs...`: Extra keyword arguments for `solve` as used on `ODEProblems`.
+- `kwargs...`: Extra keyword arguments for `solve` as used on `ODEProblem`s (or `NonlinearProblem`s if your problem is steady).
 
 # Output 
-The output is a solution struct, as returned from DifferentialEquations.jl.
+The output is a solution struct, as returned from DifferentialEquations.jl. If instead your problem is steady, returns a 
+solution struct as returned from NonlinearSolve.jl.
 """
 function SciMLBase.solve(prob::FVMProblem, alg;
     cache_eltype::Type{F}=eltype(get_initial_condition(prob)),
@@ -147,6 +145,12 @@ function SciMLBase.solve(prob::FVMProblem, alg;
     kwargs...) where {S,F}
     no_saveat = :saveat ∉ keys(Dict(kwargs))
     ode_problem = ODEProblem(prob; cache_eltype, jac_prototype, parallel, no_saveat, specialization, chunk_size)
-    sol = solve(ode_problem, alg; kwargs...)
-    return sol
+    if !is_steady(prob)
+        sol = solve(ode_problem, alg; kwargs...)
+        return sol
+    else
+        nonlinear_problem = NonlinearProblem{true}(ode_problem.f, ode_problem.u0, ode_problem.p)
+        sol = solve(nonlinear_problem, alg; kwargs...)
+        return sol
+    end
 end

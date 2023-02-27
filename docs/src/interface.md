@@ -7,16 +7,16 @@ The definition of a PDE requires definitions for (1) the triangular mesh, (2) th
 The struct that defines the underlying geometry is `FVMProblem`, storing information about the mesh, the boundary, the interior, and individual information about the elements. The mesh has to be triangular, and can be constructed using my other package [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl). The main constructor that we provided is:
 
 ```julia
-FVMGeometry(T::Ts, adj, adj2v, DG, pts, BNV; 
-    coordinate_type=Vector{number_type(pts)}, 
-    control_volume_storage_type_vector=NTuple{3,coordinate_type}, 
-    control_volume_storage_type_scalar=NTuple{3,number_type(pts)}, 
-    shape_function_coefficient_storage_type=NTuple{9,number_type(pts)}, 
-    interior_edge_storage_type=NTuple{2,Int64}, 
-    interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type}) where {Ts}
+FVMGeometry(tri;
+    coordinate_type=Vector{number_type(tri)},
+    control_volume_storage_type_vector=NTuple{3,coordinate_type},
+    control_volume_storage_type_scalar=NTuple{3,number_type(tri)},
+    shape_function_coefficient_storage_type=NTuple{9,number_type(tri)},
+    interior_edge_storage_type=NTuple{2,Int64},
+    interior_edge_pair_storage_type=NTuple{2,interior_edge_storage_type})
 ```
 
-Here, `T`, `adj`, `adj2v`, and `DG` are structs representing the triangles, adjacent map, adjacent-to-vertex map, and the Delaunay graph, as defined in [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl). You can also provide a `Triangulation` type from DelaunayTriangulation.jl in place of `(T, adj, adj2v, DG, pts)`. The argument `pts` represents the points of the mesh, and lastly `BNV` is used to define the nodes for the separate boundary segments. For example, suppose we have the following domain with boundary $\Gamma_1 \cup \Gamma_2 \cup \Gamma_3 \cup \Gamma_4$:
+Here, `tri` is a `Triangulation` type from DelaunayTriangulation.jl representing the mesh. An important feature in `tri` is the boundary nodes, allowing for boundary conditions to be defined. By defining these boundary nodes according to the specification in DelaunayTriangulation.jl, we can easily mix boundary conditions and different boundaries. For example, suppose we have the following domain with boundary $\Gamma_1 \cup \Gamma_2 \cup \Gamma_3 \cup \Gamma_4$:
 
 ![A segmented boundary](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/boundary_condition_example.png?raw=true)
 
@@ -30,9 +30,9 @@ The colours are used to distinguish between different segments of the boundaries
 BNV = [Γ₁, Γ₂, Γ₃, Γ₄]
 ```
 
-It is crucial that these nodes are provided in counter-clockwise order, and that their endpoints connect (i.e. the last node of the previous segment is the same as the first node of the current segment).
+It is crucial that these nodes are provided in counter-clockwise order, and that their endpoints connect (i.e. the last node of the previous segment is the same as the first node of the current segment). For inner boundaries, they are given in clockwise order, as defined in DelaunayTriangulation.jl.
 
-A good way to generate these meshes, and the `BNV`, is to use `generate_mesh` from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl) (provided you have Gmsh installed). Note also that if you already have an existing set of triangular elements, points, and a known set of boundary nodes, the function `triangulate` (also from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl)) may be of interest to you.
+A good way to generate these meshes, and the boundary nodes, is to use `generate_mesh` from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl) (provided you have Gmsh installed). Note also that if you already have an existing set of triangular elements, points, and a known set of boundary nodes, the corresponding constructor for `Triangulation` (also from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl)) may be of interest to you. Constrained Delaunay triangulations are in the works, but for now `generate_mesh` is sufficient.
 
 The other keyword arguments in the function are just details about how certain variables are stored. See the docstrings in the sidebar.
 
@@ -41,12 +41,12 @@ The other keyword arguments in the function are just details about how certain v
 The next component to define is the set of boundary conditions, represented via the struct `BoundaryConditions`. The boundary condition functions are all assumed to take the form `f(x, y, t, u, p)`, where `p` are extra parameters that you provide. We provide the following constructor:
 
 ```julia
-BoundaryConditions(mesh::FVMGeometry, functions, types, boundary_node_vector;
+BoundaryConditions(mesh::FVMGeometry, functions, types;
     params=Tuple(nothing for _ in (functions isa Function ? [1] : eachindex(functions))),
     u_type=Float64, float_type=Float64)
 ```
 
-Here, `functions` is a tuple for the functions for the boundary condition on each segment, where `functions[i]` should correspond to the segment represented by `BNV[i]`. Then, `types` is used to declare each segment as being of *Dirichlet*, *time-dependent Dirichlet*, or *Neumann* type, with `types[i]` corresponding to the segment represented by `BNV[i]`. This variable is defined according to the rules:
+Here, `functions` is a tuple for the functions for the boundary condition on each segment, where `functions[i]` should correspond to the segment the `i`th boundary segment. Then, `types` is used to declare each segment as being of *Dirichlet*, *time-dependent Dirichlet*, or *Neumann* type, with `types[i]` corresponding to the `i`th boundary segment. This variable is defined according to the rules:
 
 ```julia
 is_dirichlet_type(type) = type ∈ (:Dirichlet, :D, :dirichlet, "Dirichlet", "D", "dirichlet")
@@ -54,7 +54,7 @@ is_neumann_type(type) = type ∈ (:Neumann, :N, :neumann, "Neumann", "N", "neuma
 is_dudt_type(type) = type ∈ (:Dudt, :dudt, "Dudt", "dudt", "du/dt")
 ```
 
-For example, `types = (:dudt, :neumann, :D, :D)` means that the first segment has a time-dependent Dirichlet boundary condition, the second a homogeneous Neumann boundary condition, and the last two segments have Dirichlet boundary conditions (with possibly different functions). The argument `boundary_node_vector` is the same as `BNV`. To provide the parameters `p` for each function, the keyword argument `params` is provided, letting `params[i]` be the set of parameters used when calling `functions[i]`. The type of the solution `u` can be declared using `u_type`, and the numbers representing the coordinates can be declared using `float_type`. Note that the values for any functions corresponding to a Neumann boundary condition are currently ignored (equivalent to assuming the function is zero).
+For example, `types = (:dudt, :neumann, :D, :D)` means that the first segment has a time-dependent Dirichlet boundary condition, the second a homogeneous Neumann boundary condition, and the last two segments have Dirichlet boundary conditions (with possibly different functions). To provide the parameters `p` for each function, the keyword argument `params` is provided, letting `params[i]` be the set of parameters used when calling `functions[i]`. The type of the solution `u` can be declared using `u_type`, and the numbers representing the coordinates can be declared using `float_type`. Note that the values for any functions corresponding to a Neumann boundary condition are currently ignored (equivalent to assuming the function is zero).
 
 ## FVMProblem: Defining and solving the problem
 
@@ -85,7 +85,9 @@ If `reaction_function === nothing`, then it is assumed that the reaction functio
 
 The initial condition can be provided using the `initial_condition` keyword argument, and should be a vector of values so that `initial_condition[i]` is the value of `u` at `t = 0` and `(x, y) = get_point(pts, i)`.
 
-Finally, the time span that the solution is solved over, `(initial_time, final_time)`, can be defined using the keyword arguments `initial_time` and `final_time`. 
+The time span that the solution is solved over, `(initial_time, final_time)`, can be defined using the keyword arguments `initial_time` and `final_time`. 
+
+You can solve steady problems by setting `steady = true`, in which case algorithms from NonlinearSolve.jl can be used for solving the problem with `∂u/∂t = 0`.
 
 ### Solving the FVMProblem
 
@@ -102,7 +104,7 @@ alg = TRBDF2(linsolve=KLUFactorization(), autodiff=true)
 sol = solve(prob, alg)
 ```
 
-The solution will be the same type of result returned from `OrdinaryDiffEq.jl`, with `sol.u[i]` the solution at `sol.t[i]`, and `get_point(sol.u[i], j)` is the solution at `(x, y, t) = (get_point(pts, j)..., sol.t[i])`.
+The solution will be the same type of result returned from `OrdinaryDiffEq.jl`, with `sol.u[i]` the solution at `sol.t[i]`, and `get_point(sol.u[i], j)` is the solution at `(x, y, t) = (get_point(prob, j)..., sol.t[i])`.
 
 The `solve` command is defined as follows:
 ```julia
@@ -123,6 +125,8 @@ The `parallel` keyword is supported as of v3.0. Be careful that your flux vector
 The `specialization` keyword can be used to set the specialization level for the `ODEProblem`. [See here for more details](https://diffeq.sciml.ai/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation).
 
 The `chunk_size` argument sets the chunk size used for automatic differentiation when defining the cache vectors. 
+
+For examples of solving steady problems, see the Laplace's equation and Mean exit time examples in the sidebar.
 
 ## Linear Interpolants
 

@@ -46,7 +46,8 @@ The time to start solving the PDE at.
 The time to stop solving the PDE at. 
 - `steady::Bool`
 
-Whether `∂u/∂t = 0` or not. Not currently used; only non-steady problems are currently supported (see https://github.com/DanielVandH/FiniteVolumeMethod.jl/issues/16).
+Whether `∂u/∂t = 0` or not. When this is `true`, the problem is defined as a `NonlinearProblem` with initial guess coming 
+from the initial condition above.
 
 # Constructor 
 
@@ -85,7 +86,7 @@ Constructor for the [`FVMProblem`](@ref).
 - `initial_condition`: The initial condition for the problem, with `initial_condition[i]` the initial value at the `i`th node of the mesh. 
 - `initial_time=0.0`: The time to start solving the PDE at. 
 - `final_time`: The time to stop solving the PDE at. 
-- `steady::Bool`: Whether `∂u/∂t = 0` or not. Not currently used; only non-steady problems are currently supported.
+- `steady::Bool`: Whether `∂u/∂t = 0` or not. If the problem is steady, then the initial estimate used for the nonlinear solver that finds the steady state is given by the initial condition, and `final_time` is set to `∞`.
 
 # Outputs 
 Returns the [`FVMProblem`](@ref) object.
@@ -130,6 +131,7 @@ get_initial_condition(prob::FVMProblem) = prob.initial_condition
 get_initial_time(prob::FVMProblem) = prob.initial_time
 get_final_time(prob::FVMProblem) = prob.final_time
 get_time_span(prob::FVMProblem) = (get_initial_time(prob), get_final_time(prob))
+is_steady(prob::FVMProblem) = prob.steady
 
 """
     construct_flux_function(iip_flux,
@@ -241,21 +243,23 @@ end
 @inline get_interior_edges(prob::FVMProblem, T) = get_interior_edges(get_mesh(prob), T)
 @inline get_boundary_elements(prob::FVMProblem) = get_boundary_elements(get_mesh(prob))
 @inline DelaunayTriangulation.get_point(prob::FVMProblem, j) = get_point(get_mesh(prob), j)
-@inline get_points(prob::FVMProblem) = get_points(get_mesh(prob))
+@inline DelaunayTriangulation.get_points(prob::FVMProblem) = get_points(get_mesh(prob))
 @inline get_volumes(prob::FVMProblem, j) = get_volumes(get_mesh(prob), j)
 @inline get_reaction(prob::FVMProblem, x, y, t, u) = prob.reaction_function(x, y, t, u, prob.reaction_parameters)
 @inline get_dirichlet_nodes(prob::FVMProblem) = get_dirichlet_nodes(get_boundary_conditions(prob))
 @inline get_neumann_nodes(prob::FVMProblem) = get_neumann_nodes(get_boundary_conditions(prob))
 @inline get_dudt_nodes(prob::FVMProblem) = get_dudt_nodes(get_boundary_conditions(prob))
-@inline get_boundary_nodes(prob::FVMProblem) = get_boundary_nodes(get_mesh(prob))
+@inline DelaunayTriangulation.get_boundary_nodes(prob::FVMProblem) = get_boundary_nodes(get_mesh(prob))
 @inline get_boundary_function_parameters(prob::FVMProblem, i) = get_boundary_function_parameters(get_boundary_conditions(prob), i)
-@inline get_neighbours(prob::FVMProblem) = get_neighbours(get_mesh(prob))
+@inline DelaunayTriangulation.get_neighbours(prob::FVMProblem) = get_neighbours(get_mesh(prob))
 @inline map_node_to_segment(prob::FVMProblem, j) = map_node_to_segment(get_boundary_conditions(prob), j)
 @inline is_interior_or_neumann_node(prob::FVMProblem, j) = is_interior_or_neumann_node(get_boundary_conditions(prob), j)
 @inline evaluate_boundary_function(prob::FVMProblem, idx, x, y, t, u) = evaluate_boundary_function(get_boundary_conditions(prob), idx, x, y, t, u)
 @inline DelaunayTriangulation.num_points(prob::FVMProblem) = DelaunayTriangulation.num_points(get_points(prob))
-@inline num_boundary_edges(prob::FVMProblem) = num_boundary_edges(get_mesh(prob)) # This will be the same value as the above, but this makes the code clearer to read
-@inline get_adjacent(prob::FVMProblem) = get_adjacent(get_mesh(prob))
-@inline get_adjacent2vertex(prob::FVMProblem) = get_adjacent2vertex(get_mesh(prob))
+@inline DelaunayTriangulation.num_boundary_edges(prob::FVMProblem) = num_boundary_edges(get_mesh(prob)) # This will be the same value as the above, but this makes the code clearer to read
+@inline DelaunayTriangulation.get_adjacent(prob::FVMProblem) = get_adjacent(get_mesh(prob))
+@inline DelaunayTriangulation.get_adjacent2vertex(prob::FVMProblem) = get_adjacent2vertex(get_mesh(prob))
 @inline get_elements(prob::FVMProblem) = get_elements(get_mesh(prob))
 @inline get_element_type(prob::FVMProblem) = get_element_type(get_mesh(prob))
+@inline get_triangulation(prob::FVMProblem) = get_triangulation(get_mesh_information(get_mesh(prob)))
+@inline DelaunayTriangulation.each_point_index(prob::FVMProblem) = each_point_index(get_triangulation(prob))

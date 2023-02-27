@@ -1,3 +1,8 @@
+using ..FiniteVolumeMethod
+include("test_setup.jl")
+using Test
+using SciMLBase
+
 ## Make sure that the flux function is being constructed correctly
 for iip_flux in (true, false)
         flux_function = nothing
@@ -176,14 +181,15 @@ SHOW_WARNTYPE && @code_warntype reaction_fnc(x, y, t, u, nothing)
 @test reaction_fnc(x, y, t, Float32(0), nothing) === 0.0f0
 
 ## Now check that the object is constructed correctly 
-a, b, c, d, nx, ny, T, adj, adj2v, DG, pts, BN = example_triangulation()
+a, b, c, d, nx, ny, tri = example_triangulation()
 for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
     for control_volume_storage_type_vector in (Vector{coordinate_type}, SVector{3,coordinate_type})
         for control_volume_storage_type_scalar in (Vector{Float64}, SVector{3,Float64})
             for shape_function_coefficient_storage_type in (Vector{Float64}, NTuple{9,Float64})
                 for interior_edge_storage_type in (Vector{Int64}, NTuple{2,Int64},)
                     for interior_edge_pair_storage_type in (Vector{interior_edge_storage_type}, NTuple{2,interior_edge_storage_type})
-                        geo = FVMGeometry(T, adj, adj2v, DG, pts, BN;
+                        local x, y, t, reaction_function, reaction_parameters, u, delay_function, delay_parameters
+                        geo = FVMGeometry(tri;
                             coordinate_type, control_volume_storage_type_vector,
                             control_volume_storage_type_scalar, shape_function_coefficient_storage_type,
                             interior_edge_storage_type, interior_edge_pair_storage_type)
@@ -195,15 +201,17 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                         dudt_dirichlet_f2 = (x, y, t, u, p) -> u + y * t
                         functions = (dirichlet_f2, neumann_f1, dudt_dirichlet_f1, dudt_dirichlet_f2)
                         types = (:D, :N, :dudt, :dudt)
-                        boundary_node_vector = BN
                         params = ((1.0, 2.0), nothing, nothing, nothing)
-                        BCs = FVM.BoundaryConditions(geo, functions, types, boundary_node_vector; params)
+                        BCs = FVM.BoundaryConditions(geo, functions, types; params)
                         iip_flux = true
                         flux_function = (q, x, y, t, α, β, γ, p) -> (q[1] = x * y * t; q[2] = t; nothing)
                         initial_condition = zeros(20)
                         final_time = 5.0
                         prob = FVMProblem(geo, BCs; iip_flux, flux_function, initial_condition, final_time)
+                        @test FVM.get_triangulation(prob) == tri 
+                        @test each_point_index(prob) == each_point_index(tri)
                         @test isinplace(prob) == iip_flux
+                        @test !FiniteVolumeMethod.is_steady(prob)
                         @test prob.boundary_conditions == BCs
                         @test prob.flux_function == flux_function
                         @test prob.initial_condition == initial_condition
@@ -282,7 +290,7 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                         @test prob.steady == false
 
                         ## Test some of the getters 
-                        for V in T
+                        for V in each_solid_triangle(tri)
                             @test FVM.gets(prob, V) == prob.mesh.element_information_list[V].shape_function_coefficients
                             for i in 1:9
                                 @test FVM.gets(prob, V, i) == prob.mesh.element_information_list[V].shape_function_coefficients[i]
@@ -329,8 +337,8 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                             @test FVM.get_interior_edges(prob, V) == E
                         end
                         @test FVM.get_boundary_elements(prob) == prob.mesh.boundary_information.boundary_elements
-                        for j in axes(pts, 2)
-                            @test get_point(prob, j) == Tuple(pts[:, j])
+                        for j in each_point_index(tri)
+                            @test get_point(prob, j) == Tuple(get_points(tri)[:, j])
                             @test FVM.get_volumes(prob, j) == prob.mesh.volumes[j]
                         end
                         x, y, t, u = rand(4)
@@ -352,17 +360,17 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                         @test FVM.evaluate_boundary_function(prob, 2, x, y, t, u) ≈ prob.boundary_conditions.functions[2](x, y, t, u, FVM.get_boundary_function_parameters(prob, 2))
                         @test FVM.evaluate_boundary_function(prob, 3, x, y, t, u) ≈ prob.boundary_conditions.functions[3](x, y, t, u, FVM.get_boundary_function_parameters(prob, 3))
                         @test FVM.evaluate_boundary_function(prob, 4, x, y, t, u) ≈ prob.boundary_conditions.functions[4](x, y, t, u, FVM.get_boundary_function_parameters(prob, 4))
-                        @test FVM.get_neighbours(prob) == DG
+                        @test FVM.get_neighbours(prob) == tri.graph
                         @test FVM.get_initial_condition(prob) == prob.initial_condition
                         @test FVM.get_initial_time(prob) == prob.initial_time
                         @test FVM.get_final_time(prob) == prob.final_time
                         @test FVM.get_time_span(prob) == (prob.initial_time, prob.final_time)
-                        @test FVM.get_points(prob) == pts
-                        @test num_points(prob) == size(pts, 2)
+                        @test FVM.get_points(prob) == get_points(tri)
+                        @test num_points(prob) == num_points(tri)
                         @test FVM.num_boundary_edges(prob) == length(FVM.get_boundary_nodes(prob))
-                        @test FVM.get_adjacent(prob) == adj
-                        @test FVM.get_adjacent2vertex(prob) == adj2v
-                        @test FVM.get_elements(prob) == T
+                        @test FVM.get_adjacent(prob) == get_adjacent(tri)
+                        @test FVM.get_adjacent2vertex(prob) == get_adjacent2vertex(tri)
+                        @test FVM.get_elements(prob) == each_solid_triangle(tri)
                         @test FVM.get_element_type(prob) == NTuple{3,Int64}
                     end
                 end

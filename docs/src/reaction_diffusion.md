@@ -25,19 +25,19 @@ The following code solves this problem numerically.
 using FiniteVolumeMethod, DelaunayTriangulation
 
 ## Step 1: Generate the mesh 
-n = 500
-r = LinRange(1, 1, 1000)
-θ = LinRange(0, 2π, 1000)
+r = LinRange(1, 1, 100)
+θ = LinRange(0, 2π, 100)
 x = @. r * cos(θ)
 y = @. r * sin(θ)
 r = 0.05
-(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
-mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+mesh = FVMGeometry(tri)
+points = get_points(tri)
 
 ## Step 2: Define the boundary conditions 
 bc = (x, y, t, u, p) -> u
 types = :dudt
-BCs = BoundaryConditions(mesh, bc, types, BN)
+BCs = BoundaryConditions(mesh, bc, types)
 
 ## Step 3: Define the actual PDE  
 using Bessels
@@ -59,7 +59,7 @@ sol = solve(prob, alg; saveat=0.025)
 using CairoMakie 
 
 pt_mat = Matrix(points')
-T_mat = [collect(T)[i][j] for i in 1:length(T), j in 1:3]
+T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 fig = Figure(resolution=(2131.8438f0, 684.27f0), fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(1, 1.1), colormap=:matter)

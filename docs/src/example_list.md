@@ -16,9 +16,15 @@ using LinearSolve
 using CairoMakie 
 using Bessels
 using Test
+using StatsBase
+using SteadyStateDiffEq 
+using LinearAlgebra
+using NonlinearSolve 
+using FastLapackInterface
+using Krylov
 ```
 
-More detail is given in the tests. 
+More detail is given in the tests. In particular, if you want to see *just* the code, then see the corresponding test files.
 
 We list all the examples below, but solve them in their respective sections of the sidebar.
 
@@ -108,3 +114,56 @@ We treat this problem numerically and consider it to a travelling wave from the 
 ## Example VI: Using the linear interpolants 
 
 The purpose of this example is to demonstrate how to efficiently make use of the linear interpolant defined by the method, and we demonstrate it on the same PDE as in Example V.
+
+## Example VII: Diffusion equation on an annulus 
+
+The purpose of this example is to show how we can solve problems on a multiply-connected domain, namely an annulus. The problem we solve is 
+
+```math
+\begin{equation*}
+\begin{array}{rcll}
+\dfrac{\partial u}{\partial t} & = & \boldsymbol{\nabla}^2 u & \boldsymbol{x} \in \Omega, t>0, \\
+\boldsymbol{\nabla} u \boldsymbol{\cdot}  \hat{\boldsymbol n} = 0 & \boldsymbol{x} \in \mathcal D(0, 1), t>0, \\
+u(x, y, t) & = & c(t) & \boldsymbol{x} \in \mathcal D(0, 0.2),  t>0, \\
+u(x, y, 0) & = & u_0(x, y) & \boldsymbol{x} \in \Omega,
+\end{array}
+\end{equation*}
+```
+
+where $\mathcal D(0, r)$ is a circle of radius $r$ centred at the origin, $\Omega$ is the annulus bteween $\mathcal D(0, 0.2)$ and $\mathcal D(0, 1)$, $c(t) = 50[1-\exp(-0.5t)]$, and 
+
+```math 
+u_0(x) =10\mathrm{e}^{-25\left(\left(x + \frac12\right)^2 + \left(y + \frac12\right)^2\right)} - 10\mathrm{e}^{-45\left(\left(x - \frac12\right)^2 + \left(y - \frac12\right)^2\right)} - 5\mathrm{e}^{-50\left(\left(x + \frac{3}{10}\right)^2 + \left(y + \frac12\right)^2\right)}.
+```
+
+## Example VIII: Laplace's equation
+
+The purpose of this example is to show how we can solve a steady problem. We solve Laplace's equation, given by 
+
+```math
+\begin{equation*}
+\begin{array}{rcll}
+\boldsymbol{\nabla}^2 u(x, y) & = & 0 & 0 < x, y < \pi, \\
+u(x, 0) & = & \sinh(x) & 0 < x < \pi,
+u(x, \pi) & = & -\sinh(x) & 0 < x < \pi, 
+u(0, y) & = & 0 & 0 < y < \pi, \\
+u(\pi, y) & = & \sinh(\pi)\cos(y) & 0 < x < \pi,
+\end{array}
+\end{equation*}
+```
+
+The exact solution to this problem is $u(x, y) = \sinh(x)\cos(y)$.
+
+## Example IX: Mean exit time problems 
+
+Here we give a further demonstration of how we can solve steady problems, turning to a specific time of problem known as a mean exit time problem, defined by 
+
+```math
+\begin{equation*}
+\begin{array}{rcll}
+D\boldsymbol{\nabla}^2 T & = & -1,
+\end{array}
+\end{equation*}
+```
+
+where the boundary conditions could be either absorbing, reflecting, or a combination of the two, and $T$ is the mean exit time of a particle with diffusivity $D$ out of the given domain. We cover many examples, reproducing some of the work in my papers at https://iopscience.iop.org/article/10.1088/1367-2630/abe60d and https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d.

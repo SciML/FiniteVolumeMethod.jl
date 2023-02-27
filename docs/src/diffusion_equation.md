@@ -30,7 +30,7 @@ The first step is to define the mesh:
 using FiniteVolumeMethod, DelaunayTriangulation
 
 a, b, c, d = 0.0, 2.0, 0.0, 2.0
-n = 500
+n = 5
 x₁ = LinRange(a, b, n)
 x₂ = LinRange(b, b, n)
 x₃ = LinRange(b, a, n)
@@ -46,8 +46,8 @@ unique!(xy)
 x = getx.(xy)
 y = gety.(xy)
 r = 0.03
-(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
-mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+mesh = FVMGeometry(tri)
 ```
 
 Here I start by defining the square boundary as four segments, but then to have a single boundary segment I combine the segments into a single vector. I then create the mesh using `generate_mesh`, and then put the geometry together using `FVMGeometry`. 
@@ -56,7 +56,7 @@ Now having defined the mesh, let us define the boundary conditions. We have a ho
 ```julia
 bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
 type = :Dirichlet # or :D or :dirichlet or "D" or "Dirichlet"
-BCs = BoundaryConditions(mesh, bc, type, BN)
+BCs = BoundaryConditions(mesh, bc, type)
 ```
 
 Next we must define the actual PDE. The initial condition, diffusion, and reaction functions are defined as follows:
@@ -67,6 +67,7 @@ R = ((x, y, t, u::T, p) where {T}) -> zero(T)
 ```
 Using `f`, we compute the initial condition vector:
 ```julia
+points = get_points(tri)
 u₀ = @views f.(points[1, :], points[2, :])
 ```
 We want the flux function to be computed in-place when it is constructed from `D`, so we will set `iip_flux = true`. Lastly, we want to solve up to `t = 0.5`, so `final_time = 0.5` (`initial_time = 0.0` is the default for the initial time). 
@@ -111,7 +112,7 @@ You can use `sol` as you would any other solution from `DifferentialEquations.jl
 using CairoMakie
 
 pt_mat = Matrix(points')
-T_mat = [collect(T)[i][j] for i in 1:length(T), j in 1:3]
+T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 fig = Figure(resolution=(2068.72f0, 686.64f0), fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600)
 xlims!(ax, a, b)
