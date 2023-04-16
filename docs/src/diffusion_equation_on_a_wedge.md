@@ -33,16 +33,15 @@ Note that the PDE is provided in polar form, but Cartesian coordinates are assum
 
 Let us now solve the problem. Again, we start by defining the mesh. Since the boundary condition is different on each segment, we keep each segment as a different vector.
 ```julia
-using DelaunayTriangulation, FiniteVolumeMethod
+using DelaunayTriangulation, FiniteVolumeMethod, ElasticArrays
 
+## Step 1: Generate the mesh 
 n = 50
 α = π / 4
 
 # The bottom edge 
-r₁ = LinRange(0, 1, n)
-θ₁ = LinRange(0, 0, n)
-x₁ = @. r₁ * cos(θ₁)
-y₁ = @. r₁ * sin(θ₁)
+x₁ = [0.0,1.0]
+y₁ = [0.0,0.0]
 
 # Arc 
 r₂ = LinRange(1, 1, n)
@@ -51,16 +50,16 @@ x₂ = @. r₂ * cos(θ₂)
 y₂ = @. r₂ * sin(θ₂)
 
 # Upper edge 
-r₃ = LinRange(1, 0, n)
-θ₃ = LinRange(α, α, n)
-x₃ = @. r₃ * cos(θ₃)
-y₃ = @. r₃ * sin(θ₃)
+x₃ = [cos(α), 0.0]
+y₃ = [sin(α), 0.0]
 
 # Combine and create the mesh 
 x = [x₁, x₂, x₃]
 y = [y₁, y₂, y₃]
-r = 0.01
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points = ElasticMatrix{Float64}(undef, 2, 0))
+tri = triangulate(points; boundary_node)
+A = get_total_area(tri)
+refine!(tri; max_area = 1e-4A)
 mesh = FVMGeometry(tri)
 ```
 
@@ -112,4 +111,17 @@ mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(0, 0.5), colormap=:matter)
 ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0, 0.5), colormap=:matter)
 ```
-![Heat equation on a wedge solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/diffusion_equation_wedge_test.png?raw=true)
+
+```@raw html
+<figure>
+    <img src='../figures/diffusion_equation_wedge_test.png', alt='Diffusion equation on a wedge'><br>
+</figure>
+```
+
+Here is a more detailed comparison with the exact solution.
+
+```@raw html
+<figure>
+    <img src='../figures/heat_equation_wedge_test_error.png', alt='Diffusion equation on a wedge compared to exact solution'><br>
+</figure>
+```

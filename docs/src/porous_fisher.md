@@ -59,7 +59,7 @@ D, λ = 0.9, 0.99
 diff_parameters = D
 reac_parameters = λ
 final_time = 50.0
-u₀ = [f(points[:, i]...) for i in axes(points, 2)]
+u₀ = [f(x, y) for (x, y) in points]
 prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc, reaction_function=reac_fnc,
     diffusion_parameters=diff_parameters, reaction_parameters=reac_parameters,
     initial_condition=u₀, final_time)
@@ -121,7 +121,7 @@ The results we obtain are shown below, with the exact travelling wave from the o
 using CairoMakie 
 
 # The solution 
-pt_mat = Matrix(points')
+pt_mat = points
 T_mat = [[T...] for T in each_solid_triangle(tri)] # each_solid since tri contains some ghost triangles
 T_mat = reduce(hcat, T_mat)'
 fig = Figure(resolution=(3023.5881f0, 684.27f0), fontsize=38)
@@ -139,4 +139,8 @@ colors = cgrad(:matter, length(sol) - large_time_idx + 1; categorical=false)
 lines!(ax, exact_z_vals, exact_travelling_wave_values, color=:red, linewidth=4, linestyle=:dash)
 ```
 
-![Travelling wave problem](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/travelling_wave_problem_test.png?raw=true)
+```@raw html
+<figure>
+    <img src='../figures/travelling_wave_problem_test.png', alt='Travelling wave problem'><br>
+</figure>
+```

@@ -1,12 +1,6 @@
 # List of Examples and Setup
 
-We provide six examples in the sidebar. For running these examples, it is assumed that you have installed Gmsh, and have it available. I currently have set
-
-```julia
-GMSH_PATH = "./gmsh-4.9.4-Windows64/gmsh.exe"
-```
-
-The following packages are also loaded:
+We provide many examples in the sidebar. The following packages are loaded:
 
 ```julia
 using FiniteVolumeMethod
@@ -19,6 +13,7 @@ using Test
 using StatsBase
 using SteadyStateDiffEq 
 using LinearAlgebra
+using ElasticArrays
 using NonlinearSolve 
 using FastLapackInterface
 using Krylov

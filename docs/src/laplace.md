@@ -43,9 +43,15 @@ using SteadyStateDiffEq
 using Krylov
 
 ## Define the problem
-a, b = 0.0, π
-c, d = 0.0, π
-tri = generate_mesh(a, b, c, d, 0.2; gmsh_path=GMSH_PATH, single_boundary=false)
+a, b = 0.0, 1.0π
+c, d = 0.0, 1.0π
+p1 = (a, c)
+p2 = (b, c)
+p3 = (b, d)
+p4 = (a, d)
+points = [p1, p2, p3, p4]
+tri = triangulate(points; boundary_nodes=[[1, 2], [2, 3], [3, 4], [4, 1]], rng)
+refine!(tri; max_area=1e-4get_total_area(tri))
 mesh = FVMGeometry(tri)
 bc1 = (x, y, t, u, p) -> sinh(x)
 bc2 = (x, y, t, u, p) -> sinh(π) * cos(y)
@@ -77,10 +83,14 @@ sol = solve(prob, alg, parallel=true)
 ## Plot 
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")
-pt_mat = Matrix(get_points(tri)')
+pt_mat = get_points(tri)
 T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 msh = mesh!(ax, pt_mat, T_mat, color=sol, colorrange=(-15, 15))
 Colorbar(fig[1, 2], msh)
 ```
 
-![Circle mean exit time](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/laplace_equation.png?raw=true)
+```@raw html
+<figure>
+    <img src='../figures/laplace_equation.png', alt='Laplace's equation'><br>
+</figure>
+```

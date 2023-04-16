@@ -5,17 +5,23 @@ using CairoMakie
 using OrdinaryDiffEq 
 using LinearSolve
 using StatsBase
+using ElasticArrays
 using Bessels
+using StableRNGs
 
-n = 50
-r = LinRange(1, 1, 1000)
-θ = LinRange(0, 2π, 1000)
+r = LinRange(1, 1, 100)
+θ = LinRange(0, 2π, 100)
 x = @. r * cos(θ)
 y = @. r * sin(θ)
-r = 0.02
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
-points = get_points(tri)
+x[end] = x[begin];
+y[end] = y[begin]; # make sure the curve connects at the endpoints
+boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
+rng = StableRNG(191919)
+tri = triangulate(points; boundary_nodes, rng)
+A = get_total_area(tri)
+refine!(tri; max_area=1e-4A, rng)
 mesh = FVMGeometry(tri)
+points = get_points(tri)
 bc = (x, y, t, u, p) -> u
 types = :dudt
 BCs = BoundaryConditions(mesh, bc, types)

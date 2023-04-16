@@ -1,0 +1,18 @@
+{
+	"creators": [
+		{
+			"affiliation": "Queensland University of Technology",
+			"name": "VandenHeuvel, Daniel John",
+			"orcid": "0000-0001-6462-0135"
+		}
+	],
+	"description": "FiniteVolumeMethod.jl: Solver for two-dimensional conservation equations using the finite volume method.",
+	"keywords": [
+		"partial-differential-equations",
+		"finite-volume-method"
+	],
+	"license": "MIT",
+	"title": "FiniteVolumeMethod.jl",
+	"upload_type": "software",
+	"language": "eng"
+}

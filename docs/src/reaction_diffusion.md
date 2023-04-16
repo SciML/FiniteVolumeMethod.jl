@@ -22,15 +22,19 @@ where $I_0$ is the modified Bessel function of the first kind of order zero. (Th
 
 The following code solves this problem numerically.
 ```julia 
-using FiniteVolumeMethod, DelaunayTriangulation
+using FiniteVolumeMethod, DelaunayTriangulation, ElasticArrays
 
 ## Step 1: Generate the mesh 
 r = LinRange(1, 1, 100)
 θ = LinRange(0, 2π, 100)
 x = @. r * cos(θ)
 y = @. r * sin(θ)
-r = 0.05
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+x[end] = x[begin]
+y[end] = y[begin] # make sure the curve connects at the endpoints
+boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
+tri = triangulate(points; boundary_nodes)
+A = get_total_area(tri)
+refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 points = get_points(tri)
 
@@ -68,4 +72,17 @@ mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(1, 1.1), colormap=:matter)
 ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(1, 1.1), colormap=:matter)
 ```
-![Reaction-diffusion equation on a circle solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/reaction_diffusion_equation_test.png?raw=true)
+
+```@raw html
+<figure>
+    <img src='../figures/reaction_diffusion_test.png', alt='Reaction-diffusion equation on a circle solution'><br>
+</figure>
+```
+
+Here is a more detailed comparison with the exact solution.
+
+```@raw html
+<figure>
+    <img src='../figures/reaction_diffusion_equation_test_error.png.png', alt='Reaction-diffusion equation on a circle solution compared to the exact solution'><br>
+</figure>
+```

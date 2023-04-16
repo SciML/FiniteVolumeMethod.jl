@@ -338,7 +338,7 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                         end
                         @test FVM.get_boundary_elements(prob) == prob.mesh.boundary_information.boundary_elements
                         for j in each_point_index(tri)
-                            @test get_point(prob, j) == Tuple(get_points(tri)[:, j])
+                            @test get_point(prob, j) == Tuple(get_points(tri)[j])
                             @test FVM.get_volumes(prob, j) == prob.mesh.volumes[j]
                         end
                         x, y, t, u = rand(4)

@@ -3,6 +3,7 @@ include("test_setup.jl")
 using CairoMakie
 using LinearSolve
 using OrdinaryDiffEq
+using ReferenceTests
 using Test
 
 ## Generate the mesh. 
@@ -10,7 +11,8 @@ using Test
 # and is given in counter-clockwise order. The inner boundaries then follow. 
 R₁ = 0.2
 R₂ = 1.0
-θ = LinRange(0, 2π, 100)
+θ = collect(LinRange(0, 2π, 100))
+θ[end] = 0.0 # get the endpoints to match
 x = [
     [R₂ .* cos.(θ)],
     [reverse(R₁ .* cos.(θ))]
@@ -19,7 +21,10 @@ y = [
     [R₂ .* sin.(θ)],
     [reverse(R₁ .* sin.(θ))]
 ]
-tri = generate_mesh(x, y, 0.2; gmsh_path=GMSH_PATH)
+boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+tri = triangulate(points; boundary_nodes)
+A = get_total_area(tri)
+refine!(tri;max_area=1e-4A)
 mesh = FVMGeometry(tri)
 
 ## Define the boundary conditions 
@@ -34,7 +39,7 @@ initial_condition_f = (x, y) -> begin
 end
 diffusion = (x, y, t, u, p) -> one(u)
 points = get_points(tri)
-u₀ = @views initial_condition_f.(points[1, :], points[2, :])
+u₀ = [initial_condition_f(x, y) for (x, y) in points]
 final_time = 2.0
 prob = FVMProblem(mesh, BCs;
     diffusion_function=diffusion,
@@ -46,7 +51,7 @@ alg = TRBDF2(linsolve=KLUFactorization())
 sol = solve(prob, alg, parallel=false, saveat=0.2)
 
 ## Visualise 
-pt_mat = Matrix(points')
+pt_mat = points
 T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 fig = Figure(resolution=(2068.72f0, 686.64f0), fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600)
@@ -55,4 +60,4 @@ ax = Axis(fig[1, 2], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[6], colorrange=(-10, 20), colormap=:viridis)
 ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(-10, 20), colormap=:viridis)
-SAVE_FIGURE && save("figures/annulus_test.png", fig)
+@test_reference "../docs/src/figures/annulus_test.png" fig

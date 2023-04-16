@@ -8,7 +8,7 @@ Evaluates the interpolant corresponding to the `FVMProblem` at the point `(x, y)
 """
 function eval_interpolant end
 @inline function eval_interpolant!(αβγ, prob::FVMProblem, x, y, T, u)
-    T, _ = DelaunayTriangulation.contains_triangle(T, get_elements(prob))
+    T, _ = DelaunayTriangulation.contains_triangle(get_triangulation(prob), T)
     linear_shape_function_coefficients!(αβγ, u, prob, T)
     α = getα(αβγ)
     β = getβ(αβγ)

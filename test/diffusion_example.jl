@@ -1,30 +1,25 @@
-using ..FiniteVolumeMethod 
+using ..FiniteVolumeMethod
 include("test_setup.jl")
 using Test
-using CairoMakie 
-using OrdinaryDiffEq 
+using CairoMakie
+using OrdinaryDiffEq
+using ReferenceTests
 using LinearSolve
 using StatsBase
+using StableRNGs
 
 ## Step 1: Generate the mesh 
+rng = StableRNG(19191919)
 a, b, c, d = 0.0, 2.0, 0.0, 2.0
-n = 5
-x₁ = LinRange(a, b, n)
-x₂ = LinRange(b, b, n)
-x₃ = LinRange(b, a, n)
-x₄ = LinRange(a, a, n)
-y₁ = LinRange(c, c, n)
-y₂ = LinRange(c, d, n)
-y₃ = LinRange(d, d, n)
-y₄ = LinRange(d, c, n)
-x = reduce(vcat, [x₁, x₂, x₃, x₄])
-y = reduce(vcat, [y₁, y₂, y₃, y₄])
-xy = [[x[i], y[i]] for i in eachindex(x)]
-unique!(xy)
-x = getx.(xy)
-y = gety.(xy)
-r = 0.03
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+p1 = (a, c)
+p2 = (b, c)
+p3 = (b, d)
+p4 = (a, d)
+points = [p1, p2, p3, p4]
+boundary_nodes = [1, 2, 3, 4, 1]
+tri = triangulate(points; boundary_nodes, rng)
+A = get_total_area(tri)
+refine!(tri; max_area=1e-4A, rng)
 mesh = FVMGeometry(tri)
 
 ## Step 2: Define the boundary conditions 
@@ -37,7 +32,7 @@ f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0 # initial condition
 D = (x, y, t, u, p) -> 1 / 9 # You could also define flux = (q, x, y, t, α, β, γ, p) -> (q[1] = -α/9; q[2] = -β/9)
 R = ((x, y, t, u::T, p) where {T}) -> zero(T)
 points = get_points(tri)
-u₀ = @views f.(points[1, :], points[2, :])
+u₀ = @views f.(first.(points), last.(points))
 iip_flux = true
 final_time = 0.5
 prob = FVMProblem(mesh, BCs; iip_flux,
@@ -49,22 +44,21 @@ alg = TRBDF2(linsolve=KLUFactorization(), autodiff=true)
 sol = solve(prob, alg; specialization=SciMLBase.FullSpecialize, saveat=0.05)
 
 ## Step 5: Visualisation 
-pt_mat = Matrix(points')
 T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 fig = Figure(resolution=(2068.72f0, 686.64f0), fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600)
 xlims!(ax, a, b)
 ylims!(ax, c, d)
-mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(0, 50), colormap=:matter)
+mesh!(ax, points, T_mat, color=sol.u[1], colorrange=(0, 50), colormap=:matter)
 ax = Axis(fig[1, 2], width=600, height=600)
 xlims!(ax, a, b)
 ylims!(ax, c, d)
-mesh!(ax, pt_mat, T_mat, color=sol.u[6], colorrange=(0, 50), colormap=:matter)
+mesh!(ax, points, T_mat, color=sol.u[6], colorrange=(0, 50), colormap=:matter)
 ax = Axis(fig[1, 3], width=600, height=600)
 xlims!(ax, a, b)
 ylims!(ax, c, d)
-mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(0, 50), colormap=:matter)
-SAVE_FIGURE && save("figures/heat_equation_test.png", fig)
+mesh!(ax, points, T_mat, color=sol.u[11], colorrange=(0, 50), colormap=:matter)
+@test_reference "../docs/src/figures/heat_equation_test.png" fig
 
 ## Step 6: Define the exact solution for comparison later 
 function diffusion_equation_on_a_square_plate_exact_solution(x, y, t, N, M)
@@ -91,7 +85,7 @@ end
 ## Step 7: Compare the results
 sol = solve(prob, alg; saveat=0.1)
 all_errs = [Float64[] for _ in eachindex(sol)]
-u_exact = [diffusion_equation_on_a_square_plate_exact_solution(points[1, :], points[2, :], τ, 200, 200) for τ in sol.t]
+u_exact = [diffusion_equation_on_a_square_plate_exact_solution(first.(points), last.(points), τ, 200, 200) for τ in sol.t]
 u_fvm = reduce(hcat, sol.u)
 u_exact = reduce(hcat, u_exact)
 errs = reduce(hcat, [100abs.(u - û) / maximum(abs.(u)) for (u, û) in zip(eachcol(u_exact), eachcol(u_fvm))])
@@ -104,6 +98,7 @@ errs = reduce(hcat, [100abs.(u - û) / maximum(abs.(u)) for (u, û) in zip(eac
 # Yes there's a better way to do this
 fig = Figure(fontsize=42, resolution=(3469.8997f0, 1466.396f0))
 ax = Axis(fig[1, 1], width=600, height=600, title=L"(a):$ $ Exact solution, $t = %$(sol.t[1])$", titlealign=:left)
+pt_mat = points
 mesh!(ax, pt_mat, T_mat, color=u_exact[:, 1], colorrange=(0, 0.5), colormap=:matter)
 ax = Axis(fig[1, 2], width=600, height=600, title=L"(b):$ $ Exact solution, $t = %$(sol.t[2])$", titlealign=:left)
 mesh!(ax, pt_mat, T_mat, color=u_exact[:, 2], colorrange=(0, 0.5), colormap=:matter)
@@ -123,4 +118,4 @@ ax = Axis(fig[2, 4], width=600, height=600, title=L"(i):$ $ Numerical solution, 
 mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 4], colorrange=(0, 0.5), colormap=:matter)
 ax = Axis(fig[2, 5], width=600, height=600, title=L"(j):$ $ Numerical solution, $t = %$(sol.t[5])$", titlealign=:left)
 mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 5], colorrange=(0, 0.5), colormap=:matter)
-SAVE_FIGURE && save("figures/heat_equation_test_error.png", fig)
+@test_reference "../docs/src/figures/heat_equation_test_error.png" fig

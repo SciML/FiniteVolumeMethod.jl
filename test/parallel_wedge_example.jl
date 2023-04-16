@@ -6,27 +6,28 @@ using OrdinaryDiffEq
 using LinearSolve
 using StatsBase
 using PreallocationTools
+using StableRNGs
+using ElasticArrays
 
 n = 50
 α = π / 4
-r₁ = LinRange(0, 1, n)
-θ₁ = LinRange(0, 0, n)
-x₁ = @. r₁ * cos(θ₁)
-y₁ = @. r₁ * sin(θ₁)
+x₁ = [0.0,1.0]
+y₁ = [0.0,0.0]
 r₂ = LinRange(1, 1, n)
 θ₂ = LinRange(0, α, n)
 x₂ = @. r₂ * cos(θ₂)
 y₂ = @. r₂ * sin(θ₂)
-r₃ = LinRange(1, 0, n)
-θ₃ = LinRange(α, α, n)
-x₃ = @. r₃ * cos(θ₃)
-y₃ = @. r₃ * sin(θ₃)
+x₃ = [cos(α), 0.0]
+y₃ = [sin(α), 0.0]
 x = [x₁, x₂, x₃]
 y = [y₁, y₂, y₃]
-r = 0.01
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
-points = get_points(tri)
+boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points = ElasticMatrix{Float64}(undef, 2, 0))
+rng = StableRNG(191919198888)
+tri = triangulate(points; boundary_nodes, rng)
+A = get_total_area(tri)
+refine!(tri; max_area = 1e-4A, rng)
 mesh = FVMGeometry(tri)
+points = get_points(tri)
 lower_bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
 arc_bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
 upper_bc = ((x, y, t, u::T, p) where {T}) -> zero(T)

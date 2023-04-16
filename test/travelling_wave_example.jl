@@ -4,11 +4,12 @@ using Test
 using CairoMakie
 using OrdinaryDiffEq
 using LinearSolve
+using ReferenceTests
 using StatsBase
 
 ## Step 1: Define the mesh 
 a, b, c, d, Nx, Ny = 0.0, 3.0, 0.0, 40.0, 60, 80
-tri = triangulate_rectangle(a, b, c, d, Nx, Ny; single_boundary = false)
+tri = triangulate_rectangle(a, b, c, d, Nx, Ny; single_boundary=false)
 mesh = FVMGeometry(tri)
 points = get_points(tri)
 
@@ -29,7 +30,7 @@ D, λ = 0.9, 0.99
 diff_parameters = D
 reac_parameters = λ
 final_time = 50.0
-u₀ = [f(points[:, i]...) for i in axes(points, 2)]
+u₀ = [f(x, y) for (x, y) in points]
 prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc, reaction_function=reac_fnc,
     diffusion_parameters=diff_parameters, reaction_parameters=reac_parameters,
     initial_condition=u₀, final_time)
@@ -39,7 +40,7 @@ alg = TRBDF2(linsolve=KLUFactorization())
 sol = solve(prob, alg; saveat=0.5)
 
 ## Step 5: Visualisation 
-pt_mat = Matrix(points')
+pt_mat = points
 T_mat = [[T...] for T in each_solid_triangle(tri)]
 T_mat = reduce(hcat, T_mat)'
 fig = Figure(resolution=(3023.5881f0, 684.27f0), fontsize=38)
@@ -112,4 +113,4 @@ ax = Axis(fig[1, 4], width=900, height=600)
 colors = cgrad(:matter, length(sol) - large_time_idx + 1; categorical=false)
 [lines!(ax, z_vals[:, i], travelling_wave_values[:, i], color=colors[i], linewidth=2) for i in 1:(length(sol)-large_time_idx+1)]
 lines!(ax, exact_z_vals, exact_travelling_wave_values, color=:red, linewidth=4, linestyle=:dash)
-SAVE_FIGURE && save("figures/travelling_wave_problem_test.png", fig)
+@test_reference "../docs/src/figures/travelling_wave_problem_test.png" fig

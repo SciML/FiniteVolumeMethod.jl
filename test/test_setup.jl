@@ -5,7 +5,6 @@ const DT = DelaunayTriangulation
 const FVM = FiniteVolumeMethod
 const SHOW_WARNTYPE = false
 const SAVE_FIGURE = false
-const GMSH_PATH = "./gmsh-4.9.4-Windows64/gmsh.exe"
 function example_triangulation()
     a, b, c, d = 0.0, 2.0, 0.0, 5.0
     nx = 5

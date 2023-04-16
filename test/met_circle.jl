@@ -5,13 +5,21 @@ using OrdinaryDiffEq
 using SteadyStateDiffEq
 using Test
 using LinearAlgebra
+using ReferenceTests
 using StatsBase
+using StableRNGs
+
 include("test_setup.jl")
 R = 1.0
-θ = LinRange(0, 2π, 100)
+θ = collect(LinRange(0, 2π, 100))
+θ[end] = θ[begin]
 x = R .* cos.(θ)
 y = R .* sin.(θ)
-tri = generate_mesh(x, y, 0.2; gmsh_path=GMSH_PATH)
+boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+rng = StableRNG(998877)
+tri = triangulate(points; boundary_nodes, rng)
+A = get_total_area(tri)
+refine!(tri; max_area=1e-3A, min_angle=33.0, rng)
 mesh = FVMGeometry(tri)
 bc = (x, y, t, u, p) -> zero(u)
 type = :D
@@ -38,11 +46,11 @@ sol = solve(prob, alg)
 # Visualise 
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")
-pt_mat = Matrix(get_points(tri)')
+pt_mat = get_points(tri)
 T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 msh = mesh!(ax, pt_mat, T_mat, color=sol, colorrange=(0, 10000))
 Colorbar(fig[1, 2], msh)
-SAVE_FIGURE && save("figures/circle_mean_exit_time.png", fig)
+@test_reference "../docs/src/figures/circle_mean_exit_time.png" fig
 
 # Test 
 exact = [(R^2 - norm(p)^2) / (4D) for p in each_point(tri)]

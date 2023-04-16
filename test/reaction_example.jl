@@ -1,20 +1,29 @@
-using ..FiniteVolumeMethod 
+using ..FiniteVolumeMethod
 include("test_setup.jl")
 using Test
-using CairoMakie 
-using OrdinaryDiffEq 
+using CairoMakie
+using OrdinaryDiffEq
 using LinearSolve
 using StatsBase
+using StableRNGs
+using ReferenceTests
 using Bessels
+using ElasticArrays
 
 ## Step 1: Generate the mesh 
 r = LinRange(1, 1, 100)
 θ = LinRange(0, 2π, 100)
 x = @. r * cos(θ)
 y = @. r * sin(θ)
-r = 0.05
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+x[end] = x[begin];
+y[end] = y[begin]; # make sure the curve connects at the endpoints
+boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
+rng = StableRNG(191919)
+tri = triangulate(points; boundary_nodes, rng)
+A = get_total_area(tri)
+refine!(tri; max_area=1e-4A, rng)
 mesh = FVMGeometry(tri)
+points = get_points(tri)
 
 ## Step 2: Define the boundary conditions 
 bc = (x, y, t, u, p) -> u
@@ -44,7 +53,7 @@ ax = Axis(fig[1, 2], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(1, 1.1), colormap=:matter)
 ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(1, 1.1), colormap=:matter)
-SAVE_FIGURE && save("figures/reaction_diffusion_equation_test.png", fig)
+@test_reference "../docs/src/figures/reaction_diffusion_test.png" fig
 
 ## Step 6: Define the exact solution for comparison later 
 function reaction_diffusion_exact_solution(x, y, t)
@@ -88,4 +97,4 @@ ax = Axis(fig[2, 4], width=600, height=600, title=L"(i):$ $ Numerical solution, 
 mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 4], colorrange=(1, 1.1), colormap=:matter)
 ax = Axis(fig[2, 5], width=600, height=600, title=L"(j):$ $ Numerical solution, $t = %$(sol.t[5])$", titlealign=:left)
 mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 5], colorrange=(1, 1.1), colormap=:matter)
-SAVE_FIGURE && save("figures/reaction_heat_equation_test_error.png", fig)
+@test_reference "../docs/src/figures/reaction_diffusion_equation_test_error.png" fig
