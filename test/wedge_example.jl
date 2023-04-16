@@ -7,17 +7,18 @@ using LinearSolve
 using StatsBase
 using FastGaussQuadrature 
 using Bessels
+using ReferenceTests
 using Cubature
+using StableRNGs
+using ElasticArrays
 
 ## Step 1: Generate the mesh 
 n = 50
 α = π / 4
 
 # The bottom edge 
-r₁ = LinRange(0, 1, n)
-θ₁ = LinRange(0, 0, n)
-x₁ = @. r₁ * cos(θ₁)
-y₁ = @. r₁ * sin(θ₁)
+x₁ = [0.0,1.0]
+y₁ = [0.0,0.0]
 
 # Arc 
 r₂ = LinRange(1, 1, n)
@@ -26,16 +27,17 @@ x₂ = @. r₂ * cos(θ₂)
 y₂ = @. r₂ * sin(θ₂)
 
 # Upper edge 
-r₃ = LinRange(1, 0, n)
-θ₃ = LinRange(α, α, n)
-x₃ = @. r₃ * cos(θ₃)
-y₃ = @. r₃ * sin(θ₃)
+x₃ = [cos(α), 0.0]
+y₃ = [sin(α), 0.0]
 
 # Combine and create the mesh 
 x = [x₁, x₂, x₃]
 y = [y₁, y₂, y₃]
-r = 0.01
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points = ElasticMatrix{Float64}(undef, 2, 0))
+rng = StableRNG(191919198888)
+tri = triangulate(points; boundary_nodes, rng)
+A = get_total_area(tri)
+refine!(tri; max_area = 1e-4A, rng)
 mesh = FVMGeometry(tri)
 
 ## Step 2: Define the boundary conditions 
@@ -72,7 +74,8 @@ ax = Axis(fig[1, 2], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(0, 0.5), colormap=:matter)
 ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0, 0.5), colormap=:matter)
-SAVE_FIGURE && save("figures/diffusion_equation_wedge_test.png", fig)
+@test_reference "../docs/src/figures/diffusion_equation_wedge_test.png" fig
+
 
 ## Step 6: Define the exact solution for comparison later 
 function diffusion_equation_on_a_wedge_exact_solution(x, y, t, α, N, M)
@@ -150,4 +153,4 @@ ax = Axis(fig[2, 4], width=600, height=600, title=L"(i):$ $ Numerical solution, 
 mesh!(ax, pt_mat, T_mat, color=sol.u[4], colorrange=(0, 0.5), colormap=:matter)
 ax = Axis(fig[2, 5], width=600, height=600, title=L"(j):$ $ Numerical solution, $t = %$(sol.t[5])$", titlealign=:left)
 mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0, 0.5), colormap=:matter)
-SAVE_FIGURE && save("figures/heat_equation_wedge_test_error.png", fig)
+@test_reference "../docs/src/figures/heat_equation_wedge_test_error.png" fig

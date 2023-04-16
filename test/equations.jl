@@ -41,9 +41,9 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                         for V in each_solid_triangle(tri)
                             FVM.linear_shape_function_coefficients!(shape_cache, u, prob, V)
                             interp = (x, y) -> shape_cache[1] * x + shape_cache[2] * y + shape_cache[3]
-                            @test interp(pts[1, geti(V)], pts[2, geti(V)]) ≈ u[geti(V)]
-                            @test interp(pts[1, getj(V)], pts[2, getj(V)]) ≈ u[getj(V)]
-                            @test interp(pts[1, getk(V)], pts[2, getk(V)]) ≈ u[getk(V)]
+                            @test interp(pts[geti(V)][1], pts[geti(V)][2]) ≈ u[geti(V)]
+                            @test interp(pts[getj(V)][1], pts[getj(V)][2]) ≈ u[getj(V)]
+                            @test interp(pts[getk(V)][1], pts[getk(V)][2]) ≈ u[getk(V)]
                         end
 
                         du = zeros(length(u))
@@ -112,7 +112,7 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                         t = rand()
                         j = 7
                         FVM.fvm_eqs_source_contribution!(du, u, t, j, prob)
-                        @test du[j] ≈ old_du[j] / prob.mesh.volumes[j] + prob.reaction_function(pts[:, j]..., t, u[j], prob.reaction_parameters)
+                        @test du[j] ≈ old_du[j] / prob.mesh.volumes[j] + prob.reaction_function(pts[j]..., t, u[j], prob.reaction_parameters)
 
                         du = rand(length(u))
                         _du = deepcopy(du)
@@ -124,7 +124,7 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
 
                         for j in FVM.get_boundary_nodes(prob)
                             FVM.evaluate_boundary_function!(du, u, t, j, prob)
-                            @test du[j] ≈ prob.boundary_conditions.functions[prob.boundary_conditions.type_map[j]](pts[:, j]..., t, u[j], prob.boundary_conditions.parameters[prob.boundary_conditions.type_map[j]])
+                            @test du[j] ≈ prob.boundary_conditions.functions[prob.boundary_conditions.type_map[j]](pts[j]..., t, u[j], prob.boundary_conditions.parameters[prob.boundary_conditions.type_map[j]])
                         end
                         j = rand(FVM.get_boundary_nodes(prob))
                         SHOW_WARNTYPE && @code_warntype FVM.evaluate_boundary_function!(du, u, t, j, prob)
@@ -140,7 +140,7 @@ for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
                         _u = deepcopy(u)
                         FVM.update_dirichlet_nodes!(u, 0.0, prob)
                         for j in FVM.get_dirichlet_nodes(prob)
-                            @test u[j] ≈ pts[1, j] * 1.0 * 2.0 + _u[j]
+                            @test u[j] ≈ pts[j][1] * 1.0 * 2.0 + _u[j]
                         end
 
                         jac = FVM.jacobian_sparsity(prob)

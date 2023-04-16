@@ -1,30 +1,24 @@
 using ..FiniteVolumeMethod
 include("test_setup.jl")
 using Test
-using CairoMakie 
-using OrdinaryDiffEq 
+using CairoMakie
+using OrdinaryDiffEq
 using LinearSolve
 using PreallocationTools
 using StatsBase
+using StableRNGs
 
 a, b, c, d = 0.0, 2.0, 0.0, 2.0
-n = 50
-x₁ = LinRange(a, b, n)
-x₂ = LinRange(b, b, n)
-x₃ = LinRange(b, a, n)
-x₄ = LinRange(a, a, n)
-y₁ = LinRange(c, c, n)
-y₂ = LinRange(c, d, n)
-y₃ = LinRange(d, d, n)
-y₄ = LinRange(d, c, n)
-x = reduce(vcat, [x₁, x₂, x₃, x₄])
-y = reduce(vcat, [y₁, y₂, y₃, y₄])
-xy = [[x[i], y[i]] for i in eachindex(x)]
-unique!(xy)
-x = getx.(xy)
-y = gety.(xy)
-r = 0.017
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+p1 = (a, c)
+p2 = (b, c)
+p3 = (b, d)
+p4 = (a, d)
+points = [p1, p2, p3, p4]
+rng = StableRNG(19191919)
+boundary_nodes = [1, 2, 3, 4, 1]
+tri = triangulate(points; boundary_nodes, rng)
+A = get_total_area(tri)
+refine!(tri; max_area=1e-4A, rng)
 mesh = FVMGeometry(tri)
 bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
 type = :Dirichlet
@@ -33,7 +27,7 @@ f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
 D = (x, y, t, u, p) -> 1.0 / 9.0
 R = ((x, y, t, u::T, p) where {T}) -> zero(T)
 points = get_points(tri)
-u₀ = @views f.(points[1, :], points[2, :])
+u₀ = f.(first.(points), last.(points))
 iip_flux = true
 final_time = 48.0
 prob = FVMProblem(mesh, BCs; iip_flux=true,

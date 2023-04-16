@@ -18,7 +18,11 @@ FVMGeometry(tri;
 
 Here, `tri` is a `Triangulation` type from DelaunayTriangulation.jl representing the mesh. An important feature in `tri` is the boundary nodes, allowing for boundary conditions to be defined. By defining these boundary nodes according to the specification in DelaunayTriangulation.jl, we can easily mix boundary conditions and different boundaries. For example, suppose we have the following domain with boundary $\Gamma_1 \cup \Gamma_2 \cup \Gamma_3 \cup \Gamma_4$:
 
-![A segmented boundary](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/boundary_condition_example.png?raw=true)
+```@raw html
+<figure>
+    <img src='../figures/boundary_condition_example.png', alt='A segmented boundary'><br>
+</figure>
+```
 
 The colours are used to distinguish between different segments of the boundaries. The boundary node vector `BNV` would thus be defined as:
 
@@ -32,7 +36,7 @@ BNV = [Γ₁, Γ₂, Γ₃, Γ₄]
 
 It is crucial that these nodes are provided in counter-clockwise order, and that their endpoints connect (i.e. the last node of the previous segment is the same as the first node of the current segment). For inner boundaries, they are given in clockwise order, as defined in DelaunayTriangulation.jl.
 
-A good way to generate these meshes, and the boundary nodes, is to use `generate_mesh` from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl) (provided you have Gmsh installed). Note also that if you already have an existing set of triangular elements, points, and a known set of boundary nodes, the corresponding constructor for `Triangulation` (also from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl)) may be of interest to you. Constrained Delaunay triangulations are in the works, but for now `generate_mesh` is sufficient.
+A good way to generate these meshes, and the boundary nodes, is to use `triangulate` and `refine!` from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl).  Note also that if you already have an existing set of triangular elements, points, and a known set of boundary nodes, the corresponding constructor for `Triangulation` (also from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl)) may be of interest to you.
 
 The other keyword arguments in the function are just details about how certain variables are stored. See the docstrings in the sidebar.
 

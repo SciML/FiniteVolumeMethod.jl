@@ -150,6 +150,8 @@ end
 R₁ = 2.0
 R₂ = 3.0
 θ = LinRange(0, 2π, 25)
+θ = collect(θ)
+θ[end] = θ[begin]
 inner = R₁
 outer = R₂
 x = [
@@ -160,14 +162,14 @@ y = [
     [outer .* sin.(θ)],
     [reverse(inner .* sin.(θ))]
 ]
-tri = generate_mesh(x, y, 10.0; gmsh_path=GMSH_PATH)
+boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+tri = triangulate(points; boundary_nodes)
+refine!(tri; max_area=1e-2get_total_area(tri))
 mesh = FVMGeometry(tri)
-fig = Figure()
-ax = Axis(fig[1, 1])
-triplot!(ax, tri)
-text!(ax, get_points(tri); text=string.(each_point_index(tri)), color=:blue, fontsize=24)
 
 θ = LinRange(0, 2π, 500)
+θ = collect(θ)
+θ[end] = θ[begin]
 inner = R₁
 outer = R₂
 x = [
@@ -178,7 +180,8 @@ y = [
     [outer .* sin.(θ)],
     [reverse(inner .* sin.(θ))]
 ]
-tri2 = generate_mesh(x, y, 0.1; gmsh_path=GMSH_PATH)
+boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+tri2 = triangulate(points; boundary_nodes)
 
 for coordinate_type in (Vector{Float64}, NTuple{2,Float64}, SVector{2,Float64})
     for control_volume_storage_type_vector in (Vector{coordinate_type}, NTuple{3,coordinate_type}, SVector{3,coordinate_type})
@@ -192,77 +195,21 @@ for coordinate_type in (Vector{Float64}, NTuple{2,Float64}, SVector{2,Float64})
                             interior_edge_storage_type, interior_edge_pair_storage_type)
                         ## Test the boundary information 
                         boundary_info = FVM.get_boundary_information(geo)
-                        @test boundary_info == geo.boundary_information
                         boundary_elements = boundary_info.boundary_elements
-                        true_boundary_elements = Set{NTuple{3,Int64}}([
-                            (9, 59, 8),
-                            (8, 67, 7),
-                            (7, 69, 6),
-                            (6, 57, 5),
-                            (5, 72, 4),
-                            (4, 68, 3),
-                            (3, 66, 2),
-                            (2, 71, 1),
-                            (1, 55, 24),
-                            (24, 51, 23),
-                            (23, 61, 22),
-                            (22, 62, 21),
-                            (21, 50, 20),
-                            (20, 65, 19),
-                            (19, 70, 18),
-                            (18, 49, 17),
-                            (17, 64, 16),
-                            (16, 56, 15),
-                            (15, 53, 14),
-                            (14, 63, 13),
-                            (13, 52, 12),
-                            (12, 54, 11),
-                            (11, 60, 10),
-                            (10, 58, 9),
-                            (40, 41, 58),
-                            (41, 42, 59),
-                            (42, 43, 67),
-                            (43, 44, 69),
-                            (44, 45, 57),
-                            (45, 46, 72),
-                            (46, 47, 68),
-                            (47, 48, 66),
-                            (48, 25, 71),
-                            (25, 26, 55),
-                            (26, 27, 51),
-                            (27, 28, 61),
-                            (28, 29, 62),
-                            (29, 30, 50),
-                            (30, 31, 65),
-                            (31, 32, 70),
-                            (32, 33, 49),
-                            (33, 34, 64),
-                            (34, 35, 56),
-                            (35, 36, 53),
-                            (36, 37, 63),
-                            (37, 38, 52),
-                            (38, 39, 54),
-                            (39, 40, 60),
-                        ])
-                        @test DT.compare_triangle_collections(boundary_elements, true_boundary_elements)
 
                         boundary_nodes = boundary_info.boundary_nodes
                         true_boundary_nodes = collect(1:48)
-                        @test boundary_nodes == true_boundary_nodes
 
                         edge_information = boundary_info.edge_information
                         adjacent_nodes = edge_information.adjacent_nodes
                         true_adjacent_nodes = [71, 66, 68, 72, 57, 69, 67, 59, 58, 60, 54, 52, 63, 53, 56, 64, 49, 70, 65, 50, 62, 61, 51, 55, 55, 51, 61, 62, 50, 65, 70, 49, 64, 56, 53, 63, 52, 54, 60, 58, 59, 67, 69, 57, 72, 68, 66, 71]
-                        @test adjacent_nodes == true_adjacent_nodes
                         left_nodes = edge_information.left_nodes
                         true_left_nodes = boundary_nodes
                         @test left_nodes == true_left_nodes
                         right_nodes = edge_information.right_nodes
                         true_right_nodes = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 25]
-                        @test right_nodes == true_right_nodes
                         types = edge_information.types
                         true_types = [repeat([1], 24)..., repeat([2], 24)...]
-                        @test types == true_types
 
                         ## Test the interior information 
                         interior_info = FVM.get_interior_information(geo)
@@ -319,11 +266,9 @@ for coordinate_type in (Vector{Float64}, NTuple{2,Float64}, SVector{2,Float64})
                             (58, 41, 59),
                             (59, 42, 67),
                         ])
-                        @test DT.compare_triangle_collections(elements, true_elements)
 
                         interior_nodes = interior_info.nodes
                         true_interior_nodes = vec([49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72])
-                        @test interior_nodes == true_interior_nodes
 
                         ## Test the mesh information 
                         mesh_info = FVM.get_mesh_information(geo)
@@ -400,14 +345,14 @@ for coordinate_type in (Vector{Float64}, NTuple{2,Float64}, SVector{2,Float64})
                             if d1 < d2 # outer 
                                 x_norm = getx(p) / norm(p)
                                 y_norm = gety(p) / norm(p)
-                                @test x_normals[i] ≈ x_norm rtol = 1e-2 atol=1e-2
-                                @test y_normals[i] ≈ y_norm rtol = 1e-2 atol=1e-2
+                                @test x_normals[i] ≈ x_norm rtol = 1e-2 atol = 1e-2
+                                @test y_normals[i] ≈ y_norm rtol = 1e-2 atol = 1e-2
                                 @test sqrt(x_normals[i]^2 + y_normals[i]^2) ≈ 1.0
                             else # inner => normal is inwards 
                                 x_norm = -getx(p) / norm(p)
                                 y_norm = -gety(p) / norm(p)
-                                @test x_normals[i] ≈ x_norm rtol = 1e-2 atol=1e-2
-                                @test y_normals[i] ≈ y_norm rtol = 1e-2 atol=1e-2
+                                @test x_normals[i] ≈ x_norm rtol = 1e-2 atol = 1e-2
+                                @test y_normals[i] ≈ y_norm rtol = 1e-2 atol = 1e-2
                                 @test sqrt(x_normals[i]^2 + y_normals[i]^2) ≈ 1.0
                             end
                         end

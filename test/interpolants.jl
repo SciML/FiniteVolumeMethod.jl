@@ -1,9 +1,11 @@
-using ..FiniteVolumeMethod 
+using ..FiniteVolumeMethod
 include("test_setup.jl")
 using Test
-using CairoMakie 
-using OrdinaryDiffEq 
+using CairoMakie
+using OrdinaryDiffEq
 using LinearSolve
+using StableRNGs
+using ReferenceTests
 
 ## We test on the porous medium equation with a linear source
 for parallel in (false, true)
@@ -14,26 +16,16 @@ for parallel in (false, true)
     final_time = 10.0
     ε = 0.1
     RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
-    L = sqrt(RmM) * (D / (λ * (m - 1)) * (exp(λ * (m - 1) * 1.2final_time) - 1))^(1 / (2m))
-    n = 5
-    x₁ = LinRange(-L, L, n)
-    x₂ = LinRange(L, L, n)
-    x₃ = LinRange(L, -L, n)
-    x₄ = LinRange(-L, -L, n)
-    y₁ = LinRange(-L, -L, n)
-    y₂ = LinRange(-L, L, n)
-    y₃ = LinRange(L, L, n)
-    y₄ = LinRange(L, -L, n)
-    x = reduce(vcat, [x₁, x₂, x₃, x₄])
-    y = reduce(vcat, [y₁, y₂, y₃, y₄])
-    xy = [(x, y) for (x, y) in zip(x, y)]
-    unique!(xy)
-    x = getx.(xy)
-    y = gety.(xy)
-    r = 0.07
-    tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
-    points = get_points(tri)
+    L = sqrt(RmM) * (D / (λ * (m - 1)) * (exp(λ * (m - 1) * final_time) - 1))^(1 / (2m))
+    x = [-L, L, L, -L, -L]
+    y = [-L, -L, L, L, -L]
+    boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+    rng = StableRNG(123)
+    tri = triangulate(points; boundary_nodes, rng)
+    A = get_total_area(tri)
+    refine!(tri; max_area=1e-4A / 2, rng)
     mesh = FVMGeometry(tri)
+    points = get_points(tri)
     bc = ((x, y, t, u::T, p) where {T}) -> zero(T)
     types = :D
     BCs = BoundaryConditions(mesh, bc, types)
@@ -42,7 +34,7 @@ for parallel in (false, true)
     reac_fnc = (x, y, t, u, p) -> p[1] * u
     diff_parameters = (D, m)
     react_parameter = λ
-    u₀ = [f(points[:, i]...) for i in axes(points, 2)]
+    u₀ = f.(first.(points), last.(points))
     prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc,
         diffusion_parameters=diff_parameters,
         reaction_function=reac_fnc, reaction_parameters=react_parameter,
@@ -102,11 +94,13 @@ for parallel in (false, true)
     end
 
     ## Plot 
-    fig = Figure(resolution=(2744.0f0, 692.0f0))
-    for k in 1:4
-        ax = Axis3(fig[1, k])
-        zlims!(ax, 0, 1), xlims!(ax, -L - 1e-1, L + 1e-1), ylims!(ax, -L - 1e-1, L + 1e-1)
-        surface!(ax, grid_x, grid_y, u_vals[:, :, k+1], colormap=:matter)
+    if parallel
+        fig = Figure(resolution=(2744.0f0, 692.0f0))
+        for k in 1:4
+            ax = Axis3(fig[1, k])
+            zlims!(ax, 0, 1), xlims!(ax, -L - 1e-1, L + 1e-1), ylims!(ax, -L - 1e-1, L + 1e-1)
+            surface!(ax, grid_x, grid_y, u_vals[:, :, k+1], colormap=:matter)
+        end
+        @test_reference "../docs/src/figures/surface_plots_travelling_wave.png" fig
     end
-    SAVE_FIGURE && save("figures/surface_plots_travelling_wave.png", fig)
 end

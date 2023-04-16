@@ -74,4 +74,9 @@ for k in 1:4
     surface!(ax, grid_x, grid_y, u_vals[:, :, k+1], colormap=:matter)
 end 
 ```
-![Surface plots](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/surface_plots_travelling_wave.png?raw=true)
+
+```@raw html
+<figure>
+    <img src='../figures/surface_plots_travelling_wave.png.png', alt='Surface plots'><br>
+</figure>
+```

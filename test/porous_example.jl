@@ -5,6 +5,8 @@ using CairoMakie
 using OrdinaryDiffEq
 using LinearSolve
 using StatsBase
+using StableRNGs
+using ReferenceTests
 
 ## Step 0: Define all the parameters 
 m = 2
@@ -16,23 +18,13 @@ final_time = 12.0
 ## Step 1: Define the mesh 
 RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
 L = sqrt(RmM) * (D * final_time)^(1 / (2m))
-n = 5
-x₁ = LinRange(-L, L, n)
-x₂ = LinRange(L, L, n)
-x₃ = LinRange(L, -L, n)
-x₄ = LinRange(-L, -L, n)
-y₁ = LinRange(-L, -L, n)
-y₂ = LinRange(-L, L, n)
-y₃ = LinRange(L, L, n)
-y₄ = LinRange(L, -L, n)
-x = reduce(vcat, [x₁, x₂, x₃, x₄])
-y = reduce(vcat, [y₁, y₂, y₃, y₄])
-xy = [(x, y) for (x, y) in zip(x, y)]
-unique!(xy)
-x = getx.(xy)
-y = gety.(xy)
-r = 0.1
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+x = [-L, L, L, -L, -L]
+y = [-L, -L, L, L, -L]
+boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+rng = StableRNG(123)
+tri = triangulate(points; boundary_nodes, rng)
+A = get_total_area(tri)
+refine!(tri; max_area=1e-4A/2, rng)
 mesh = FVMGeometry(tri)
 points = get_points(tri)
 
@@ -45,7 +37,7 @@ BCs = BoundaryConditions(mesh, bc, types)
 f = (x, y) -> M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
 diff_fnc = (x, y, t, u, p) -> p[1] * u^(p[2] - 1)
 diff_parameters = (D, m)
-u₀ = [f(points[:, i]...) for i in axes(points, 2)]
+u₀ = f.(first.(points), last.(points))
 prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc,
     diffusion_parameters=diff_parameters, initial_condition=u₀, final_time)
 
@@ -54,7 +46,7 @@ alg = TRBDF2(linsolve=KLUFactorization())
 sol = solve(prob, alg; saveat=3.0)
 
 ## Step 5: Visualisation 
-pt_mat = Matrix(points')
+pt_mat = points
 T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 fig = Figure(resolution=(2131.8438f0, 684.27f0), fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600)
@@ -63,7 +55,7 @@ ax = Axis(fig[1, 2], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(0.0, 0.05), colormap=:matter)
 ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0.0, 0.05), colormap=:matter)
-SAVE_FIGURE && save("figures/porous_medium_test.png", fig)
+@test_reference "../docs/src/figures/porous_medium_test.png" fig
 
 ## Step 6: Define the exact solution for comparison later 
 function porous_medium_exact_solution(x, y, t, m, M, D)
@@ -81,7 +73,7 @@ end
 
 ## Step 7: Compare the results
 all_errs = [Float64[] for _ in eachindex(sol)]
-u_exact = [porous_medium_exact_solution(points[1, :], points[2, :], τ, m, M, D) for τ in sol.t]
+u_exact = [porous_medium_exact_solution(first.(points), last.(points), τ, m, M, D) for τ in sol.t]
 u_fvm = reduce(hcat, sol.u)
 u_exact = reduce(hcat, u_exact)
 errs = reduce(hcat, [100abs.(u - û) / maximum(abs.(u)) for (u, û) in zip(eachcol(u_exact[:, 2:end]), eachcol(u_fvm[:, 2:end]))])
@@ -112,4 +104,4 @@ ax = Axis(fig[2, 4], width=600, height=600, title=L"(i):$ $ Numerical solution, 
 mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 4], colorrange=(0, 0.05), colormap=:matter)
 ax = Axis(fig[2, 5], width=600, height=600, title=L"(j):$ $ Numerical solution, $t = %$(sol.t[5])$", titlealign=:left)
 mesh!(ax, pt_mat, T_mat, color=u_fvm[:, 5], colorrange=(0, 0.05), colormap=:matter)
-SAVE_FIGURE && save("figures/porous_medium_test_error.png", fig)
+@test_reference "../docs/src/figures/porous_medium_test_error.png" fig

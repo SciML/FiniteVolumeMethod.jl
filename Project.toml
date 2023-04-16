@@ -17,7 +17,7 @@ StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 
 [compat]
 ChunkSplitters = "^0.1, 1.0"
-DelaunayTriangulation = "0.4"
+DelaunayTriangulation = "0.4, 0.5"
 DiffEqBase = "^6.0"
 FunctionWrappersWrappers = "^0.1"
 MuladdMacro = "^0.2"

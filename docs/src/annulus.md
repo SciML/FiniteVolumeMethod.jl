@@ -21,7 +21,7 @@ where $\mathcal D(0, r)$ is a circle of radius $r$ centred at the origin, $\Omeg
 u_0(x) =10\mathrm{e}^{-25\left(\left(x + \frac12\right)^2 + \left(y + \frac12\right)^2\right)} - 10\mathrm{e}^{-45\left(\left(x - \frac12\right)^2 + \left(y - \frac12\right)^2\right)} - 5\mathrm{e}^{-50\left(\left(x + \frac{3}{10}\right)^2 + \left(y + \frac12\right)^2\right)}.
 ```
 
-To define this problem, we define the problem as we have been doing, but now we take special care to define the multiply-connected domain. In particular, we define the boundary nodes according to the specification in DelaunayTriangulation.jl (see the boundary nodes discussion here [https://danielvandh.github.io/DelaunayTriangulation.jl/stable/interface/interface/](https://danielvandh.github.io/DelaunayTriangulation.jl/stable/interface/interface/)). The complete code is below, where we generate the mesh, and then visualise the solution.
+To define this problem, we define the problem as we have been doing, but now we take special care to define the multiply-connected domain. In particular, we define the boundary nodes according to the specification in DelaunayTriangulation.jl (see the boundary nodes discussion [here](https://danielvandh.github.io/DelaunayTriangulation.jl/dev/boundary_handling/)). The complete code is below, where we generate the mesh, and then visualise the solution.
 
 ```julia 
 ## Generate the mesh. 
@@ -29,7 +29,8 @@ To define this problem, we define the problem as we have been doing, but now we 
 # and is given in counter-clockwise order. The inner boundaries then follow. 
 R₁ = 0.2
 R₂ = 1.0
-θ = LinRange(0, 2π, 100)
+θ = collect(LinRange(0, 2π, 100))
+θ[end] = 0.0 # get the endpoints to match
 x = [
     [R₂ .* cos.(θ)],
     [reverse(R₁ .* cos.(θ))]
@@ -38,7 +39,10 @@ y = [
     [R₂ .* sin.(θ)],
     [reverse(R₁ .* sin.(θ))]
 ]
-tri = generate_mesh(x, y, 0.2; gmsh_path=GMSH_PATH)
+boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+tri = triangulate(points; boundary_nodes)
+A = get_total_area(tri)
+refine!(tri;max_area=1e-4A)
 mesh = FVMGeometry(tri)
 
 ## Define the boundary conditions 
@@ -53,7 +57,7 @@ initial_condition_f = (x, y) -> begin
 end
 diffusion = (x, y, t, u, p) -> one(u)
 points = get_points(tri)
-u₀ = @views initial_condition_f.(points[1, :], points[2, :])
+u₀ = [initial_condition_f(x, y) for (x, y) in points]
 final_time = 2.0
 prob = FVMProblem(mesh, BCs;
     diffusion_function=diffusion,
@@ -76,4 +80,8 @@ ax = Axis(fig[1, 3], width=600, height=600)
 mesh!(ax, pt_mat, T_mat, color=sol.u[11], colorrange=(-10, 20), colormap=:viridis)
 ```
 
-![Annulus solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/annulus_test.png?raw=true)
+```@raw html
+<figure>
+    <img src='../figures/annulus_test.png', alt='Solution on an annulus'><br>
+</figure>
+```

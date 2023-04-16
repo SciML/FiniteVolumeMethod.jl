@@ -1,8 +1,9 @@
 # FiniteVolumeMethod
 
 [![DOI](https://zenodo.org/badge/561533716.svg)](https://zenodo.org/badge/latestdoi/561533716)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://DanielVandH.github.io/FiniteVolumeMethod.jl/dev)
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://DanielVandH.github.io/FiniteVolumeMethod.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://DanielVandH.github.io/FiniteVolumeMethod.jl/dev)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://DanielVandH.github.io/FiniteVolumeMethod.jl/stable)
+[![Coverage](https://codecov.io/gh/DanielVandH/FiniteVolumeMethod.jl/branch/main/graph/badge.svg?token=XPM5KN89R6)](https://codecov.io/gh/DanielVandH/FiniteVolumeMethod.jl)
 
 This is a package for solving partial differential equations (PDEs) of the form 
 

@@ -6,6 +6,8 @@ using SteadyStateDiffEq
 using Test
 using LinearSolve
 using Krylov
+using ReferenceTests
+using StableRNGs
 include("test_setup.jl")
 a = 2.0
 b = 1.0
@@ -15,7 +17,13 @@ g = θ -> sin(3θ) + cos(5θ) - sin(θ)
 h = θ -> cos(3θ) + sin(5θ) - cos(θ)
 x = a * (1 .+ ε .* g.(θ)) .* cos.(θ)
 y = b * (1 .+ ε .* h.(θ)) .* sin.(θ)
-tri = generate_mesh(x, y, 0.2; gmsh_path=GMSH_PATH)
+x[end] = x[begin]
+y[end] = y[begin]
+rng = StableRNG(998877)
+boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+tri = triangulate(points; boundary_nodes, rng)
+A = get_total_area(tri)
+refine!(tri; max_area=1e-4A/2, min_angle = 33.0, rng)
 mesh = FVMGeometry(tri)
 bc = (x, y, t, u, p) -> zero(u)
 type = :D
@@ -36,9 +44,9 @@ prob = FVMProblem(mesh, BCs;
 sol = solve(prob, DynamicSS(TRBDF2(linsolve=KrylovJL_GMRES())))
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y", width=600, height=300)
-pt_mat = Matrix(get_points(tri)')
+pt_mat = get_points(tri)
 T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 msh = mesh!(ax, pt_mat, T_mat, color=sol, colorrange=(0, 16000))
 Colorbar(fig[1, 2], msh)
 resize_to_layout!(fig)
-SAVE_FIGURE && save("figures/perturbed_ellipse_mean_exit_time.png", fig)
+@test_reference "../docs/src/figures/perturbed_ellipse_mean_exit_time.png" fig

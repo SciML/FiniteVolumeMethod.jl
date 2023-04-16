@@ -13,6 +13,8 @@ using MuladdMacro
 import DiffEqBase: dualgen
 using ChunkSplitters
 
+using DelaunayTriangulation: number_type
+
 include("geometry.jl")
 include("boundary_conditions.jl")
 include("problem.jl")

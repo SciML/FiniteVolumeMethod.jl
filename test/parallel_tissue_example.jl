@@ -7,47 +7,14 @@ using LinearSolve
 using StatsBase
 
 ## Cell model 
-function select_refinement_parameter(x, y, left_r, right_r, target_n; tol=200, max_iters=50)
-    f = r -> num_points(generate_mesh(x, y, r; gmsh_path=GMSH_PATH)) - target_n
-    iters = 1
-    fleft = f(left_r)
-    fright = f(right_r)
-    while iters ≤ max_iters
-        middle_r = (left_r + right_r) / 2
-        fmiddle = f(middle_r)
-        if abs(fmiddle) < tol
-            return middle_r
-        end
-        iters += 1
-        if sign(fmiddle) == sign(fleft)
-            left_r = middle_r
-            fleft = fmiddle
-        else
-            right_r = middle_r
-            fright = fmiddle
-        end
-    end
-    throw("Failed.")
-end
 a = c = 0.0
 b = d = 500.0
-_n = 5
-x₁ = LinRange(a, b, _n)
-y₁ = LinRange(c, c, _n)
-x₂ = LinRange(b, b, _n)
-y₂ = LinRange(c, d, _n)
-x₃ = LinRange(b, a, _n)
-y₃ = LinRange(d, d, _n)
-x₄ = LinRange(a, a, _n)
-y₄ = LinRange(d, c, _n)
-x = reduce(vcat, [x₁, x₂, x₃, x₄])
-y = reduce(vcat, [y₁, y₂, y₃, y₄])
-xy = [[x[i], y[i]] for i in eachindex(x)]
-unique!(xy)
-x = [xy[i][1] for i in eachindex(xy)]
-y = [xy[i][2] for i in eachindex(xy)]
-r = select_refinement_parameter(x, y, 2.0, 1000.0, 10_000)
-tri = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+x = [a,b,b,a,a]
+y = [c,c,d,d,c]
+boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+tri = triangulate(points; boundary_nodes)
+A = get_total_area(tri)
+refine!(tri; max_area=1e-4A)
 msh = FVMGeometry(tri)
 functions = (x, y, t, u, p) -> p[1] * u * (1 - u)
 type = :dudt

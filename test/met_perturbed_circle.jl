@@ -6,6 +6,9 @@ using SteadyStateDiffEq
 using LinearSolve
 using FastLapackInterface
 using LinearAlgebra
+using ReferenceTests
+using StableRNGs
+
 include("test_setup.jl")
 R = 1.0
 θ = LinRange(0, 2π, 100)
@@ -14,7 +17,13 @@ g = θ -> sin(3θ) + cos(5θ) - sin(θ)
 R_bnd = 1 .+ ε .* g.(θ)
 x = R_bnd .* cos.(θ)
 y = R_bnd .* sin.(θ)
-tri = generate_mesh(x, y, 0.2; gmsh_path=GMSH_PATH)
+x[end] = x[begin]
+y[end] = y[begin] # ensure circular array 
+boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+rng = StableRNG(998877)
+tri = triangulate(points; boundary_nodes, rng)
+A = get_total_area(tri)
+refine!(tri; max_area=1e-3A, min_angle=33.0, rng)
 mesh = FVMGeometry(tri)
 bc = (x, y, t, u, p) -> zero(u)
 type = :D
@@ -37,8 +46,8 @@ alg = DynamicSS(TRBDF2(linsolve=FastLUFactorization()))
 sol = solve(prob, alg, parallel=true)
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")
-pt_mat = Matrix(get_points(tri)')
+pt_mat = get_points(tri)
 T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 msh = mesh!(ax, pt_mat, T_mat, color=sol, colorrange=(0, 10000))
 Colorbar(fig[1, 2], msh)
-SAVE_FIGURE && save("figures/perturbed_circle_mean_exit_time.png", fig)
+@test_reference "../docs/src/figures/perturbed_circle_mean_exit_time.png" fig
