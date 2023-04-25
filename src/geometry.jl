@@ -526,7 +526,7 @@ function boundary_edge_matrix(tri::Triangulation)
         bn_nodes = get_convex_hull_indices(tri)
         nedges = num_boundary_edges(bn_nodes)
         for edge_idx in 1:nedges
-            left_node = get_boundary_node(bn_nodes, edge_idx)
+            left_node = get_boundary_nodes(bn_nodes, edge_idx)
             right_node = get_right_boundary_node(tri, edge_idx, boundary_index)
             adjacent_node = get_adjacent(tri, left_node, right_node)
             push!(E, (left_node, right_node, adjacent_node, type))
