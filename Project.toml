@@ -13,7 +13,6 @@ MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
 PreallocationTools = "d236fae5-4411-538c-8e31-a6e3d9e00b46"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 
 [compat]
 ChunkSplitters = "^0.1, 1.0"
@@ -23,7 +22,6 @@ FunctionWrappersWrappers = "^0.1"
 MuladdMacro = "^0.2"
 PreallocationTools = "^0.4"
 SciMLBase = "^1.77"
-StaticArraysCore = "^1.4"
 julia = "^1"
 
 [extras]

@@ -64,8 +64,7 @@ from the initial condition above.
         initial_condition,
         initial_time=0.0,
         final_time,
-        steady=false,
-        q_storage=SVector{2,Float64})
+        steady=false)
 
 Constructor for the [`FVMProblem`](@ref).
 

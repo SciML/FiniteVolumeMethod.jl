@@ -3,7 +3,6 @@ module FiniteVolumeMethod
 using DelaunayTriangulation
 using FunctionWrappersWrappers
 using PreallocationTools
-using StaticArraysCore
 using LinearAlgebra
 using SparseArrays
 using SciMLBase
