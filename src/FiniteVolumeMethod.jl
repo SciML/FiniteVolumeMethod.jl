@@ -3,7 +3,6 @@ module FiniteVolumeMethod
 using DelaunayTriangulation
 using FunctionWrappersWrappers
 using PreallocationTools
-using StaticArraysCore
 using LinearAlgebra
 using SparseArrays
 using SciMLBase
@@ -12,6 +11,7 @@ using DiffEqBase
 using MuladdMacro
 import DiffEqBase: dualgen
 using ChunkSplitters
+using PrecompileTools
 
 using DelaunayTriangulation: number_type
 
