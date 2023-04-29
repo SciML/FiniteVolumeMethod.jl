@@ -11,7 +11,6 @@ using DiffEqBase
 using MuladdMacro
 import DiffEqBase: dualgen
 using ChunkSplitters
-using PrecompileTools
 
 using DelaunayTriangulation: number_type
 
