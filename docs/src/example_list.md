@@ -15,7 +15,6 @@ using SteadyStateDiffEq
 using LinearAlgebra
 using ElasticArrays
 using NonlinearSolve 
-using FastLapackInterface
 using Krylov
 ```
 

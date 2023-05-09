@@ -40,7 +40,7 @@ final_time = 0.10
 prob = FVMProblem(mesh, BCs; diffusion_function=D, reaction_function=R, initial_condition=u₀, final_time)
 
 ## Step 4: Solve
-alg = FBDF(linsolve=UMFPACKFactorization())
+alg = FBDF(linsolve=UMFPACKFactorization(), autodiff = false)
 sol = solve(prob, alg; saveat=0.025)
 
 ## Step 5: Visualisation 

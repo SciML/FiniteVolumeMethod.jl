@@ -52,7 +52,7 @@ end
 # Test the type-stability for a vector of functions 
 function vector_of_function_test(wrappers, parameters)
     nums = zeros(length(wrappers))
-    @inline map(wrappers, eachindex(wrappers), parameters) do f, i, p
+    map(wrappers, eachindex(wrappers), parameters) do f, i, p
         x, y, t, u = rand(4)
         nums[i] = f(x, y, t, u, p)
     end

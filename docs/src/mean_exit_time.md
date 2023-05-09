@@ -109,7 +109,6 @@ using OrdinaryDiffEq
 using SteadyStateDiffEq
 using LinearSolve
 using LinearAlgebra
-using FastLapackInterface
 
 R = 1.0
 θ = LinRange(0, 2π, 100)

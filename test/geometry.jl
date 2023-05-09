@@ -196,7 +196,7 @@ for coordinate_type in (Vector{Float64}, NTuple{2,Float64}, SVector{2,Float64})
                         ## Test the boundary information 
                         boundary_info = FVM.get_boundary_information(geo)
                         boundary_elements = boundary_info.boundary_elements
-
+                        local boundary_nodes
                         boundary_nodes = boundary_info.boundary_nodes
                         true_boundary_nodes = collect(1:48)
 

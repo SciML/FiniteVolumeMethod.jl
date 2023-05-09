@@ -42,12 +42,12 @@ prob = FVMProblem(msh, BC;
     final_time=48.0,
     initial_condition=initial_condition)
 
-alg = TRBDF2(linsolve=KLUFactorization())
+alg = TRBDF2(linsolve=KLUFactorization(), autodiff = VERSION ≥ v"1.8.5")
 sol_par = solve(prob, alg; parallel=true, saveat=0.05)
 sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
 @test sol_par.u ≈ sol_ser.u
 
-alg = TRBDF2(linsolve=KLUFactorization(; reuse_symbolic=false))
+alg = TRBDF2(linsolve=KLUFactorization(; reuse_symbolic=false), autodiff = VERSION ≥ v"1.8.5")
 sol_par = solve(prob, alg; parallel=true, saveat=0.05)
 sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
 @test sol_par.u ≈ sol_ser.u

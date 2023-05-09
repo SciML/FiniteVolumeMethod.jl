@@ -31,13 +31,13 @@ R = (x, y, t, u, p) -> u * (1 - u)
 u₀ = [f(points[:, i]...) for i in axes(points, 2)]
 final_time = 0.5
 prob = FVMProblem(mesh, BCs; iip_flux=false, diffusion_function=D, reaction_function=R, initial_condition=u₀, final_time)
-alg = TRBDF2(linsolve=KLUFactorization(; reuse_symbolic=false))
+alg = TRBDF2(linsolve=KLUFactorization(; reuse_symbolic=false), autodiff = VERSION ≥ v"1.8.5")
 sol_par = solve(prob, alg; parallel=true, saveat=0.05)
 sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
 @test sol_par.u ≈ sol_ser.u rtol=1e-7
 
 prob = FVMProblem(mesh, BCs; iip_flux=true, diffusion_function=D, reaction_function=R, initial_condition=u₀, final_time)
-alg = TRBDF2(linsolve=KLUFactorization(; reuse_symbolic=false))
+alg = TRBDF2(linsolve=KLUFactorization(; reuse_symbolic=false), autodiff = VERSION ≥ v"1.8.5")
 sol_par = solve(prob, alg; parallel=true, saveat=0.05)
 sol_ser = solve(prob, alg; parallel=false, saveat=0.05)
 @test sol_par.u ≈ sol_ser.u rtol=1e-7

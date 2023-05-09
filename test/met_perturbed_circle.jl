@@ -4,7 +4,6 @@ using CairoMakie
 using OrdinaryDiffEq
 using SteadyStateDiffEq
 using LinearSolve
-using FastLapackInterface
 using LinearAlgebra
 using ReferenceTests
 using StableRNGs
@@ -42,7 +41,7 @@ prob = FVMProblem(mesh, BCs;
     final_time=final_time,
     initial_condition=initial_guess,
     steady=true)
-alg = DynamicSS(TRBDF2(linsolve=FastLUFactorization()))
+alg = DynamicSS(TRBDF2(linsolve=KrylovJL_GMRES()))
 sol = solve(prob, alg, parallel=true)
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")

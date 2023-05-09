@@ -56,7 +56,7 @@ prob = FVMProblem(mesh, BCs; diffusion_function=D, reaction_function=R, initial_
 ## Step 4: Solve
 using OrdinaryDiffEq, LinearSolve
 
-alg = FBDF(linsolve=UMFPACKFactorization())
+alg = FBDF(linsolve=UMFPACKFactorization(), autodiff=false)
 sol = solve(prob, alg; saveat=0.025)
 
 ## Step 5: Visualisation 
