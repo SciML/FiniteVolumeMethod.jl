@@ -83,6 +83,6 @@ Here is a more detailed comparison with the exact solution.
 
 ```@raw html
 <figure>
-    <img src='../figures/reaction_diffusion_equation_test_error.png.png', alt='Reaction-diffusion equation on a circle solution compared to the exact solution'><br>
+    <img src='../figures/reaction_diffusion_equation_test_error.png', alt='Reaction-diffusion equation on a circle solution compared to the exact solution'><br>
 </figure>
 ```
