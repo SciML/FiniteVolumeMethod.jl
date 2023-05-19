@@ -1,7 +1,7 @@
 name = "FiniteVolumeMethod"
 uuid = "d4f04ab7-4f65-4d72-8a28-7087bc7f46f4"
 authors = ["Daniel VandenHeuvel <danj.vandenheuvel@gmail.com>"]
-version = "0.4.6"
+version = "0.4.7"
 
 [deps]
 ChunkSplitters = "ae650224-84b6-46f8-82ea-d812ca08434e"
@@ -16,7 +16,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 ChunkSplitters = "^0.1, 1.0"
-DelaunayTriangulation = "0.4, 0.5, 0.6"
+DelaunayTriangulation = "0.7"
 DiffEqBase = "^6.0"
 FunctionWrappersWrappers = "^0.1"
 MuladdMacro = "^0.2"
