@@ -42,6 +42,6 @@ function DelaunayTriangulation.jump_and_march(prob::FVMProblem, q;
     point_indices=each_point_index(prob),
     m=DelaunayTriangulation.default_num_samples(length(point_indices)),
     try_points=(),
-    k=DelaunayTriangulation.select_initial_point(get_points(prob), q; m, point_indices, try_points))
+    k=DelaunayTriangulation.select_initial_point(get_triangulation(prob), q; m, point_indices, try_points))
     return jump_and_march(get_triangulation(prob), q; point_indices, m, try_points, k)
 end
