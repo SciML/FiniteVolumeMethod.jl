@@ -27,8 +27,9 @@ makedocs(;
             "Example VII: Diffusion equation on an annulus" => "annulus.md",
             "Example VIII: Laplace's equation" => "laplace.md",
             "Example IX: Mean exit time problems" => "mean_exit_time.md",
-            "Mathematical Details" => "math.md"
-        ]]
+        ],
+        "Mathematical Details" => "math.md"
+    ]
 )
 
 deploydocs(;
