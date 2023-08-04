@@ -52,7 +52,7 @@ BCs = BoundaryConditions(mesh, boundary_functions, types)
 f = (x, y) -> 1 - sqrt(x^2 + y^2)
 D = ((x, y, t, u::T, p) where {T}) -> one(T)
 points = get_points(tri)
-u₀ = f.(points[1, :], points[2, :])
+u₀ = f.(points[1, :], points[2, :]) |> collect
 final_time = 0.1 # Do not need iip_flux = true or R(x, y, t, u, p) = 0, these are defaults 
 prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition=u₀, final_time)
 
