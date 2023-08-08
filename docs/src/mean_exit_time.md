@@ -212,7 +212,7 @@ prob = FVMProblem(mesh, BCs;
     steady=true)
 sol = solve(prob, DynamicSS(TRBDF2(linsolve=KrylovJL_GMRES())))
 fig = Figure(fontsize=38)
-ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")
+ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y", width = 900, height = 600)
 msh = tricontourf!(tri, sol.u, levels = 0:500:16000)
 tightlimits!(ax)
 Colorbar(fig[1, 2], msh)
@@ -274,12 +274,12 @@ prob = FVMProblem(mesh, BCs;
     steady=true)
 sol = solve(prob, DynamicSS(TRBDF2(linsolve=KrylovJL_GMRES())))
 fig = Figure(fontsize=38)
-ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")
+ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y", width = 900, height = 600)
 msh = tricontourf!(tri, sol.u, levels = 0:500:16000)
 tightlimits!(ax)
 Colorbar(fig[1, 2], msh)
-fig
 resize_to_layout!(fig)
+fig
 ```
 
 ```@raw html

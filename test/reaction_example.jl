@@ -40,7 +40,7 @@ final_time = 0.10
 prob = FVMProblem(mesh, BCs; diffusion_function=D, reaction_function=R, initial_condition=u₀, final_time)
 
 ## Step 4: Solve
-alg = FBDF(linsolve=UMFPACKFactorization(), autodiff = false)
+alg = FBDF(linsolve=UMFPACKFactorization(), autodiff=false)
 sol = solve(prob, alg; saveat=0.025)
 
 ## Step 5: Visualisation 
@@ -75,11 +75,13 @@ errs = reduce(hcat, [100abs.(u - û) / maximum(abs.(u)) for (u, û) in zip(eac
 
 ## Step 8: Visualise the comparison 
 fig = Figure(fontsize=42, resolution=(3469.8997f0, 1466.396f0))
-for i in 1:5 
+for i in 1:5
     ax1 = Axis(fig[1, i], width=600, height=600, title=L"(%$(join('a':'z')[i])):$ $ Exact solution, $t = %$(sol.t[i])$", titlealign=:left)
     ax2 = Axis(fig[2, i], width=600, height=600, title=L"(%$(join('a':'z')[5+i])):$ $ Numerical solution, $t = %$(sol.t[i])$", titlealign=:left)
-    tricontourf!(ax1, tri, u_exact[:, i], levels = 1:0.01:1.4, colormap=:matter)
-    tricontourf!(ax2, tri, u_fvm[:, i], levels = 1:0.01:1.4, colormap=:matter)
+    tricontourf!(ax1, tri, u_exact[:, i], levels=1:0.01:1.4, colormap=:matter)
+    tricontourf!(ax2, tri, u_fvm[:, i], levels=1:0.01:1.4, colormap=:matter)
+    tightlimits!(ax1)
+    tightlimits!(ax2)
 end
 fig
 @test_reference "../docs/src/figures/reaction_diffusion_equation_test_error.png" fig

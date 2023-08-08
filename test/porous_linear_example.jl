@@ -95,6 +95,8 @@ for i in 1:5
     ax2 = Axis(fig[2, i], width=600, height=600, title=L"(%$(join('a':'z')[5+i])):$ $ Numerical solution, $t = %$(sol.t[i])$", titlealign=:left)
     tricontourf!(ax1, tri, u_exact[:, i], levels=0:0.05:1, colormap=:matter, extendhigh=:auto)
     tricontourf!(ax2, tri, u_fvm[:, i], levels=0:0.05:1, colormap=:matter, extendhigh=:auto)
+    tightlimits!(ax1)
+    tightlimits!(ax2)
 end
 fig
 @test_reference "../docs/src/figures/porous_medium_linear_source_test_error.png" fig

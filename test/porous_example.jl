@@ -85,8 +85,10 @@ fig = Figure(fontsize=42, resolution=(3469.8997f0, 1466.396f0))
 for i in 1:5
     ax1 = Axis(fig[1, i], width=600, height=600, title=L"(%$(join('a':'z')[i])):$ $ Exact solution, $t = %$(sol.t[i])$", titlealign=:left)
     ax2 = Axis(fig[2, i], width=600, height=600, title=L"(%$(join('a':'z')[5+i])):$ $ Numerical solution, $t = %$(sol.t[i])$", titlealign=:left)
-    tricontourf!(ax1, tri, u_exact[:, i], levels=0:0.005:0.05, colormap=:matter, extendhigh=:auto)
-    tricontourf!(ax2, tri, u_fvm[:, i], levels=0:005:0.05, colormap=:matter, extendhigh=:auto)
+    tricontourf!(ax1, tri, u_exact[:, i], levels=0:0.005:0.05, colormap=:matter, extendhigh=:auto, extendlow=:auto)
+    tricontourf!(ax2, tri, u_fvm[:, i], levels=0:0.005:0.05, colormap=:matter, extendhigh=:auto, extendlow=:auto)
+    tightlimits!(ax1)
+    tightlimits!(ax2)
 end
 fig
 @test_reference "../docs/src/figures/porous_medium_test_error.png" fig
