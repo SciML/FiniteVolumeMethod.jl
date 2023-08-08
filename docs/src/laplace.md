@@ -83,10 +83,10 @@ sol = solve(prob, alg, parallel=true)
 ## Plot 
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")
-pt_mat = get_points(tri)
-T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
-msh = mesh!(ax, pt_mat, T_mat, color=sol, colorrange=(-15, 15))
+msh = tricontourf!(tri, sol.u, levels = -15:0.5:15)
+tightlimits!(ax)
 Colorbar(fig[1, 2], msh)
+fig
 ```
 
 ```@raw html

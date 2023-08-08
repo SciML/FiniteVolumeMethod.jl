@@ -121,16 +121,13 @@ The results we obtain are shown below, with the exact travelling wave from the o
 using CairoMakie 
 
 # The solution 
-pt_mat = points
-T_mat = [[T...] for T in each_solid_triangle(tri)] # each_solid since tri contains some ghost triangles
-T_mat = reduce(hcat, T_mat)'
-fig = Figure(resolution=(3023.5881f0, 684.27f0), fontsize=38)
-ax = Axis(fig[1, 1], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(0.0, 1.0), colormap=:matter)
-ax = Axis(fig[1, 2], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[51], colorrange=(0.0, 1.0), colormap=:matter)
-ax = Axis(fig[1, 3], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[101], colorrange=(0.0, 1.0), colormap=:matter)
+fig = Figure(resolution=(3024.72f0, 686.64f0), fontsize=38)
+for (i, j) in zip(1:3, (1, 51, 101))
+    ax = Axis(fig[1, i], width=600, height=600)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.05:1, colormap=:matter)
+    tightlimits!(ax)
+end
+fig
 
 # The wave comparisons 
 ax = Axis(fig[1, 4], width=900, height=600)

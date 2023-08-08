@@ -40,16 +40,13 @@ alg = TRBDF2(linsolve=KLUFactorization())
 sol = solve(prob, alg; saveat=0.5)
 
 ## Step 5: Visualisation 
-pt_mat = points
-T_mat = [[T...] for T in each_solid_triangle(tri)]
-T_mat = reduce(hcat, T_mat)'
-fig = Figure(resolution=(3023.5881f0, 684.27f0), fontsize=38)
-ax = Axis(fig[1, 1], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(0.0, 1.0), colormap=:matter)
-ax = Axis(fig[1, 2], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[51], colorrange=(0.0, 1.0), colormap=:matter)
-ax = Axis(fig[1, 3], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[101], colorrange=(0.0, 1.0), colormap=:matter)
+fig = Figure(resolution=(3024.72f0, 686.64f0), fontsize=38)
+for (i, j) in zip(1:3, (1, 51, 101))
+    ax = Axis(fig[1, i], width=600, height=600)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.05:1, colormap=:matter)
+    tightlimits!(ax)
+end
+fig
 
 ## Step 6: Put the solutions into a matrix format and test the x-invariance by comparing each column to the middle
 u_mat = [reshape(u, (Nx, Ny)) for u in sol.u]
