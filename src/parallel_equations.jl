@@ -1,6 +1,6 @@
-@inbounds @muladd getα(prob, T, u) = gets(prob, T, 1) * u[T[1]] + gets(prob, T, 2) * u[T[2]] + gets(prob, T, 3) * u[T[3]]
-@inbounds @muladd getβ(prob, T, u) = gets(prob, T, 4) * u[T[1]] + gets(prob, T, 5) * u[T[2]] + gets(prob, T, 6) * u[T[3]]
-@inbounds @muladd getγ(prob, T, u) = gets(prob, T, 7) * u[T[1]] + gets(prob, T, 8) * u[T[2]] + gets(prob, T, 9) * u[T[3]]
+ @muladd getα(prob, T, u) = gets(prob, T, 1) * u[T[1]] + gets(prob, T, 2) * u[T[2]] + gets(prob, T, 3) * u[T[3]]
+ @muladd getβ(prob, T, u) = gets(prob, T, 4) * u[T[1]] + gets(prob, T, 5) * u[T[2]] + gets(prob, T, 6) * u[T[3]]
+ @muladd getγ(prob, T, u) = gets(prob, T, 7) * u[T[1]] + gets(prob, T, 8) * u[T[2]] + gets(prob, T, 9) * u[T[3]]
 
 function par_fvm_eqs_edge!(du, t, (vj, j), (vjnb, jnb), α, β, γ, prob, flux_cache, T)
     x, y = get_control_volume_edge_midpoints(prob, T, j)
@@ -11,12 +11,12 @@ function par_fvm_eqs_edge!(du, t, (vj, j), (vjnb, jnb), α, β, γ, prob, flux_c
     else
         flux_cache = get_flux(prob, x, y, t, α, β, γ) # Make no assumption that flux_cache is mutable 
     end
-    @muladd @inbounds summand = -(getx(flux_cache) * xn + gety(flux_cache) * yn) * ℓ
+    @muladd  summand = -(getx(flux_cache) * xn + gety(flux_cache) * yn) * ℓ
     if is_interior_or_neumann_node(prob, vj)
-        @inbounds du[vj] += summand
+         du[vj] += summand
     end
     if is_interior_or_neumann_node(prob, vjnb)
-        @inbounds du[vjnb] -= summand
+         du[vjnb] -= summand
     end
     return nothing
 end
@@ -72,8 +72,8 @@ end
 @inline function par_fvm_eqs_source_contribution!(du, u, t, j::Integer, prob)
     x, y = get_point(prob, j)
     V = get_volumes(prob, j)
-    @inbounds R = get_reaction(prob, x, y, t, u[j])
-    @inbounds @muladd du[j] = du[j] / V + R
+     R = get_reaction(prob, x, y, t, u[j])
+     @muladd du[j] = du[j] / V + R
     return nothing
 end
 @inline function par_fvm_eqs_source_contribution!(du, u, t, prob, interior_or_neumann_nodes)
@@ -119,12 +119,12 @@ end
 
 function par_update_dirichlet_nodes!(u, t, prob, dirichlet_nodes)
     Threads.@threads for j in dirichlet_nodes
-        @inbounds u[j] = evaluate_boundary_function(u, t, j, prob)
+         u[j] = evaluate_boundary_function(u, t, j, prob)
     end
     return nothing
 end
 function par_update_dirichlet_nodes!(integrator)
-    @inbounds par_update_dirichlet_nodes!(integrator.u, integrator.t, integrator.p[1], integrator.p[10])
+     par_update_dirichlet_nodes!(integrator.u, integrator.t, integrator.p[1], integrator.p[10])
     return nothing
 end
 
