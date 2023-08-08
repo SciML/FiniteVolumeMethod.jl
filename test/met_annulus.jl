@@ -48,11 +48,11 @@ prob = FVMProblem(mesh, BCs;
     steady=true)
 sol = solve(prob, DynamicSS(TRBDF2(linsolve=KrylovJL_GMRES())))
 fig = Figure(fontsize=38)
-ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y", width=600, height=300)
-pt_mat = get_points(tri)
-T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
-msh = mesh!(ax, pt_mat, T_mat, color=sol, colorrange=(0, 900))
+ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")
+msh = tricontourf!(tri, sol.u, levels = 0:50:900)
+tightlimits!(ax)
 Colorbar(fig[1, 2], msh)
+fig
 resize_to_layout!(fig)
 @test_reference "../docs/src/figures/annulus_mean_exit_time.png" fig
 exact = [(R₂^2 - norm(p)^2) / (4D) + R₁^2 * log(norm(p) / R₂) / (2D) for p in each_point(tri)]

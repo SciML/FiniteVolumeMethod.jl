@@ -67,16 +67,13 @@ sol = solve(prob, alg; saveat=3.0)
 
 ## Step 5: Visualisation
 using CairoMakie
-
-pt_mat = points
-T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
-fig = Figure(resolution=(2131.8438f0, 684.27f0), fontsize=38)
-ax = Axis(fig[1, 1], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(0.0, 0.05), colormap=:matter)
-ax = Axis(fig[1, 2], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(0.0, 0.05), colormap=:matter)
-ax = Axis(fig[1, 3], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0.0, 0.05), colormap=:matter)
+fig = Figure(resolution=(2068.72f0, 686.64f0), fontsize=38)
+for (i, j) in zip(1:3, (1, 3, 5))
+    ax = Axis(fig[1, i], width=600, height=600)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.005:0.05, colormap=:matter, extendhigh=:auto)
+    tightlimits!(ax)
+end
+fig
 ```
 
 ```@raw html
@@ -92,7 +89,6 @@ Here is a detailed comparison with the exact solution.
     <img src='../figures/porous_medium_test_error.png', alt='Porous-Medium equation comparison with the exact solution'><br>
 </figure>
 ```
-
 
 ## Linear source
 
@@ -156,15 +152,13 @@ alg = TRBDF2(linsolve=KLUFactorization())
 sol = solve(prob, alg; saveat=2.5)
 
 ## Step 5: Visualisation 
-pt_mat = points
-T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
-fig = Figure(resolution=(2131.8438f0, 684.27f0), fontsize=38)
-ax = Axis(fig[1, 1], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(0.0, 0.5), colormap=:matter)
-ax = Axis(fig[1, 2], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(0.0, 0.5), colormap=:matter)
-ax = Axis(fig[1, 3], width=600, height=600)
-mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0.0, 0.5), colormap=:matter)
+fig = Figure(resolution=(2132.72f0, 686.64f0), fontsize=38)
+for (i, j) in zip(1:3, (1, 3, 5))
+    ax = Axis(fig[1, i], width=600, height=600)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.05:1, colormap=:matter, extendhigh=:auto)
+    tightlimits!(ax)
+end
+fig
 ```
 
 ```@raw html

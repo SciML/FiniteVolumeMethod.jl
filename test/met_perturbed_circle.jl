@@ -45,8 +45,8 @@ alg = DynamicSS(TRBDF2(linsolve=KrylovJL_GMRES()))
 sol = solve(prob, alg, parallel=true)
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")
-pt_mat = get_points(tri)
-T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
-msh = mesh!(ax, pt_mat, T_mat, color=sol, colorrange=(0, 10000))
+msh = tricontourf!(tri, sol.u, levels = 0:500:10000)
+tightlimits!(ax)
 Colorbar(fig[1, 2], msh)
+fig
 @test_reference "../docs/src/figures/perturbed_circle_mean_exit_time.png" fig

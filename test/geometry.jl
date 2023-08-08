@@ -8,10 +8,10 @@ include("test_setup.jl")
 a, b, c, d, nx, ny, tri = example_triangulation()
 
 ## Look at it 
-fig = Figure()
-ax = Axis(fig[1, 1])
-triplot!(ax, tri)
-text!(ax, get_points(tri); text=string.(each_point_index(tri)))
+#fig = Figure()
+#ax = Axis(fig[1, 1])
+#triplot!(ax, tri)
+#text!(ax, get_points(tri); text=string.(each_point_index(tri)))
 
 ## Define the geometry 
 for coordinate_type in (Vector{Float64}, NTuple{2,Float64}, SVector{2,Float64})

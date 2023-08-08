@@ -101,20 +101,13 @@ u: 11-element Vector{Vector{Float64}}:
 You can use `sol` as you would any other solution from `DifferentialEquations.jl` (e.g. `sol(t)` returns the solution at time `t`). To visualise the solution at the times `t = 0.0`, `t = 0.25`, and `t = 0.5`, the following code can be used:
 ```julia
 using CairoMakie
-T_mat = [T[j] for T in each_triangle(tri), j in 1:3]
 fig = Figure(resolution=(2068.72f0, 686.64f0), fontsize=38)
-ax = Axis(fig[1, 1], width=600, height=600)
-xlims!(ax, a, b)
-ylims!(ax, c, d)
-mesh!(ax, points, T_mat, color=sol.u[1], colorrange=(0, 50), colormap=:matter)
-ax = Axis(fig[1, 2], width=600, height=600)
-xlims!(ax, a, b)
-ylims!(ax, c, d)
-mesh!(ax, points, T_mat, color=sol.u[6], colorrange=(0, 50), colormap=:matter)
-ax = Axis(fig[1, 3], width=600, height=600)
-xlims!(ax, a, b)
-ylims!(ax, c, d)
-mesh!(ax, points, T_mat, color=sol.u[11], colorrange=(0, 50), colormap=:matter)
+for (i, j) in zip(1:3, (1, 6, 11))
+    ax = Axis(fig[1, i], width=600, height=600)
+    tricontourf!(ax, tri, sol.u[j], levels=0:5:50, colormap=:matter)
+    tightlimits!(ax)
+end
+fig
 ```
 
 ```@raw html
