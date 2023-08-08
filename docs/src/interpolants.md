@@ -77,6 +77,6 @@ end
 
 ```@raw html
 <figure>
-    <img src='../figures/surface_plots_travelling_wave.png.png', alt='Surface plots'><br>
+    <img src='../figures/surface_plots_travelling_wave.png', alt='Surface plots'><br>
 </figure>
 ```
