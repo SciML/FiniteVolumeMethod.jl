@@ -1,25 +1,47 @@
-@inline function dirichlet_callback(no_saveat=false)
-    condition = (u, t, integrator) -> true
-    cb = DiffEqBase.DiscreteCallback(condition, update_dirichlet_nodes!; save_positions=(no_saveat, no_saveat))
-    return cb
+function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem{N}}) where {N}
+    u = prob.initial_condition
+    nt = Threads.nthreads()
+    if prob isa FVMProblem
+        duplicated_du = DiffCache(similar(u, length(u), nt))
+        point_conditions = collect(keys(prob.conditions.point_conditions))
+    else
+        duplicated_du = DiffCache(similar(u, size(u, 1), size(u, 2), nt))
+        point_conditions = ntuple(i -> collect(keys(prob.problems[i].conditions.point_conditions)), N)
+    end
+    solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
+    solid_vertices = collect(each_solid_vertex(prob.mesh.triangulation))
+    chunked_solid_triangles = chunks(solid_triangles, nt)
+    return (
+        duplicated_du=duplicated_du,
+        point_conditions=point_conditions,
+        solid_triangles=solid_triangles,
+        solid_vertices=solid_vertices,
+        chunked_solid_triangles=chunked_solid_triangles,
+        parallel=Val(true),
+        prob=prob
+    )
 end
 
 """
-    jacobian_sparsity(prob::FVMProblem)
+    jacobian_sparsity(prob::Union{FVMProblem,FVMSystem})
 
 Constructs the sparse matrix which has the same sparsity pattern as the Jacobian for the finite volume equations 
-corresponding to the [`FVMProblem`](@ref) given by `prob`.
+corresponding to the [`FVMProblem`](@ref) or [`FVMSystem`](@ref) given by `prob`.
 """
 function jacobian_sparsity(prob::FVMProblem)
-    DG = get_neighbours(prob)
+    tri = prob.mesh.triangulation
     I = Int64[]   # row indices 
     J = Int64[]   # col indices 
     V = Float64[] # values (all 1)
-    for i in each_point_index(prob)
+    n = length(prob.initial_condition)
+    sizehint!(I, 6n) # points have, on average, six neighbours in a DelaunayTriangulation
+    sizehint!(J, 6n)
+    sizehint!(V, 6n)
+    for i in each_solid_vertex(tri)
         push!(I, i)
         push!(J, i)
         push!(V, 1.0)
-        ngh = get_neighbours(DG, i)
+        ngh = get_neighbours(tri, i)
         for j in ngh
             if !DelaunayTriangulation.is_boundary_index(j)
                 push!(I, i)
@@ -30,127 +52,93 @@ function jacobian_sparsity(prob::FVMProblem)
     end
     return sparse(I, J, V)
 end
-
-"""
-    SciMLBase.ODEProblem(prob::FVMProblem;
-        cache_eltype::Type{F}=eltype(get_initial_condition(prob)),
-        jac_prototype=float.(jacobian_sparsity(prob)),
-        parallel=false,
-        no_saveat=true,
-        specialization::Type{S}=SciMLBase.AutoSpecialize,
-        chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob)))) where {S,F}
-
-Constructs the `ODEProblem` for the system of ODEs defined by the finite volume equations corresponding to `prob`.
-
-# Arguments 
-- `prob::FVMProblem`: The [`FVMProblem`](@ref).
-
-# Keyword Arguments 
-- `cache_eltype::Type{F}=eltype(get_initial_condition(prob))`: The element type used for the cache vectors. 
-- `jac_prototype=float.(jacobian_sparsity(prob))`: The prototype for the sparsity pattern of the Jacobian. 
-- `parallel=false`: Whether to use multithreading for evaluating the equations.
-- `no_saveat=true`: Whether the solution is saving at specific points. 
-- `specialization::Type{S}=SciMLBase.AutoSpecialize`: The specialisation level for the `ODEProblem`.
-- `chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob))))`: The chunk size for the dual numbers used in the cache vector.
-
-# Outputs 
-Returns the corresponding [`ODEProblem`](@ref).
-"""
-function SciMLBase.ODEProblem(prob::FVMProblem;
-    cache_eltype::Type{F}=eltype(get_initial_condition(prob)),
-    jac_prototype=float.(jacobian_sparsity(prob)),
-    parallel=false,
-    no_saveat=true,
-    specialization::Type{S}=SciMLBase.AutoSpecialize,
-    chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob))),
-    kwargs...) where {S,F}
-    time_span = get_time_span(prob)
-    initial_condition = get_initial_condition(prob)
-    cb = dirichlet_callback(no_saveat)
-    if !parallel
-        flux_cache = PreallocationTools.DiffCache(zeros(F, 2), chunk_size)
-        shape_coeffs = PreallocationTools.DiffCache(zeros(F, 3), chunk_size)
-        f = ODEFunction{true,S}(fvm_eqs!; jac_prototype)
-        p = (prob, flux_cache, shape_coeffs)
-        ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb, kwargs...)
-        return ode_problem
-    else
-        f = ODEFunction{true,S}(par_fvm_eqs!; jac_prototype)
-        u0 = get_initial_condition(prob)
-        du_copies,
-        flux_caches,
-        shape_coeffs,
-        dudt_nodes,
-        interior_or_neumann_nodes,
-        boundary_elements,
-        interior_elements,
-        elements,
-        dirichlet_nodes,
-        chunked_boundary_elements,
-        chunked_interior_elements,
-        chunked_elements = prepare_vectors_for_multithreading(u0, prob, F; chunk_size)
-        p = (
-            prob,
-            du_copies,
-            flux_caches,
-            shape_coeffs,
-            dudt_nodes,
-            interior_or_neumann_nodes,
-            boundary_elements,
-            interior_elements,
-            elements,
-            dirichlet_nodes,
-            chunked_boundary_elements,
-            chunked_interior_elements,
-            chunked_elements
-        )
-        ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb, kwargs...)
-        return ode_problem
+function jacobian_sparsity(prob::FVMSystem{N}) where {N}
+    tri = prob.mesh.triangulation
+    I = Int64[]   # row indices
+    J = Int64[]   # col indices
+    V = Float64[] # values (all 1)
+    n = length(prob.initial_condition)
+    sizehint!(I, 6n) # points have, on average, six neighbours in a DelaunayTriangulation. We don't need to multiply by N here, since length(prob.initial_condition) is actually N * num_solid_vertices(tri) already 
+    sizehint!(J, 6n)
+    sizehint!(V, 6n)
+    for i in each_solid_vertex(tri)
+        for j in 1:N
+            push!(I, i)
+            push!(J, (j - 1) * N + i)
+            push!(V, 1.0)
+        end
+        ngh = get_neighbours(tri, i)
+        for j in ngh
+            if !DelaunayTriangulation.is_boundary_index(j)
+                for k in 1:N
+                    push!(I, i)
+                    push!(J, (k - 1) * N + j)
+                    push!(V, 1.0)
+                end
+            end
+        end
     end
+    return sparse(I, J, V)
 end
 
-"""
-    SciMLBase.solve(prob::FVMProblem, alg;
-        cache_eltype::Type{F}=eltype(get_initial_condition(prob)),
-        jac_prototype=float.(jacobian_sparsity(prob)),
-        parallel=false,
-        specialization::Type{S}=SciMLBase.AutoSpecialize,
-        chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob))),
-        kwargs...)
-
-Solves the [`FVMProblem`](@ref) given by `prob` using the algorithm `alg`.
-
-# Arguments 
-- `prob::FVMProblem`: The [`FVMProblem`](@ref).
-- `alg`: The algorithm to use for solving. See the DifferentialEquations.jl documentation for this. If your problem is a steady problem, then you should use an algorithm from NonlinearSolve.jl instead - note that the initial estimate in this case comes from the initial condition.
-
-# Keyword Arguments 
-- `cache_eltype::Type{F}=eltype(get_initial_condition(prob))`: The element type used for the cache vectors. 
-- `jac_prototype=float.(jacobian_sparsity(prob))`: The prototype for the sparsity pattern of the Jacobian. 
-- `parallel=false`: Whether to use multithreading for evaluating the equations. Not currently used.
-- `specialization::Type{S}=SciMLBase.AutoSpecialize`: The specialisation level for the `ODEProblem`.
-- `chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob))))`: The chunk size for the dual numbers used in the cache vector.
-- `kwargs...`: Extra keyword arguments for `solve` as used on `ODEProblem`s (or `NonlinearProblem`s if your problem is steady).
-
-# Output 
-The output is a solution struct, as returned from DifferentialEquations.jl. If instead your problem is steady, returns a 
-solution struct as returned from NonlinearSolve.jl.
-"""
-function SciMLBase.solve(prob::FVMProblem, alg;
-    cache_eltype::Type{F}=eltype(get_initial_condition(prob)),
-    jac_prototype=float.(jacobian_sparsity(prob)),
-    parallel=false,
-    specialization::Type{S}=SciMLBase.AutoSpecialize,
-    chunk_size=PreallocationTools.ForwardDiff.pickchunksize(length(get_initial_condition(prob))),
-    kwargs...) where {S,F}
-    no_saveat = :saveat ∉ keys(Dict(kwargs))
-    ode_problem = ODEProblem(prob; cache_eltype, jac_prototype, parallel, no_saveat, specialization, chunk_size)
-    if !is_steady(prob)
-        sol = solve(ode_problem, alg; kwargs...)
-        return sol
-    else
-        nonlinear_problem = NonlinearProblem{true}(ode_problem.f, ode_problem.u0, ode_problem.p)
-        sol = solve(nonlinear_problem, alg; kwargs...)
-        return sol
-    end
+@inline function dirichlet_callback(has_saveat=true)
+    cb = DiscreteCallback(
+        Returns(true),
+        (integrator, t, u) -> update_dirichlet_nodes!(integrator); save_positions=(!has_saveat, !has_saveat)
+    )
+    return cb
 end
+
+function SciMLBase.ODEProblem(prob::Union{FVMProblem,FVMSystem};
+    specialization::Type{S}=SciMLBase.AutoSpecialize,
+    jac_prototype=jacobian_sparsity(prob),
+    parallel::Bool,
+    kwargs...) where {S}
+    par = Val(parallel)
+    initial_time = prob.initial_time
+    final_time = prob.final_time
+    time_span = (initial_time, final_time)
+    initial_condition = prob.initial_condition
+    kwarg_dict = Dict(kwargs)
+    dirichlet_cb = dirichlet_callback(:saveat ∈ keys(kwarg_dict))
+    if :callback ∈ keys(kwarg_dict)
+        callback = CallbackSet(kwarg_dict[:callback], dirichlet_cb)
+    else
+        callback = CallbackSet(dirichlet_cb)
+    end
+    delete!(kwargs, :callback)
+    f = ODEFunction{true,S}(fvm_eqs!; jac_prototype)
+    p = par ? get_multithreading_vectors(prob) : prob
+    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=callback, kwargs...)
+    return ode_problem
+end
+function SciMLBase.NonlinearProblem(prob::SteadyFVMProblem; kwargs...)
+    ode_prob = ODEProblem(prob.problem; kwargs...)
+    nl_prob = NonlinearProblem{true}(ode_prob.f, ode_prob.u0, ode_prob.p; kwargs...)
+    return nl_prob
+end
+
+CommonSolve.init(prob::Union{FVMProblem,FVMSystem}, alg; kwargs...) = CommonSolve.init(ODEProblem(prob, kwargs...), alg; kwargs...)
+CommonSolve.solve(prob::SteadyFVMProblem, alg; kwargs...) = CommonSolve.solve(NonlinearProblem(prob; kwargs...), alg; kwargs...)
+
+@doc """
+    solve(prob::Union{FVMProblem,FVMSystem}, alg; kwargs...)
+
+Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the algorithm `alg`, with keyword 
+arguments `kwargs` passed to the solver as in DifferentialEquations.jl. The returned type for a [`FVMProblem`](@ref)
+is a `sol::ODESolution`, with the `i`th component of the solution referring to the `i`th 
+node in the underlying mesh, and accessed like the solutions in DifferentialEquations.jl. If `prob` is a 
+[`FVMSystem`](@ref), the `(j, i)`th component of the solution instead refers to the `i`th node 
+for the `j`th component of the system.
+""" solve(::Union{FVMProblem,FVMSystem}, ::Any; kwargs...)
+
+@doc """
+    solve(prob::SteadyFVMProblem, alg; kwargs...)
+
+Solves the given [`SteadyFVMProblem`](@ref) `prob` with the algorithm `alg`, with keyword
+arguments `kwargs` passed to the solver as in (Simple)NonlinearSolve.jl. The returned type
+is a `NonlinearSolution`, and the `i`th component of the solution if the steady state for the 
+`i`th node in the underlying mesh. If the underlying problem is instead a [`FVMSystem`](@ref), 
+rather than a [`FVMProblem`](@ref), it is the `(j, i)`th component that refers to the `i`th 
+node of the mesh for the `j`th component of the system.
+""" solve(::SteadyFVMProblem, ::Any; kwargs...)

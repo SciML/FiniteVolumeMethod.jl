@@ -1,3 +1,14 @@
+export FVMGeometry,
+    FVMProblem,
+    FVMSystem,
+    SteadyFVMProblem,
+    BoundaryConditions,
+    InternalConditions,
+    Neumann,
+    Dudt,
+    Dirichlet,
+    solve
+
 # Properties of a control volume's intersection with a triangle
 struct TriangleProperties
     shape_function_coefficients::NTuple{9,Float64}
@@ -131,7 +142,7 @@ takes the form
 
 where `(x, y)` is the point, `t` is the current time, and `u` is the 
 solution at the point `(x, y)` at time `t`, as above, with an extra 
-argument `p` for additional parameters.
+argument `p` for additional parameters. 
 """ Neumann
 
 @doc raw"""
@@ -178,10 +189,10 @@ argument `p` for additional parameters.
 
 get_dual_arg_types(::Type{T}, ::Type{U}, ::Type{P}) where {T,U,P} = (
     Tuple{T,T,T,U,P},                       # Typical signature 
-    Tuple{T,T,T,dualgen(U),P},              # Signature with "u" a Dual 
-    Tuple{T,T,dualgen(T),U,P},              # Signature with "t" a Dual 
-    Tuple{T,T,dualgen(T),dualgen(U),P})     # Signature with "u" and "t" Duals
-get_dual_ret_types(::Type{U}, ::Type{T}) where {U,T} = (U, dualgen(U), dualgen(T), dualgen(promote_type(U, T)))
+    Tuple{T,T,T,DiffEqBase.dualgen(U),P},              # Signature with "u" a Dual 
+    Tuple{T,T,DiffEqBase.dualgen(T),U,P},              # Signature with "t" a Dual 
+    Tuple{T,T,DiffEqBase.dualgen(T),DiffEqBase.dualgen(U),P})     # Signature with "u" and "t" Duals
+get_dual_ret_types(::Type{U}, ::Type{T}) where {U,T} = (U, DiffEqBase.dualgen(U), DiffEqBase.dualgen(T), DiffEqBase.dualgen(promote_type(U, T)))
 function wrap_functions(functions, parameters, float_type::Type{T}=Float64, u_type::Type{U}=Float64) where {T,U}
     all_arg_types = ntuple(i -> get_dual_arg_types(T, U, typeof(parameters[i])), length(parameters))
     all_ret_types = ntuple(i -> get_dual_ret_types(U, T), length(parameters))
@@ -502,13 +513,64 @@ function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, 
 end
 
 """
-    SteadyFVMProblem{P<:FVMProblem}
+    SteadyFVMProblem{P<:Union{<:FVMProblem,<:FVMSystem}}
 
-This is a wrapper for [`FVMProblem`](@ref) that indicates that the problem is to be solved as a 
+This is a wrapper for [`FVMProblem`](@ref) or [`FVMSystem`](@ref) that indicates that the problem is to be solved as a 
 steady-state problem. You can then solve the problem using `solve` from (Simple)NonlinearSolve.jl.
 """
-struct SteadyFVMProblem{P<:FVMProblem}
+struct SteadyFVMProblem{P}
     problem::P
+end
+
+"""
+    FVMSystem{N,FG,P,IC,FT,FT}
+
+Representation of a system of PDEs. The constructor for this struct is 
+
+    FVMSystem(prob1, prob2, ..., probN),
+
+where each `probi` is a [`FVMProblem`](@ref) for the `i`th component of the system.
+For these [`FVMProblem`](@ref)s, the functions involved, such as the condition functions, should 
+all be defined so that the `u` argument assumes the form `u = (u₁, u₂, ..., uN)` (both `Tuple`s and `Vector`s will be passed), 
+where `uᵢ` is the solution for the `i`th component of the system. For the flux functions, 
+which for a [`FVMProblem`](@ref) takes the form
+
+    q(x, y, t, α, β, γ, p) ↦ (qx, qy),
+
+the same form is used, except `α`, `β`, `γ` are all `Tuple`s so that `α[i]*x + β[i]*y + γ` is the 
+approximation to `uᵢ`.
+
+This problem is solved in the same way as a [`FVMProblem`](@ref), except the problem is defined such that 
+the solution returns a matrix at each time, where the `(j, i)`th component corresponds to the solution at the `i`th 
+node for the `j`th component.
+"""
+struct FVMSystem{N,FG,P,IC,FT,FT}
+    mesh::FG
+    problems::P
+    initial_condition::IC
+    initial_time::FT
+    final_time::FT
+    function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::FT, final_time::FT) where {FG,P,IC,FT}
+        @assert length(problems) > 0 "There must be at least one problem."
+        @assert all(p -> p.mesh === mesh, problems) "All problems must have the same mesh."
+        @assert all(p -> p.initial_time === initial_time, problems) "All problems must have the same initial time."
+        @assert all(p -> p.final_time === final_time, problems) "All problems must have the same final time."
+        @assert size(initial_condition) == (length(problems), length(initial_condition[1])) "The initial condition must be a matrix with the same number of rows as the number of problems."
+        return FVMSystem{length(problems),FG,P,IC,FT,FT}(mesh, problems, initial_condition, initial_time, final_time)
+    end
+end
+function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
+    N == 0 && error("There must be at least one problem.")
+    mesh = probs[1].mesh
+    initial_time = probs[1].initial_time
+    final_time = probs[1].final_time
+    n = DelaunayTriangulation.num_solid_vertices(mesh)
+    ic₁ = probs[1].initial_condition
+    initial_condition = similar(ic₁, N, length(ic₁))
+    for (i, prob) in enumerate(probs)
+        initial_condition[i, :] .= prob.initial_condition
+    end
+    return FVMSystem(mesh, probs, initial_condition, initial_time, final_time)
 end
 
 """
@@ -538,7 +600,26 @@ function construct_flux_function(q, D, Dp)
     end
 end
 
-function get_shape_function_coefficients(props::TriangleProperties, T, u)
+function idx_is_point_condition(prob::FVMProblem, idx)
+    return idx ∈ keys(prob.conditions.point_conditions)
+end
+function idx_is_point_condition(prob::FVMSystem{N}, idx, var) where {N}
+    return idx_is_point_condition(prob.problens[var], idx)
+end
+function idx_is_dudt_condition(prob::FVMProblem, idx)
+    return prob.conditions.point_conditions[idx][1] == Dudt
+end
+function idx_is_dudt_condition(prob::FVMSystem{N}, idx, var) where {N}
+    return idx_is_dudt_condition(prob.problems[var], idx)
+end
+function idx_is_neumann_condition(prob::FVMProblem, i, j)
+    return (i, j) ∈ keys(prob.conditions.edge_conditions)
+end
+function idx_is_neumann_condition(prob::FVMSystem{N}, i, j, var) where {N}
+    return idx_is_neumann_condition(prob.problems[var], i, j)
+end
+
+function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMProblem)
     i, j, k = indices(T)
     s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
     α = s₁ * u[i] + s₂ * u[j] + s₃ * u[k]
@@ -546,10 +627,22 @@ function get_shape_function_coefficients(props::TriangleProperties, T, u)
     γ = s₇ * u[i] + s₈ * u[j] + s₉ * u[k]
     return α, β, γ
 end
+function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMSystem{N})
+    i, j, k = indices(T)
+    s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
+    α = ntuple(ℓ -> s₁ * u[ℓ, i] + s₂ * u[ℓ, j] + s₃ * u[ℓ, k], N)
+    β = ntuple(ℓ -> s₄ * u[ℓ, i] + s₅ * u[ℓ, j] + s₆ * u[ℓ, k], N)
+    γ = ntuple(ℓ -> s₇ * u[ℓ, i] + s₈ * u[ℓ, j] + s₉ * u[ℓ, k], N)
+    return α, β, γ
+end
 
-function get_flux(prob, props, α, β, γ, t, i, j, edge_index)
+function evaluate_flux()
+
+end
+
+function get_flux(prob::FVMProblem, props, α, β, γ, t, i, j, edge_index)
     # For checking if an edge is Neumann, we need only check e.g. (i, j) and not (j, i), since we do not allow for internal Neumann edges.
-    ij_is_neumann = (i, j) ∈ keys(prob.conditions.edge_conditions)
+    ij_is_neumann = idx_is_neumann_condition(prob, i, j)
     x, y = props.control_volume_midpoints[edge_index]
     nx, ny = props.control_volume_normals[edge_index]
     ℓ = props.control_volume_edge_lengths[edge_index]
@@ -563,6 +656,25 @@ function get_flux(prob, props, α, β, γ, t, i, j, edge_index)
     end
     return qn * ℓ
 end
+function get_flux(prob::FVMSystem{N}, props, α, β, γ, t, i, j, edge_index)
+    x, y = props.control_volume_midpoints[edge_index]
+    nx, ny = props.control_volume_normals[edge_index]
+    ℓ = props.control_volume_edge_lengths[edge_index]
+    u_shape = ntuple(ℓ -> α[ℓ] * x + β[ℓ] * y + γ[ℓ], N)
+    qn = ntuple(N) do ℓ
+        ij_is_neumann = idx_is_neumann_condition(prob, i, j, ℓ)
+        if !ij_is_neumann
+            qx, qy = prob.problems[ℓ].flux_function(x, y, t, α, β, γ, prob.problems[ℓ].flux_parameters)
+            qn = qx * nx + qy * ny
+        else
+            function_index = prob.problems[ℓ].conditions.edge_conditions[(i, j)]
+            a, ap = prob.problems[ℓ].conditions.functions[function_index], prob.problems[ℓ].conditions.parameters[function_index]
+            qn = a(x, y, t, u_shape, ap)
+        end
+        return qn * ℓ
+    end
+    return qn
+end
 
 function get_fluxes(prob, props, α, β, γ, t)
     q1 = get_flux(prob, props, α, β, γ, t, i, j, 1)
@@ -571,15 +683,7 @@ function get_fluxes(prob, props, α, β, γ, t)
     return q1, q2, q3
 end
 
-function idx_is_point_condition(prob, idx)
-    return idx ∈ keys(prob.conditions.point_conditions)
-end
-
-function fvm_eqs_single_triangle!(du, u, prob, t, T)
-    i, j, k = indices(T)
-    props = prob.mesh.triangle_props[(i, j, k)]
-    α, β, γ = get_shape_function_coefficients(props, T, u)
-    summand₁, summand₂, summand₃ = get_fluxes(prob, props, α, β, γ, t)
+function update_du!(du, prob::FVMProblem, i, j, k, summand₁, summand₂, summand₃)
     i_is_pc = idx_is_point_condition(prob, i)
     j_is_pc = idx_is_point_condition(prob, j)
     k_is_pc = idx_is_point_condition(prob, k)
@@ -596,13 +700,41 @@ function fvm_eqs_single_triangle!(du, u, prob, t, T)
         du[i] += summand₃
     end
 end
+function update_du!(du, prob::FVMSystem{N}, i, j, k, ℓ, summand₁, summand₂, summand₃) where {N}
+    i_is_pc = idx_is_point_condition(prob, i, ℓ)
+    j_is_pc = idx_is_point_condition(prob, j, ℓ)
+    k_is_pc = idx_is_point_condition(prob, k, ℓ)
+    @. begin
+        if !i_is_pc
+            du[:, i] -= summand₁
+            du[:, j] += summand₁
+        end
+        if !j_is_pc
+            du[:, j] -= summand₂
+            du[:, k] += summand₂
+        end
+        if !k_is_pc
+            du[:, k] -= summand₃
+            du[:, i] += summand₃
+        end
+    end
+end
 
-function fvm_eqs_single_source_contribution!(du, u, prob, t, i)
+function fvm_eqs_single_triangle!(du, u, prob, t, T)
+    i, j, k = indices(T)
+    props = prob.mesh.triangle_props[(i, j, k)]
+    α, β, γ = get_shape_function_coefficients(props, T, u, prob)
+    summand₁, summand₂, summand₃ = get_fluxes(prob, props, α, β, γ, t)
+    update_du!(du, prob, i, j, k, summand₁, summand₂, summand₃)
+    return nothing
+end
+
+function fvm_eqs_single_source_contribution!(du, u, prob::FVMProblem, t, i)
     p = get_point(prob.mesh.triangulation, i)
     x, y = getxy(p)
     if !idx_is_point_condition(prob, i)
         du[i] += prob.source_function(x, y, t, u[i], prob.source_parameters)
-    elseif prob.conditions.point_conditions[i][1] == Dudt
+    elseif idx_is_dudt_condition(prob, i)
         function_index = prob.conditions.point_conditions[i][2]
         a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
         du[i] = a(x, y, t, u[i], ap)
@@ -610,6 +742,22 @@ function fvm_eqs_single_source_contribution!(du, u, prob, t, i)
         du[i] = zero(eltype(du))
     end
     return nothing
+end
+function fvm_eqs_single_source_contribution!(du, u, prob::FVMSystem{N}, t, i) where {N}
+    p = get_point(prob.mesh.triangulation, i)
+    x, y = getxy(p)
+    uᵢ = @views u[:, i]
+    for j in 1:N
+        if !idx_is_point_condition(prob, i, j)
+            du[j, i] += prob.problems[j].source_function(x, y, t, uᵢ, prob.problems[j].source_parameters)
+        elseif idx_is_dudt_condition(prob, i, j)
+            function_index = prob.problems[j].conditions.point_conditions[i][2]
+            a, ap = prob.problems[j].conditions.functions[function_index], prob.problems[j].conditions.parameters[function_index]
+            du[j, i] = a(x, y, t, uᵢ, ap)
+        else # Dirichlet
+            du[j, i] = zero(eltype(du))
+        end
+    end
 end
 
 function serial_fvm_eqs!(du, u, prob, t)
@@ -619,6 +767,19 @@ function serial_fvm_eqs!(du, u, prob, t)
     end
     for i in each_solid_vertex(prob.mesh.triangulation)
         fvm_eqs_single_source_contribution!(du, u, prob, t, i)
+    end
+    return nothing
+end
+
+function combine_duplicated_du!(du, duplicated_du, prob)
+    if prob isa FVMProblem
+        for _du in eachcol(duplicated_du)
+            du .+= _du
+        end
+    else
+        for i in axes(duplicated_du, 3)
+            du .+= duplicated_du[:, :, i]
+        end
     end
     return nothing
 end
@@ -635,12 +796,14 @@ function parallel_fvm_eqs!(du, u, p, t)
     Threads.@threads for (triangle_range, chunk_idx) in chunked_solid_triangles
         for triangle_idx in triangle_range
             T = solid_triangles[triangle_idx]
-            @views fvm_eqs_single_triangle!(_duplicated_du[:, chunk_idx], u, prob, t, T)
+            if prob isa FVMProblem
+                @views fvm_eqs_single_triangle!(_duplicated_du[:, chunk_idx], u, prob, t, T)
+            else
+                @views fvm_eqs_single_triangle!(_duplicated_du[:, :, chunk_idx], u, prob, t, T)
+            end
         end
     end
-    for _du in eachcol(duplicated_du)
-        du .+= _du
-    end
+    combine_duplicated_du!(du, duplicated_du, prob)
     Threads.@threads for i in solid_vertices
         fvm_eqs_single_source_contribution!(du, u, prob, t, i)
     end
@@ -656,7 +819,7 @@ function fvm_eqs!(du, u, p, t)
     end
 end
 
-function update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
+function update_dirichlet_nodes_single!(u, t, prob::FVMProblem, i, condition, function_index)
     if condition == Dirichlet
         a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
         p = get_point(prob.mesh.triangulation, i)
@@ -665,20 +828,46 @@ function update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index
     end
     return nothing
 end
+function update_dirichlet_nodes_single!(u, t, prob::FVMSystem{N}, i, j, condition, function_index) where {N}
+    if condition == Dirichlet
+        a, ap = prob.problems[j].conditions.functions[function_index], prob.problems[j].conditions.parameters[function_index]
+        p = get_point(prob.mesh.triangulation, i)
+        x, y = getxy(p)
+        @views u[j, i] = a(x, y, t, u[:, i], ap)
+    end
+end
 
-function serial_update_dirichlet_nodes!(u, t, prob)
+function serial_update_dirichlet_nodes!(u, t, prob::FVMProblem)
     for (i, (condition, function_index)) in prob.conditions.point_conditions
         update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
     end
     return nothing
 end
+function serial_update_dirichlet_nodes!(u, t, prob::FVMSystem{N}) where {N}
+    for j in 1:N
+        for (i, (condition, function_index)) in prob.problems[j].conditions.point_conditions
+            update_dirichlet_nodes_single!(u, t, prob, i, j, condition, function_index)
+        end
+    end
+end
 
-function parallel_update_dirichlet_nodes!(u, t, p)
-    prob, point_conditions = p.prob, p.point_conditions
+function parallel_update_dirichlet_nodes!(u, t, p, prob::FVMProblem)
+    point_conditions = p.point_conditions
     Threads.@threads for i in point_conditions
         point_conditions_dict = prob.conditions.point_conditions
         condition, function_index = point_conditions_dict[i]
         update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
+    end
+    return nothing
+end
+function parallel_update_dirichlet_nodes!(u, t, p, prob::FVMSystem{N}) where {N}
+    point_conditions = p.point_conditions
+    for j in 1:N
+        Threads.@threads for i in point_conditions[j]
+            point_conditions_dict = prob.problems[j].conditions.point_conditions
+            condition, function_index = point_conditions_dict[i]
+            update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
+        end
     end
     return nothing
 end
@@ -688,16 +877,21 @@ function update_dirichlet_nodes!(integrator)
     if parallel == Val(false)
         return serial_update_dirichlet_nodes!(integrator.u, integrator.t, prob)
     else
-        return parallel_update_dirichlet_nodes!(integrator.u, integrator.t, integrator.p)
+        return parallel_update_dirichlet_nodes!(integrator.u, integrator.t, integrator.p, prob)
     end
     return nothing
 end
 
-function get_multithreading_vectors(prob)
+function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem{N}}) where {N}
     u = prob.initial_condition
     nt = Threads.nthreads()
-    duplicated_du = DiffCache(similar(u, length(u), nt))
-    point_conditions = collect(keys(prob.conditions.point_conditions))
+    if prob isa FVMProblem
+        duplicated_du = DiffCache(similar(u, length(u), nt))
+        point_conditions = collect(keys(prob.conditions.point_conditions))
+    else
+        duplicated_du = DiffCache(similar(u, size(u, 1), size(u, 2), nt))
+        point_conditions = ntuple(i -> collect(keys(prob.problems[i].conditions.point_conditions)), N)
+    end
     solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
     solid_vertices = collect(each_solid_vertex(prob.mesh.triangulation))
     chunked_solid_triangles = chunks(solid_triangles, nt)
@@ -713,13 +907,13 @@ function get_multithreading_vectors(prob)
 end
 
 """
-    jacobian_sparsity(prob::FVMProblem)
+    jacobian_sparsity(prob::Union{FVMProblem,FVMSystem})
 
 Constructs the sparse matrix which has the same sparsity pattern as the Jacobian for the finite volume equations 
-corresponding to the [`FVMProblem`](@ref) given by `prob`.
+corresponding to the [`FVMProblem`](@ref) or [`FVMSystem`](@ref) given by `prob`.
 """
 function jacobian_sparsity(prob::FVMProblem)
-    DG = get_neighbours(prob)
+    tri = prob.mesh.triangulation
     I = Int64[]   # row indices 
     J = Int64[]   # col indices 
     V = Float64[] # values (all 1)
@@ -727,16 +921,44 @@ function jacobian_sparsity(prob::FVMProblem)
     sizehint!(I, 6n) # points have, on average, six neighbours in a DelaunayTriangulation
     sizehint!(J, 6n)
     sizehint!(V, 6n)
-    for i in each_point_index(prob)
+    for i in each_solid_vertex(tri)
         push!(I, i)
         push!(J, i)
         push!(V, 1.0)
-        ngh = get_neighbours(DG, i)
+        ngh = get_neighbours(tri, i)
         for j in ngh
             if !DelaunayTriangulation.is_boundary_index(j)
                 push!(I, i)
                 push!(J, j)
                 push!(V, 1.0)
+            end
+        end
+    end
+    return sparse(I, J, V)
+end
+function jacobian_sparsity(prob::FVMSystem{N}) where {N}
+    tri = prob.mesh.triangulation
+    I = Int64[]   # row indices
+    J = Int64[]   # col indices
+    V = Float64[] # values (all 1)
+    n = length(prob.initial_condition)
+    sizehint!(I, 6n) # points have, on average, six neighbours in a DelaunayTriangulation. We don't need to multiply by N here, since length(prob.initial_condition) is actually N * num_solid_vertices(tri) already 
+    sizehint!(J, 6n)
+    sizehint!(V, 6n)
+    for i in each_solid_vertex(tri)
+        for j in 1:N
+            push!(I, i)
+            push!(J, (j - 1) * N + i)
+            push!(V, 1.0)
+        end
+        ngh = get_neighbours(tri, i)
+        for j in ngh
+            if !DelaunayTriangulation.is_boundary_index(j)
+                for k in 1:N
+                    push!(I, i)
+                    push!(J, (k - 1) * N + j)
+                    push!(V, 1.0)
+                end
             end
         end
     end
@@ -751,7 +973,7 @@ end
     return cb
 end
 
-function SciMLBase.ODEProblem(prob::FVMProblem;
+function SciMLBase.ODEProblem(prob::Union{FVMProblem,FVMSystem};
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
     parallel::Bool,
@@ -780,17 +1002,19 @@ function SciMLBase.NonlinearProblem(prob::SteadyFVMProblem; kwargs...)
     return nl_prob
 end
 
-CommonSolve.init(prob::FVMProblem, alg; kwargs...) = CommonSolve.init(ODEProblem(prob, kwargs...), alg; kwargs...)
+CommonSolve.init(prob::Union{FVMProblem,FVMSystem}, alg; kwargs...) = CommonSolve.init(ODEProblem(prob, kwargs...), alg; kwargs...)
 CommonSolve.solve(prob::SteadyFVMProblem, alg; kwargs...) = CommonSolve.solve(NonlinearProblem(prob; kwargs...), alg; kwargs...)
 
 @doc """
-    solve(prob::FVMProblem, alg; kwargs...)
+    solve(prob::Union{FVMProblem,FVMSystem}, alg; kwargs...)
 
-Solves the given [`FVMProblem`](@ref) `prob` with the algorithm `alg`, with keyword 
-arguments `kwargs` passed to the solver as in DifferentialEquations.jl. The returned type 
+Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the algorithm `alg`, with keyword 
+arguments `kwargs` passed to the solver as in DifferentialEquations.jl. The returned type for a [`FVMProblem`](@ref)
 is a `sol::ODESolution`, with the `i`th component of the solution referring to the `i`th 
-node in the underlying mesh, and accessed like the solutions in DifferentialEquations.jl.
-""" solve(::FVMProblem, ::Any; kwargs...)
+node in the underlying mesh, and accessed like the solutions in DifferentialEquations.jl. If `prob` is a 
+[`FVMSystem`](@ref), the `(j, i)`th component of the solution instead refers to the `i`th node 
+for the `j`th component of the system.
+""" solve(::Union{FVMProblem,FVMSystem}, ::Any; kwargs...)
 
 @doc """
     solve(prob::SteadyFVMProblem, alg; kwargs...)
@@ -798,5 +1022,7 @@ node in the underlying mesh, and accessed like the solutions in DifferentialEqua
 Solves the given [`SteadyFVMProblem`](@ref) `prob` with the algorithm `alg`, with keyword
 arguments `kwargs` passed to the solver as in (Simple)NonlinearSolve.jl. The returned type
 is a `NonlinearSolution`, and the `i`th component of the solution if the steady state for the 
-`i`th node in the underlying mesh.
+`i`th node in the underlying mesh. If the underlying problem is instead a [`FVMSystem`](@ref), 
+rather than a [`FVMProblem`](@ref), it is the `(j, i)`th component that refers to the `i`th 
+node of the mesh for the `j`th component of the system.
 """ solve(::SteadyFVMProblem, ::Any; kwargs...)

@@ -8,20 +8,24 @@ using SparseArrays
 using SciMLBase
 using Base.Threads
 using DiffEqBase
-import DiffEqBase: dualgen
 using ChunkSplitters
 using CommonSolve
 
 include("geometry.jl")
-include("boundary_conditions.jl")
+include("conditions.jl")
 include("problem.jl")
 include("equations.jl")
-include("parallel_equations.jl")
 include("solve.jl")
 
-export FVMGeometry
-export BoundaryConditions
-export FVMProblem
-export jacobian_sparsity
+export FVMGeometry,
+    FVMProblem,
+    FVMSystem,
+    SteadyFVMProblem,
+    BoundaryConditions,
+    InternalConditions,
+    Neumann,
+    Dudt,
+    Dirichlet,
+    solve
 
 end
