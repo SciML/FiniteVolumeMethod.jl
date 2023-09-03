@@ -303,11 +303,14 @@ where $u(\vb x_\sigma, t) = \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sig
 
 # Internal Conditions
 
-We also allow for specifying internal conditions, meaning conditions of the form \eqref{eq:neumann}--\eqref{eq:dirichlet} that are applied to edges that are not on the boundary. These are handled in the same way as BCs. One difference is that, for the Dirichlet BCs \eqref{eq:dudtdirichlet}--\eqref{eq:dirichlet}, we also allow for the conditions to be provided at vertices in addition to edges, so that, for example, point sources can be specified. Neumann internal conditions can only be provided with edges, though, since here a definition of $\vu n$ is needed. For these edges, the normal vector $\vu n$ is always interpreted as being a counter-clockwise rotation of the edge.
+We also allow for specifying internal conditions, meaning conditions of the form \eqref{eq:neumann}--\eqref{eq:dirichlet} that are applied away from the boundary. We do not currently allow for internal Neumann conditions.[^1] These conditions are handled in the same way as BCs, except that the user is to provide them per-vertex rather than per-edge.
+
+[^1]: This is a technical limitation due to how the control volumes are defined. For vertices away from the boundary, the control volume edges do not lie along any of the triangle's edges, which is where we would like to impose Neumann conditions.
+
 
 # Putting Everything Together 
 
-We have now specified how we discretise the PDE itself, and how we handle both boundary and internal conditions. The remaining task is to actually discuss how we compute each $\mathrm du_i/\mathrm dt$. As written, \eqre{eq:internalapproximation} indicates that we loop over each vertex and, within each vertex, loop over each edge of its control volume. This would not be the most efficient way to do this when actually implementing it in code. Instead, we loop over each triangle in $\mathcal T(\Omega)$, picking up the contribution from each control volume edge inside the triangle to the system of equations for $\mathrm du_i/\mathrm dt$.
+We have now specified how we discretise the PDE itself, and how we handle both boundary and internal conditions. The remaining task is to actually discuss how we compute each $\mathrm du_i/\mathrm dt$. As written, \eqref{eq:interiorapproximation} indicates that we loop over each vertex and, within each vertex, loop over each edge of its control volume. This would not be the most efficient way to do this when actually implementing it in code. Instead, we loop over each triangle in $\mathcal T(\Omega)$, picking up the contribution from each control volume edge inside the triangle to the system of equations for $\mathrm du_i/\mathrm dt$.
 
 To understand how this can be done, consider the figure below.
 
