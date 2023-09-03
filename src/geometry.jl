@@ -19,13 +19,20 @@ struct FVMGeometry{T,S}
     cv_volumes::Vector{Float64}
     triangle_props::Dict{NTuple{3,Int},TriangleProperties}
 end
+function Base.show(io::IO, ::MIME"text/plain", geo::FVMGeometry)
+    nv = DelaunayTriangulation.num_solid_vertices(geo.triangulation_statistics)
+    nt = DelaunayTriangulation.num_solid_triangles(geo.triangulation_statistics)
+    ne = DelaunayTriangulation.num_solid_edges(geo.triangulation_statistics)
+    print(io, "FVMGeometry with $(nv) control volumes, $(nt) triangles, and $(ne) edges")
+end
+
 function FVMGeometry(tri::Triangulation)
     has_ghost = DelaunayTriangulation.has_ghost_triangles(tri)
     has_ghost || add_ghost_triangles!(tri)
     stats = statistics(tri)
     nn = DelaunayTriangulation.num_solid_vertices(stats)
     nt = DelaunayTriangulation.num_solid_triangles(stats)
-    cv_volumes = zeros(Int, nn)
+    cv_volumes = zeros(nn)
     triangle_props = Dict{NTuple{3,Int},TriangleProperties}()
     sizehint!(cv_volumes, nn)
     sizehint!(triangle_props, nt)
@@ -37,24 +44,24 @@ function FVMGeometry(tri::Triangulation)
         rx, ry = getxy(r)
         ## Get the centroid of the triangle, and the midpoint of each edge
         centroid = DelaunayTriangulation.get_centroid(stats, T)
-        m1, m2, m3 = DelaunayTriangulation.get_edge_midpoints(stats, T)
+        m₁, m₂, m₃ = DelaunayTriangulation.get_edge_midpoints(stats, T)
         ## Need to get the sub-control volume areas
         # We need to connect the centroid to each vertex 
         cx, cy = getxy(centroid)
-        pcx, pcy = cx - pcx, cy - pcy
-        qcx, qcy = cx - qcx, cy - qcy
-        rcx, rcy = cx - rcx, cy - rcy
+        pcx, pcy = cx - px, cy - py
+        qcx, qcy = cx - qx, cy - qy
+        rcx, rcy = cx - rx, cy - ry
         # Next, connect all the midpoints to each other
-        m1x, m1y = getxy(m1)
-        m2x, m2y = getxy(m2)
-        m3x, m3y = getxy(m3)
-        m13x, m13y = m1x - m3x, m1y - m3y
-        m21x, m21y = m2x - m1x, m2y - m1y
-        m32x, m32y = m3x - m2x, m3y - m2y
+        m₁x, m₁y = getxy(m₁)
+        m₂x, m₂y = getxy(m₂)
+        m₃x, m₃y = getxy(m₃)
+        m₁₃x, m₁₃y = m₁x - m₃x, m₁y - m₃y
+        m₂₁x, m₂₁y = m₂x - m₁x, m₂y - m₁y
+        m₃₂x, m₃₂y = m₃x - m₂x, m₃y - m₂y
         # We can now contribute the portion of each vertex's control volume inside the triangle to its total volume 
-        S₁ = 1 / 2 * abs(pcx * m13y - pcy * m13x)
-        S₂ = 1 / 2 * abs(qcx * m21y - qcy * m21x)
-        S₃ = 1 / 2 * abs(rcx * m32y - rcy * m32x)
+        S₁ = 1 / 2 * abs(pcx * m₁₃y - pcy * m₁₃x)
+        S₂ = 1 / 2 * abs(qcx * m₂₁y - qcy * m₂₁x)
+        S₃ = 1 / 2 * abs(rcx * m₃₂y - rcy * m₃₂x)
         cv_volumes[i] += S₁
         cv_volumes[j] += S₂
         cv_volumes[k] += S₃

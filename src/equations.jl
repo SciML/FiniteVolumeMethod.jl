@@ -25,7 +25,7 @@ function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMP
     γ = s₇ * u[i] + s₈ * u[j] + s₉ * u[k]
     return α, β, γ
 end
-function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMSystem{N})
+function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMSystem{N}) where {N}
     i, j, k = indices(T)
     s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
     α = ntuple(ℓ -> s₁ * u[ℓ, i] + s₂ * u[ℓ, j] + s₃ * u[ℓ, k], N)
@@ -50,7 +50,7 @@ function get_flux(prob::FVMProblem, props, α, β, γ, t, i, j, edge_index)
     end
     return qn * ℓ
 end
-function get_flux(prob::FVMSystem{N}, props, α, β, γ, t, i, j, edge_index)
+function get_flux(prob::FVMSystem{N}, props, α, β, γ, t, i, j, edge_index) where {N}
     x, y = props.control_volume_midpoints[edge_index]
     nx, ny = props.control_volume_normals[edge_index]
     ℓ = props.control_volume_edge_lengths[edge_index]

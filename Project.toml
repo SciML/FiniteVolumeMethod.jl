@@ -16,7 +16,8 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 ChunkSplitters = "0.1, 1.0, 2.0"
-DelaunayTriangulation = "0.7, 0.8"
+CommonSolve = "0.2"
+DelaunayTriangulation = "0.8"
 DiffEqBase = "6"
 FunctionWrappersWrappers = "0.1"
 PreallocationTools = "0.4"
