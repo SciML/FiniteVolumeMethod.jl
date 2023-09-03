@@ -508,7 +508,7 @@ This is a wrapper for [`FVMProblem`](@ref) that indicates that the problem is to
 steady-state problem. You can then solve the problem using `solve` from (Simple)NonlinearSolve.jl.
 """
 struct SteadyFVMProblem{P<:FVMProblem}
-    problem::P 
+    problem::P
 end
 
 """
@@ -624,11 +624,11 @@ function serial_fvm_eqs!(du, u, prob, t)
 end
 
 function parallel_fvm_eqs!(du, u, p, t)
-    (; duplicated_du,
-        solid_triangles,
-        solid_vertices,
-        chunked_solid_triangles,
-        prob) = p
+    duplicated_du, solid_triangles,
+    solid_vertices, chunked_solid_triangles,
+    prob = p.duplicated_du, p.solid_triangles,
+    p.solid_vertices, p.chunked_solid_triangles,
+    p.prob
     fill!(du, zero(eltype(du)))
     _duplicated_du = get_tmp(duplicated_du, du)
     fill!(_duplicated_du, zero(eltype(du)))
@@ -648,7 +648,7 @@ function parallel_fvm_eqs!(du, u, p, t)
 end
 
 function fvm_eqs!(du, u, p, t)
-    (; prob, parallel) = p
+    prob, parallel = p.prob, p.parallel
     if parallel == Val(false)
         return serial_fvm_eqs!(du, u, prob, t)
     else
@@ -674,7 +674,7 @@ function serial_update_dirichlet_nodes!(u, t, prob)
 end
 
 function parallel_update_dirichlet_nodes!(u, t, p)
-    (; prob, point_conditions) = p
+    prob, point_conditions = p.prob, p.point_conditions
     Threads.@threads for i in point_conditions
         point_conditions_dict = prob.conditions.point_conditions
         condition, function_index = point_conditions_dict[i]
@@ -684,7 +684,7 @@ function parallel_update_dirichlet_nodes!(u, t, p)
 end
 
 function update_dirichlet_nodes!(integrator)
-    (; prob, parallel) = integrator.p
+    prob, parallel = integrator.p.prob, integrator.p.parallel
     if parallel == Val(false)
         return serial_update_dirichlet_nodes!(integrator.u, integrator.t, prob)
     else
