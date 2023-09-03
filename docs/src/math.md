@@ -4,10 +4,10 @@ Here we outline the mathematical and implementation details involved in implemen
 ```math
 \begin{equation}
 \label{eq:pde}
-\pdv{u(\vb x, t)}{t} + \div \vb q(\vb x, t) = S(\vb x, t), \quad \vb x \in \Omega,
+\pdv{u(\vb x, t)}{t} + \div \vb q(\vb x, t, u) = S(\vb x, t, u), \quad \vb x \in \Omega,
 \end{equation}
 ```
-together with some boundary conditions or internal conditions that we discuss later.
+together with some boundary conditions or internal conditions that we discuss later. We also discuss steady-state problems and systems of PDEs of the form \eqref{eq:pde}.
 
 # Interior Discretisation 
 
@@ -197,18 +197,18 @@ Note that \eqref{eq:intform} is still an exact expression.
 To proceed, we need to approximate the integrals $\int_\sigma \vb q \vdot \vu n_\sigma\dd{s}$. To accomplish this, we use a midpoint rule, writing
 ```math
 \begin{equation}\label{eq:midpt_rule}
-\int_\sigma \vb q \vdot \vu n_\sigma \dd{s} \approx \left[\vb q(\vb x_\sigma, t)\vdot \vu n_\sigma\right]L_\sigma.
+\int_\sigma \vb q \vdot \vu n_\sigma \dd{s} \approx \left[\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t))\vdot \vu n_\sigma\right]L_\sigma.
 \end{equation}
 ```
 Then, replacing the control volume averages with their value at $\vb x_i$, we obtain the following approximation:
 ```math
 \begin{equation}\label{eq:nextapprox}
-\dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\vb q(\vb x_\sigma, t) \vdot \vu n_\sigma\right]L_\sigma = S_i,
+\dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t)) \vdot \vu n_\sigma\right]L_\sigma = S_i,
 \end{equation}
 ```
 where $u_i = u(\vb x_i, t)$ and $S_i = S(\vb x_i, t)$. 
 
-The final step in this part of the approximation is the evaluation of $\vb q(\vb x_\sigma, t)$. To deal with this function, consider some $T_k \in \mathcal T_i$ so that $\vb x_\sigma$ is inside $T_k$. We use a linear shape function inside $T_k$ to approximate $u$, writing
+The final step in this part of the approximation is the evaluation of $\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t))$. To deal with this function, consider some $T_k \in \mathcal T_i$ so that $\vb x_\sigma$ is inside $T_k$. We use a linear shape function inside $T_k$ to approximate $u$, writing
 ```math
 \begin{equation}\label{eq:shape}
 u(\vb x, t) = \alpha_kx + \beta_ky + \gamma_k, \quad \vb x \in T_k,
@@ -246,7 +246,7 @@ and thus we obtain
 \end{aligned}
 \end{equation}
 ```
-where $u_{ki} = u(\vb x_{ki}, t)$ and $s_{k,ij}$ are the elements of $\vb S_k$. With \eqref{eq:shape} and \eqref{eq:shapecoeffvals}, we can approximate $\vb q(\vb x_\sigma, t)$ and thus obtain the approximation
+where $u_{ki} = u(\vb x_{ki}, t)$ and $s_{k,ij}$ are the elements of $\vb S_k$. With \eqref{eq:shape} and \eqref{eq:shapecoeffvals}, we can approximate $\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t))$ and thus obtain the approximation
 ```math
 \begin{equation}\label{eq:interiorapproximation}
 \dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\vb q\left(\vb x_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_k\right)\vdot \vu n_\sigma\right]L_\sigma = S_i,
@@ -259,7 +259,7 @@ where $k(\sigma)$ is the index of the triangle that contains $\vb x_\sigma$. Thi
 Let us now discuss how boundary conditions (BCs) are handled. We assume that BCs take on any of the following forms:
 ```math
 \begin{align}
-\vb q(\vb x, t) \vdot \vu n_\sigma &= a(\vb x, t, u) & \vb x \in \mathcal B \subseteq \partial\Omega, \label{eq:neumann} \\
+\vb q(\vb x, t, u) \vdot \vu n_\sigma &= a(\vb x, t, u) & \vb x \in \mathcal B \subseteq \partial\Omega, \label{eq:neumann} \\
 \dv{u(\vb x, t)}{t} &= a(\vb x, t, u) & \vb x \in \mathcal B \subseteq \partial\Omega, \label{eq:dudtdirichlet} \\
 u(\vb x, t) &= a(\vb x, t, u) & \vb x \in \mathcal B \subseteq \partial\Omega, \label{eq:dirichlet}
 \end{align}
@@ -392,3 +392,72 @@ Let us focus on $u_b$ and $u_r$. The procedure for going from the edge $e_{br}$ 
 With this procedure, we can get the contribution from each edge without having to repeat many computations. The procedure for the other edges is similar. Care does need to be taken if there is a boundary or internal condition on $u_b$ or $u_r$ (or the other vertices). If there is a Dirichlet condition on $u_b$ (either \eqref{eq:dudtdirichlet} or \eqref{eq:dirichlet}), skip step 7. Similarly, skip step 8 if there is a Dirichlet condition on $u_r$. If there is a Neumann condition on $e_{br}$, then the definition of $Q$ should be modified to be $Q = [a_{br}(\vb x_{br}, t, \alpha x_{br} + \beta y_{br} + \gamma)]L_{br}$, where $a_{br}$ is the Neumann condition function associated with $e_{br}$; it does not matter if, for example, $u_b$ is a part of a Neumann condition for some other edge, since Neumann conditions are specified per-edge rather than per-vertex.
 
 Once we have applied these steps onto each triangle, and we have taken care for respecting the boundary and internal conditions, the last step is to loop over each vertex and then compute the source term $S_i$, adding it to each equation. This completes the discretisation of the PDE.
+
+# Systems of Equations 
+
+We also provide support for systems of PDEs that take the form
+
+```math
+\begin{equation}\label{eq:system}
+\begin{aligned}
+\pdv{u_1(\vb x, t)}{t} + \div \vb q_1(\vb x, t, u_1, \ldots, u_n) &= S_1(\vb x, t, u_1, \ldots, u_n), \\
+\pdv{u_2(\vb x, t)}{t} + \div \vb q_2(\vb x, t, u_1, \ldots, u_n) &= S_2(\vb x, t, u_1, \ldots, u_n), \\
+&\vdots \\
+\pdv{u_n(\vb x, t)}{t} + \div \vb q_n(\vb x, t, u_1, \ldots, u_n) &= S_n(\vb x, t, u_1, \ldots, u_n),
+\end{aligned}
+\end{equation}
+```
+
+where any of the divergences and source terms may also depend on the other variables $u_1,\ldots,u_n$. We can write this as,
+
+```math
+\begin{equation}\label{eq:systemsim}
+\pdv{\vb u(\vb x, t)}{t} + \div \vb Q(\vb x, t, \vb u) = \vb S(\vb x, t, \vb u),
+\end{equation}
+```
+
+where
+
+```math
+\begin{equation}\label{eq:sysdef}
+\begin{aligned}
+\vb u(\vb x, t) &= \begin{bmatrix} u_1(\vb x, t) \\ u_2(\vb x, t) \\ \vdots \\ u_n(\vb x, t) \end{bmatrix} \in \mathbb R^{n \times 1}, \\\vb Q(\vb x, t, \vb u) &= \begin{bmatrix} \vb q_1(\vb x, t, \vb u) & \vb q_2(\vb x, t, \vb u) & \cdots & \vb q_n(\vb x, t, \vb u) \end{bmatrix} \in \mathbb R^{2 \times n}, \\\vb S(\vb x, t, \vb u) &= \begin{bmatrix} S_1(\vb x, t, \vb u) \\ S_2(\vb x, t, \vb u) \\ \vdots \\ S_n(\vb x, t, \vb u) \end{bmatrix} \in \mathbb R^{n \times 1},
+\end{aligned}
+\end{equation}
+```
+
+and the divergence $\div \vb Q$ is defined as
+
+```math
+\begin{equation}\label{eq:divdef}
+\div \vb Q(\vb x, t, \vb u) = \begin{bmatrix} \div \vb q_1(\vb x, t, \vb u) \\ \div \vb q_2(\vb x, t, \vb u) \\ \vdots \\ \div\vb q_n(\vb x, t, \vb u) \end{bmatrix} \in \mathbb R^{n \times 1}.
+\end{equation}
+```
+
+The method we use for solving these equations is basically the same as what we do for a single PDE. Letting $\vb u_i = \vb u(\vb x_i, t)$ and $\vb S_i = \vb S(\vb x_i, t)$, the analogous approximation to \eqref{eq:interiorapproximation} is
+
+```math
+\begin{equation}\label{eq:sysapproxint}
+\dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\vb Q\left(\vb x_\sigma, t, t, \boldsymbol\alpha_{k(\sigma)}x_\sigma + \boldsymbol\beta_{k(\sigma)}y_\sigma + \boldsymbol\gamma_k\right)^{\mkern-1.5mu\mathsf{T}}\vu{n}_\sigma\right]L_\sigma = \vb S_i,
+\end{equation}
+```
+
+where $\boldsymbol\alpha_{k(\sigma)}$, $\boldsymbol\beta_{k(\sigma)}$, and $\boldsymbol\gamma_k$ are the vectors of coefficients from \eqref{eq:shapecoeffvals}, e.g.
+
+```math
+\boldsymbol\alpha_{k(\sigma)} = s_{k(\sigma),11}\vb u_{k1} + s_{k(\sigma),12}\vb u_{k2} + s_{k(\sigma),13}\vb u_{k3}.
+```
+
+where $\vb u_{ki} = \vb u(\vb x_{ki}, t)$ and $s_{k(\sigma),ij}$ are the elements of $\vb S_{k(\sigma)}$. The only difference between \eqref{eq:sysapproxint} and \eqref{eq:interiorapproximation} is that we now have a vector of PDEs rather than a single PDE. The procedure for computing the contribution from each edge is the same as before, except that we now have to loop over each PDE in the system. In the code, we use a `FVMSystem` type to represent a system of PDEs, constructed by providing a vector of `FVMProblem`s. The `FVMSystem` replaces the initial conditions with a matrix initial condition, where the `i`th column refers to the `i`th component of the system.
+
+# Steady-State Problems
+
+We provide support for steady-state problems, in which case \eqref{eq:pde} (and similarly for \eqref{eq:system}) becomes
+
+```math
+\begin{equation}
+\div \vb q(\vb x, t, u) = S(\vb x, t, \vb u).
+\end{equation}
+```
+
+This is solved in exactly the same way, except rootfinding is used and there is no timestepping.
