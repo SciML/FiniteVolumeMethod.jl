@@ -33,7 +33,7 @@ y2 = @. 0.5(1 + h(θ) * ε) * sin(θ)
 reverse!(x2)
 reverse!(y2)
 boundary_nodes, points = convert_boundary_points_to_indices([[x], [x2]], [[y], [y2]])
-tri = triangulate(points; boundary_nodes)
+tri = triangulate(points; boundary_nodes, delete_ghosts=false)
 refine!(tri)
 fig, ax, sc = triplot(tri,
     show_convex_hull=false,
@@ -316,6 +316,40 @@ To understand how this can be done, consider the figure below.
 
 ```@setup ex_focus
 using DelaunayTriangulation, CairoMakie
+function get_control_volume(tri, i)
+    is_bnd, bnd_idx = DelaunayTriangulation.is_boundary_node(tri, i)
+    cv = NTuple{2,Float64}[]
+    if is_bnd
+        j = DelaunayTriangulation.get_right_boundary_node(tri, i, bnd_idx)
+        k = get_adjacent(tri, i, j)
+        p = get_point(tri, i)
+        push!(cv, p)
+        while !DelaunayTriangulation.is_boundary_index(k)
+            q, r = get_point(tri, j, k)
+            c = (p .+ q .+ r) ./ 3
+            m = (p .+ q) ./ 2
+            push!(cv, m, c)
+            j = k
+            k = get_adjacent(tri, i, j)
+            DelaunayTriangulation.is_boundary_index(k) && push!(cv, (p .+ r) ./ 2)
+        end
+        push!(cv, p)
+    else
+        S = DelaunayTriangulation.get_surrounding_polygon(tri, i)
+        push!(S, S[begin])
+        j = S[begin]
+        p = get_point(tri, i)
+        q = get_point(tri, j)
+        push!(cv, (p .+ q) ./ 2)
+        for k in S[2:end]
+            r = get_point(tri, k)
+            push!(cv, (p .+ q .+ r) ./ 3)
+            push!(cv, (p .+ r) ./ 2)
+            q = r
+        end
+    end
+    return cv
+end
 a, b, c, d, e, f, g, h, i, j, k, ℓ = (0.0, 0.0),
 (2.0, 3.0),
 (4.0, -1.0),
@@ -334,19 +368,7 @@ tri = triangulate(points)
 fig = Figure()
 ax = Axis(fig[1, 1], width=400, height=400)
 for i in 1:3
-    p = get_point(tri, i)
-    cv = NTuple{2,Float64}[]
-    S = DelaunayTriangulation.get_surrounding_polygon(tri, i)
-    push!(S, S[begin])
-    j = S[begin]
-    q = get_point(tri, j)
-    push!(cv, (p .+ q) ./ 2)
-    for k in S[2:end]
-        r = get_point(tri, k)
-        push!(cv, (p .+ q .+ r) ./ 3)
-        push!(cv, (p .+ r) ./ 2)
-        q = r
-    end
+    cv = get_control_volume(tri, i)
     L = lines!(ax, cv, color=:blue, linewidth=3)
     translate!(L, 0, 0, 1)
 end
