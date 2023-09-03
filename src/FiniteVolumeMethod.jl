@@ -10,8 +10,7 @@ using Base.Threads
 using DiffEqBase
 import DiffEqBase: dualgen
 using ChunkSplitters
-
-using DelaunayTriangulation: number_type
+using CommonSolve
 
 include("geometry.jl")
 include("boundary_conditions.jl")

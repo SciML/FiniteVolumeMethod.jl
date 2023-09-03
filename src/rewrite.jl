@@ -1,3 +1,11 @@
+# Properties of a control volume's intersection with a triangle
+struct TriangleProperties
+    shape_function_coefficients::NTuple{9,Float64}
+    cv_edge_midpoints::NTuple{3,NTuple{2,Float64}}
+    cv_normals::NTuple{3,NTuple{2,Float64}}
+    cv_edge_lengths::NTuple{3,Float64}
+end
+
 """
     FVMGeometry(tri::Triangulation)
 
@@ -5,11 +13,11 @@ This is a constructor for the [`FVMGeometry`](@ref) struct, which holds the mesh
 
 It is assumed that all vertices in `tri` are in the triangulation, meaning `v` is in `tri` for each `v` in `each_point_index(tri)`.
 """
-struct FVMGeometry{T,S,V,C}
+struct FVMGeometry{T,S}
     triangulation::T
     triangulation_statistics::S
-    cv_volumes::Vector{Float64} # don't need to use a Dict... all vertices should be present in the mesh.
-    shape_function_coefficients::Dict{NTuple{3,Int},NTuple{9,Float64}}
+    cv_volumes::Vector{Float64}
+    triangle_props::Dict{NTuple{3,Int},TriangleProperties}
 end
 function FVMGeometry(tri::Triangulation)
     has_ghost = DelaunayTriangulation.has_ghost_triangles(tri)
@@ -18,19 +26,20 @@ function FVMGeometry(tri::Triangulation)
     nn = DelaunayTriangulation.num_solid_vertices(stats)
     nt = DelaunayTriangulation.num_solid_triangles(stats)
     cv_volumes = zeros(Int, nn)
-    shape_function_coefficients = Dict{NTuple{3,Int},NTuple{9,Float64}}()
+    triangle_props = Dict{NTuple{3,Int},TriangleProperties}()
     sizehint!(cv_volumes, nn)
-    sizehint!(shape_function_coefficients, nt)
+    sizehint!(triangle_props, nt)
     for T in each_solid_triangle(tri)
         i, j, k = indices(T)
         p, q, r = get_point(tri, i, j, k)
         px, py = getxy(p)
         qx, qy = getxy(q)
         rx, ry = getxy(r)
-        # Get the centroid of the triangle, and the midpoint of each edge
+        ## Get the centroid of the triangle, and the midpoint of each edge
         centroid = DelaunayTriangulation.get_centroid(stats, T)
         m1, m2, m3 = DelaunayTriangulation.get_edge_midpoints(stats, T)
-        # Now we need to connect the centroid to each vertex 
+        ## Need to get the sub-control volume areas
+        # We need to connect the centroid to each vertex 
         cx, cy = getxy(centroid)
         pcx, pcy = cx - pcx, cy - pcy
         qcx, qcy = cx - qcx, cy - qcy
@@ -49,7 +58,7 @@ function FVMGeometry(tri::Triangulation)
         cv_volumes[i] += S₁
         cv_volumes[j] += S₂
         cv_volumes[k] += S₃
-        # Lastly, we need to compute the shape function coefficients
+        ## Next, we need to compute the shape function coefficients
         Δ = qx * ry - qy * rx - px * ry + rx * py + px * qy - qx * py
         s₁ = (qy - ry) / Δ
         s₂ = (ry - py) / Δ
@@ -60,10 +69,26 @@ function FVMGeometry(tri::Triangulation)
         s₇ = (qx * ry - rx * qy) / Δ
         s₈ = (rx * py - px * ry) / Δ
         s₉ = (px * qy - qx * py) / Δ
-        shape_function_coefficients[(i, j, k)] = (s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉)
+        shape_function_coefficients = (s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉)
+        ## Now we need the control volume edge midpoints 
+        m₁cx, m₁cy = (m₁x + cx) / 2, (m₁y + cy) / 2
+        m₂cx, m₂cy = (m₂x + cx) / 2, (m₂y + cy) / 2
+        m₃cx, m₃cy = (m₃x + cx) / 2, (m₃y + cy) / 2
+        ## Next, we need the normal vectors to the control volume edges 
+        e₁x, e₁y = cx - m₁x, cy - m₁y
+        e₂x, e₂y = cx - m₂x, cy - m₂y
+        e₃x, e₃y = cx - m₃x, cy - m₃y
+        ℓ₁ = norm((e₁x, e₁y))
+        ℓ₂ = norm((e₂x, e₂y))
+        ℓ₃ = norm((e₃x, e₃y))
+        n₁x, n₁y = e₁y, -e₁x
+        n₂x, n₂y = e₂y, -e₂x
+        n₃x, n₃y = e₃y, -e₃x
+        ## Now construct the TriangleProperties
+        triangle_props[indices(T)] = TriangleProperties(shape_function_coefficients, ((m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy)), ((n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)), (ℓ₁, ℓ₂, ℓ₃))
     end
     has_ghost || delete_ghost_triangles!(tri)
-    return FVMGeometry(tri, stats, cv_volumes, shape_function_coefficients)
+    return FVMGeometry(tri, stats, cv_volumes, triangle_props)
 end
 
 """
@@ -123,7 +148,7 @@ conditions take the form
 When providing a `Dudt` condition, the function you provide
 takes the form
 
-    a(x, y, t, u)
+    a(x, y, t, u, p)
 
 where `(x, y)` is the point, `t` is the current time, and `u` is the
 solution at the point `(x, y)` at time `t`, as above, with an extra 
@@ -144,7 +169,7 @@ u(x, y, t) = a(x, y, t, u).
 When providing a `Dirichlet` condition, the function you provide
 takes the form
 
-    a(x, y, t, u)
+    a(x, y, t, u, p)
 
 where `(x, y)` is the point, `t` is the current time, and `u` is the
 solution at the point `(x, y)` at time `t`, as above, with an extra 
@@ -209,9 +234,8 @@ struct BoundaryConditions{F<:Tuple,P<:Tuple,C<:Tuple}
 end
 
 """
-    InternalConditions(functions::Tuple;
-        edge_conditions::Dict{NTuple{2,Int},Int}=Dict{NTuple{2,Int},Int}(),
-        point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}(),
+    InternalConditions(functions::Tuple,
+        point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}();
         parameters::Tuple=ntuple(_ -> nothing, length(functions)),
         u_type=Float64,
         float_type=Float64)
@@ -223,18 +247,13 @@ See also [`Conditions`](@ref) (which [`FVMProblem`](@ref) wraps this into), [`Co
 - `functions::Tuple`
 
 The functions that define the internal conditions. These are the functions refereed to in `edge_conditions` and `point_conditions`.
-
-# Keyword Arguments
-- `edge_conditions::Dict{NTuple{2,Int},Int}=Dict{NTuple{2,Int},Int}()`
-
-A `Dict` that maps an oriented edge `(u, v)`, with vertices referring to points in the associated triangulation,
-to the index `idx` of the associated condition function and parameters in `functions` and `parameters`. The enforced
-condition on these edges are [`Neumann`](@ref) conditions.
 - `point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}()`
 
 A `Dict` that maps a vertex `u`, referring to a point in the associated triangulation, to a `Tuple` of the form
 `(ConditionType, idx)`, where `ConditionType` is either [`Dudt`](@ref) or [`Dirichlet`](@ref) from [`ConditionType`](@ref),
 and `idx` is the index of the associated condition function and parameters in `functions` and `parameters`.
+
+# Keyword Arguments
 - `parameters::Tuple=ntuple(_ -> nothing, length(functions))`
 
 The parameters for the functions, with `parameters[i]` giving the argument `p` in `functions[i]`.
@@ -249,13 +268,12 @@ The number type used for representing the coordinates of points.
 The returned value is the corresponding [`InternalConditions`](@ref) struct.
 """
 struct InternalConditions{F,P}
-    edge_conditions::Dict{NTuple{2,Int},Int}
     point_conditions::Dict{Int,Tuple{ConditionType,Int}}
     functions::F
     parameters::P
-    function InternalConditions(edge_conditions, point_conditions, functions, parameters)
+    function InternalConditions(point_conditions, functions::F, parameters::P) where {F,P}
         @assert length(functions) == length(parameters) "The number of functions and parameters must be the same."
-        return new(edge_conditions, point_conditions, functions, parameters)
+        return new{F,P}(point_conditions, functions, parameters)
     end
 end
 
@@ -265,18 +283,16 @@ function BoundaryConditions(mesh::FVMGeometry, functions::Tuple, types::Tuple;
     float_type=Float64)
     nbnd_idx = DelaunayTriangulation.num_ghost_vertices(mesh.triangulation_statistics)
     @assert length(functions) == nbnd_idx "The number of boundary conditions must be the same as the number of parts of the mesh's boundary."
-    wrapped_functions = wrap_functions(functions, parameters)
+    wrapped_functions = wrap_functions(functions, parameters, u_type, float_type)
     return BoundaryConditions(wrapped_functions, parameters, types)
 end
 
-function InternalConditions(functions::Tuple=();
-    edge_conditions::Dict{NTuple{2,Int},Int}=Dict{NTuple{2,Int},Int}(),
-    point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}(),
+function InternalConditions(functions::Tuple=(), point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}();
     parameters::Tuple=ntuple(_ -> nothing, length(functions)),
     u_type=Float64,
     float_type=Float64)
-    wrapped_functions = wrap_functions(functions, parameters)
-    return InternalConditions(wrapped_functions, parameters, types)
+    wrapped_functions = wrap_functions(functions, parameters, u_type, float_type)
+    return InternalConditions(point_conditions, wrapped_functions, parameters)
 end
 
 """
@@ -305,38 +321,29 @@ A `Tuple` of functions that correspond to the conditions in `neumann_conditions`
 
 A `Tuple` of parameters that correspond to the conditions in `neumann_conditions` and `point_conditions`, where `parameters[i]` 
 corresponds to `functions[i]`.
-- `neumann_edges::Dict{Int,Int}`
-
-A `Dict` that maps a vertex `u` to another vertex `v`, for all ordered edges `(u, v)` from 
-`edge_conditions`. This is needed so that we can easily handle incompatible boundary conditions, by 
-comparing vertices from here to those in `point_conditions`. This part of the struct is not public API.
 """
 struct Conditions{F<:Tuple,P<:Tuple}
     edge_conditions::Dict{NTuple{2,Int},Int}
     point_conditions::Dict{Int,Tuple{ConditionType,Int}}
     functions::F
     parameters::P
-    neumann_edges::Dict{Int,Int}
 end
 
 function prepare_conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions)
     bc_functions = bc.functions
     bc_parameters = bc.parameters
-    bc_conditions = bc.condition_types
     ic_functions = ic.functions
     ic_parameters = ic.parameters
-    ic_edge_conditions = copy(ic.edge_conditions)
-    ic_point_conditions = copy(ic.point_conditions)
-    neumann_edges = Dict{Int,Int}()
+    edge_conditions = Dict{NTuple{2,Int},Int}()
+    point_conditions = copy(ic.point_conditions)
     ne = DelaunayTriangulation.num_constrained_edges(mesh.triangulation_statistics)
     nv = DelaunayTriangulation.num_solid_vertices(mesh.triangulation_statistics)
-    sizehint!(ic_edge_conditions, ne + length(ic_edge_conditions))
-    sizehint!(ic_point_conditions, nv + length(ic_point_conditions))
-    sizehint!(neumann_edges, ne)
+    sizehint!(edge_conditions, ne)
+    sizehint!(point_conditions, nv)
     functions = (ic_functions..., bc_functions...)
     parameters = (ic_parameters..., bc_parameters...)
-    conditions = Conditions(ic_edge_conditions, ic_point_conditions, functions, parameters, neumann_edges)
-    return conditions
+    conditions = Conditions(ic_edge_conditions, ic_point_conditions, functions, parameters)
+    return conditions, bc.condition_types
 end
 
 # (cur, prev) ↦ (merged, b), where b is `true` if replaced with the previous condition, and `false` otherwise.
@@ -353,25 +360,24 @@ function reconcile_conditions(cur_condition::ConditionType, prev_condition::Cond
 end
 
 # returns (merged_condition, updated_bc_number)
-function get_edge_condition(conditions::Conditions, tri, i, j, bc_number, nif)
+function get_edge_condition(bc_conditions, tri, i, j, bc_number, nif)
     prev_boundary_index = get_adjacent(tri, j, i)
-    cur_condition = bc_conditions[nif+bc_number]
-    prev_condition = bc_conditions[-prev_boundary_index+nif]
+    cur_condition = bc_conditions[bc_number]
+    prev_condition = bc_conditions[-prev_boundary_index]
     merged_condition, replaced = reconcile_conditions(cur_condition, prev_condition)
     return merged_condition, replaced ? -prev_boundary_index + nif : nif + bc_number
 end
 
-function add_bc_number!(conditions::Conditions, condition, bc_number, i, j)
+function add_condition!(conditions::Conditions, condition, bc_number, i, j)
     if condition == Neumann
-        neumann_edges[i] = j
-        edge_conditions[(i, j)] = bc_number
+        conditions.edge_conditions[(i, j)] = bc_number
     else
-        point_conditions[i] = (condition, bc_number)
+        conditions.point_conditions[i] = (condition, bc_number)
     end
     return nothing
 end
 
-function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, nif)
+function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditions, nif)
     tri = mesh.triangulation
     has_ghost = DelaunayTriangulation.has_ghost_triangles(tri)
     hasbnd = DelaunayTriangulation.has_boundary_nodes(tri)
@@ -382,15 +388,15 @@ function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, nif)
         bn_nodes = get_boundary_nodes(tri, segment_index)
         nedges = num_boundary_edges(bn_nodes)
         v = get_boundary_nodes(bn_nodes, 1)
-        u = DelaunayTriangulation.get_left_boundary_node(tri, v, -bc_number)
-        merged_condition, updated_bc_number = get_edge_condition(conditions, tri, u, v, bc_number, nif)
+        u = DelaunayTriangulation.get_left_boundary_node(tri, v, boundary_index)
+        merged_condition, updated_bc_number = get_edge_condition(bc_conditions, tri, u, v, bc_number, nif)
         w = get_boundary_nodes(bn_nodes, 2)
         add_condition!(conditions, merged_condition, updated_bc_number, v, w)
         for i in 2:nedges
             u = v
             v = get_boundary_nodes(bn_nodes, i)
             w = get_boundary_nodes(bn_nodes, i + 1)
-            merged_condition, updated_bc_number = get_edge_condition(conditions, tri, u, v, bc_number, nif)
+            merged_condition, updated_bc_number = get_edge_condition(bc_conditions, tri, u, v, bc_number, nif)
             add_condition!(conditions, merged_condition, updated_bc_number, v, w)
         end
     end
@@ -401,7 +407,7 @@ end
 
 function Conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions=InternalConditions())
     conditions = prepare_conditions(mesh, bc, ic)
-    merge_conditions!(conditions, mesh, length(ic.functions))
+    merge_conditions!(conditions, mesh, bc.condition_types, length(ic.functions))
     return conditions
 end
 
@@ -460,12 +466,9 @@ The initial time.
 - `final_time`
 
 The final time.
-- `steady=false`
-
-Whether the problem is steady or not, meaning `∂u/∂t = 0`. If the problem is steady, then the initial estimate used for the nonlinear solver that finds the steady state is given by the initial condition, and `final_time` is set to `∞`.
 
 # Outputs
-The returned value is the corresponding [`FVMProblem`](@ref) struct.
+The returned value is the corresponding [`FVMProblem`](@ref) struct. You can then solve the problem using `solve` from DifferentialEquations.jl.
 """
 struct FVMProblem{FG,BC,F,FP,R,RP,IC,FT}
     mesh::FG
@@ -477,7 +480,6 @@ struct FVMProblem{FG,BC,F,FP,R,RP,IC,FT}
     initial_condition::IC
     initial_time::FT
     final_time::FT
-    steady::Bool
 end
 
 function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, internal_conditions::InternalConditions=InternalConditions();
@@ -500,6 +502,16 @@ function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, 
 end
 
 """
+    SteadyFVMProblem{P<:FVMProblem}
+
+This is a wrapper for [`FVMProblem`](@ref) that indicates that the problem is to be solved as a 
+steady-state problem. You can then solve the problem using `solve` from (Simple)NonlinearSolve.jl.
+"""
+struct SteadyFVMProblem{P<:FVMProblem}
+    problem::P 
+end
+
+"""
     construct_flux_function(q, D, Dp)
 
 If `isnothing(q)`, then this returns the flux function based on the diffusion function `D` and 
@@ -512,7 +524,7 @@ Otherwise, just returns `q` again.
 function construct_flux_function(q, D, Dp)
     if isnothing(q)
         flux_function = let D = D, Dp = Dp
-            (flx, x, y, t, α, β, γ, p) -> begin
+            (x, y, t, α, β, γ, p) -> begin
                 u = α * x + β * y + γ
                 Dval = D(x, y, t, u, Dp)
                 qx = -Dval * α
@@ -526,126 +538,265 @@ function construct_flux_function(q, D, Dp)
     end
 end
 
-function get_shape_function_coefficients(prob, T, u)
+function get_shape_function_coefficients(props::TriangleProperties, T, u)
     i, j, k = indices(T)
-    s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = mesh.shape_function_coefficients[(i, j, k)]
+    s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
     α = s₁ * u[i] + s₂ * u[j] + s₃ * u[k]
     β = s₄ * u[i] + s₅ * u[j] + s₆ * u[k]
     γ = s₇ * u[i] + s₈ * u[j] + s₉ * u[k]
     return α, β, γ
 end
 
-function get_centroid_and_edge_midpoints(prob::FVMProblem, T)
-    mesh = prob.mesh
-    stats = mesh.triangulation_statistics
-    centroid = get_centroid(stats, T)
-    midpoints = get_edge_midpoints(stats, T)
-    cx, cy = getxy(centroid)
-    m₁, m₂, m₃ = midpoints
-    m₁x, m₁y = getxy(m₁)
-    m₂x, m₂y = getxy(m₂)
-    m₃x, m₃y = getxy(m₃)
-    return (cx, cy), ((m₁x, m₁y), (m₂x, m₂y), (m₃x, m₃y))
+function get_flux(prob, props, α, β, γ, t, i, j, edge_index)
+    # For checking if an edge is Neumann, we need only check e.g. (i, j) and not (j, i), since we do not allow for internal Neumann edges.
+    ij_is_neumann = (i, j) ∈ keys(prob.conditions.edge_conditions)
+    x, y = props.control_volume_midpoints[edge_index]
+    nx, ny = props.control_volume_normals[edge_index]
+    ℓ = props.control_volume_edge_lengths[edge_index]
+    if !ij_is_neumann
+        qx, qy = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
+        qn = qx * nx + qy * ny
+    else
+        function_index = prob.conditions.edge_conditions[(i, j)]
+        a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
+        qn = a(x, y, t, α * x + β * y + γ, ap)
+    end
+    return qn * ℓ
 end
 
-function get_control_volume_edge_midpoints(cx, cy, m₁x, m₁y, m₂x, m₂y, m₃x, m₃y)
-    m₁cx, m₁cy = (m₁x + cx) / 2, (m₁y + cy) / 2
-    m₂cx, m₂cy = (m₂x + cx) / 2, (m₂y + cy) / 2
-    m₃cx, m₃cy = (m₃x + cx) / 2, (m₃y + cy) / 2
-    return (m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy)
+function get_fluxes(prob, props, α, β, γ, t)
+    q1 = get_flux(prob, props, α, β, γ, t, i, j, 1)
+    q2 = get_flux(prob, props, α, β, γ, t, j, k, 2)
+    q3 = get_flux(prob, props, α, β, γ, t, k, i, 3)
+    return q1, q2, q3
 end
 
-function get_control_volume_edge_normals(cx, cy, m₁x, m₁y, m₂x, m₂y, m₃x, m₃y)
-    e₁x, e₁y = cx - m₁x, cy - m₁y
-    e₂x, e₂y = cx - m₂x, cy - m₂y
-    e₃x, e₃y = cx - m₃x, cy - m₃y
-    n₁x, n₁y = e₁y, -e₁x
-    n₂x, n₂y = e₂y, -e₂x
-    n₃x, n₃y = e₃y, -e₃x
-    return (n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)
+function idx_is_point_condition(prob, idx)
+    return idx ∈ keys(prob.conditions.point_conditions)
 end
 
-function get_fluxes(prob, T, m₁cx, m₁cy, m₂cx, m₂cy, m₃cx, m₃cy, n₁x, n₁y, n₂x, n₂y, n₃x, n₃y, α, β, γ)
+function fvm_eqs_single_triangle!(du, u, prob, t, T)
     i, j, k = indices(T)
-    q = prob.flux_function
-    p = prob.flux_parameters 
-    conditions = prob.conditions
-    qx₁, qy₁ = q(m₁cx, m₁cy, t, α, β, γ, p)
-    qx₂, qy₂ = q(m₂cx, m₂cy, t, α, β, γ, p)
-    qx₃, qy₃ = q(m₃cx, m₃cy, t, α, β, γ, p)
-    qn₁ = qx₁ * n₁x + qy₁ * n₁y
-    qn₂ = qx₂ * n₂x + qy₂ * n₂y
-    qn₃ = qx₃ * n₃x + qy₃ * n₃y
-    return qn₁, qn₂, qn₃
-end
-
-function fvm_eqs!(du::AbstractVector{T}, u, prob, t) where {T}
-    fill!(du, zero(T))
-    mesh = prob.mesh
-    tri = mesh.triangulation
-    stats = mesh.triangulation_statistics
-    conditions = prob.conditions
-    point_conditions = conditions.point_conditions
-    point_condition_indices = keys(point_conditions)
-    edge_conditions = conditions.edge_conditions
-
-    for T in each_solid_triangle(tri)
-        i, j, k = indices(T)
-        α, β, γ = get_shape_function_coefficients(prob, T, u)
-        (cx, cy), ((m₁x, m₁y), (m₂x, m₂y), (m₃x, m₃y)) = get_centroid_and_edge_midpoints(prob, T)
-        (m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy) = get_control_volume_edge_midpoints(cx, cy, m₁x, m₁y, m₂x, m₂y, m₃x, m₃y)
-        (n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y) = get_control_volume_edge_normals(cx, cy, m₁x, m₁y, m₂x, m₂y, m₃x, m₃y)
-        summand₁, summand₂, summand₃ = get_fluxes(prob, m₁cx, m₁cy, m₂cx, m₂cy, m₃cx, m₃cy, n₁x, n₁y, n₂x, n₂y, n₃x, n₃y, α, β, γ)
-        i_is_pc = i ∈ point_condition_indices
-        j_is_pc = j ∈ point_condition_indices
-        k_is_pc = k ∈ point_condition_indices
-        i_is_neumann 
-        # (i, 1), (j, 2)
-        i ∉ point_condition_indices && (du[i] += summand₁)
-        j ∉ point_condition_indices && (du[j] -= summand₁)
-
-        # (j, 2), (k, 3)
-        j ∉ point_condition_indices && (du[j] += summand₂)
-        k ∉ point_condition_indices && (du[k] -= summand₂)
-
-        # (k, 3), (i, 1)
-        k ∉ point_condition_indices && (du[k] += summand₃)
-        i ∉ point_condition_indices && (du[i] -= summand₃)
+    props = prob.mesh.triangle_props[(i, j, k)]
+    α, β, γ = get_shape_function_coefficients(props, T, u)
+    summand₁, summand₂, summand₃ = get_fluxes(prob, props, α, β, γ, t)
+    i_is_pc = idx_is_point_condition(prob, i)
+    j_is_pc = idx_is_point_condition(prob, j)
+    k_is_pc = idx_is_point_condition(prob, k)
+    if !i_is_pc
+        du[i] -= summand₁
+        du[j] += summand₁
+    end
+    if !j_is_pc
+        du[j] -= summand₂
+        du[k] += summand₂
+    end
+    if !k_is_pc
+        du[k] -= summand₃
+        du[i] += summand₃
     end
 end
 
-struct Conditions{F<:Tuple,P<:Tuple}
-    edge_conditions::Dict{NTuple{2,Int},Int}
-    point_conditions::Dict{Int,Tuple{ConditionType,Int}}
-    functions::F
-    parameters::P
-    neumann_edges::Dict{Int,Int}
+function fvm_eqs_single_source_contribution!(du, u, prob, t, i)
+    p = get_point(prob.mesh.triangulation, i)
+    x, y = getxy(p)
+    if !idx_is_point_condition(prob, i)
+        du[i] += prob.source_function(x, y, t, u[i], prob.source_parameters)
+    elseif prob.conditions.point_conditions[i][1] == Dudt
+        function_index = prob.conditions.point_conditions[i][2]
+        a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
+        du[i] = a(x, y, t, u[i], ap)
+    else # Dirichlet
+        du[i] = zero(eltype(du))
+    end
+    return nothing
 end
 
-curve_1 = [
-    [(0.0, 0.0), (5.0, 0.0), (10.0, 0.0), (15.0, 0.0), (20.0, 0.0), (25.0, 0.0)],
-    [(25.0, 0.0), (25.0, 5.0), (25.0, 10.0), (25.0, 15.0), (25.0, 20.0), (25.0, 25.0)],
-    [(25.0, 25.0), (20.0, 25.0), (15.0, 25.0), (10.0, 25.0), (5.0, 25.0), (0.0, 25.0)],
-    [(0.0, 25.0), (0.0, 20.0), (0.0, 15.0), (0.0, 10.0), (0.0, 5.0), (0.0, 0.0)]
-] # outer-most boundary: counter-clockwise  
-curve_2 = [
-    [(4.0, 6.0), (4.0, 14.0), (4.0, 20.0), (18.0, 20.0), (20.0, 20.0)],
-    [(20.0, 20.0), (20.0, 16.0), (20.0, 12.0), (20.0, 8.0), (20.0, 4.0)],
-    [(20.0, 4.0), (16.0, 4.0), (12.0, 4.0), (8.0, 4.0), (4.0, 4.0), (4.0, 6.0)]
-] # inner boundary: clockwise 
-curve_3 = [
-    [(12.906, 10.912), (16.0, 12.0), (16.16, 14.46), (16.29, 17.06),
-    (13.13, 16.86), (8.92, 16.4), (8.8, 10.9), (12.906, 10.912)]
-] # this is inside curve_2, so it's counter-clockwise 
-curves = [curve_1, curve_2, curve_3]
-points = [
-    (3.0, 23.0), (9.0, 24.0), (9.2, 22.0), (14.8, 22.8), (16.0, 22.0),
-    (23.0, 23.0), (22.6, 19.0), (23.8, 17.8), (22.0, 14.0), (22.0, 11.0),
-    (24.0, 6.0), (23.0, 2.0), (19.0, 1.0), (16.0, 3.0), (10.0, 1.0), (11.0, 3.0),
-    (6.0, 2.0), (6.2, 3.0), (2.0, 3.0), (2.6, 6.2), (2.0, 8.0), (2.0, 11.0),
-    (5.0, 12.0), (2.0, 17.0), (3.0, 19.0), (6.0, 18.0), (6.5, 14.5),
-    (13.0, 19.0), (13.0, 12.0), (16.0, 8.0), (9.8, 8.0), (7.5, 6.0),
-    (12.0, 13.0), (19.0, 15.0)
-]
-boundary_nodes, points = convert_boundary_points_to_indices(curves; existing_points=points)
-cons_tri = triangulate(points; boundary_nodes=boundary_nodes, check_arguments=false)
+function serial_fvm_eqs!(du, u, prob, t)
+    fill!(du, zero(eltype(du)))
+    for T in each_solid_triangle(prob.mesh.triangulation)
+        fvm_eqs_single_triangle!(du, u, prob, t, T)
+    end
+    for i in each_solid_vertex(prob.mesh.triangulation)
+        fvm_eqs_single_source_contribution!(du, u, prob, t, i)
+    end
+    return nothing
+end
+
+function parallel_fvm_eqs!(du, u, p, t)
+    (; duplicated_du,
+        solid_triangles,
+        solid_vertices,
+        chunked_solid_triangles,
+        prob) = p
+    fill!(du, zero(eltype(du)))
+    _duplicated_du = get_tmp(duplicated_du, du)
+    fill!(_duplicated_du, zero(eltype(du)))
+    Threads.@threads for (triangle_range, chunk_idx) in chunked_solid_triangles
+        for triangle_idx in triangle_range
+            T = solid_triangles[triangle_idx]
+            @views fvm_eqs_single_triangle!(_duplicated_du[:, chunk_idx], u, prob, t, T)
+        end
+    end
+    for _du in eachcol(duplicated_du)
+        du .+= _du
+    end
+    Threads.@threads for i in solid_vertices
+        fvm_eqs_single_source_contribution!(du, u, prob, t, i)
+    end
+    return nothing
+end
+
+function fvm_eqs!(du, u, p, t)
+    (; prob, parallel) = p
+    if parallel == Val(false)
+        return serial_fvm_eqs!(du, u, prob, t)
+    else
+        return parallel_fvm_eqs!(du, u, p, t)
+    end
+end
+
+function update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
+    if condition == Dirichlet
+        a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
+        p = get_point(prob.mesh.triangulation, i)
+        x, y = getxy(p)
+        u[i] = a(x, y, t, u[i], ap)
+    end
+    return nothing
+end
+
+function serial_update_dirichlet_nodes!(u, t, prob)
+    for (i, (condition, function_index)) in prob.conditions.point_conditions
+        update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
+    end
+    return nothing
+end
+
+function parallel_update_dirichlet_nodes!(u, t, p)
+    (; prob, point_conditions) = p
+    Threads.@threads for i in point_conditions
+        point_conditions_dict = prob.conditions.point_conditions
+        condition, function_index = point_conditions_dict[i]
+        update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
+    end
+    return nothing
+end
+
+function update_dirichlet_nodes!(integrator)
+    (; prob, parallel) = integrator.p
+    if parallel == Val(false)
+        return serial_update_dirichlet_nodes!(integrator.u, integrator.t, prob)
+    else
+        return parallel_update_dirichlet_nodes!(integrator.u, integrator.t, integrator.p)
+    end
+    return nothing
+end
+
+function get_multithreading_vectors(prob)
+    u = prob.initial_condition
+    nt = Threads.nthreads()
+    duplicated_du = DiffCache(similar(u, length(u), nt))
+    point_conditions = collect(keys(prob.conditions.point_conditions))
+    solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
+    solid_vertices = collect(each_solid_vertex(prob.mesh.triangulation))
+    chunked_solid_triangles = chunks(solid_triangles, nt)
+    return (
+        duplicated_du=duplicated_du,
+        point_conditions=point_conditions,
+        solid_triangles=solid_triangles,
+        solid_vertices=solid_vertices,
+        chunked_solid_triangles=chunked_solid_triangles,
+        parallel=Val(true),
+        prob=prob
+    )
+end
+
+"""
+    jacobian_sparsity(prob::FVMProblem)
+
+Constructs the sparse matrix which has the same sparsity pattern as the Jacobian for the finite volume equations 
+corresponding to the [`FVMProblem`](@ref) given by `prob`.
+"""
+function jacobian_sparsity(prob::FVMProblem)
+    DG = get_neighbours(prob)
+    I = Int64[]   # row indices 
+    J = Int64[]   # col indices 
+    V = Float64[] # values (all 1)
+    n = length(prob.initial_condition)
+    sizehint!(I, 6n) # points have, on average, six neighbours in a DelaunayTriangulation
+    sizehint!(J, 6n)
+    sizehint!(V, 6n)
+    for i in each_point_index(prob)
+        push!(I, i)
+        push!(J, i)
+        push!(V, 1.0)
+        ngh = get_neighbours(DG, i)
+        for j in ngh
+            if !DelaunayTriangulation.is_boundary_index(j)
+                push!(I, i)
+                push!(J, j)
+                push!(V, 1.0)
+            end
+        end
+    end
+    return sparse(I, J, V)
+end
+
+@inline function dirichlet_callback(has_saveat=true)
+    cb = DiscreteCallback(
+        Returns(true),
+        (integrator, t, u) -> update_dirichlet_nodes!(integrator); save_positions=(!has_saveat, !has_saveat)
+    )
+    return cb
+end
+
+function SciMLBase.ODEProblem(prob::FVMProblem;
+    specialization::Type{S}=SciMLBase.AutoSpecialize,
+    jac_prototype=jacobian_sparsity(prob),
+    parallel::Bool,
+    kwargs...) where {S}
+    par = Val(parallel)
+    initial_time = prob.initial_time
+    final_time = prob.final_time
+    time_span = (initial_time, final_time)
+    initial_condition = prob.initial_condition
+    kwarg_dict = Dict(kwargs)
+    dirichlet_cb = dirichlet_callback(:saveat ∈ keys(kwarg_dict))
+    if :callback ∈ keys(kwarg_dict)
+        callback = CallbackSet(kwarg_dict[:callback], dirichlet_cb)
+    else
+        callback = CallbackSet(dirichlet_cb)
+    end
+    delete!(kwargs, :callback)
+    f = ODEFunction{true,S}(fvm_eqs!; jac_prototype)
+    p = par ? get_multithreading_vectors(prob) : prob
+    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=callback, kwargs...)
+    return ode_problem
+end
+function SciMLBase.NonlinearProblem(prob::SteadyFVMProblem; kwargs...)
+    ode_prob = ODEProblem(prob.problem; kwargs...)
+    nl_prob = NonlinearProblem{true}(ode_prob.f, ode_prob.u0, ode_prob.p; kwargs...)
+    return nl_prob
+end
+
+CommonSolve.init(prob::FVMProblem, alg; kwargs...) = CommonSolve.init(ODEProblem(prob, kwargs...), alg; kwargs...)
+CommonSolve.solve(prob::SteadyFVMProblem, alg; kwargs...) = CommonSolve.solve(NonlinearProblem(prob; kwargs...), alg; kwargs...)
+
+@doc """
+    solve(prob::FVMProblem, alg; kwargs...)
+
+Solves the given [`FVMProblem`](@ref) `prob` with the algorithm `alg`, with keyword 
+arguments `kwargs` passed to the solver as in DifferentialEquations.jl. The returned type 
+is a `sol::ODESolution`, with the `i`th component of the solution referring to the `i`th 
+node in the underlying mesh, and accessed like the solutions in DifferentialEquations.jl.
+""" solve(::FVMProblem, ::Any; kwargs...)
+
+@doc """
+    solve(prob::SteadyFVMProblem, alg; kwargs...)
+
+Solves the given [`SteadyFVMProblem`](@ref) `prob` with the algorithm `alg`, with keyword
+arguments `kwargs` passed to the solver as in (Simple)NonlinearSolve.jl. The returned type
+is a `NonlinearSolution`, and the `i`th component of the solution if the steady state for the 
+`i`th node in the underlying mesh.
+""" solve(::SteadyFVMProblem, ::Any; kwargs...)

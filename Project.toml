@@ -1,10 +1,11 @@
 name = "FiniteVolumeMethod"
 uuid = "d4f04ab7-4f65-4d72-8a28-7087bc7f46f4"
 authors = ["Daniel VandenHeuvel <danj.vandenheuvel@gmail.com>"]
-version = "0.4.9"
+version = "1.0.0-DEV"
 
 [deps]
 ChunkSplitters = "ae650224-84b6-46f8-82ea-d812ca08434e"
+CommonSolve = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
 DelaunayTriangulation = "927a84f5-c5f4-47a5-9785-b46e178433df"
 DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
 FunctionWrappersWrappers = "77dc65aa-8811-40c2-897b-53d922fa7daf"
