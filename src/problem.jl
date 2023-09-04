@@ -109,11 +109,11 @@ where `prob` is an `AbstractFVMProblem`.
 
 See also [`FVMProblem`](@ref), [`FVMSystem`](@ref), and [`ConstrainedFVMProblem`](@ref).
 """
-struct SteadyFVMProblem{M,<:FVMGeometry,P<:AbstractFVMProblem} <: AbstractFVMProblem
+struct SteadyFVMProblem{M<:FVMGeometry,P<:AbstractFVMProblem} <: AbstractFVMProblem
     mesh::M
     problem::P
     function SteadyFVMProblem(prob::P) where {P}
-        return new{typeof(prob.mesh),M,P}(prob.mesh, wrapped_problem)
+        return new{typeof(prob.mesh),P}(prob.mesh, wrapped_problem)
     end
 end
 eval_flux_function(prob::SteadyFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
@@ -157,7 +157,7 @@ struct FVMSystem{N,FG,P,IC,FT,FT}
         return FVMSystem{length(problems),FG,P,IC,FT,FT}(mesh, problems, initial_condition, initial_time, final_time)
     end
 end
-eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) = ntuple(i -> eval_flux_function(prob.problems[i], x, y, t, α[i], β[i], γ), Val(N))
+eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) where {N} = ntuple(i -> eval_flux_function(prob.problems[i], x, y, t, α[i], β[i], γ), Val(N))
 function _rewrap_conditions(prob::FVMSystem{N}, constrained::Val{B}) where {N,B}
     problems = ntuple(i -> _rewrap_conditions(prob.problems[i], Val(N), constrained), Val(N))
     return FVMSystem(prob.mesh, problems, prob.initial_condition, prob.initial_time, prob.final_time)
@@ -219,12 +219,12 @@ examples. To construct the wrapper, do
 
 where `prob` is an `AbstractFVMProblem`.
 """
-struct ConstrainedFVMProblem{M<:FVMGeometry,P<:AbstractFVMProblem} <: AbstractFVMProblem 
+struct ConstrainedFVMProblem{M<:FVMGeometry,P<:AbstractFVMProblem} <: AbstractFVMProblem
     mesh::M
-    problem::P 
+    problem::P
     function ConstrainedFVMProblem(prob::P) where {P}
         wrapped_problem = _rewrap_conditions(prob, Val(_neqs(prob)), Val(true))
-        return new{typeof(prob.mesh), P}(wrapped_problem.mesh, wrapped_problem)
+        return new{typeof(prob.mesh),P}(wrapped_problem.mesh, wrapped_problem)
     end
 end
 eval_flux_function(prob::ConstrainedFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
