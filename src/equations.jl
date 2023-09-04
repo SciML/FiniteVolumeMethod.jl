@@ -1,23 +1,23 @@
-function idx_is_point_condition(prob::FVMProblem, idx)
+function idx_is_point_condition(prob::AbstractFVMProblem, idx)
     return idx ∈ keys(prob.conditions.point_conditions)
 end
 function idx_is_point_condition(prob::FVMSystem{N}, idx, var) where {N}
     return idx_is_point_condition(prob.problens[var], idx)
 end
-function idx_is_dudt_condition(prob::FVMProblem, idx)
+function idx_is_dudt_condition(prob::AbstractFVMProblem, idx)
     return prob.conditions.point_conditions[idx][1] == Dudt
 end
 function idx_is_dudt_condition(prob::FVMSystem{N}, idx, var) where {N}
     return idx_is_dudt_condition(prob.problems[var], idx)
 end
-function idx_is_neumann_condition(prob::FVMProblem, i, j)
+function idx_is_neumann_condition(prob::AbstractFVMProblem, i, j)
     return (i, j) ∈ keys(prob.conditions.edge_conditions)
 end
 function idx_is_neumann_condition(prob::FVMSystem{N}, i, j, var) where {N}
     return idx_is_neumann_condition(prob.problems[var], i, j)
 end
 
-function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMProblem)
+function get_shape_function_coefficients(props::TriangleProperties, T, u, ::AbstractFVMProblem)
     i, j, k = indices(T)
     s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
     α = s₁ * u[i] + s₂ * u[j] + s₃ * u[k]
@@ -34,14 +34,14 @@ function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMS
     return α, β, γ
 end
 
-function get_flux(prob::FVMProblem, props, α, β, γ, t, i, j, edge_index)
+function get_flux(prob::AbstractFVMProblem, props, α, β, γ, t, i, j, edge_index)
     # For checking if an edge is Neumann, we need only check e.g. (i, j) and not (j, i), since we do not allow for internal Neumann edges.
     ij_is_neumann = idx_is_neumann_condition(prob, i, j)
-    x, y = props.control_volume_midpoints[edge_index]
-    nx, ny = props.control_volume_normals[edge_index]
-    ℓ = props.control_volume_edge_lengths[edge_index]
+    x, y = props.cv_edge_midpoints[edge_index]
+    nx, ny = props.cv_edge_normals[edge_index]
+    ℓ = props.cv_edge_lengths[edge_index]
     if !ij_is_neumann
-        qx, qy = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
+        qx, qy = eval_flux_function(prob, x, y, t, α, β, γ)
         qn = qx * nx + qy * ny
     else
         function_index = prob.conditions.edge_conditions[(i, j)]
@@ -51,14 +51,14 @@ function get_flux(prob::FVMProblem, props, α, β, γ, t, i, j, edge_index)
     return qn * ℓ
 end
 function get_flux(prob::FVMSystem{N}, props, α, β, γ, t, i, j, edge_index) where {N}
-    x, y = props.control_volume_midpoints[edge_index]
-    nx, ny = props.control_volume_normals[edge_index]
-    ℓ = props.control_volume_edge_lengths[edge_index]
+    x, y = props.cv_edge_midpoints[edge_index]
+    nx, ny = props.cv_edge_normals[edge_index]
+    ℓ = props.cv_edge_lengths[edge_index]
     u_shape = ntuple(ℓ -> α[ℓ] * x + β[ℓ] * y + γ[ℓ], N)
     qn = ntuple(N) do ℓ
         ij_is_neumann = idx_is_neumann_condition(prob, i, j, ℓ)
         if !ij_is_neumann
-            qx, qy = prob.problems[ℓ].flux_function(x, y, t, α, β, γ, prob.problems[ℓ].flux_parameters)
+            qx, qy = eval_flux_function(prob.problems[ℓ], x, y, t, α[ℓ], β[ℓ], γ[ℓ])
             qn = qx * nx + qy * ny
         else
             function_index = prob.problems[ℓ].conditions.edge_conditions[(i, j)]
@@ -77,7 +77,7 @@ function get_fluxes(prob, props, α, β, γ, t)
     return q1, q2, q3
 end
 
-function update_du!(du, prob::FVMProblem, i, j, k, summand₁, summand₂, summand₃)
+function update_du!(du, prob::AbstractFVMProblem, i, j, k, summand₁, summand₂, summand₃)
     i_is_pc = idx_is_point_condition(prob, i)
     j_is_pc = idx_is_point_condition(prob, j)
     k_is_pc = idx_is_point_condition(prob, k)
@@ -123,7 +123,7 @@ function fvm_eqs_single_triangle!(du, u, prob, t, T)
     return nothing
 end
 
-function fvm_eqs_single_source_contribution!(du, u, prob::FVMProblem, t, i)
+function fvm_eqs_single_source_contribution!(du, u, prob::AbstractFVMProblem, t, i)
     p = get_point(prob.mesh.triangulation, i)
     x, y = getxy(p)
     if !idx_is_point_condition(prob, i)
@@ -166,7 +166,7 @@ function serial_fvm_eqs!(du, u, prob, t)
 end
 
 function combine_duplicated_du!(du, duplicated_du, prob)
-    if prob isa FVMProblem
+    if prob isa AbstractFVMProblem
         for _du in eachcol(duplicated_du)
             du .+= _du
         end
@@ -190,7 +190,7 @@ function parallel_fvm_eqs!(du, u, p, t)
     Threads.@threads for (triangle_range, chunk_idx) in chunked_solid_triangles
         for triangle_idx in triangle_range
             T = solid_triangles[triangle_idx]
-            if prob isa FVMProblem
+            if prob isa AbstractFVMProblem
                 @views fvm_eqs_single_triangle!(_duplicated_du[:, chunk_idx], u, prob, t, T)
             else
                 @views fvm_eqs_single_triangle!(_duplicated_du[:, :, chunk_idx], u, prob, t, T)
@@ -213,7 +213,7 @@ function fvm_eqs!(du, u, p, t)
     end
 end
 
-function update_dirichlet_nodes_single!(u, t, prob::FVMProblem, i, condition, function_index)
+function update_dirichlet_nodes_single!(u, t, prob::AbstractFVMProblem, i, condition, function_index)
     if condition == Dirichlet
         a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
         p = get_point(prob.mesh.triangulation, i)
@@ -231,7 +231,7 @@ function update_dirichlet_nodes_single!(u, t, prob::FVMSystem{N}, i, j, conditio
     end
 end
 
-function serial_update_dirichlet_nodes!(u, t, prob::FVMProblem)
+function serial_update_dirichlet_nodes!(u, t, prob::AbstractFVMProblem)
     for (i, (condition, function_index)) in prob.conditions.point_conditions
         update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
     end
@@ -245,7 +245,7 @@ function serial_update_dirichlet_nodes!(u, t, prob::FVMSystem{N}) where {N}
     end
 end
 
-function parallel_update_dirichlet_nodes!(u, t, p, prob::FVMProblem)
+function parallel_update_dirichlet_nodes!(u, t, p, prob::AbstractFVMProblem)
     point_conditions = p.point_conditions
     Threads.@threads for i in point_conditions
         point_conditions_dict = prob.conditions.point_conditions

@@ -75,6 +75,7 @@ function _rewrap_conditions(prob::FVMProblem, neqs::Val{N}, constrained::Val{B})
     new_conds = _rewrap_conditions(prob.conditions, eltype(prob.initial_condition), neqs, constrained)
     return FVMProblem(prob.mesh, new_conds, prob.flux_function, prob.flux_parameters, prob.source_function, prob.source_parameters, prob.initial_condition, prob.initial_time, prob.final_time)
 end
+eval_flux_function(prob::FVMProblem, x, y, t, α, β, γ) = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
 
 function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, internal_conditions::InternalConditions=InternalConditions();
     diffusion_function=nothing,
@@ -96,16 +97,26 @@ function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, 
 end
 
 """
-    SteadyFVMProblem{P<:AbstractFVMProblem}
+    SteadyFVMProblem{M<:FVMGeometry, P<:AbstractFVMProblem}
 
 This is a wrapper for an `AbstractFVMProblem` that indicates that the problem is to be solved as a steady-state problem. 
-You can then solve the problem using `solve` from (Simple)NonlinearSolve.jl.
+You can then solve the problem using `solve` from (Simple)NonlinearSolve.jl. To construct this wrapper, 
+simply do 
+
+    SteadyFVMProblem(prob),
+
+where `prob` is an `AbstractFVMProblem`.
 
 See also [`FVMProblem`](@ref), [`FVMSystem`](@ref), and [`ConstrainedFVMProblem`](@ref).
 """
-struct SteadyFVMProblem{P<:AbstractFVMProblem} <: AbstractFVMProblem
+struct SteadyFVMProblem{M,<:FVMGeometry,P<:AbstractFVMProblem} <: AbstractFVMProblem
+    mesh::M
     problem::P
+    function SteadyFVMProblem(prob::P) where {P}
+        return new{typeof(prob.mesh),M,P}(prob.mesh, wrapped_problem)
+    end
 end
+eval_flux_function(prob::SteadyFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
 
 """
     FVMSystem{N,FG,P,IC,FT,FT}
@@ -146,8 +157,9 @@ struct FVMSystem{N,FG,P,IC,FT,FT}
         return FVMSystem{length(problems),FG,P,IC,FT,FT}(mesh, problems, initial_condition, initial_time, final_time)
     end
 end
+eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) = ntuple(i -> eval_flux_function(prob.problems[i], x, y, t, α[i], β[i], γ), Val(N))
 function _rewrap_conditions(prob::FVMSystem{N}, constrained::Val{B}) where {N,B}
-    problems = ntuple(i -> _rewrap_conditions(prob.problems[i], Val(N), constrained), N)
+    problems = ntuple(i -> _rewrap_conditions(prob.problems[i], Val(N), constrained), Val(N))
     return FVMSystem(prob.mesh, problems, prob.initial_condition, prob.initial_time, prob.final_time)
 end
 
@@ -161,7 +173,7 @@ function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     for (i, prob) in enumerate(probs)
         initial_condition[i, :] .= prob.initial_condition
     end
-    wrapped_probs = ntuple(i -> _rewrap_conditions(probs[i], Val(N), Val(false)), N)
+    wrapped_probs = ntuple(i -> _rewrap_conditions(probs[i], Val(N), Val(false)), Val(N))
     return FVMSystem(mesh, wrapped_probs, initial_condition, initial_time, final_time)
 end
 
@@ -195,17 +207,59 @@ end
 _neqs(::FVMProblem) = 0 # We test for N > 0 in _rewrap_conditions, so let this be 0
 _neqs(::FVMSystem{N}) where {N} = N
 _neqs(prob::SteadyFVMProblem) = _neqs(prob.problem)
+is_system(prob::AbstractFVMProblem) = _neqs(prob) > 0
 """
-    ConstrainedFVMProblem{P<:AbstractFVMProblem} <: AbstractFVMProblem
+    ConstrainedFVMProblem{M<:FVMGeometry, P<:AbstractFVMProblem} <: AbstractFVMProblem
 
 This is a wrapper for an `AbstractFVMProblem` that indicates that the problem is to be solved as a constrained problem.
 You can then solve the problem using `solve` from DifferentialEquations.jl, treating it as a DAE. See the docs for some 
-examples.
+examples. To construct the wrapper, do 
+
+    ConstrainedFVMProblem(prob),
+
+where `prob` is an `AbstractFVMProblem`.
 """
-struct ConstrainedFVMProblem{P<:AbstractFVMProblem} <: AbstractFVMProblem 
-    prob::P 
+struct ConstrainedFVMProblem{M<:FVMGeometry,P<:AbstractFVMProblem} <: AbstractFVMProblem 
+    mesh::M
+    problem::P 
     function ConstrainedFVMProblem(prob::P) where {P}
         wrapped_problem = _rewrap_conditions(prob, Val(_neqs(prob)), Val(true))
-        return new{P}(wrapped_problem)
+        return new{typeof(prob.mesh), P}(wrapped_problem.mesh, wrapped_problem)
+    end
+end
+eval_flux_function(prob::ConstrainedFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
+
+"""
+    compute_flux(prob::AbstractFVMProblem, i, j, u, t)
+
+Given an edge with indices `(i, j)`, a solution vector `u`, a current time `t`, 
+and a problem `prob`, computes the flux `∇⋅q(x, y, t, α, β, γ, p) ⋅ n`, 
+where `n` is the normal vector to the edge, `q` is the flux function from `prob`,
+`(x, y)` is the midpoint of the edge, `(α, β, γ)` are the shape function coefficients, 
+and `p` are the flux parameters from `prob`. If `prob` is an [`FVMSystem`](@ref), the returned 
+value is a `Tuple` for each individual flux. The normal vector `n` is a clockwise rotation of 
+the edge, meaning pointing right of the edge `(i, j)`.
+"""
+function compute_flux(prob::AbstractFVMProblem, i, j, u, t)
+    tri = prob.mesh.triangulation
+    p, q = get_point(tri, i, j)
+    px, py = getxy(p)
+    qx, qy = getxy(q)
+    ex, ey = qx - px, qy - py
+    ℓ = norm((ex, ey))
+    nx, ny = ey / ℓ, -ex / ℓ
+    k = get_adjacent(tri, i, j)
+    α, β, γ = get_shape_function_coefficients(prob.mesh.triangle_props, (i, j, k), u, prob)
+    mx, my = (px + qx) / 2, (py + qy) / 2
+    q = eval_flux_function(prob, mx, my, t, α, β, γ)
+    if is_system(prob)
+        qn = ntuple(Val(_neqs(prob))) do i
+            qx, qy = getxy(q[i])
+            return nx * qx + ny * qy
+        end
+        return qn
+    else
+        qx, qy = getxy(q)
+        return nx * qx + ny * qy
     end
 end

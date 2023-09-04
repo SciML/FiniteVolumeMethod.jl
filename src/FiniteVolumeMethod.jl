@@ -28,6 +28,7 @@ export FVMGeometry,
     Dudt,
     Dirichlet,
     Constrained,
-    solve
+    solve,
+    compute_flux
 
 end

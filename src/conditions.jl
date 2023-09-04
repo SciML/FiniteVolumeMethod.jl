@@ -218,8 +218,8 @@ The functions that define the internal conditions. These are the functions refer
 
 A `Dict` that maps an oriented edge `(u, v)`, with vertices referring to points in the associated triangulation,
 to a `Tuple` of the form `(neumann, idx)`, where `neumann` is `true` if the condition is a [`Neumann`](@ref) condition on this 
-edge, or `false` if the condition is instead [`Constrained`](@ref).
-
+edge, or `false` if the condition is instead [`Constrained`](@ref). `idx` is the index of the associated condition function
+and parameters in `functions` and `parameters`.
 - `point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}()`
 
 A `Dict` that maps a vertex `u`, referring to a point in the associated triangulation, to a `Tuple` of the form
@@ -241,9 +241,9 @@ struct InternalConditions{F<:Tuple,P<:Tuple,UF<:Tuple}
     functions::F
     parameters::P
     unwrapped_functions::UF # not public
-    function InternalConditions(edge_conditions, point_conditions, functions::F, parameters::P,unwrapped_functions::UF) where {F,P,UF}
+    function InternalConditions(edge_conditions, point_conditions, functions::F, parameters::P, unwrapped_functions::UF) where {F,P,UF}
         @assert length(functions) == length(parameters) "The number of functions and parameters must be the same."
-        return new{F,P,UF}(edge_conditions, point_conditions, functions, parameters,unwrapped_functions)
+        return new{F,P,UF}(edge_conditions, point_conditions, functions, parameters, unwrapped_functions)
     end
 end
 
@@ -267,16 +267,16 @@ end
     Conditions{F<:Tuple,P<:Tuple}
 
 This is a `struct` that holds the boundary and internal conditions for the PDE.
-
-See also [`BoundaryConditions`](@ref), [`InternalConditions`](@ref),
-and [`ConditionType`](@ref).
+This is not public API - the relevant public API is [`BoundaryConditions`](@ref), 
+[`InternalConditions`](@ref), and [`ConditionType`](@ref).
 
 # Fields 
-- `neumann_conditions::Dict{NTuple{2,Int},Int}`
+- `edge_conditions::Dict{NTuple{2,Int},Tuple{Bool,Int}}`
 
-A `Dict` that maps an oriented edge `(u, v)`, with vertices referring to points in the associated triangulation, 
-to the index `idx` of the associated condition function and parameters in `functions` and `parameters`. The enforced 
-condition on these edges are [`Neumann`](@ref) conditions.
+A `Dict` that maps an oriented edge `(u, v)`, with vertices referring to points in the associated triangulation,
+to a `Tuple` of the form `(neumann, idx)`, where `neumann` is `true` if the condition is a [`Neumann`](@ref) condition on this
+edge, or `false` if the condition is instead [`Constrained`](@ref). `idx` is the index of the associated condition function
+and parameters in `functions` and `parameters`.
 - `point_conditions::Dict{Int,Tuple{ConditionType,Int}}`
 
 A `Dict` that maps a vertex `u`, referring to a point in the associated triangulation, to a `Tuple` of the form 
@@ -291,13 +291,13 @@ A `Tuple` of parameters that correspond to the conditions in `neumann_conditions
 corresponds to `functions[i]`.
 """
 struct Conditions{F<:Tuple,P<:Tuple,UF<:Tuple}
-    edge_conditions::Dict{NTuple{2,Int},Int}
+    edge_conditions::Dict{NTuple{2,Int},Tuple{Bool,Int}}
     point_conditions::Dict{Int,Tuple{ConditionType,Int}}
     functions::F
     parameters::P
     unwrapped_functions::UF
 end
-function _rewrap_conditions(conds::Conditions, u_type::Type{U}, neqs::Val{N}, constrained::Val{B}) where {U,N,B}   
+function _rewrap_conditions(conds::Conditions, u_type::Type{U}, neqs::Val{N}, constrained::Val{B}) where {U,N,B}
     T = Float64 # float_type
     all_arg_types = ntuple(i -> get_dual_arg_types(T, N > 0 ? NTuple{N,U} : U, typeof(conds.parameters[i]), constrained), length(conds.parameters))
     all_ret_types = ntuple(i -> get_dual_ret_types(U, T), length(conds.parameters))
@@ -310,7 +310,7 @@ function prepare_conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::Inter
     bc_parameters = bc.parameters
     ic_functions = ic.functions
     ic_parameters = ic.parameters
-    edge_conditions = Dict{NTuple{2,Int},Int}()
+    edge_conditions = copy(ic.edge_conditions)
     point_conditions = copy(ic.point_conditions)
     ne = DelaunayTriangulation.num_constrained_edges(mesh.triangulation_statistics)
     nv = DelaunayTriangulation.num_solid_vertices(mesh.triangulation_statistics)
@@ -346,8 +346,8 @@ function get_edge_condition(bc_conditions, tri, i, j, bc_number, nif)
 end
 
 function add_condition!(conditions::Conditions, condition, bc_number, i, j)
-    if condition == Neumann
-        conditions.edge_conditions[(i, j)] = bc_number
+    if condition == Neumann || condition == Constrained
+        conditions.edge_conditions[(i, j)] = (condition == Neumann, bc_number)
     else
         conditions.point_conditions[i] = (condition, bc_number)
     end

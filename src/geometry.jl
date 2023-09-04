@@ -2,7 +2,7 @@
 struct TriangleProperties
     shape_function_coefficients::NTuple{9,Float64}
     cv_edge_midpoints::NTuple{3,NTuple{2,Float64}}
-    cv_normals::NTuple{3,NTuple{2,Float64}}
+    cv_edge_normals::NTuple{3,NTuple{2,Float64}}
     cv_edge_lengths::NTuple{3,Float64}
 end
 
@@ -88,9 +88,9 @@ function FVMGeometry(tri::Triangulation)
         ℓ₁ = norm((e₁x, e₁y))
         ℓ₂ = norm((e₂x, e₂y))
         ℓ₃ = norm((e₃x, e₃y))
-        n₁x, n₁y = e₁y, -e₁x
-        n₂x, n₂y = e₂y, -e₂x
-        n₃x, n₃y = e₃y, -e₃x
+        n₁x, n₁y = e₁y/ℓ₁, -e₁x/ℓ₁
+        n₂x, n₂y = e₂y/ℓ₂, -e₂x/ℓ₂
+        n₃x, n₃y = e₃y/ℓ₃, -e₃x/ℓ₃
         ## Now construct the TriangleProperties
         triangle_props[indices(T)] = TriangleProperties(shape_function_coefficients, ((m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy)), ((n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)), (ℓ₁, ℓ₂, ℓ₃))
     end
