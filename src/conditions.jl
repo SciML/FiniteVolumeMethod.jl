@@ -147,7 +147,7 @@ function get_dual_ret_types(::Type{U}, ::Type{T}) where {U,T}
     dUT = DiffEqBase.dualgen(promote_type(U, T))
     return (U, dU, dT, dUT)
 end
-function wrap_functions(functions, parameters, u_type::Type{U}=Float64, constrained::Val{B}) where {U}
+function wrap_functions(functions, parameters, u_type::Type{U}=Float64, constrained::Val{B}=Val(false)) where {U,B}
     T = Float64 # float_type
     all_arg_types = ntuple(i -> get_dual_arg_types(T, U, typeof(parameters[i]), constrained), length(parameters))
     all_ret_types = ntuple(i -> get_dual_ret_types(U, T), length(parameters))
@@ -290,7 +290,7 @@ A `Tuple` of functions that correspond to the conditions in `neumann_conditions`
 A `Tuple` of parameters that correspond to the conditions in `neumann_conditions` and `point_conditions`, where `parameters[i]` 
 corresponds to `functions[i]`.
 """
-struct Conditions{F<:Tuple,P<:Tuple}
+struct Conditions{F<:Tuple,P<:Tuple,UF<:Tuple}
     edge_conditions::Dict{NTuple{2,Int},Int}
     point_conditions::Dict{Int,Tuple{ConditionType,Int}}
     functions::F
