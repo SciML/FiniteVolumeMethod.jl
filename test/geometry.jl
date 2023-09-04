@@ -55,11 +55,10 @@ function random_point_inside_triangle(p, q, r)
     return y
 end
 
-
-
 a, b, c, d, nx, ny = 0.0, 2.0, 0.0, 5.0, 5, 6
 tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary=false, add_ghost_triangles=true)
 geo = FVMGeometry(tri)
+@inferred FVMGeometry(tri)
 @test geo.triangulation === tri
 @test geo.triangulation_statistics == statistics(tri)
 for i in each_solid_vertex(tri)
@@ -69,6 +68,7 @@ for i in each_solid_vertex(tri)
 end
 @test length(geo.triangle_props) == DelaunayTriangulation.num_solid_triangles(tri)
 for T in each_solid_triangle(tri)
+    local a, b, c
     i, j, k = T
     props = geo.triangle_props[(i,j,k)]
     p, q, r = get_point(tri, i, j, k)

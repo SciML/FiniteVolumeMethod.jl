@@ -141,16 +141,16 @@ function get_dual_arg_types(::Type{T}, ::Type{U}, ::Type{P}, constrained::Val{B}
         return uncons
     end
 end
-function get_dual_ret_types(::Type{U}, ::Type{T}) where {U,T}
+function get_dual_ret_types(::Type{T}, ::Type{U}) where {T,U}
     dU = DiffEqBase.dualgen(U)
     dT = DiffEqBase.dualgen(T)
-    dUT = DiffEqBase.dualgen(promote_type(U, T))
+    dUT = DiffEqBase.dualgen(promote_type(T, U))
     return (U, dU, dT, dUT)
 end
 function wrap_functions(functions, parameters, u_type::Type{U}=Float64, constrained::Val{B}=Val(false)) where {U,B}
     T = Float64 # float_type
     all_arg_types = ntuple(i -> get_dual_arg_types(T, U, typeof(parameters[i]), constrained), length(parameters))
-    all_ret_types = ntuple(i -> get_dual_ret_types(U, T), length(parameters))
+    all_ret_types = ntuple(i -> get_dual_ret_types(T, U), length(parameters))
     wrapped_functions = ntuple(i -> FunctionWrappersWrapper(functions[i], all_arg_types[i], all_ret_types[i]), length(parameters))
     return wrapped_functions
 end
@@ -196,14 +196,17 @@ struct BoundaryConditions{F<:Tuple,P<:Tuple,C<:Tuple,UF<:Tuple}
         return new{F,P,C,UF}(functions, parameters, condition_types, unwrapped_functions)
     end
 end
+function Base.show(io::IO, ::MIME"text/plain", bc::BoundaryConditions)
+    n = length(bc.functions)
+    print(io, "BoundaryConditions with $(n) boundary conditions of types $(bc.condition_types)")
+end
 
 """
-    InternalConditions(functions::Tuple;
+    InternalConditions(functions::Tuple=();
         edge_conditions::Dict{NTuple{2,Int},Tuple{Bool,Int}}=Dict{NTuple{2,Int},Tuple{Bool,Int}}(),
-        point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}();
+        point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}(),
         parameters::Tuple=ntuple(_ -> nothing, length(functions)),
-        u_type=Float64,
-        float_type=Float64)
+        u_type=Float64)
 
 This is a constructor for the [`InternalConditions`](@ref) struct, which holds the internal conditions for the PDE.
 See also [`Conditions`](@ref) (which [`FVMProblem`](@ref) wraps this into), [`ConditionType`](@ref), and [`BoundaryConditions`](@ref).
@@ -246,6 +249,11 @@ struct InternalConditions{F<:Tuple,P<:Tuple,UF<:Tuple}
         return new{F,P,UF}(edge_conditions, point_conditions, functions, parameters, unwrapped_functions)
     end
 end
+function Base.show(io::IO, ::MIME"text/plain", ic::InternalConditions)
+    ne = length(ic.edge_conditions)
+    np = length(ic.point_conditions)
+    print(io, "InternalConditions with $(ne) edge conditions and $(np) point conditions")
+end
 
 function BoundaryConditions(mesh::FVMGeometry, functions::Tuple, types::Tuple;
     parameters::Tuple=ntuple(_ -> nothing, length(functions)),
@@ -256,11 +264,13 @@ function BoundaryConditions(mesh::FVMGeometry, functions::Tuple, types::Tuple;
     return BoundaryConditions(wrapped_functions, parameters, types, functions)
 end
 
-function InternalConditions(functions::Tuple=(), point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}();
+function InternalConditions(functions::Tuple=();
+    edge_conditions::Dict{NTuple{2,Int},Tuple{Bool,Int}}=Dict{NTuple{2,Int},Tuple{Bool,Int}}(),
+    point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}(),
     parameters::Tuple=ntuple(_ -> nothing, length(functions)),
     u_type=Float64)
     wrapped_functions = wrap_functions(functions, parameters, u_type)
-    return InternalConditions(point_conditions, wrapped_functions, parameters, functions)
+    return InternalConditions(edge_conditions, point_conditions, wrapped_functions, parameters, functions)
 end
 
 """
@@ -297,6 +307,12 @@ struct Conditions{F<:Tuple,P<:Tuple,UF<:Tuple}
     parameters::P
     unwrapped_functions::UF
 end
+function Base.show(io::IO, ::MIME"text/plain", conds::Conditions)
+    ne = length(conds.edge_conditions)
+    np = length(conds.point_conditions)
+    print(io, "Conditions with $(ne) edge conditions and $(np) point conditions")
+end
+
 function _rewrap_conditions(conds::Conditions, u_type::Type{U}, neqs::Val{N}, constrained::Val{B}) where {U,N,B}
     T = Float64 # float_type
     all_arg_types = ntuple(i -> get_dual_arg_types(T, N > 0 ? NTuple{N,U} : U, typeof(conds.parameters[i]), constrained), length(conds.parameters))
@@ -319,39 +335,8 @@ function prepare_conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::Inter
     functions = (ic_functions..., bc_functions...)
     parameters = (ic_parameters..., bc_parameters...)
     unwrapped_functions = (ic.unwrapped_functions..., bc.unwrapped_functions...)
-    conditions = Conditions(ic_edge_conditions, ic_point_conditions, functions, parameters, unwrapped_functions)
-    return conditions, bc.condition_types
-end
-
-# (cur, prev) ↦ (merged, b), where b is `true` if replaced with the previous condition, and `false` otherwise.
-function reconcile_conditions(cur_condition::ConditionType, prev_condition::ConditionType)
-    cur_condition == Dirichlet && return (Dirichlet, false)
-    if cur_condition == Dudt
-        prev_condition == Dirichlet && return (Dirichlet, true)
-        return (Dudt, false)
-    else # Neumann  
-        prev_condition == Dirichlet && return (Dirichlet, true)
-        prev_condition == Dudt && return (Dudt, true)
-        return (Neumann, false)
-    end
-end
-
-# returns (merged_condition, updated_bc_number)
-function get_edge_condition(bc_conditions, tri, i, j, bc_number, nif)
-    prev_boundary_index = get_adjacent(tri, j, i)
-    cur_condition = bc_conditions[bc_number]
-    prev_condition = bc_conditions[-prev_boundary_index]
-    merged_condition, replaced = reconcile_conditions(cur_condition, prev_condition)
-    return merged_condition, replaced ? -prev_boundary_index + nif : nif + bc_number
-end
-
-function add_condition!(conditions::Conditions, condition, bc_number, i, j)
-    if condition == Neumann || condition == Constrained
-        conditions.edge_conditions[(i, j)] = (condition == Neumann, bc_number)
-    else
-        conditions.point_conditions[i] = (condition, bc_number)
-    end
-    return nothing
+    conditions = Conditions(edge_conditions, point_conditions, functions, parameters, unwrapped_functions)
+    return conditions
 end
 
 function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditions, nif)
@@ -361,26 +346,34 @@ function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditi
     has_ghost || add_ghost_triangles!(tri)
     hasbnd || lock_convex_hull!(tri)
     bn_map = get_boundary_map(tri)
-    for (bc_number, (boundary_index, segment_index)) in enumerate(bn_map)
+    for (bc_number, (_, segment_index)) in enumerate(bn_map)
         bn_nodes = get_boundary_nodes(tri, segment_index)
         nedges = num_boundary_edges(bn_nodes)
-        v = get_boundary_nodes(bn_nodes, 1)
-        u = DelaunayTriangulation.get_left_boundary_node(tri, v, boundary_index)
-        merged_condition, updated_bc_number = get_edge_condition(bc_conditions, tri, u, v, bc_number, nif)
-        w = get_boundary_nodes(bn_nodes, 2)
-        add_condition!(conditions, merged_condition, updated_bc_number, v, w)
-        for i in 2:nedges
-            u = v
-            v = get_boundary_nodes(bn_nodes, i)
-            w = get_boundary_nodes(bn_nodes, i + 1)
-            merged_condition, updated_bc_number = get_edge_condition(bc_conditions, tri, u, v, bc_number, nif)
-            add_condition!(conditions, merged_condition, updated_bc_number, v, w)
+        for i in 1:nedges
+            u = get_boundary_nodes(bn_nodes, i)
+            v = get_boundary_nodes(bn_nodes, i + 1)
+            condition = bc_conditions[bc_number]
+            updated_bc_number = bc_number + nif
+            if condition == Neumann || condition == Constrained
+                conditions.edge_conditions[(u, v)] = (condition == Neumann, updated_bc_number)
+            elseif condition == Dirichlet
+                conditions.point_conditions[u] = (condition, updated_bc_number)
+                conditions.point_conditions[v] = (condition, updated_bc_number)
+            else # condition == Dudt 
+                for w in (u, v)
+                    w_key = haskey(conditions.point_conditions, w) # already Dirichlet
+                    if !w_key 
+                        conditions.point_conditions[w] = (condition, updated_bc_number)
+                    end
+                end
+            end
         end
     end
     hasbnd || unlock_convex_hull!(tri)
     has_ghost || delete_ghost_triangles!(tri)
     return conditions
 end
+
 
 function Conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions=InternalConditions())
     conditions = prepare_conditions(mesh, bc, ic)
