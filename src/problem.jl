@@ -1,3 +1,5 @@
+abstract type AbstractFVMProblem end
+
 """
     FVMProblem(mesh, boundary_conditions[, internal_conditions];
         diffusion_function=nothing,
@@ -11,7 +13,8 @@
         final_time,
         steady=false)
 
-Constructs an `FVMProblem`.
+Constructs an `FVMProblem`. See also [`FVMSystem`](@ref), [`SteadyFVMProblem`](@ref), and 
+[`ConstrainedFVMProblem`](@ref).
 
 # Arguments 
 - `mesh::FVMGeometry`
@@ -57,7 +60,7 @@ The final time.
 # Outputs
 The returned value is the corresponding [`FVMProblem`](@ref) struct. You can then solve the problem using `solve` from DifferentialEquations.jl.
 """
-struct FVMProblem{FG,BC,F,FP,R,RP,IC,FT}
+struct FVMProblem{FG,BC,F,FP,R,RP,IC,FT} <: AbstractFVMProblem
     mesh::FG
     conditions::BC
     flux_function::F
@@ -67,6 +70,10 @@ struct FVMProblem{FG,BC,F,FP,R,RP,IC,FT}
     initial_condition::IC
     initial_time::FT
     final_time::FT
+end
+function _rewrap_conditions(prob::FVMProblem, neqs::Val{N}, constrained::Val{B}) where {N,B}
+    new_conds = _rewrap_conditions(prob.conditions, eltype(prob.initial_condition), neqs, constrained)
+    return FVMProblem(prob.mesh, new_conds, prob.flux_function, prob.flux_parameters, prob.source_function, prob.source_parameters, prob.initial_condition, prob.initial_time, prob.final_time)
 end
 
 function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, internal_conditions::InternalConditions=InternalConditions();
@@ -89,12 +96,14 @@ function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, 
 end
 
 """
-    SteadyFVMProblem{P<:Union{<:FVMProblem,<:FVMSystem}}
+    SteadyFVMProblem{P<:AbstractFVMProblem}
 
-This is a wrapper for [`FVMProblem`](@ref) or [`FVMSystem`](@ref) that indicates that the problem is to be solved as a 
-steady-state problem. You can then solve the problem using `solve` from (Simple)NonlinearSolve.jl.
+This is a wrapper for an `AbstractFVMProblem` that indicates that the problem is to be solved as a steady-state problem. 
+You can then solve the problem using `solve` from (Simple)NonlinearSolve.jl.
+
+See also [`FVMProblem`](@ref), [`FVMSystem`](@ref), and [`ConstrainedFVMProblem`](@ref).
 """
-struct SteadyFVMProblem{P}
+struct SteadyFVMProblem{P<:AbstractFVMProblem} <: AbstractFVMProblem
     problem::P
 end
 
@@ -119,6 +128,8 @@ approximation to `uᵢ`.
 This problem is solved in the same way as a [`FVMProblem`](@ref), except the problem is defined such that 
 the solution returns a matrix at each time, where the `(j, i)`th component corresponds to the solution at the `i`th 
 node for the `j`th component.
+
+See also [`FVMProblem`](@ref), [`SteadyFVMProblem`](@ref), and [`ConstrainedFVMProblem`](@ref).
 """
 struct FVMSystem{N,FG,P,IC,FT,FT}
     mesh::FG
@@ -135,18 +146,23 @@ struct FVMSystem{N,FG,P,IC,FT,FT}
         return FVMSystem{length(problems),FG,P,IC,FT,FT}(mesh, problems, initial_condition, initial_time, final_time)
     end
 end
+function _rewrap_conditions(prob::FVMSystem{N}, constrained::Val{B}) where {N,B}
+    problems = ntuple(i -> _rewrap_conditions(prob.problems[i], Val(N), constrained), N)
+    return FVMSystem(prob.mesh, problems, prob.initial_condition, prob.initial_time, prob.final_time)
+end
+
 function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     N == 0 && error("There must be at least one problem.")
     mesh = probs[1].mesh
     initial_time = probs[1].initial_time
     final_time = probs[1].final_time
-    n = DelaunayTriangulation.num_solid_vertices(mesh)
     ic₁ = probs[1].initial_condition
     initial_condition = similar(ic₁, N, length(ic₁))
     for (i, prob) in enumerate(probs)
         initial_condition[i, :] .= prob.initial_condition
     end
-    return FVMSystem(mesh, probs, initial_condition, initial_time, final_time)
+    wrapped_probs = ntuple(i -> _rewrap_conditions(probs[i], Val(N), Val(false)), N)
+    return FVMSystem(mesh, wrapped_probs, initial_condition, initial_time, final_time)
 end
 
 """
@@ -173,5 +189,23 @@ function construct_flux_function(q, D, Dp)
         return flux_function
     else
         return q
+    end
+end
+
+_neqs(::FVMProblem) = 0 # We test for N > 0 in _rewrap_conditions, so let this be 0
+_neqs(::FVMSystem{N}) where {N} = N
+_neqs(prob::SteadyFVMProblem) = _neqs(prob.problem)
+"""
+    ConstrainedFVMProblem{P<:AbstractFVMProblem} <: AbstractFVMProblem
+
+This is a wrapper for an `AbstractFVMProblem` that indicates that the problem is to be solved as a constrained problem.
+You can then solve the problem using `solve` from DifferentialEquations.jl, treating it as a DAE. See the docs for some 
+examples.
+"""
+struct ConstrainedFVMProblem{P<:AbstractFVMProblem} <: AbstractFVMProblem 
+    prob::P 
+    function ConstrainedFVMProblem(prob::P) where {P}
+        wrapped_problem = _rewrap_conditions(prob, Val(_neqs(prob)), Val(true))
+        return new{P}(wrapped_problem)
     end
 end

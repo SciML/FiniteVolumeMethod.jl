@@ -21,11 +21,13 @@ export FVMGeometry,
     FVMProblem,
     FVMSystem,
     SteadyFVMProblem,
+    ConstrainedFVMProblem,
     BoundaryConditions,
     InternalConditions,
     Neumann,
     Dudt,
     Dirichlet,
+    Constrained,
     solve
 
 end
