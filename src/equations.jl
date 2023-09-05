@@ -48,15 +48,15 @@ function get_flux(prob::FVMSystem{N}, props, α, β, γ, t, i, j, edge_index) wh
     x, y = props.cv_edge_midpoints[edge_index]
     nx, ny = props.cv_edge_normals[edge_index]
     ℓ = props.cv_edge_lengths[edge_index]
-    u_shape = ntuple(ℓ -> α[ℓ] * x + β[ℓ] * y + γ[ℓ], Val(N))
-    qn = ntuple(Val(N)) do ℓ
+    u_shape = ntuple(var -> α[var] * x + β[var] * y + γ[var], Val(N))
+    qn = ntuple(Val(N)) do var
         ij_is_neumann = is_neumann_edge(prob, i, j, ℓ)
         if !ij_is_neumann
-            qx, qy = eval_flux_function(prob.problems[ℓ], x, y, t, α[ℓ], β[ℓ], γ[ℓ])
+            qx, qy = eval_flux_function(prob.problems[var], x, y, t, α[var], β[var], γ[var])
             qn = qx * nx + qy * ny
         else
-            function_index = prob.problems[ℓ].conditions.neumann_edges[(i, j)]
-            a, ap = prob.problems[ℓ].conditions.functions[function_index], prob.problems[ℓ].conditions.parameters[function_index]
+            function_index = prob.problems[var].conditions.neumann_edges[(i, j)]
+            a, ap = prob.problems[var].conditions.functions[function_index], prob.problems[var].conditions.parameters[function_index]
             qn = a(x, y, t, u_shape, ap)
         end
         return qn * ℓ
@@ -64,55 +64,33 @@ function get_flux(prob::FVMSystem{N}, props, α, β, γ, t, i, j, edge_index) wh
     return qn
 end
 
-function get_fluxes(prob, props, α, β, γ, t)
+function get_fluxes(prob, props, α, β, γ, i, j, k, t)
     q1 = get_flux(prob, props, α, β, γ, t, i, j, 1)
     q2 = get_flux(prob, props, α, β, γ, t, j, k, 2)
     q3 = get_flux(prob, props, α, β, γ, t, k, i, 3)
     return q1, q2, q3
 end
 
-function update_du!(du, prob::AbstractFVMProblem, i, j, k, summand₁, summand₂, summand₃)
-    i_is_pc = has_condition(prob, i)
-    j_is_pc = has_condition(prob, j)
-    k_is_pc = has_condition(prob, k)
-    if !i_is_pc
-        du[i] -= summand₁
-        du[j] += summand₁
-    end
-    if !j_is_pc
-        du[j] -= summand₂
-        du[k] += summand₂
-    end
-    if !k_is_pc
-        du[k] -= summand₃
-        du[i] += summand₃
-    end
+function update_du!(du, ::AbstractFVMProblem, i, j, k, summand₁, summand₂, summand₃)
+    du[i] = du[i] + summand₃ - summand₁
+    du[j] = du[j] + summand₁ - summand₂
+    du[k] = du[k] + summand₂ - summand₃
+    return nothing
 end
-function update_du!(du, prob::FVMSystem{N}, i, j, k, ℓ, summand₁, summand₂, summand₃) where {N}
-    i_is_pc = has_condition(prob, i, ℓ)
-    j_is_pc = has_condition(prob, j, ℓ)
-    k_is_pc = has_condition(prob, k, ℓ)
-    @. begin
-        if !i_is_pc
-            du[:, i] -= summand₁
-            du[:, j] += summand₁
-        end
-        if !j_is_pc
-            du[:, j] -= summand₂
-            du[:, k] += summand₂
-        end
-        if !k_is_pc
-            du[:, k] -= summand₃
-            du[:, i] += summand₃
-        end
+function update_du!(du, ::FVMSystem{N}, i, j, k, ℓ, summand₁, summand₂, summand₃) where {N}
+    for var in 1:N
+        du[var, i] = du[var, i] + summand₃[var] - summand₁[var]
+        du[var, j] = du[var, j] + summand₁[var] - summand₂[var]
+        du[var, k] = du[var, k] + summand₂[var] - summand₃[var]
     end
+    return nothing
 end
 
 function fvm_eqs_single_triangle!(du, u, prob, t, T)
     i, j, k = indices(T)
     props = prob.mesh.triangle_props[(i, j, k)]
     α, β, γ = get_shape_function_coefficients(props, T, u, prob)
-    summand₁, summand₂, summand₃ = get_fluxes(prob, props, α, β, γ, t)
+    summand₁, summand₂, summand₃ = get_fluxes(prob, props, α, β, γ, i, j, k, t)
     update_du!(du, prob, i, j, k, summand₁, summand₂, summand₃)
     return nothing
 end
@@ -121,11 +99,11 @@ function fvm_eqs_single_source_contribution!(du, u, prob::AbstractFVMProblem, t,
     p = get_point(prob.mesh.triangulation, i)
     x, y = getxy(p)
     if !has_condition(prob, i)
-        du[i] += prob.source_function(x, y, t, u[i], prob.source_parameters)
+        du[i] = du[i] / prob.mesh.cv_volumes[i] + prob.source_function(x, y, t, u[i], prob.source_parameters)
     elseif is_dirichlet_node(prob, i)
         du[i] = zero(eltype(du))
     else # Dudt
-        function_index = prob.conditions.point_conditions[i][2]
+        function_index = prob.conditions.dudt_nodes[i]
         a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
         du[i] = a(x, y, t, u[i], ap)
     end
@@ -137,12 +115,12 @@ function fvm_eqs_single_source_contribution!(du, u, prob::FVMSystem{N}, t, i) wh
     uᵢ = @views u[:, i]
     for j in 1:N
         if !has_condition(prob, i, j)
-            du[j, i] += prob.problems[j].source_function(x, y, t, uᵢ, prob.problems[j].source_parameters)
-        elseif is_dirichlet_node(prob,i,j) 
+            du[j, i] = du[j, i] / prob.mesh.cv_volumes[i] + prob.problems[j].source_function(x, y, t, uᵢ, prob.problems[j].source_parameters)
+        elseif is_dirichlet_node(prob, i, j)
             # Need to do Dirichlet first in case Dirichlet and Dudt overlap at this node - Dirichlet takes precedence
             du[j, i] = zero(eltype(du))
         else # Dudt
-            function_index = prob.problems[j].conditions.dudt_node[i][2]
+            function_index = prob.problems[j].conditions.dudt_nodes[i]
             a, ap = prob.problems[j].conditions.functions[function_index], prob.problems[j].conditions.parameters[function_index]
             du[j, i] = a(x, y, t, uᵢ, ap)
         end
@@ -157,7 +135,7 @@ function serial_fvm_eqs!(du, u, prob, t)
     for i in each_solid_vertex(prob.mesh.triangulation)
         fvm_eqs_single_source_contribution!(du, u, prob, t, i)
     end
-    return nothing
+    return du
 end
 
 function combine_duplicated_du!(du, duplicated_du, prob)
@@ -192,11 +170,11 @@ function parallel_fvm_eqs!(du, u, p, t)
             end
         end
     end
-    combine_duplicated_du!(du, duplicated_du, prob)
+    combine_duplicated_du!(du, _duplicated_du, prob)
     Threads.@threads for i in solid_vertices
         fvm_eqs_single_source_contribution!(du, u, prob, t, i)
     end
-    return nothing
+    return du
 end
 
 function fvm_eqs!(du, u, p, t)

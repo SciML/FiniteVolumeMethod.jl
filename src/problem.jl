@@ -75,6 +75,7 @@ function Base.show(io::IO, ::MIME"text/plain", prob::FVMProblem)
     tf = prob.final_time
     print(io, "FVMProblem with $(nv) nodes and time span ($t0, $tf)")
 end
+has_dirichlet_nodes(prob::AbstractFVMProblem) = has_dirichlet_nodes(prob.conditions)
 
 function _rewrap_conditions(prob::FVMProblem, neqs::Val{N}) where {N}
     new_conds = _rewrap_conditions(prob.conditions, eltype(prob.initial_condition), neqs)
@@ -172,6 +173,8 @@ struct FVMSystem{N,FG,P,IC,FT} <: AbstractFVMProblem
     end
 end
 Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, "FVMSystem with $N equations and time span ($(prob.initial_time), $(prob.final_time))")
+
+has_dirichlet_nodes(prob::FVMSystem{N}) where {N} = any(i -> has_dirichlet_nodes(prob.problems[i]), 1:length(prob.problems))
 
 eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) where {N} = ntuple(i -> eval_flux_function(prob.problems[i], x, y, t, α[i], β[i], γ[i]), Val(N))
 function _rewrap_conditions(prob::FVMSystem{N}) where {N}

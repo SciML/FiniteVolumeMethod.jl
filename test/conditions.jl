@@ -46,6 +46,7 @@ end
     linesegments!(ax, constrained_edges, color=:blue, linewidth=6)
     linesegments!(ax, neumann_edges, color=:yellow, linewidth=6)
     @test_reference "test_figures/conditions.png" fig
+    @test FVM.has_dirichlet_nodes(conds)
 end
 
 @testset "BoundaryConditions and InternalConditions" begin
@@ -75,4 +76,7 @@ end
     linesegments!(ax, constrained_edges, color=:blue, linewidth=6)
     linesegments!(ax, neumann_edges, color=:yellow, linewidth=6)
     @test_reference "test_figures/internal_conditions.png" fig
+    @test FVM.has_dirichlet_nodes(conds)
+    empty!(conds.dirichlet_nodes)
+    @test !FVM.has_dirichlet_nodes(conds)
 end

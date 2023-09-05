@@ -15,4 +15,28 @@ in two dimensions using the finite volume method, with support also provided for
 
 If this package doesn't suit what you need, you may like to review some of the other PDE packages shown [here](https://github.com/JuliaPDE/SurveyofPDEPackages).
 
-Please see the docs for more information.
+ As a very quick demonstration, here is how we could solve a diffusion equation with Dirichlet boundary conditions on a square domain; please see the docs for more information.
+
+```julia
+using FiniteVolumeMethod, DelaunayTriangulation, CairoMakie, DifferentialEquations
+a, b, c, d = 0.0, 2.0, 0.0, 2.0
+nx, ny = 50, 50
+tri = triangulate_rectangle(a, b, c, d, nx, ny, single_boundary=true)
+mesh = FVMGeometry(tri)
+bc = (x, y, t, u, p) -> zero(u)
+BCs = BoundaryConditions(mesh, bc, Dirichlet)
+f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
+initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+D = (x, y, t, u, p) -> 1 / 9
+final_time = 0.5
+prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
+sol = solve(prob, saveat=0.05)
+u = Observable(sol.u[1])
+fig, ax, sc = tricontourf(tri, u, levels=0:5:50, colormap=:matter)
+tightlimits!(ax)
+record(fig, "anim.mp4", eachindex(sol)) do i
+    u[] = sol.u[i]
+end
+```
+
+![Animation of a solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/imp_clean/anim.mp4?raw=true)

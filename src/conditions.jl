@@ -238,6 +238,11 @@ function BoundaryConditions(mesh::FVMGeometry, functions::Tuple, types::Tuple;
     wrapped_functions = wrap_functions(functions, parameters, u_type)
     return BoundaryConditions(wrapped_functions, parameters, types, functions)
 end
+function BoundaryConditions(mesh::FVMGeometry, functions::Function, types::ConditionType;
+    parameters=nothing,
+    u_type=Float64)
+    return BoundaryConditions(mesh, (functions,), (types,), parameters=(parameters,), u_type=u_type)
+end
 
 function InternalConditions(functions::Tuple=();
     dirichlet_nodes::Dict{Int,Int}=Dict{Int,Int}(),
@@ -298,6 +303,7 @@ function Base.show(io::IO, ::MIME"text/plain", conds::Conditions)
     println(io, "   $(nd) Dirichlet nodes")
     print(io, "   $(ndt) Dudt nodes")
 end
+has_dirichlet_nodes(conds::Conditions) = !isempty(conds.dirichlet_nodes)
 
 function _rewrap_conditions(conds::Conditions, u_type::Type{U}, neqs::Val{N}) where {U,N}
     T = Float64 # float_type

@@ -88,6 +88,7 @@ const _PAGES = [
     "Interface" => "interface.md",
     "Tutorials" => [
         "Section Overview" => "tutorials/overview.md",
+        "Diffusion Equation on a Square Plate" => "tutorials/diffusion_equation_on_a_square_plate.md",
     ],
     "Mathematical and Implementation Details" => "math.md"
 ]
@@ -141,8 +142,6 @@ makedocs(;
                 "packages" => ["base", "ams", "autoload", "physics"],
             ),
         ))),
-    linkcheck=false,
-    strict=false,
     draft=IS_LIVESERVER,
     pages=_PAGES
 )

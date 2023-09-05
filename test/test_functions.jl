@@ -211,3 +211,140 @@ function test_bc_ic_conditions!(tri, conds, t,
         end
     end
 end
+
+function example_diffusion_problem()
+    a, b, c, d = 0.0, 2.0, 0.0, 2.0
+    nx, ny = 25, 25
+    tri = triangulate_rectangle(a, b, c, d, nx, ny, single_boundary=true)
+    mesh = FVMGeometry(tri)
+    bc = (x, y, t, u, p) -> zero(u)
+    BCs = BoundaryConditions(mesh, bc, Dirichlet)
+    f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
+    initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+    D = (x, y, t, u, p) -> 1 / 9
+    final_time = 0.5
+    prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
+    return prob
+end
+
+function test_shape_function_coefficients(prob, u)
+    for T in each_solid_triangle(prob.mesh.triangulation)
+        i, j, k = indices(T)
+        s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = prob.mesh.triangle_props[T].shape_function_coefficients
+        ui, uj, uk = u[i], u[j], u[k]
+        α = s₁ * ui + s₂ * uj + s₃ * uk
+        β = s₄ * ui + s₅ * uj + s₆ * uk
+        γ = s₇ * ui + s₈ * uj + s₉ * uk
+        @test sum(prob.mesh.triangle_props[T].shape_function_coefficients) ≈ 1.0
+        xi, yi = get_point(prob.mesh.triangulation, i)
+        xj, yj = get_point(prob.mesh.triangulation, j)
+        xk, yk = get_point(prob.mesh.triangulation, k)
+        @test α * xi + β * yi + γ ≈ ui atol = 1e-9
+        @test α * xj + β * yj + γ ≈ uj atol = 1e-9
+        @test α * xk + β * yk + γ ≈ uk atol = 1e-9
+        cx, cy = (xi + xj + xk) / 3, (yi + yj + yk) / 3
+        @test α * cx + β * cy + γ ≈ (ui + uj + uk) / 3
+        a, b, c = FVM.get_shape_function_coefficients(prob.mesh.triangle_props[T], T, u, prob)
+        @test a ≈ α atol = 1e-9
+        @test b ≈ β atol = 1e-9
+        @test c ≈ γ atol = 1e-9
+        @inferred FVM.get_shape_function_coefficients(prob.mesh.triangle_props[T], T, u, prob)
+    end
+end
+
+function test_get_flux(prob, u, t)
+    for T in each_solid_triangle(prob.mesh.triangulation)
+        p, q, r = get_point(prob.mesh.triangulation, T...)
+        c = (p .+ q .+ r) ./ 3
+        s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = prob.mesh.triangle_props[T].shape_function_coefficients
+        α = s₁ * u[T[1]] + s₂ * u[T[2]] + s₃ * u[T[3]]
+        β = s₄ * u[T[1]] + s₅ * u[T[2]] + s₆ * u[T[3]]
+        γ = s₇ * u[T[1]] + s₈ * u[T[2]] + s₉ * u[T[3]]
+        _qn = Float64[]
+        for (edge_index, (i, j)) in enumerate(DelaunayTriangulation.triangle_edges(T))
+            p, q = get_point(prob.mesh.triangulation, i, j)
+            m = (p .+ q) ./ 2
+            x, y = (c .+ m) ./ 2
+            ex, ey = c .- m
+            ℓ = norm((ex, ey))
+            nx, ny = ey / ℓ, -ex / ℓ
+            qx, qy = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
+            @inferred prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
+            qn = (qx * nx + qy * ny) * ℓ
+            @test qn ≈ FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index) atol = 1e-9
+            push!(_qn, qn)
+        end
+        @test _qn ≈ collect(FVM.get_fluxes(prob, prob.mesh.triangle_props[T], α, β, γ, T..., t)) atol = 1e-9
+    end
+end
+
+function test_single_triangle(prob, u, t)
+    du = zero(u)
+    for T in each_solid_triangle(prob.mesh.triangulation)
+        fill!(du, 0.0)
+        p, q, r = get_point(prob.mesh.triangulation, T...)
+        c = (p .+ q .+ r) ./ 3
+        s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = prob.mesh.triangle_props[T].shape_function_coefficients
+        α = s₁ * u[T[1]] + s₂ * u[T[2]] + s₃ * u[T[3]]
+        β = s₄ * u[T[1]] + s₅ * u[T[2]] + s₆ * u[T[3]]
+        γ = s₇ * u[T[1]] + s₈ * u[T[2]] + s₉ * u[T[3]]
+        _qn = Float64[]
+        for (edge_index, (i, j)) in enumerate(DelaunayTriangulation.triangle_edges(T))
+            push!(_qn, FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index))
+        end
+        q1, q2, q3 = _qn 
+        dui = -(q1 - q3) 
+        duj = -(-q1 + q2)
+        duk = -(-q2 + q3)
+        FVM.fvm_eqs_single_triangle!(du,u,prob,t,T)
+        @test du[T[1]] ≈ dui atol = 1e-9
+        @test du[T[2]] ≈ duj atol = 1e-9
+        @test du[T[3]] ≈ duk atol = 1e-9
+    end
+end
+
+function test_source_contribution(prob, u, t)
+    du = rand(length(u))
+    for i in each_solid_vertex(prob.mesh.triangulation)
+        _du = du[i] / prob.mesh.cv_volumes[i]
+        if i ∈ keys(prob.conditions.dirichlet_nodes)
+            _du = 0.0
+        end
+        FVM.fvm_eqs_single_source_contribution!(du, u, prob, t, i)
+        @test du[i] ≈ _du
+    end
+end
+
+function get_dudt_val(prob, u, t, i)
+    i ∈ keys(prob.conditions.dirichlet_nodes) && return 0.0
+    mesh = prob.mesh
+    tri = mesh.triangulation
+    cv = get_control_volume(tri, i)
+    int = 0.0
+    nedges = length(cv) - 1
+    for j in 1:nedges
+        p, q = cv[j], cv[j+1]
+        px, py = p
+        qx, qy = q
+        mx, my = (px + qx) / 2, (py + qy) / 2
+        T = jump_and_march(tri, (mx, my))
+        T = DelaunayTriangulation.contains_triangle(tri, T)[1]
+        props = mesh.triangle_props[T]
+        L = norm(p .- q)
+        nx, ny = (qy - py) / L, (px - qx) / L
+        s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
+        α = s₁ * u[T[1]] + s₂ * u[T[2]] + s₃ * u[T[3]]
+        β = s₄ * u[T[1]] + s₅ * u[T[2]] + s₆ * u[T[3]]
+        γ = s₇ * u[T[1]] + s₈ * u[T[2]] + s₉ * u[T[3]]
+        q = (-α / 9, -β / 9)
+        int += L * (q[1] * nx + q[2] * ny)
+    end
+    dudt = prob.source_function(get_point(tri, i)..., t, u[i], prob.source_parameters) - int / mesh.cv_volumes[i]
+    return dudt
+end
+
+function test_dudt_val(prob, u, t)
+    dudt = [get_dudt_val(prob, u, t, i) for i in each_point_index(prob.mesh.triangulation)]
+    dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, (prob=prob, parallel=Val(false)), t)
+    @test dudt ≈ dudt_fnc
+end

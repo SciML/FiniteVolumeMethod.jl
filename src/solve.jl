@@ -3,17 +3,17 @@ function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem{N}}) where 
     nt = Threads.nthreads()
     if prob isa FVMProblem
         duplicated_du = DiffCache(similar(u, length(u), nt))
-        point_conditions = collect(keys(prob.conditions.dirichlet_nodes))
+        dirichlet_nodes = collect(keys(prob.conditions.dirichlet_nodes))
     else
         duplicated_du = DiffCache(similar(u, size(u, 1), size(u, 2), nt))
-        point_conditions = ntuple(i -> collect(keys(prob.problems[i].conditions.dirichlet_nodes)), N)
+        dirichlet_nodess = ntuple(i -> collect(keys(prob.problems[i].conditions.dirichlet_nodes)), N)
     end
     solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
     solid_vertices = collect(each_solid_vertex(prob.mesh.triangulation))
     chunked_solid_triangles = chunks(solid_triangles, nt)
     return (
         duplicated_du=duplicated_du,
-        point_conditions=point_conditions,
+        dirichlet_nodes=dirichlet_nodes,
         solid_triangles=solid_triangles,
         solid_vertices=solid_vertices,
         chunked_solid_triangles=chunked_solid_triangles,
@@ -35,38 +35,62 @@ function jacobian_sparsity(prob::FVMProblem)
         push!(I, i)
         push!(J, i)
         push!(V, 1.0)
-        ngh = get_neighbours(tri, i)
-        for j in ngh
-            if !DelaunayTriangulation.is_boundary_index(j)
-                push!(I, i)
-                push!(J, j)
-                push!(V, 1.0)
-            end
+        for j in get_neighbours(tri, i)
+            DelaunayTriangulation.is_boundary_index(j) && continue
+            push!(I, i)
+            push!(J, j)
+            push!(V, 1.0)
         end
     end
     return sparse(I, J, V)
 end
+
+# Some working:
+# Suppose we have a problem that looks like this (↓ vars → node) 
+#   u₁¹     u₂¹     u₃¹     ⋯       uₙ¹ 
+#   u₁²     u₂²     u₃²     ⋯       uₙ²
+#    ⋮        ⋮       ⋮       ⋱       ⋮
+#   u₁ᴺ     u₂ᴺ     u₃ᴺ     ⋯       uₙᴺ
+# When we write down the relationships here, we need 
+# to use the linear subscripts, so that the problem above 
+# is interpreted as 
+#   u¹      uᴺ⁺¹     u²ᴺ⁺¹     ⋯       u⁽ⁿ⁻¹⁾ᴺ⁺¹
+#   u²      uᴺ⁺²     u²ᴺ⁺²     ⋯       u⁽ⁿ⁻¹⁾ᴺ⁺²
+#    ⋮        ⋮       ⋮          ⋱       ⋮
+#   uᴺ      u²ᴺ      u³ᴺ       ⋯       uⁿᴺ
+# With this, the ith node is at the linear indices 
+# (i, 1), (i, 2), …, (i, N) ↦ (i-1)*N + j for j in 1:N.
+# In the original matrix, a node i being related to a node ℓ
+# means that the ith and ℓ columns are all related to eachother. 
 function jacobian_sparsity(prob::FVMSystem{N}) where {N}
     tri = prob.mesh.triangulation
     I = Int64[]   # row indices
     J = Int64[]   # col indices
     V = Float64[] # values (all 1)
-    n = length(prob.initial_condition)
-    sizehint!(I, 6n) # points have, on average, six neighbours in a DelaunayTriangulation. We don't need to multiply by N here, since length(prob.initial_condition) is actually N * num_solid_vertices(tri) already 
-    sizehint!(J, 6n)
-    sizehint!(V, 6n)
+    n = DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation_statistics)
+    sizehint!(I, 6n * N) # points have, on average, six neighbours in a DelaunayTriangulation.
+    sizehint!(J, 6n * N)
+    sizehint!(V, 6n * N)
     for i in each_solid_vertex(tri)
-        for j in 1:N
-            push!(I, i)
-            push!(J, (j - 1) * N + i)
-            push!(V, 1.0)
+        # First, i is related to itself, meaning 
+        # (i, 1), (i, 2), …, (i, N) are all related. 
+        for ℓ in 1:N
+            node = (i - 1) * N + ℓ
+            for j in 1:N
+                node2 = (i - 1) * N + j
+                push!(I, node)
+                push!(J, node2)
+                push!(V, 1.0)
+            end
         end
-        ngh = get_neighbours(tri, i)
-        for j in ngh
-            if !DelaunayTriangulation.is_boundary_index(j)
+        for j in get_neighbours(tri, i)
+            DelaunayTriangulation.is_boundary_index(j) && continue
+            for ℓ in 1:N
+                node = (i - 1) * N + ℓ
                 for k in 1:N
-                    push!(I, i)
-                    push!(J, (k - 1) * N + j)
+                    node2 = (j - 1) * N + k
+                    push!(I, node)
+                    push!(J, node2)
                     push!(V, 1.0)
                 end
             end
@@ -75,10 +99,13 @@ function jacobian_sparsity(prob::FVMSystem{N}) where {N}
     return sparse(I, J, V)
 end
 
-@inline function dirichlet_callback(has_saveat=true)
+@inline function dirichlet_callback(has_saveat, has_dirichlet_nodes)
     cb = DiscreteCallback(
-        Returns(true),
-        (integrator, t, u) -> update_dirichlet_nodes!(integrator); save_positions=(!has_saveat, !has_saveat)
+        (u, t, integrator) -> let cb_needed = has_dirichlet_nodes
+            cb_needed
+        end,
+        update_dirichlet_nodes!,
+        save_positions=(!has_saveat, !has_saveat)
     )
     return cb
 end
@@ -86,40 +113,58 @@ end
 function SciMLBase.ODEProblem(prob::Union{FVMProblem,FVMSystem};
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
-    parallel::Bool=true,
-    kwargs...) where {S}
-    par = Val(parallel)
+    parallel::Val{B}=Val(true),
+    callback=nothing, # need this to check if user provides it
+    kwargs...) where {S,B}
     initial_time = prob.initial_time
     final_time = prob.final_time
     time_span = (initial_time, final_time)
     initial_condition = prob.initial_condition
     kwarg_dict = Dict(kwargs)
-    dirichlet_cb = dirichlet_callback(:saveat ∈ keys(kwarg_dict))
-    if :callback ∈ keys(kwarg_dict)
-        callback = CallbackSet(kwarg_dict[:callback], dirichlet_cb)
+    dirichlet_cb = dirichlet_callback(:saveat ∈ keys(kwarg_dict), has_dirichlet_nodes(prob))
+    if !isnothing(callback)
+        cb = CallbackSet(callback, dirichlet_cb)
     else
-        callback = CallbackSet(dirichlet_cb)
+        cb = CallbackSet(dirichlet_cb)
     end
-    delete!(kwargs, :callback)
     f = ODEFunction{true,S}(fvm_eqs!; jac_prototype)
-    p = par ? get_multithreading_vectors(prob) : prob
-    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=callback, kwargs...)
+    p = B ? get_multithreading_vectors(prob) : (prob=prob, parallel=parallel)
+    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb, kwargs...)
     return ode_problem
 end
-function SciMLBase.NonlinearProblem(prob::SteadyFVMProblem; kwargs...)
-    ode_prob = ODEProblem(prob.problem; kwargs...)
+function SciMLBase.NonlinearProblem(prob::SteadyFVMProblem;
+    specialization::Type{S}=SciMLBase.AutoSpecialize,
+    jac_prototype=jacobian_sparsity(prob),
+    parallel::Val{B}=Val(true),
+    callback=nothing, # need this to check if user provides it
+    kwargs...) where {S,B}
+    ode_prob = ODEProblem(prob.problem; specialization, jac_prototype, parallel, callback, kwargs...)
     nl_prob = NonlinearProblem{true}(ode_prob.f, ode_prob.u0, ode_prob.p; kwargs...)
     return nl_prob
 end
 
-CommonSolve.init(prob::Union{FVMProblem,FVMSystem}, alg; kwargs...) = CommonSolve.init(ODEProblem(prob, kwargs...), alg; kwargs...)
-CommonSolve.solve(prob::SteadyFVMProblem, alg; kwargs...) = CommonSolve.solve(NonlinearProblem(prob; kwargs...), alg; kwargs...)
+function CommonSolve.init(prob::Union{FVMProblem,FVMSystem}, args...;
+    specialization::Type{S}=SciMLBase.AutoSpecialize,
+    jac_prototype=jacobian_sparsity(prob),
+    parallel::Val{B}=Val(true),
+    kwargs...) where {S,B}
+    ode_prob = SciMLBase.ODEProblem(prob; specialization, jac_prototype, parallel, kwargs...)
+    return CommonSolve.init(ode_prob, args...; kwargs...)
+end
+function CommonSolve.solve(prob::SteadyFVMProblem, args...;
+    specialization::Type{S}=SciMLBase.AutoSpecialize,
+    jac_prototype=jacobian_sparsity(prob),
+    parallel::Val{B}=Val(true),
+    kwargs...) where {S,B}
+    nl_prob = SciMLBase.NonlinearProblem(prob; specialization, jac_prototype, parallel, kwargs...)
+    return CommonSolve.solve(ode_prob, args...; kwargs...)
+end
 
 @doc """
     solve(prob::Union{FVMProblem,FVMSystem}, alg; 
         specialization=SciMLBase.AutoSpecialize, 
         jac_prototype=jacobian_sparsity(prob),
-        parallel::Bool=true,
+        parallel::Val{<:Bool}=Val(true),
         kwargs...)
 
 
@@ -132,7 +177,7 @@ Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the alg
 # Keyword Arguments
 - `specialization=SciMLBase.AutoSpecialize`: The type of specialization to be used. See https://docs.sciml.ai/DiffEqDocs/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation.
 - `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`.
-- `parallel::Bool=true`: Whether to use multithreading.
+- `parallel::Val{<:Bool}=Val(true)`: Whether to use multithreading. Use `Val(false)` to disable multithreading.
 
 # Outputs 
 The returned value `sol` depends on whether the problem is a [`FVMProblem`](@ref) or an [`FVMSystem`](@ref), but in 
@@ -149,7 +194,7 @@ In this case, the `(j, i)`th component of `sol` refers to the `i`th node of the 
     solve(prob::SteadyFVMProblem, alg; 
         specialization=SciMLBase.AutoSpecialize, 
         jac_prototype=jacobian_sparsity(prob),
-        parallel::Bool=true,
+        parallel::Val{<:Bool}=Val(true),
         kwargs...)
 
 
@@ -162,7 +207,7 @@ Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the alg
 # Keyword Arguments
 - `specialization=SciMLBase.AutoSpecialize`: The type of specialization to be used. See https://docs.sciml.ai/DiffEqDocs/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation.
 - `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`.
-- `parallel::Bool=true`: Whether to use multithreading.
+- `parallel::Val{<:Bool}=Val(true)`: Whether to use multithreading. Use `Val(false)` to disable multithreading.
 
 # Outputs 
 The returned value `sol` depends on whether the underlying problem is a [`FVMProblem`](@ref) or an [`FVMSystem`](@ref), but in 

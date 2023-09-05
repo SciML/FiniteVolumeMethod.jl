@@ -156,3 +156,49 @@ function test_compute_flux(_prob, steady, system, steady_system)
     end
 end
 test_compute_flux(prob, steady, system, steady_system)
+
+function test_jacobian_sparsity(prob::FVMProblem)
+    A = zeros(num_points(prob.mesh.triangulation), num_points(prob.mesh.triangulation))
+    for i in each_solid_vertex(prob.mesh.triangulation)
+        A[i, i] = 1.0
+        for j in get_neighbours(tri, i)
+            DelaunayTriangulation.is_boundary_index(j) && continue
+            A[i, j] = 1.0
+        end
+    end
+    @test A == FVM.jacobian_sparsity(prob)
+end
+function test_jacobian_sparsity(prob::FVMSystem{N}) where {N}
+    tri = prob.mesh.triangulation
+    n = num_points(tri)
+    A = zeros(n * N, n * N)
+    idx_map = Vector{Vector{Int}}(undef, n)
+    idx_mat = zeros(N, n)
+    ctr = 1
+    for j in 1:n
+        for i in 1:N
+            idx_mat[i, j] = ctr
+            ctr += 1
+        end
+    end
+    for i in 1:n
+        idx_map[i] = idx_mat[:, i]
+    end
+    for i in each_solid_vertex(tri)
+        node1 = idx_map[i]
+        for j in (i, get_neighbours(tri, i)...)
+            DelaunayTriangulation.is_boundary_index(j) && continue
+            node2 = idx_map[j]
+            for x in node1
+                for y in node2
+                    A[x, y] = 1.0
+                end
+            end
+        end
+    end
+    @test A == FVM.jacobian_sparsity(prob)
+end
+for prob in (prob, system)
+    test_jacobian_sparsity(prob)
+    @inferred FVM.jacobian_sparsity(prob)
+end

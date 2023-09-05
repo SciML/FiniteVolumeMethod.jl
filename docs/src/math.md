@@ -398,12 +398,12 @@ Let us focus on $u_b$ and $u_r$. The procedure for going from the edge $e_{br}$ 
 4. Compute $L_{br} = \|\vb x_T - \vb x_{br}\|$.
 5. Compute $\alpha$, $\beta$, and $\gamma$ from \eqref{eq:shapecoeffvals} using the vertices of $T$.
 6. Let $Q = [\vb q(\vb x_{br}, t, \alpha x_{br} + \beta y_{br} + \gamma) \vdot \vu n_{br}]L_{br}$.
-7. Perform the reassignment $\mathrm du_b/\mathrm dt \leftarrow \mathrm du_b/\mathrm dt - Q$. Note that the minus sign is because we have brought the sum in \eqref{eq:interiorapproximation} to the left-hand side of the equation.
+7. Perform the reassignment $\mathrm du_b/\mathrm dt \leftarrow \mathrm du_b/\mathrm dt - Q$. Note that the minus sign is because we have brought the sum in \eqref{eq:interiorapproximation} to the right-hand side of the equation.
 8. Perform the reassignment $\mathrm du_r/\mathrm dt \leftarrow \mathrm du_r/\mathrm dt + Q$. Note that this second term is positive because $\vu n_{br}$ is pointing towards $\vb x_r$.
 
 With this procedure, we can get the contribution from each edge without having to repeat many computations. The procedure for the other edges is similar. Care does need to be taken if there is a boundary or internal condition on $u_b$ or $u_r$ (or the other vertices). If there is a Dirichlet condition on $u_b$ (either \eqref{eq:dudtdirichlet} or \eqref{eq:dirichlet}), skip step 7. Similarly, skip step 8 if there is a Dirichlet condition on $u_r$. If there is a Neumann condition on $e_{br}$, then the definition of $Q$ should be modified to be $Q = [a_{br}(\vb x_{br}, t, \alpha x_{br} + \beta y_{br} + \gamma)]L_{br}$, where $a_{br}$ is the Neumann condition function associated with $e_{br}$; it does not matter if, for example, $u_b$ is a part of a Neumann condition for some other edge, since Neumann conditions are specified per-edge rather than per-vertex.
 
-Once we have applied these steps onto each triangle, and we have taken care for respecting the boundary and internal conditions, the last step is to loop over each vertex and then compute the source term $S_i$, adding it to each equation. This completes the discretisation of the PDE.
+Once we have applied these steps onto each triangle, and we have taken care for respecting the boundary and internal conditions, the last step is to loop over each vertex $i$ and then (1) divide the current $\mathrm du_i/\mathrm dt$ value by $V_i$ and then compute the source term $S_i$, adding it to each equation. This completes the discretisation of the PDE.
 
 # Systems of Equations 
 

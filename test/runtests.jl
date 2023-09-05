@@ -11,3 +11,6 @@ end
 @safetestset "Problem" begin
     include("problem.jl")
 end
+@safetestset "Equations" begin
+    include("equations.jl")
+end
