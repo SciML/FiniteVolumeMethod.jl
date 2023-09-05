@@ -22,12 +22,6 @@ function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem{N}}) where 
     )
 end
 
-"""
-    jacobian_sparsity(prob::Union{FVMProblem,FVMSystem})
-
-Constructs the sparse matrix which has the same sparsity pattern as the Jacobian for the finite volume equations 
-corresponding to the [`FVMProblem`](@ref) or [`FVMSystem`](@ref) given by `prob`.
-"""
 function jacobian_sparsity(prob::FVMProblem)
     tri = prob.mesh.triangulation
     I = Int64[]   # row indices 
@@ -92,7 +86,7 @@ end
 function SciMLBase.ODEProblem(prob::Union{FVMProblem,FVMSystem};
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
-    parallel::Bool,
+    parallel::Bool=true,
     kwargs...) where {S}
     par = Val(parallel)
     initial_time = prob.initial_time
@@ -122,23 +116,61 @@ CommonSolve.init(prob::Union{FVMProblem,FVMSystem}, alg; kwargs...) = CommonSolv
 CommonSolve.solve(prob::SteadyFVMProblem, alg; kwargs...) = CommonSolve.solve(NonlinearProblem(prob; kwargs...), alg; kwargs...)
 
 @doc """
-    solve(prob::Union{FVMProblem,FVMSystem}, alg; kwargs...)
+    solve(prob::Union{FVMProblem,FVMSystem}, alg; 
+        specialization=SciMLBase.AutoSpecialize, 
+        jac_prototype=jacobian_sparsity(prob),
+        parallel::Bool=true,
+        kwargs...)
 
-Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the algorithm `alg`, with keyword 
-arguments `kwargs` passed to the solver as in DifferentialEquations.jl. The returned type for a [`FVMProblem`](@ref)
-is a `sol::ODESolution`, with the `i`th component of the solution referring to the `i`th 
-node in the underlying mesh, and accessed like the solutions in DifferentialEquations.jl. If `prob` is a 
-[`FVMSystem`](@ref), the `(j, i)`th component of the solution instead refers to the `i`th node 
-for the `j`th component of the system.
+
+Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the algorithm `alg`.
+
+# Arguments 
+- `prob`: The problem to be solved.
+- `alg`: The algorithm to be used to solve the problem. This can be any of the algorithms in DifferentialEquations.jl.
+
+# Keyword Arguments
+- `specialization=SciMLBase.AutoSpecialize`: The type of specialization to be used. See https://docs.sciml.ai/DiffEqDocs/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation.
+- `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`.
+- `parallel::Bool=true`: Whether to use multithreading.
+
+# Outputs 
+The returned value `sol` depends on whether the problem is a [`FVMProblem`](@ref) or an [`FVMSystem`](@ref), but in 
+each case it is an `ODESolution` type that can be accessed like the solutions in DifferentialEquations.jl:
+- [`FVMProblem`](@ref)
+
+In this case, `sol` is such that the `i`th component of `sol` refers to the `i`th node of the underlying mesh.
+- [`FVMSystem`](@ref)
+
+In this case, the `(j, i)`th component of `sol` refers to the `i`th node of the underlying mesh for the `j`th component of the system.
 """ solve(::Union{FVMProblem,FVMSystem}, ::Any; kwargs...)
 
 @doc """
-    solve(prob::SteadyFVMProblem, alg; kwargs...)
+    solve(prob::SteadyFVMProblem, alg; 
+        specialization=SciMLBase.AutoSpecialize, 
+        jac_prototype=jacobian_sparsity(prob),
+        parallel::Bool=true,
+        kwargs...)
 
-Solves the given [`SteadyFVMProblem`](@ref) `prob` with the algorithm `alg`, with keyword
-arguments `kwargs` passed to the solver as in (Simple)NonlinearSolve.jl. The returned type
-is a `NonlinearSolution`, and the `i`th component of the solution if the steady state for the 
-`i`th node in the underlying mesh. If the underlying problem is instead a [`FVMSystem`](@ref), 
-rather than a [`FVMProblem`](@ref), it is the `(j, i)`th component that refers to the `i`th 
-node of the mesh for the `j`th component of the system.
+
+Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the algorithm `alg`.
+
+# Arguments 
+- `prob`: The problem to be solved.
+- `alg`: The algorithm to be used to solve the problem. This can be any of the algorithms in NonlinearSolve.jl.
+
+# Keyword Arguments
+- `specialization=SciMLBase.AutoSpecialize`: The type of specialization to be used. See https://docs.sciml.ai/DiffEqDocs/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation.
+- `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`.
+- `parallel::Bool=true`: Whether to use multithreading.
+
+# Outputs 
+The returned value `sol` depends on whether the underlying problem is a [`FVMProblem`](@ref) or an [`FVMSystem`](@ref), but in 
+each case it is an `ODESolution` type that can be accessed like the solutions in DifferentialEquations.jl:
+- [`FVMProblem`](@ref)
+
+In this case, `sol` is such that the `i`th component of `sol` refers to the `i`th node of the underlying mesh.
+- [`FVMSystem`](@ref)
+
+In this case, the `(j, i)`th component of `sol` refers to the `i`th node of the underlying mesh for the `j`th component of the system.
 """ solve(::SteadyFVMProblem, ::Any; kwargs...)

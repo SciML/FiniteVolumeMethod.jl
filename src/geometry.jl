@@ -11,7 +11,8 @@ end
 
 This is a constructor for the [`FVMGeometry`](@ref) struct, which holds the mesh and associated data for the PDE.
 
-It is assumed that all vertices in `tri` are in the triangulation, meaning `v` is in `tri` for each `v` in `each_point_index(tri)`.
+!!! note
+    It is assumed that all vertices in `tri` are in the triangulation, meaning `v` is in `tri` for each `v` in `each_point_index(tri)`.
 """
 struct FVMGeometry{T,S}
     triangulation::T

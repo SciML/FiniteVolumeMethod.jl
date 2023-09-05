@@ -1,7 +1,7 @@
 """
     ConditionType 
 
-This is an `Enum`-type, with three instances:
+This is an `Enum`-type, with four instances:
 
 - [`Neumann`](@ref)
 - [`Dudt`](@ref)
@@ -31,7 +31,8 @@ take the form
 ```
 
 where $\vb q$ is the flux function and $\vu n_\sigma$ is the 
-outward unit normal vector field on the associated edge. 
+outward unit normal vector field on the associated edge (meaning, for example, 
+the normal vector to an edge `pq` would point to the right of `pq`).
 
 When providing a `Neumann` condition, the function you provide 
 takes the form
@@ -143,7 +144,7 @@ the `mesh` corresponding to the `i`th boundary index, as defined in DelaunayTria
 - `conditions::Tuple`
 
 The classification for the boundary condition type corresponding to each boundary index as above. See 
-[`ConditionType`](@ref) for possible conditions - should be one of [`Neumann`](@ref), [`Dudt`](@ref), [`Dirichlet`(@ref), or [`Constrained`](@ref).
+[`ConditionType`](@ref) for possible conditions - should be one of [`Neumann`](@ref), [`Dudt`](@ref), [`Dirichlet`](@ref), or [`Constrained`](@ref).
 
 # Keyword Arguments
 - `parameters=ntuple(_ -> nothing, length(functions))`
@@ -175,7 +176,7 @@ end
 """
     InternalConditions(functions::Tuple=();
         dirichlet_nodes::Dict{Int,Int}=Dict{Int,Int}(),
-        dudt_nodes::Dict{Int,Int}=Dict{Int,Int}();
+        dudt_nodes::Dict{Int,Int}=Dict{Int,Int}(),
         parameters::Tuple=ntuple(_ -> nothing, length(functions)),
         u_type=Float64)
 
@@ -251,8 +252,6 @@ end
     Conditions{F<:Tuple,P<:Tuple}
 
 This is a `struct` that holds the boundary and internal conditions for the PDE.
-This is not public API - the relevant public API is [`BoundaryConditions`](@ref), 
-[`InternalConditions`](@ref), and [`ConditionType`](@ref).
 
 # Fields 
 - `neumann_conditions::Dict{NTuple{2,Int},Int}`
@@ -286,7 +285,7 @@ struct Conditions{F<:Tuple,P<:Tuple,UF<:Tuple}
     dudt_nodes::Dict{Int,Int}
     functions::F
     parameters::P
-    unwrapped_functions::UF
+    unwrapped_functions::UF # not public API
 end
 function Base.show(io::IO, ::MIME"text/plain", conds::Conditions)
     nn = length(conds.neumann_edges)

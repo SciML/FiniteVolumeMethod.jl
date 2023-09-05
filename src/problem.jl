@@ -56,7 +56,7 @@ The initial time.
 The final time.
 
 # Outputs
-The returned value is the corresponding [`FVMProblem`](@ref) struct. You can then solve the problem using `solve` from DifferentialEquations.jl.
+The returned value is the corresponding [`FVMProblem`](@ref) struct. You can then solve the problem using [`solve(::Union{FVMProblem,FVMSystem}, ::Any; kwargs...)`](@ref) from DifferentialEquations.jl.
 """
 struct FVMProblem{FG,BC,F,FP,R,RP,IC,FT} <: AbstractFVMProblem
     mesh::FG
@@ -102,15 +102,10 @@ function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, 
 end
 
 """
-    SteadyFVMProblem{P<:AbstractFVMProblem,M<:FVMGeometry}
+    SteadyFVMProblem(prob::AbstractFVMProblem)
 
 This is a wrapper for an `AbstractFVMProblem` that indicates that the problem is to be solved as a steady-state problem. 
-You can then solve the problem using `solve` from (Simple)NonlinearSolve.jl. To construct this wrapper, 
-simply do 
-
-    SteadyFVMProblem(prob),
-
-where `prob` is an `AbstractFVMProblem`. Note that the final time is treated 
+You can then solve the problem using [`solve(::SteadyFVMProblem, ::Any; kwargs...)`](@ref) from NonlinearSolve.jl. Note that the final time is treated 
 as infinity rather than as `prob.final_time`.
 
 See also [`FVMProblem`](@ref) and [`FVMSystem`](@ref).
@@ -135,13 +130,11 @@ end
 eval_flux_function(prob::SteadyFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
 
 """
-    FVMSystem{N,FG,P,IC,FT}
+    FVMSystem(prob1, prob2, ..., probN)
 
-Representation of a system of PDEs. The constructor for this struct is 
+Constructs a representation for a system of PDEs, where each `probi` is 
+a [`FVMProblem`](@ref) for the `i`th component of the system.
 
-    FVMSystem(prob1, prob2, ..., probN),
-
-where each `probi` is a [`FVMProblem`](@ref) for the `i`th component of the system.
 For these [`FVMProblem`](@ref)s, the functions involved, such as the condition functions, should 
 all be defined so that the `u` argument assumes the form `u = (u₁, u₂, ..., uN)` (both `Tuple`s and `Vector`s will be passed), 
 where `uᵢ` is the solution for the `i`th component of the system. For the flux functions, 
@@ -157,6 +150,11 @@ the solution returns a matrix at each time, where the `(j, i)`th component corre
 node for the `j`th component.
 
 See also [`FVMProblem`](@ref) and [`SteadyFVMProblem`](@ref).
+
+!!! note 
+    To construct a steady-state problem for an `FVMSystem`, you need to apply 
+    [`SteadyFVMProblem`](@ref) to the system rather than first applying it to
+    each individual [`FVMProblem`](@ref) in the system.
 """
 struct FVMSystem{N,FG,P,IC,FT} <: AbstractFVMProblem
     mesh::FG
