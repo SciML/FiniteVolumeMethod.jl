@@ -74,13 +74,24 @@ function example_bc_ic_setup()
     q5 = (0.2, 0.4, 0.5, 0.7)
     g = (g1, g2, g3, g4, g5)
     q = (q1, q2, q3, q4, q5)
+    dirichlet_nodes = Dict(
+        ([7 + (i - 1) * 12 for i in 1:10] .=> 1)...,
+        ([2 + (i - 1) * 12 for i in 7:15] .=> 5)...,
+        2 + 2 * 12 => 3
+    )
+    dudt_nodes = Dict(
+        (38:(38+7) .=> 2)...,
+        ([9 + (i - 1) * 12 for i in 2:18] .=> 4)...,
+    )
+    return f, t, p, g, q, dirichlet_nodes, dudt_nodes
 end
 function test_bc_conditions!(tri, conds, t,
-    dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges)
+    dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges, shift=0)
     for e in keys(get_boundary_edge_map(tri))
         u, v = DelaunayTriangulation.edge_indices(e)
         w = get_adjacent(tri, v, u)
         bc_type = t[-w]
+        w -= shift
         if bc_type == Dirichlet
             @test conds.dirichlet_nodes[u] == -w
             @test conds.dirichlet_nodes[v] == -w
@@ -100,6 +111,25 @@ function test_bc_conditions!(tri, conds, t,
         end
     end
     return nothing
+end
+function test_bc_ic_conditions!(tri, conds, t,
+    dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges,
+    ics)
+    nif = length(conds.parameters) - DelaunayTriangulation.num_ghost_vertices(tri)
+    test_bc_conditions!(tri, conds, t, dirichlet_nodes,
+        dudt_nodes, constrained_edges, neumann_edges, nif)
+    for (i, idx) in ics.dirichlet_nodes
+        if !DelaunayTriangulation.is_boundary_node(tri, i)[1]
+            @test conds.dirichlet_nodes[i] == idx
+            push!(dirichlet_nodes, get_point(tri, i))
+        end
+    end
+    for (i, idx) in ics.dudt_nodes
+        if !DelaunayTriangulation.is_boundary_node(tri, i)[1]
+            @test conds.dudt_nodes[i] == idx
+            push!(dudt_nodes, get_point(tri, i))
+        end
+    end
 end
 
 @testset "dual_args" begin
@@ -141,3 +171,31 @@ end
     @test_reference "test_figures/conditions.png" fig
 end
 
+@testset "BoundaryConditions and InternalConditions" begin
+    tri = example_tri_rect()
+    mesh = FVMGeometry(tri)
+    f, t, p, g, q, dirichlet_nodes, dudt_nodes = example_bc_ic_setup()
+    BCs = BoundaryConditions(mesh, f, t; parameters=p)
+    ICs = InternalConditions(g; dirichlet_nodes, dudt_nodes, parameters=q)
+    conds = FVM.Conditions(mesh, BCs, ICs)
+    @test conds.parameters == (q..., p...)
+    @test conds.unwrapped_functions == (g..., f...)
+    @test BCs.parameters == p
+    @test BCs.condition_types == t
+    @test BCs.unwrapped_functions == f
+    @test ICs.dirichlet_nodes == dirichlet_nodes
+    @test ICs.dudt_nodes == dudt_nodes
+    @test ICs.unwrapped_functions == g
+    @test ICs.parameters == q
+    dirichlet_nodes = NTuple{2,Float64}[]
+    dudt_nodes = NTuple{2,Float64}[]
+    constrained_edges = NTuple{2,Float64}[]
+    neumann_edges = NTuple{2,Float64}[]
+    test_bc_ic_conditions!(tri, conds, t, dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges, ICs)
+    fig, ax, sc = triplot(tri, show_constrained_edges=false)
+    scatter!(ax, dudt_nodes, color=:green, markersize=18)
+    scatter!(ax, dirichlet_nodes, color=:red, markersize=18)
+    linesegments!(ax, constrained_edges, color=:blue, linewidth=6)
+    linesegments!(ax, neumann_edges, color=:yellow, linewidth=6)
+    @test_reference "test_figures/internal_conditions.png" fig
+end

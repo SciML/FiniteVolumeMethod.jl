@@ -169,7 +169,7 @@ struct BoundaryConditions{F<:Tuple,P<:Tuple,C<:Tuple,UF<:Tuple}
 end
 function Base.show(io::IO, ::MIME"text/plain", bc::BoundaryConditions)
     n = length(bc.functions)
-    print(io, "BoundaryConditions with $(n) boundary conditions of types $(bc.condition_types)")
+    print(io, "BoundaryConditions with $(n) boundary conditions with types $(bc.condition_types)")
 end
 
 """
@@ -205,6 +205,12 @@ The number type used for the solution.
 
 # Outputs
 The returned value is the corresponding [`InternalConditions`](@ref) struct.
+
+!!! note 
+
+    When the internal conditions get merged with the boundary conditions, 
+    any internal conditions that are placed onto the boundary will 
+    be replaced with the boundary condition at that point on the boundary.
 """
 struct InternalConditions{F<:Tuple,P<:Tuple,UF<:Tuple}
     dirichlet_nodes::Dict{Int,Int}
@@ -218,8 +224,9 @@ struct InternalConditions{F<:Tuple,P<:Tuple,UF<:Tuple}
     end
 end
 function Base.show(io::IO, ::MIME"text/plain", ic::InternalConditions)
-    ne = length(ic.edge_conditions)
-    print(io, "InternalConditions with $(ne) point conditions")
+    nd = length(ic.dirichlet_nodes)
+    ndt = length(ic.dudt_nodes)
+    print(io, "InternalConditions with $(nd) Dirichlet nodes and $(ndt) Dudt nodes")
 end
 
 function BoundaryConditions(mesh::FVMGeometry, functions::Tuple, types::Tuple;
