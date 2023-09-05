@@ -1,21 +1,15 @@
-function idx_is_point_condition(prob::AbstractFVMProblem, idx)
-    return idx ∈ keys(prob.conditions.point_conditions)
+function has_condition(prob::AbstractFVMProblem, node)
+    return is_dudt_node(prob, node) || is_dirichlet_node(prob, node)
 end
-function idx_is_point_condition(prob::FVMSystem{N}, idx, var) where {N}
-    return idx_is_point_condition(prob.problens[var], idx)
-end
-function idx_is_dudt_condition(prob::AbstractFVMProblem, idx)
-    return prob.conditions.point_conditions[idx][1] == Dudt
-end
-function idx_is_dudt_condition(prob::FVMSystem{N}, idx, var) where {N}
-    return idx_is_dudt_condition(prob.problems[var], idx)
-end
-function idx_is_neumann_condition(prob::AbstractFVMProblem, i, j)
-    return (i, j) ∈ keys(prob.conditions.edge_conditions)
-end
-function idx_is_neumann_condition(prob::FVMSystem{N}, i, j, var) where {N}
-    return idx_is_neumann_condition(prob.problems[var], i, j)
-end
+has_condition(prob::FVMSystem, node, var) = has_condition(prob.problems[var], node)
+is_dudt_node(prob::AbstractFVMProblem, node) = node ∈ keys(prob.conditions.dudt_nodes)
+is_dudt_node(prob::FVMSystem, node, var) = is_dudt_node(prob.problems[var], node)
+is_dirichlet_node(prob::AbstractFVMProblem, node) = node ∈ keys(prob.conditions.dirichlet_nodes)
+is_dirichlet_node(prob::FVMSystem, node, var) = is_dirichlet_node(prob.problems[var], node)
+is_neumann_edge(prob::AbstractFVMProblem, i, j) = (i, j) ∈ keys(prob.conditions.neumann_edges)
+is_neumann_edge(prob::FVMSystem, i, j, var) = is_neumann_edge(prob.problems[var], i, j)
+is_constrained_edge(prob::AbstractFVMProblem, i, j) = (i, j) ∈ keys(prob.conditions.constrained_edges)
+is_constrained_edge(prob::FVMSystem, i, j, var) = is_constrained_edge(prob.problems[var], i, j)
 
 function get_shape_function_coefficients(props::TriangleProperties, T, u, ::AbstractFVMProblem)
     i, j, k = indices(T)
@@ -36,7 +30,7 @@ end
 
 function get_flux(prob::AbstractFVMProblem, props, α, β, γ, t, i, j, edge_index)
     # For checking if an edge is Neumann, we need only check e.g. (i, j) and not (j, i), since we do not allow for internal Neumann edges.
-    ij_is_neumann = idx_is_neumann_condition(prob, i, j)
+    ij_is_neumann = is_neumann_edge(prob, i, j)
     x, y = props.cv_edge_midpoints[edge_index]
     nx, ny = props.cv_edge_normals[edge_index]
     ℓ = props.cv_edge_lengths[edge_index]
@@ -44,7 +38,7 @@ function get_flux(prob::AbstractFVMProblem, props, α, β, γ, t, i, j, edge_ind
         qx, qy = eval_flux_function(prob, x, y, t, α, β, γ)
         qn = qx * nx + qy * ny
     else
-        function_index = prob.conditions.edge_conditions[(i, j)]
+        function_index = prob.conditions.neumann_edges[(i, j)]
         a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
         qn = a(x, y, t, α * x + β * y + γ, ap)
     end
@@ -56,12 +50,12 @@ function get_flux(prob::FVMSystem{N}, props, α, β, γ, t, i, j, edge_index) wh
     ℓ = props.cv_edge_lengths[edge_index]
     u_shape = ntuple(ℓ -> α[ℓ] * x + β[ℓ] * y + γ[ℓ], N)
     qn = ntuple(N) do ℓ
-        ij_is_neumann = idx_is_neumann_condition(prob, i, j, ℓ)
+        ij_is_neumann = is_neumann_edge(prob, i, j, ℓ)
         if !ij_is_neumann
             qx, qy = eval_flux_function(prob.problems[ℓ], x, y, t, α[ℓ], β[ℓ], γ[ℓ])
             qn = qx * nx + qy * ny
         else
-            function_index = prob.problems[ℓ].conditions.edge_conditions[(i, j)]
+            function_index = prob.problems[ℓ].conditions.neumann_edges[(i, j)]
             a, ap = prob.problems[ℓ].conditions.functions[function_index], prob.problems[ℓ].conditions.parameters[function_index]
             qn = a(x, y, t, u_shape, ap)
         end
@@ -78,9 +72,9 @@ function get_fluxes(prob, props, α, β, γ, t)
 end
 
 function update_du!(du, prob::AbstractFVMProblem, i, j, k, summand₁, summand₂, summand₃)
-    i_is_pc = idx_is_point_condition(prob, i)
-    j_is_pc = idx_is_point_condition(prob, j)
-    k_is_pc = idx_is_point_condition(prob, k)
+    i_is_pc = has_condition(prob, i)
+    j_is_pc = has_condition(prob, j)
+    k_is_pc = has_condition(prob, k)
     if !i_is_pc
         du[i] -= summand₁
         du[j] += summand₁
@@ -95,9 +89,9 @@ function update_du!(du, prob::AbstractFVMProblem, i, j, k, summand₁, summand�
     end
 end
 function update_du!(du, prob::FVMSystem{N}, i, j, k, ℓ, summand₁, summand₂, summand₃) where {N}
-    i_is_pc = idx_is_point_condition(prob, i, ℓ)
-    j_is_pc = idx_is_point_condition(prob, j, ℓ)
-    k_is_pc = idx_is_point_condition(prob, k, ℓ)
+    i_is_pc = has_condition(prob, i, ℓ)
+    j_is_pc = has_condition(prob, j, ℓ)
+    k_is_pc = has_condition(prob, k, ℓ)
     @. begin
         if !i_is_pc
             du[:, i] -= summand₁
@@ -126,9 +120,9 @@ end
 function fvm_eqs_single_source_contribution!(du, u, prob::AbstractFVMProblem, t, i)
     p = get_point(prob.mesh.triangulation, i)
     x, y = getxy(p)
-    if !idx_is_point_condition(prob, i)
+    if !has_condition(prob, i)
         du[i] += prob.source_function(x, y, t, u[i], prob.source_parameters)
-    elseif idx_is_dudt_condition(prob, i)
+    elseif is_dudt_node(prob, i)
         function_index = prob.conditions.point_conditions[i][2]
         a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
         du[i] = a(x, y, t, u[i], ap)
@@ -142,10 +136,10 @@ function fvm_eqs_single_source_contribution!(du, u, prob::FVMSystem{N}, t, i) wh
     x, y = getxy(p)
     uᵢ = @views u[:, i]
     for j in 1:N
-        if !idx_is_point_condition(prob, i, j)
+        if !has_condition(prob, i, j)
             du[j, i] += prob.problems[j].source_function(x, y, t, uᵢ, prob.problems[j].source_parameters)
-        elseif idx_is_dudt_condition(prob, i, j)
-            function_index = prob.problems[j].conditions.point_conditions[i][2]
+        elseif is_dudt_node(prob, i, j)
+            function_index = prob.problems[j].conditions.dudt_node[i][2]
             a, ap = prob.problems[j].conditions.functions[function_index], prob.problems[j].conditions.parameters[function_index]
             du[j, i] = a(x, y, t, uᵢ, ap)
         else # Dirichlet
@@ -166,13 +160,13 @@ function serial_fvm_eqs!(du, u, prob, t)
 end
 
 function combine_duplicated_du!(du, duplicated_du, prob)
-    if prob isa AbstractFVMProblem
-        for _du in eachcol(duplicated_du)
-            du .+= _du
-        end
-    else
+    if prob isa FVMSystem
         for i in axes(duplicated_du, 3)
             du .+= duplicated_du[:, :, i]
+        end
+    else
+        for _du in eachcol(duplicated_du)
+            du .+= _du
         end
     end
     return nothing
@@ -190,10 +184,10 @@ function parallel_fvm_eqs!(du, u, p, t)
     Threads.@threads for (triangle_range, chunk_idx) in chunked_solid_triangles
         for triangle_idx in triangle_range
             T = solid_triangles[triangle_idx]
-            if prob isa AbstractFVMProblem
-                @views fvm_eqs_single_triangle!(_duplicated_du[:, chunk_idx], u, prob, t, T)
-            else
+            if prob isa FVMSystem
                 @views fvm_eqs_single_triangle!(_duplicated_du[:, :, chunk_idx], u, prob, t, T)
+            else
+                @views fvm_eqs_single_triangle!(_duplicated_du[:, chunk_idx], u, prob, t, T)
             end
         end
     end
@@ -213,54 +207,48 @@ function fvm_eqs!(du, u, p, t)
     end
 end
 
-function update_dirichlet_nodes_single!(u, t, prob::AbstractFVMProblem, i, condition, function_index)
-    if condition == Dirichlet
-        a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
-        p = get_point(prob.mesh.triangulation, i)
-        x, y = getxy(p)
-        u[i] = a(x, y, t, u[i], ap)
-    end
+function update_dirichlet_nodes_single!(u, t, prob::AbstractFVMProblem, i, function_index)
+    a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
+    p = get_point(prob.mesh.triangulation, i)
+    x, y = getxy(p)
+    u[i] = a(x, y, t, u[i], ap)
     return nothing
 end
-function update_dirichlet_nodes_single!(u, t, prob::FVMSystem{N}, i, j, condition, function_index) where {N}
-    if condition == Dirichlet
-        a, ap = prob.problems[j].conditions.functions[function_index], prob.problems[j].conditions.parameters[function_index]
-        p = get_point(prob.mesh.triangulation, i)
-        x, y = getxy(p)
-        @views u[j, i] = a(x, y, t, u[:, i], ap)
-    end
+function update_dirichlet_nodes_single!(u, t, prob::FVMSystem{N}, i, var, function_index) where {N}
+    a, ap = prob.problems[var].conditions.functions[function_index], prob.problems[var].conditions.parameters[function_index]
+    p = get_point(prob.mesh.triangulation, i)
+    x, y = getxy(p)
+    @views u[j, i] = a(x, y, t, u[:, i], ap)
 end
 
 function serial_update_dirichlet_nodes!(u, t, prob::AbstractFVMProblem)
-    for (i, (condition, function_index)) in prob.conditions.point_conditions
-        update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
+    for (i, function_index) in prob.conditions.dirichlet_nodes
+        update_dirichlet_nodes_single!(u, t, prob, i, function_index)
     end
     return nothing
 end
 function serial_update_dirichlet_nodes!(u, t, prob::FVMSystem{N}) where {N}
     for j in 1:N
-        for (i, (condition, function_index)) in prob.problems[j].conditions.point_conditions
-            update_dirichlet_nodes_single!(u, t, prob, i, j, condition, function_index)
+        for (i, function_index) in prob.problems[j].conditions.dirichlet_nodes
+            update_dirichlet_nodes_single!(u, t, prob, i, j, function_index)
         end
     end
 end
 
 function parallel_update_dirichlet_nodes!(u, t, p, prob::AbstractFVMProblem)
-    point_conditions = p.point_conditions
-    Threads.@threads for i in point_conditions
-        point_conditions_dict = prob.conditions.point_conditions
-        condition, function_index = point_conditions_dict[i]
-        update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
+    dirichlet_nodes = p.dirichlet_nodes
+    Threads.@threads for i in dirichlet_nodes
+        function_index = prob.conditions.dirichlet_nodes[i]
+        update_dirichlet_nodes_single!(u, t, prob, i, function_index)
     end
     return nothing
 end
 function parallel_update_dirichlet_nodes!(u, t, p, prob::FVMSystem{N}) where {N}
-    point_conditions = p.point_conditions
-    for j in 1:N
-        Threads.@threads for i in point_conditions[j]
-            point_conditions_dict = prob.problems[j].conditions.point_conditions
-            condition, function_index = point_conditions_dict[i]
-            update_dirichlet_nodes_single!(u, t, prob, i, condition, function_index)
+    dirichlet_nodes = p.dirichlet_nodes
+    for var in 1:N
+        Threads.@threads for i in dirichlet_nodes[j]
+            function_index = prob.problems[j].conditions.dirichlet_nodes[i]
+            update_dirichlet_nodes_single!(u, t, prob, i, var, function_index)
         end
     end
     return nothing

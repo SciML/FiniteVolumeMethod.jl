@@ -5,3 +5,6 @@ using SafeTestsets
 @safetestset "Geometry" begin
     include("geometry.jl")
 end
+@safetestset "Conditions" begin
+    include("conditions.jl")
+end

@@ -88,26 +88,22 @@ argument `p` for additional parameters.
 @doc raw"""
     Constrained 
 
-Instance of a [`ConditionType`](@ref) used for declaring that a point or an edge
-has a `Constrained` condition. `Constrained` conditions take the form
+Instance of a [`ConditionType`](@ref) used for declaring that an edge
+has a `Constrained` condition. When an edge has this condition associated with it, 
+it will be treated as any normal edge and no boundary condition will be applied.
+With this condition, it is assumed that you will later setup your problem as a 
+differential-algebraic equation (DAE) and provide the appropriate constraints.
+See the docs for some examples.
 
-```math
-g(x, y, t, u, e) = 0,
-```
-
-where `(x, y)` are the coordinates of the point, `t` is the current time, and `u` is 
-the solution at the point `(x, y)` at time `t`, as above. The argument `e` is either 
-an edge or a point, i.e. `e` will be a `Tuple{NTuple{2,Float64},NTuple{2,Float64}}`
-for an edge, or `NTuple{2,Float64}` for a point. When providing a `Constrained` condition,
-the function you provide takes the form
-
-    g(x, y, t, u, e, p),
-
-where `p` are some additional parameters you can provide.
+When you provide a `Constrained` condition, for certain technical reasons 
+you do still need to provide a function that corresponds to it in the function list 
+provided to [`BoundaryConditions`](@ref). For this function, any function will work, 
+e.g. `sin` - it will not be called. The proper constraint function is to be provided after-the-fact, 
+as explained in the docs.
 """ Constrained
 
 # functions a(x, y, t, u, p)
-function unconstrained_dual_arg_types(::Type{T}, ::Type{U}, ::Type{P}) where {T,U,P}
+function get_dual_arg_types(::Type{T}, ::Type{U}, ::Type{P}) where {T,U,P}
     dU = DiffEqBase.dualgen(U)
     dT = DiffEqBase.dualgen(T)
     arg1 = Tuple{T,T,T,U,P}
@@ -116,42 +112,17 @@ function unconstrained_dual_arg_types(::Type{T}, ::Type{U}, ::Type{P}) where {T,
     arg4 = Tuple{T,T,dT,dU,P}
     return (arg1, arg2, arg3, arg4)
 end
-# functions g(x, y, t, u, e, p) = 0
-function constrained_dual_arg_types(::Type{T}, ::Type{U}, ::Type{P}) where {T,U,P}
-    dU = DiffEqBase.dualgen(U)
-    dT = DiffEqBase.dualgen(T)
-    point = NTuple{2,T}
-    edge = NTuple{2,point}
-    arg5 = Tuple{T,T,T,U,edge,P}
-    arg6 = Tuple{T,T,T,dU,edge,P}
-    arg7 = Tuple{T,T,dT,U,edge,P}
-    arg8 = Tuple{T,T,dT,dU,edge,P}
-    arg9 = Tuple{T,T,T,U,point,P}
-    arg10 = Tuple{T,T,T,dU,point,P}
-    arg11 = Tuple{T,T,dT,U,point,P}
-    arg12 = Tuple{T,T,dT,dU,point,P}
-    return (arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12)
-end
-function get_dual_arg_types(::Type{T}, ::Type{U}, ::Type{P}, constrained::Val{B}) where {T,U,P,B}
-    uncons = unconstrained_dual_arg_types(T, U, P)
-    if B
-        cons = constrained_dual_arg_types(T, U, P)
-        return (uncons..., cons...)
-    else
-        return uncons
-    end
-end
 function get_dual_ret_types(::Type{T}, ::Type{U}) where {T,U}
     dU = DiffEqBase.dualgen(U)
     dT = DiffEqBase.dualgen(T)
     dUT = DiffEqBase.dualgen(promote_type(T, U))
     return (U, dU, dT, dUT)
 end
-function wrap_functions(functions, parameters, u_type::Type{U}=Float64, constrained::Val{B}=Val(false)) where {U,B}
+function wrap_functions(functions, parameters, u_type::Type{U}=Float64) where {U}
     T = Float64 # float_type
-    all_arg_types = ntuple(i -> get_dual_arg_types(T, U, typeof(parameters[i]), constrained), length(parameters))
-    all_ret_types = ntuple(i -> get_dual_ret_types(T, U), length(parameters))
-    wrapped_functions = ntuple(i -> FunctionWrappersWrapper(functions[i], all_arg_types[i], all_ret_types[i]), length(parameters))
+    all_arg_types = ntuple(i -> get_dual_arg_types(T, U, typeof(parameters[i])), Val(length(parameters)))
+    all_ret_types = ntuple(i -> get_dual_ret_types(T, U), Val(length(parameters)))
+    wrapped_functions = ntuple(i -> FunctionWrappersWrapper(functions[i], all_arg_types[i], all_ret_types[i]), Val(length(parameters)))
     return wrapped_functions
 end
 
@@ -203,8 +174,8 @@ end
 
 """
     InternalConditions(functions::Tuple=();
-        edge_conditions::Dict{NTuple{2,Int},Tuple{Bool,Int}}=Dict{NTuple{2,Int},Tuple{Bool,Int}}(),
-        point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}(),
+        dirichlet_nodes::Dict{Int,Int}=Dict{Int,Int}(),
+        dudt_nodes::Dict{Int,Int}=Dict{Int,Int}();
         parameters::Tuple=ntuple(_ -> nothing, length(functions)),
         u_type=Float64)
 
@@ -216,18 +187,15 @@ See also [`Conditions`](@ref) (which [`FVMProblem`](@ref) wraps this into), [`Co
 
 The functions that define the internal conditions. These are the functions refereed to in `edge_conditions` and `point_conditions`.
 
-# Keyword Arguments 
-- `edge_conditions::Dict{NTuple{2,Int},Tuple{Bool,Int}}=Dict{NTuple{2,Int},Tuple{Bool,Int}}()`
+# Keyword Arguments
+- `dirichlet_nodes::Dict{Int,Int}=Dict{Int,Int}()`
 
-A `Dict` that maps an oriented edge `(u, v)`, with vertices referring to points in the associated triangulation,
-to a `Tuple` of the form `(neumann, idx)`, where `neumann` is `true` if the condition is a [`Neumann`](@ref) condition on this 
-edge, or `false` if the condition is instead [`Constrained`](@ref). `idx` is the index of the associated condition function
-and parameters in `functions` and `parameters`.
-- `point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}()`
+A `Dict` that stores all [`Dirichlet`](@ref) points `u` as keys, with keys mapping to indices
+`idx` that refer to the corresponding condition function and parameters in `functions` and `parameters`.
+- `dudt_nodes::Dict{Int,Int}=Dict{Int,Int}()`
 
-A `Dict` that maps a vertex `u`, referring to a point in the associated triangulation, to a `Tuple` of the form
-`(ConditionType, idx)`, where `ConditionType` is either [`Dudt`](@ref) or [`Dirichlet`](@ref) from [`ConditionType`](@ref),
-and `idx` is the index of the associated condition function and parameters in `functions` and `parameters`.
+A `Dict` that stores all [`Dudt`](@ref) points `u` as keys, with keys mapping to indices
+`idx` that refer to the corresponding condition function and parameters in `functions` and `parameters`.
 - `parameters::Tuple=ntuple(_ -> nothing, length(functions))`
 
 The parameters for the functions, with `parameters[i]` giving the argument `p` in `functions[i]`.
@@ -239,20 +207,19 @@ The number type used for the solution.
 The returned value is the corresponding [`InternalConditions`](@ref) struct.
 """
 struct InternalConditions{F<:Tuple,P<:Tuple,UF<:Tuple}
-    edge_conditions::Dict{NTuple{2,Int},Tuple{Bool,Int}}
-    point_conditions::Dict{Int,Tuple{ConditionType,Int}}
+    dirichlet_nodes::Dict{Int,Int}
+    dudt_nodes::Dict{Int,Int}
     functions::F
     parameters::P
     unwrapped_functions::UF # not public
-    function InternalConditions(edge_conditions, point_conditions, functions::F, parameters::P, unwrapped_functions::UF) where {F,P,UF}
+    function InternalConditions(dirichlet_conditions, dudt_conditions, functions::F, parameters::P, unwrapped_functions::UF) where {F,P,UF}
         @assert length(functions) == length(parameters) "The number of functions and parameters must be the same."
-        return new{F,P,UF}(edge_conditions, point_conditions, functions, parameters, unwrapped_functions)
+        return new{F,P,UF}(dirichlet_conditions, dudt_conditions, functions, parameters, unwrapped_functions)
     end
 end
 function Base.show(io::IO, ::MIME"text/plain", ic::InternalConditions)
     ne = length(ic.edge_conditions)
-    np = length(ic.point_conditions)
-    print(io, "InternalConditions with $(ne) edge conditions and $(np) point conditions")
+    print(io, "InternalConditions with $(ne) point conditions")
 end
 
 function BoundaryConditions(mesh::FVMGeometry, functions::Tuple, types::Tuple;
@@ -265,12 +232,12 @@ function BoundaryConditions(mesh::FVMGeometry, functions::Tuple, types::Tuple;
 end
 
 function InternalConditions(functions::Tuple=();
-    edge_conditions::Dict{NTuple{2,Int},Tuple{Bool,Int}}=Dict{NTuple{2,Int},Tuple{Bool,Int}}(),
-    point_conditions::Dict{Int,Tuple{ConditionType,Int}}=Dict{Int,Tuple{ConditionType,Int}}(),
+    dirichlet_nodes::Dict{Int,Int}=Dict{Int,Int}(),
+    dudt_nodes::Dict{Int,Int}=Dict{Int,Int}(),
     parameters::Tuple=ntuple(_ -> nothing, length(functions)),
     u_type=Float64)
     wrapped_functions = wrap_functions(functions, parameters, u_type)
-    return InternalConditions(edge_conditions, point_conditions, wrapped_functions, parameters, functions)
+    return InternalConditions(dirichlet_nodes, dudt_nodes, wrapped_functions, parameters, functions)
 end
 
 """
@@ -281,41 +248,54 @@ This is not public API - the relevant public API is [`BoundaryConditions`](@ref)
 [`InternalConditions`](@ref), and [`ConditionType`](@ref).
 
 # Fields 
-- `edge_conditions::Dict{NTuple{2,Int},Tuple{Bool,Int}}`
+- `neumann_conditions::Dict{NTuple{2,Int},Int}`
 
-A `Dict` that maps an oriented edge `(u, v)`, with vertices referring to points in the associated triangulation,
-to a `Tuple` of the form `(neumann, idx)`, where `neumann` is `true` if the condition is a [`Neumann`](@ref) condition on this
-edge, or `false` if the condition is instead [`Constrained`](@ref). `idx` is the index of the associated condition function
-and parameters in `functions` and `parameters`.
-- `point_conditions::Dict{Int,Tuple{ConditionType,Int}}`
+A `Dict` that stores all [`Neumann`](@ref) edges `(u, v)` as keys, with keys mapping to indices 
+`idx` that refer to the corresponding condition function and parameters in `functions` and `parameters`.
+- `constrained_conditions::Dict{NTuple{2,Int},Int}`
 
-A `Dict` that maps a vertex `u`, referring to a point in the associated triangulation, to a `Tuple` of the form 
-`(ConditionType, idx)`, where `ConditionType` is either [`Dudt`](@ref) or [`Dirichlet`](@ref) from [`ConditionType`](@ref),
-and `idx` is the index of the associated condition function and parameters in `functions` and `parameters`.
+A `Dict` that stores all [`Constrained`](@ref) edges `(u, v)` as keys, with keys mapping to indices
+`idx` that refer to the corresponding condition function and parameters in `functions` and `parameters`.
+- `dirichlet_conditions::Dict{Int,Int}`
+
+A `Dict` that stores all [`Dirichlet`](@ref) points `u` as keys, with keys mapping to indices
+`idx` that refer to the corresponding condition function and parameters in `functions` and `parameters`.
+- `dudt_conditions::Dict{Int,Int}`
+
+A `Dict` that stores all [`Dudt`](@ref) points `u` as keys, with keys mapping to indices
+`idx` that refer to the corresponding condition function and parameters in `functions` and `parameters`.
 - `functions::F`
 
-A `Tuple` of functions that correspond to the conditions in `neumann_conditions` and `point_conditions`.
+A `Tuple` of functions that correspond to the condition functions.
 - `parameters::P`
 
-A `Tuple` of parameters that correspond to the conditions in `neumann_conditions` and `point_conditions`, where `parameters[i]` 
+A `Tuple` of parameters that correspond to the condition functions, where `parameters[i]` 
 corresponds to `functions[i]`.
 """
 struct Conditions{F<:Tuple,P<:Tuple,UF<:Tuple}
-    edge_conditions::Dict{NTuple{2,Int},Tuple{Bool,Int}}
-    point_conditions::Dict{Int,Tuple{ConditionType,Int}}
+    neumann_edges::Dict{NTuple{2,Int},Int}
+    constrained_edges::Dict{NTuple{2,Int},Int}
+    dirichlet_nodes::Dict{Int,Int}
+    dudt_nodes::Dict{Int,Int}
     functions::F
     parameters::P
     unwrapped_functions::UF
 end
 function Base.show(io::IO, ::MIME"text/plain", conds::Conditions)
-    ne = length(conds.edge_conditions)
-    np = length(conds.point_conditions)
-    print(io, "Conditions with $(ne) edge conditions and $(np) point conditions")
+    nn = length(conds.neumann_edges)
+    nc = length(conds.constrained_edges)
+    nd = length(conds.dirichlet_nodes)
+    ndt = length(conds.dudt_nodes)
+    println(io, "Conditions with")
+    println(io, "   $(nn) Neumann edges")
+    println(io, "   $(nc) Constrained edges")
+    println(io, "   $(nd) Dirichlet nodes")
+    print(io, "   $(ndt) Dudt nodes")
 end
 
-function _rewrap_conditions(conds::Conditions, u_type::Type{U}, neqs::Val{N}, constrained::Val{B}) where {U,N,B}
+function _rewrap_conditions(conds::Conditions, u_type::Type{U}, neqs::Val{N}) where {U,N}
     T = Float64 # float_type
-    all_arg_types = ntuple(i -> get_dual_arg_types(T, N > 0 ? NTuple{N,U} : U, typeof(conds.parameters[i]), constrained), length(conds.parameters))
+    all_arg_types = ntuple(i -> get_dual_arg_types(T, N > 0 ? NTuple{N,U} : U, typeof(conds.parameters[i])), length(conds.parameters))
     all_ret_types = ntuple(i -> get_dual_ret_types(U, T), length(conds.parameters))
     wrapped_functions = ntuple(i -> FunctionWrappersWrapper(conds.unwrapped_functions[i], all_arg_types[i], all_ret_types[i]), length(conds.parameters))
     return Conditions(conds.edge_conditions, conds.point_conditions, wrapped_functions, conds.parameters, conds.unwrapped_functions)
@@ -326,16 +306,20 @@ function prepare_conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::Inter
     bc_parameters = bc.parameters
     ic_functions = ic.functions
     ic_parameters = ic.parameters
-    edge_conditions = copy(ic.edge_conditions)
-    point_conditions = copy(ic.point_conditions)
+    neumann_edges = Dict{NTuple{2,Int},Int}()
+    constrained_edges = Dict{NTuple{2,Int},Int}()
+    dirichlet_nodes = copy(ic.dirichlet_nodes)
+    dudt_nodes = copy(ic.dudt_nodes)
     ne = DelaunayTriangulation.num_constrained_edges(mesh.triangulation_statistics)
     nv = DelaunayTriangulation.num_solid_vertices(mesh.triangulation_statistics)
-    sizehint!(edge_conditions, ne)
-    sizehint!(point_conditions, nv)
+    sizehint!(neumann_edges, ne)
+    sizehint!(constrained_edges, ne)
+    sizehint!(dirichlet_nodes, nv)
+    sizehint!(dudt_nodes, nv)
     functions = (ic_functions..., bc_functions...)
     parameters = (ic_parameters..., bc_parameters...)
     unwrapped_functions = (ic.unwrapped_functions..., bc.unwrapped_functions...)
-    conditions = Conditions(edge_conditions, point_conditions, functions, parameters, unwrapped_functions)
+    conditions = Conditions(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions, parameters, unwrapped_functions)
     return conditions
 end
 
@@ -354,16 +338,21 @@ function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditi
             v = get_boundary_nodes(bn_nodes, i + 1)
             condition = bc_conditions[bc_number]
             updated_bc_number = bc_number + nif
-            if condition == Neumann || condition == Constrained
-                conditions.edge_conditions[(u, v)] = (condition == Neumann, updated_bc_number)
+            if condition == Neumann
+                conditions.neumann_edges[(u, v)] = updated_bc_number
+            elseif condition == Constrained
+                conditions.constrained_edges[(u, v)] = updated_bc_number
             elseif condition == Dirichlet
-                conditions.point_conditions[u] = (condition, updated_bc_number)
-                conditions.point_conditions[v] = (condition, updated_bc_number)
-            else # condition == Dudt 
                 for w in (u, v)
-                    w_key = haskey(conditions.point_conditions, w) # already Dirichlet
-                    if !w_key 
-                        conditions.point_conditions[w] = (condition, updated_bc_number)
+                    conditions.dirichlet_nodes[w] = updated_bc_number
+                    if w ∈ keys(conditions.dudt_nodes)
+                        delete!(conditions.dudt_nodes, w)
+                    end
+                end
+            else # Dudt 
+                for w in (u, v)
+                    if w ∉ keys(conditions.dirichlet_nodes)
+                        conditions.dudt_nodes[w] = updated_bc_number
                     end
                 end
             end

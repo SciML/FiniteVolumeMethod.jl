@@ -3,10 +3,10 @@ function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem{N}}) where 
     nt = Threads.nthreads()
     if prob isa FVMProblem
         duplicated_du = DiffCache(similar(u, length(u), nt))
-        point_conditions = collect(keys(prob.conditions.point_conditions))
+        point_conditions = collect(keys(prob.conditions.dirichlet_nodes))
     else
         duplicated_du = DiffCache(similar(u, size(u, 1), size(u, 2), nt))
-        point_conditions = ntuple(i -> collect(keys(prob.problems[i].conditions.point_conditions)), N)
+        point_conditions = ntuple(i -> collect(keys(prob.problems[i].conditions.dirichlet_nodes)), N)
     end
     solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
     solid_vertices = collect(each_solid_vertex(prob.mesh.triangulation))

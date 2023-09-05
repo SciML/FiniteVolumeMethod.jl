@@ -10,11 +10,9 @@ abstract type AbstractFVMProblem end
         flux_parameters=nothing,
         initial_condition,
         initial_time=0.0,
-        final_time,
-        steady=false)
+        final_time)
 
-Constructs an `FVMProblem`. See also [`FVMSystem`](@ref), [`SteadyFVMProblem`](@ref), and 
-[`ConstrainedFVMProblem`](@ref).
+Constructs an `FVMProblem`. See also [`FVMSystem`](@ref) and [`SteadyFVMProblem`](@ref).
 
 # Arguments 
 - `mesh::FVMGeometry`
@@ -23,10 +21,10 @@ The mesh on which the PDE is defined, given as a [`FVMGeometry`](@ref).
 - `boundary_conditions::BoundaryConditions`
 
 The boundary conditions for the PDE, given as a [`BoundaryConditions`](@ref).
-- `internal_conditions::InternalConditions`
+- `internal_conditions::InternalConditions=InternalConditions()`
 
-The internal conditions for the PDE, given as an [`InternalConditions`](@ref). This does not 
-need to be provided.
+The internal conditions for the PDE, given as an [`InternalConditions`](@ref). This argument 
+is optional.
 
 # Keyword Arguments
 - `diffusion_function=nothing`
@@ -71,8 +69,8 @@ struct FVMProblem{FG,BC,F,FP,R,RP,IC,FT} <: AbstractFVMProblem
     initial_time::FT
     final_time::FT
 end
-function _rewrap_conditions(prob::FVMProblem, neqs::Val{N}, constrained::Val{B}) where {N,B}
-    new_conds = _rewrap_conditions(prob.conditions, eltype(prob.initial_condition), neqs, constrained)
+function _rewrap_conditions(prob::FVMProblem, neqs::Val{N}) where {N}
+    new_conds = _rewrap_conditions(prob.conditions, eltype(prob.initial_condition), neqs)
     return FVMProblem(prob.mesh, new_conds, prob.flux_function, prob.flux_parameters, prob.source_function, prob.source_parameters, prob.initial_condition, prob.initial_time, prob.final_time)
 end
 eval_flux_function(prob::FVMProblem, x, y, t, α, β, γ) = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
@@ -86,18 +84,17 @@ function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, 
     flux_parameters=nothing,
     initial_condition,
     initial_time=0.0,
-    final_time,
-    steady=false)
+    final_time)
     updated_flux_fnc = construct_flux_function(flux_function, diffusion_function, diffusion_parameters)
     conditions = Conditions(mesh, boundary_conditions, internal_conditions)
     return FVMProblem(mesh, conditions,
         updated_flux_fnc, flux_parameters,
         source_function, source_parameters,
-        initial_condition, initial_time, final_time, steady)
+        initial_condition, initial_time, final_time)
 end
 
 """
-    SteadyFVMProblem{M<:FVMGeometry, P<:AbstractFVMProblem}
+    SteadyFVMProblem{P<:AbstractFVMProblem,M<:FVMGeometry}
 
 This is a wrapper for an `AbstractFVMProblem` that indicates that the problem is to be solved as a steady-state problem. 
 You can then solve the problem using `solve` from (Simple)NonlinearSolve.jl. To construct this wrapper, 
@@ -107,13 +104,13 @@ simply do
 
 where `prob` is an `AbstractFVMProblem`.
 
-See also [`FVMProblem`](@ref), [`FVMSystem`](@ref), and [`ConstrainedFVMProblem`](@ref).
+See also [`FVMProblem`](@ref) AND [`FVMSystem`](@ref).
 """
-struct SteadyFVMProblem{M<:FVMGeometry,P<:AbstractFVMProblem} <: AbstractFVMProblem
-    mesh::M
+struct SteadyFVMProblem{P<:AbstractFVMProblem,M<:FVMGeometry} <: AbstractFVMProblem
     problem::P
+    mesh::M
     function SteadyFVMProblem(prob::P) where {P}
-        return new{typeof(prob.mesh),P}(prob.mesh, wrapped_problem)
+        return new{P,typeof(prob.mesh)}(wrapped_problem, prob.mesh)
     end
 end
 eval_flux_function(prob::SteadyFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
@@ -140,7 +137,7 @@ This problem is solved in the same way as a [`FVMProblem`](@ref), except the pro
 the solution returns a matrix at each time, where the `(j, i)`th component corresponds to the solution at the `i`th 
 node for the `j`th component.
 
-See also [`FVMProblem`](@ref), [`SteadyFVMProblem`](@ref), and [`ConstrainedFVMProblem`](@ref).
+See also [`FVMProblem`](@ref) and [`SteadyFVMProblem`](@ref).
 """
 struct FVMSystem{N,FG,P,IC,FT,FT}
     mesh::FG
@@ -158,8 +155,8 @@ struct FVMSystem{N,FG,P,IC,FT,FT}
     end
 end
 eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) where {N} = ntuple(i -> eval_flux_function(prob.problems[i], x, y, t, α[i], β[i], γ), Val(N))
-function _rewrap_conditions(prob::FVMSystem{N}, constrained::Val{B}) where {N,B}
-    problems = ntuple(i -> _rewrap_conditions(prob.problems[i], Val(N), constrained), Val(N))
+function _rewrap_conditions(prob::FVMSystem{N}) where {N}
+    problems = ntuple(i -> _rewrap_conditions(prob.problems[i], Val(N)), Val(N))
     return FVMSystem(prob.mesh, problems, prob.initial_condition, prob.initial_time, prob.final_time)
 end
 
@@ -173,7 +170,7 @@ function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     for (i, prob) in enumerate(probs)
         initial_condition[i, :] .= prob.initial_condition
     end
-    wrapped_probs = ntuple(i -> _rewrap_conditions(probs[i], Val(N), Val(false)), Val(N))
+    wrapped_probs = ntuple(i -> _rewrap_conditions(probs[i], Val(N)), Val(N))
     return FVMSystem(mesh, wrapped_probs, initial_condition, initial_time, final_time)
 end
 
@@ -208,27 +205,6 @@ _neqs(::FVMProblem) = 0 # We test for N > 0 in _rewrap_conditions, so let this b
 _neqs(::FVMSystem{N}) where {N} = N
 _neqs(prob::SteadyFVMProblem) = _neqs(prob.problem)
 is_system(prob::AbstractFVMProblem) = _neqs(prob) > 0
-"""
-    ConstrainedFVMProblem{M<:FVMGeometry, P<:AbstractFVMProblem} <: AbstractFVMProblem
-
-This is a wrapper for an `AbstractFVMProblem` that indicates that the problem is to be solved as a constrained problem.
-You can then solve the problem using `solve` from DifferentialEquations.jl, treating it as a DAE. See the docs for some 
-examples. To construct the wrapper, do 
-
-    ConstrainedFVMProblem(prob),
-
-where `prob` is an `AbstractFVMProblem`.
-"""
-struct ConstrainedFVMProblem{M<:FVMGeometry,P<:AbstractFVMProblem} <: AbstractFVMProblem
-    mesh::M
-    problem::P
-    function ConstrainedFVMProblem(prob::P) where {P}
-        wrapped_problem = _rewrap_conditions(prob, Val(_neqs(prob)), Val(true))
-        return new{typeof(prob.mesh),P}(wrapped_problem.mesh, wrapped_problem)
-    end
-end
-eval_flux_function(prob::ConstrainedFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
-
 """
     compute_flux(prob::AbstractFVMProblem, i, j, u, t)
 
