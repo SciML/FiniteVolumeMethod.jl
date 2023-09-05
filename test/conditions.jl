@@ -75,7 +75,7 @@ function example_bc_ic_setup()
     g = (g1, g2, g3, g4, g5)
     q = (q1, q2, q3, q4, q5)
 end
-function test_bc_conditions!(tri, conds, wrap_around, t,
+function test_bc_conditions!(tri, conds, t,
     dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges)
     for e in keys(get_boundary_edge_map(tri))
         u, v = DelaunayTriangulation.edge_indices(e)
@@ -85,20 +85,10 @@ function test_bc_conditions!(tri, conds, wrap_around, t,
             @test conds.dirichlet_nodes[u] == -w
             @test conds.dirichlet_nodes[v] == -w
             push!(dirichlet_nodes, get_point(tri, u, v)...)
-            @test u ∉ keys(conds.dudt_nodes)
-            @test v ∉ keys(conds.dudt_nodes)
         elseif bc_type == Dudt
-            for uu in (u, v)
-                if uu ∈ keys(conds.dirichlet_nodes)
-                    @test uu ∉ keys(conds.dudt_nodes)
-                    @test conds.dirichlet_nodes[uu] == -w - 1 || conds.dirichlet_nodes[uu] == wrap_around
-                    push!(dirichlet_nodes, get_point(tri, uu))
-                else
-                    @test uu ∉ keys(conds.dirichlet_nodes)
-                    @test conds.dudt_nodes[uu] == -w
-                    push!(dudt_nodes, get_point(tri, uu))
-                end
-            end
+            @test conds.dudt_nodes[u] == -w
+            @test conds.dudt_nodes[v] == -w
+            push!(dudt_nodes, get_point(tri, u, v)...)
         elseif bc_type == Neumann
             @test conds.neumann_edges[(u, v)] == -w
             push!(neumann_edges, get_point(tri, u, v)...)
@@ -142,10 +132,10 @@ end
     dudt_nodes = NTuple{2,Float64}[]
     constrained_edges = NTuple{2,Float64}[]
     neumann_edges = NTuple{2,Float64}[]
-    test_bc_conditions!(tri, conds, 5, t, dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges)
+    test_bc_conditions!(tri, conds, t, dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges)
     fig, ax, sc = triplot(tri, show_constrained_edges=false)
-    scatter!(ax, dirichlet_nodes, color=:red, markersize=18)
     scatter!(ax, dudt_nodes, color=:green, markersize=18)
+    scatter!(ax, dirichlet_nodes, color=:red, markersize=18)
     linesegments!(ax, constrained_edges, color=:blue, linewidth=6)
     linesegments!(ax, neumann_edges, color=:yellow, linewidth=6)
     @test_reference "test_figures/conditions.png" fig

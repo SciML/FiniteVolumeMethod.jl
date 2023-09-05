@@ -122,12 +122,12 @@ function fvm_eqs_single_source_contribution!(du, u, prob::AbstractFVMProblem, t,
     x, y = getxy(p)
     if !has_condition(prob, i)
         du[i] += prob.source_function(x, y, t, u[i], prob.source_parameters)
-    elseif is_dudt_node(prob, i)
+    elseif is_dirichlet_node(prob, i)
+        du[i] = zero(eltype(du))
+    else # Dudt
         function_index = prob.conditions.point_conditions[i][2]
         a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
         du[i] = a(x, y, t, u[i], ap)
-    else # Dirichlet
-        du[i] = zero(eltype(du))
     end
     return nothing
 end
@@ -138,12 +138,13 @@ function fvm_eqs_single_source_contribution!(du, u, prob::FVMSystem{N}, t, i) wh
     for j in 1:N
         if !has_condition(prob, i, j)
             du[j, i] += prob.problems[j].source_function(x, y, t, uᵢ, prob.problems[j].source_parameters)
-        elseif is_dudt_node(prob, i, j)
+        elseif is_dirichlet_node(prob,i,j) 
+            # Need to do Dirichlet first in case Dirichlet and Dudt overlap at this node - Dirichlet takes precedence
+            du[j, i] = zero(eltype(du))
+        else # Dudt
             function_index = prob.problems[j].conditions.dudt_node[i][2]
             a, ap = prob.problems[j].conditions.functions[function_index], prob.problems[j].conditions.parameters[function_index]
             du[j, i] = a(x, y, t, uᵢ, ap)
-        else # Dirichlet
-            du[j, i] = zero(eltype(du))
         end
     end
 end

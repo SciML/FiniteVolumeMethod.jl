@@ -343,18 +343,17 @@ function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditi
             elseif condition == Constrained
                 conditions.constrained_edges[(u, v)] = updated_bc_number
             elseif condition == Dirichlet
-                for w in (u, v)
-                    conditions.dirichlet_nodes[w] = updated_bc_number
-                    if w ∈ keys(conditions.dudt_nodes)
-                        delete!(conditions.dudt_nodes, w)
-                    end
-                end
+                conditions.dirichlet_nodes[u] = updated_bc_number
+                conditions.dirichlet_nodes[v] = updated_bc_number
             else # Dudt 
-                for w in (u, v)
-                    if w ∉ keys(conditions.dirichlet_nodes)
-                        conditions.dudt_nodes[w] = updated_bc_number
-                    end
-                end
+                # Strictly speaking, we do need to take care that no Dudt 
+                # nodes are also assigned as Dirichlet nodes, since 
+                # Dirichlet conditions take precedence over Dudt conditions. 
+                # However, in the code we also defend against this by checking 
+                # for Dirichlet first, so this check is not _technically_
+                # needed at all.
+                conditions.dudt_nodes[u] = updated_bc_number
+                conditions.dudt_nodes[v] = updated_bc_number
             end
         end
     end
