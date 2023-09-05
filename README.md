@@ -39,4 +39,4 @@ record(fig, "anim.mp4", eachindex(sol)) do i
 end
 ```
 
-![Animation of a solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/imp_clean/anim.mp4?raw=true)
+![Animation of a solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/imp_clean/anim.mp4)
