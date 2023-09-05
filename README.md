@@ -34,9 +34,9 @@ sol = solve(prob, saveat=0.001)
 u = Observable(sol.u[1])
 fig, ax, sc = tricontourf(tri, u, levels=0:5:50, colormap=:matter)
 tightlimits!(ax)
-record(fig, "anim.mp4", eachindex(sol)) do i
+record(fig, "anim.gif", eachindex(sol)) do i
     u[] = sol.u[i]
 end
 ```
 
-![Animation of a solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/imp_clean/anim.mp4)
+![Animation of a solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/imp_clean/anim.gif)
