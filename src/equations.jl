@@ -1,12 +1,12 @@
-@inline getα(shape_coeffs) =  shape_coeffs[1]
-@inline getβ(shape_coeffs) =  shape_coeffs[2]
-@inline getγ(shape_coeffs) =  shape_coeffs[3]
+@inline getα(shape_coeffs) = shape_coeffs[1]
+@inline getβ(shape_coeffs) = shape_coeffs[2]
+@inline getγ(shape_coeffs) = shape_coeffs[3]
 
 @inline function linear_shape_function_coefficients!(shape_coeffs, u, prob, T)
     i, j, k = indices(T)
-    @muladd  shape_coeffs[1] = gets(prob, T, 1) * u[i] + gets(prob, T, 2) * u[j] + gets(prob, T, 3) * u[k]
-    @muladd  shape_coeffs[2] = gets(prob, T, 4) * u[i] + gets(prob, T, 5) * u[j] + gets(prob, T, 6) * u[k]
-    @muladd  shape_coeffs[3] = gets(prob, T, 7) * u[i] + gets(prob, T, 8) * u[j] + gets(prob, T, 9) * u[k]
+    @muladd shape_coeffs[1] = gets(prob, T, 1) * u[i] + gets(prob, T, 2) * u[j] + gets(prob, T, 3) * u[k]
+    @muladd shape_coeffs[2] = gets(prob, T, 4) * u[i] + gets(prob, T, 5) * u[j] + gets(prob, T, 6) * u[k]
+    @muladd shape_coeffs[3] = gets(prob, T, 7) * u[i] + gets(prob, T, 8) * u[j] + gets(prob, T, 9) * u[k]
     return nothing
 end
 
@@ -19,12 +19,12 @@ function fvm_eqs_edge!(du, t, (vj, j), (vjnb, jnb), α, β, γ, prob, flux_cache
     else
         flux_cache = get_flux(prob, x, y, t, α, β, γ) # Make no assumption that flux_cache is mutable 
     end
-    @muladd  summand = -(getx(flux_cache) * xn + gety(flux_cache) * yn) * ℓ
+    @muladd summand = -(getx(flux_cache) * xn + gety(flux_cache) * yn) * ℓ
     if is_interior_or_neumann_node(prob, vj)
-         du[vj] += summand
+        du[vj] += summand
     end
     if is_interior_or_neumann_node(prob, vjnb)
-         du[vjnb] -= summand
+        du[vjnb] -= summand
     end
     return nothing
 end
@@ -72,8 +72,8 @@ end
 @inline function fvm_eqs_source_contribution!(du, u, t, j, prob)
     x, y = get_point(prob, j)
     V = get_volumes(prob, j)
-     R = get_reaction(prob, x, y, t, u[j])
-    @muladd  du[j] = du[j] / V + R
+    R = get_reaction(prob, x, y, t, u[j])
+    @muladd du[j] = du[j] / V + R
     return nothing
 end
 @inline function fvm_eqs_source_contribution!(du, u, t, prob)
@@ -86,11 +86,11 @@ end
 @inline function evaluate_boundary_function(u, t, j, prob)
     segment_number = map_node_to_segment(prob, j)
     x, y = get_point(prob, j)
-     val = evaluate_boundary_function(prob, segment_number, x, y, t, u[j])
+    val = evaluate_boundary_function(prob, segment_number, x, y, t, u[j])
     return val
 end
 @inline function evaluate_boundary_function!(du, u, t, j, prob)
-     du[j] = evaluate_boundary_function(u, t, j, prob)
+    du[j] = evaluate_boundary_function(u, t, j, prob)
     return nothing
 end
 
@@ -115,11 +115,11 @@ end
 
 function update_dirichlet_nodes!(u, t, prob)
     for j in get_dirichlet_nodes(prob)
-         u[j] = evaluate_boundary_function(u, t, j, prob)
+        u[j] = evaluate_boundary_function(u, t, j, prob)
     end
     return nothing
 end
 function update_dirichlet_nodes!(integrator)
-     update_dirichlet_nodes!(integrator.u, integrator.t, integrator.p[1])
+    update_dirichlet_nodes!(integrator.u, integrator.t, integrator.p[1])
     return nothing
 end
