@@ -30,7 +30,7 @@ initial_condition = [f(x, y) for (x, y) in each_point(tri)]
 D = (x, y, t, u, p) -> 1 / 9
 final_time = 0.5
 prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
-sol = solve(prob, saveat=0.05)
+sol = solve(prob, saveat=0.001)
 u = Observable(sol.u[1])
 fig, ax, sc = tricontourf(tri, u, levels=0:5:50, colormap=:matter)
 tightlimits!(ax)
