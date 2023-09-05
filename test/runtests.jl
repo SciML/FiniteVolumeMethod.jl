@@ -14,3 +14,6 @@ end
 @safetestset "Equations" begin
     include("equations.jl")
 end
+@safetestset "README" begin
+    include("README.jl")
+end
