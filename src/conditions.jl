@@ -305,7 +305,7 @@ function _rewrap_conditions(conds::Conditions, u_type::Type{U}, neqs::Val{N}) wh
     all_arg_types = ntuple(i -> get_dual_arg_types(T, N > 0 ? NTuple{N,U} : U, typeof(conds.parameters[i])), length(conds.parameters))
     all_ret_types = ntuple(i -> get_dual_ret_types(U, T), length(conds.parameters))
     wrapped_functions = ntuple(i -> FunctionWrappersWrapper(conds.unwrapped_functions[i], all_arg_types[i], all_ret_types[i]), length(conds.parameters))
-    return Conditions(conds.edge_conditions, conds.point_conditions, wrapped_functions, conds.parameters, conds.unwrapped_functions)
+    return Conditions(conds.neumann_edges, conds.constrained_edges, conds.dirichlet_nodes, conds.dudt_nodes, wrapped_functions, conds.parameters, conds.unwrapped_functions)
 end
 
 function prepare_conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions)
@@ -368,7 +368,6 @@ function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditi
     has_ghost || delete_ghost_triangles!(tri)
     return conditions
 end
-
 
 function Conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions=InternalConditions())
     conditions = prepare_conditions(mesh, bc, ic)

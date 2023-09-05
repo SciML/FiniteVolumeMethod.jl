@@ -33,7 +33,7 @@ If `isnothing(flux_function)`, then this can be provided to give the diffusion-s
 - `diffusion_parameters=nothing`
 
 The argument `p` for `diffusion_function`.
-- `source_function=nothing`
+- `source_function=(x, y, t, u, p) -> zero(u)`
 
 The source term, given in the form `S(x, y, t, u, p)`.
 - `source_parameters=nothing`
@@ -69,16 +69,24 @@ struct FVMProblem{FG,BC,F,FP,R,RP,IC,FT} <: AbstractFVMProblem
     initial_time::FT
     final_time::FT
 end
+function Base.show(io::IO, ::MIME"text/plain", prob::FVMProblem)
+    nv = num_points(prob.mesh.triangulation)
+    t0 = prob.initial_time
+    tf = prob.final_time
+    print(io, "FVMProblem with $(nv) nodes and time span ($t0, $tf)")
+end
+
 function _rewrap_conditions(prob::FVMProblem, neqs::Val{N}) where {N}
     new_conds = _rewrap_conditions(prob.conditions, eltype(prob.initial_condition), neqs)
     return FVMProblem(prob.mesh, new_conds, prob.flux_function, prob.flux_parameters, prob.source_function, prob.source_parameters, prob.initial_condition, prob.initial_time, prob.final_time)
 end
+
 eval_flux_function(prob::FVMProblem, x, y, t, α, β, γ) = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
 
 function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, internal_conditions::InternalConditions=InternalConditions();
     diffusion_function=nothing,
     diffusion_parameters=nothing,
-    source_function=nothing,
+    source_function=(x, y, t, u, p) -> zero(u),
     source_parameters=nothing,
     flux_function=nothing,
     flux_parameters=nothing,
@@ -102,21 +110,32 @@ simply do
 
     SteadyFVMProblem(prob),
 
-where `prob` is an `AbstractFVMProblem`.
+where `prob` is an `AbstractFVMProblem`. Note that the final time is treated 
+as infinity rather than as `prob.final_time`.
 
-See also [`FVMProblem`](@ref) AND [`FVMSystem`](@ref).
+See also [`FVMProblem`](@ref) and [`FVMSystem`](@ref).
 """
 struct SteadyFVMProblem{P<:AbstractFVMProblem,M<:FVMGeometry} <: AbstractFVMProblem
     problem::P
     mesh::M
     function SteadyFVMProblem(prob::P) where {P}
-        return new{P,typeof(prob.mesh)}(wrapped_problem, prob.mesh)
+        return new{P,typeof(prob.mesh)}(prob, prob.mesh)
     end
 end
+function Base.show(io::IO, ::MIME"text/plain", prob::SteadyFVMProblem)
+    nv = num_points(prob.mesh.triangulation)
+    is_sys = is_system(prob)
+    if !is_sys
+        print(io, "SteadyFVMProblem with $(nv) nodes")
+    else
+        print(io, "SteadyFVMProblem with $(nv) nodes and $(_neqs(prob)) equations")
+    end
+end
+
 eval_flux_function(prob::SteadyFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
 
 """
-    FVMSystem{N,FG,P,IC,FT,FT}
+    FVMSystem{N,FG,P,IC,FT}
 
 Representation of a system of PDEs. The constructor for this struct is 
 
@@ -139,7 +158,7 @@ node for the `j`th component.
 
 See also [`FVMProblem`](@ref) and [`SteadyFVMProblem`](@ref).
 """
-struct FVMSystem{N,FG,P,IC,FT,FT}
+struct FVMSystem{N,FG,P,IC,FT} <: AbstractFVMProblem
     mesh::FG
     problems::P
     initial_condition::IC
@@ -150,11 +169,13 @@ struct FVMSystem{N,FG,P,IC,FT,FT}
         @assert all(p -> p.mesh === mesh, problems) "All problems must have the same mesh."
         @assert all(p -> p.initial_time === initial_time, problems) "All problems must have the same initial time."
         @assert all(p -> p.final_time === final_time, problems) "All problems must have the same final time."
-        @assert size(initial_condition) == (length(problems), length(initial_condition[1])) "The initial condition must be a matrix with the same number of rows as the number of problems."
-        return FVMSystem{length(problems),FG,P,IC,FT,FT}(mesh, problems, initial_condition, initial_time, final_time)
+        @assert size(initial_condition) == (length(problems), length(problems[1].initial_condition)) "The initial condition must be a matrix with the same number of rows as the number of problems."
+        return new{length(problems),FG,P,IC,FT}(mesh, problems, initial_condition, initial_time, final_time)
     end
 end
-eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) where {N} = ntuple(i -> eval_flux_function(prob.problems[i], x, y, t, α[i], β[i], γ), Val(N))
+Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, "FVMSystem with $N equations and time span ($(prob.initial_time), $(prob.final_time))")
+
+eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) where {N} = ntuple(i -> eval_flux_function(prob.problems[i], x, y, t, α[i], β[i], γ[i]), Val(N))
 function _rewrap_conditions(prob::FVMSystem{N}) where {N}
     problems = ntuple(i -> _rewrap_conditions(prob.problems[i], Val(N)), Val(N))
     return FVMSystem(prob.mesh, problems, prob.initial_condition, prob.initial_time, prob.final_time)
@@ -205,6 +226,7 @@ _neqs(::FVMProblem) = 0 # We test for N > 0 in _rewrap_conditions, so let this b
 _neqs(::FVMSystem{N}) where {N} = N
 _neqs(prob::SteadyFVMProblem) = _neqs(prob.problem)
 is_system(prob::AbstractFVMProblem) = _neqs(prob) > 0
+
 """
     compute_flux(prob::AbstractFVMProblem, i, j, u, t)
 
@@ -224,18 +246,25 @@ function compute_flux(prob::AbstractFVMProblem, i, j, u, t)
     ex, ey = qx - px, qy - py
     ℓ = norm((ex, ey))
     nx, ny = ey / ℓ, -ex / ℓ
-    k = get_adjacent(tri, i, j)
-    α, β, γ = get_shape_function_coefficients(prob.mesh.triangle_props, (i, j, k), u, prob)
+    k = get_adjacent(tri, j, i) # want the vertex in the direction of the normal
+    if DelaunayTriangulation.is_boundary_index(k)
+        k = get_adjacent(tri, i, j)
+    else
+        i, j = j, i
+    end
+    i, j, k = indices(DelaunayTriangulation.contains_triangle(tri, i, j, k)[1]) # so that the key in triangle_props is (i, j, k) not e.g. (j, k, i)
+    α, β, γ = get_shape_function_coefficients(prob.mesh.triangle_props[(i, j, k)], (i, j, k), u, prob)
     mx, my = (px + qx) / 2, (py + qy) / 2
-    q = eval_flux_function(prob, mx, my, t, α, β, γ)
+    qv = eval_flux_function(prob, mx, my, t, α, β, γ)
     if is_system(prob)
-        qn = ntuple(Val(_neqs(prob))) do i
-            qx, qy = getxy(q[i])
-            return nx * qx + ny * qy
+        qn = ntuple(Val(_neqs(prob))) do var
+            local qvx, qvy
+            qvx, qvy = getxy(qv[var])
+            return nx * qvx + ny * qvy
         end
         return qn
     else
-        qx, qy = getxy(q)
-        return nx * qx + ny * qy
+        qvx, qvy = getxy(qv)
+        return nx * qvx + ny * qvy
     end
 end

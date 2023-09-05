@@ -8,3 +8,6 @@ end
 @safetestset "Conditions" begin
     include("conditions.jl")
 end
+@safetestset "Problem" begin
+    include("problem.jl")
+end

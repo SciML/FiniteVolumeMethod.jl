@@ -22,9 +22,9 @@ end
 function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMSystem{N}) where {N}
     i, j, k = indices(T)
     s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
-    α = ntuple(ℓ -> s₁ * u[ℓ, i] + s₂ * u[ℓ, j] + s₃ * u[ℓ, k], N)
-    β = ntuple(ℓ -> s₄ * u[ℓ, i] + s₅ * u[ℓ, j] + s₆ * u[ℓ, k], N)
-    γ = ntuple(ℓ -> s₇ * u[ℓ, i] + s₈ * u[ℓ, j] + s₉ * u[ℓ, k], N)
+    α = ntuple(ℓ -> s₁ * u[ℓ, i] + s₂ * u[ℓ, j] + s₃ * u[ℓ, k], Val(N))
+    β = ntuple(ℓ -> s₄ * u[ℓ, i] + s₅ * u[ℓ, j] + s₆ * u[ℓ, k], Val(N))
+    γ = ntuple(ℓ -> s₇ * u[ℓ, i] + s₈ * u[ℓ, j] + s₉ * u[ℓ, k], Val(N))
     return α, β, γ
 end
 
@@ -48,8 +48,8 @@ function get_flux(prob::FVMSystem{N}, props, α, β, γ, t, i, j, edge_index) wh
     x, y = props.cv_edge_midpoints[edge_index]
     nx, ny = props.cv_edge_normals[edge_index]
     ℓ = props.cv_edge_lengths[edge_index]
-    u_shape = ntuple(ℓ -> α[ℓ] * x + β[ℓ] * y + γ[ℓ], N)
-    qn = ntuple(N) do ℓ
+    u_shape = ntuple(ℓ -> α[ℓ] * x + β[ℓ] * y + γ[ℓ], Val(N))
+    qn = ntuple(Val(N)) do ℓ
         ij_is_neumann = is_neumann_edge(prob, i, j, ℓ)
         if !ij_is_neumann
             qx, qy = eval_flux_function(prob.problems[ℓ], x, y, t, α[ℓ], β[ℓ], γ[ℓ])

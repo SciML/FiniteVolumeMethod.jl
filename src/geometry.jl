@@ -27,8 +27,6 @@ function Base.show(io::IO, ::MIME"text/plain", geo::FVMGeometry)
 end
 
 function FVMGeometry(tri::Triangulation)
-    has_ghost = DelaunayTriangulation.has_ghost_triangles(tri)
-    has_ghost || add_ghost_triangles!(tri)
     stats = statistics(tri)
     nn = DelaunayTriangulation.num_solid_vertices(stats)
     nt = DelaunayTriangulation.num_solid_triangles(stats)
@@ -94,6 +92,5 @@ function FVMGeometry(tri::Triangulation)
         ## Now construct the TriangleProperties
         triangle_props[indices(T)] = TriangleProperties(shape_function_coefficients, ((m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy)), ((n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)), (ℓ₁, ℓ₂, ℓ₃))
     end
-    has_ghost || delete_ghost_triangles!(tri)
     return FVMGeometry(tri, stats, cv_volumes, triangle_props)
 end
