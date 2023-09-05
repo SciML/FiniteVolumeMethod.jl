@@ -11,7 +11,15 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://DanielVandH.github.io/FiniteVolumeMethod.jl",
         edit_link="main",
-        assets=String[]),
+        assets=String[],
+        mathengine=MathJax3(Dict(
+            :loader => Dict("load" => ["[tex]/physics"]),
+            :tex => Dict(
+                "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
+                "tags" => "ams",
+                "packages" => ["base", "ams", "autoload", "physics"],
+            ),
+        ))),
     pages=[
         "Home" => "index.md",
         "Interface" => "interface.md",
@@ -28,7 +36,7 @@ makedocs(;
             "Example VIII: Laplace's equation" => "laplace.md",
             "Example IX: Mean exit time problems" => "mean_exit_time.md",
         ],
-        "Mathematical Details" => "math.md"
+        "Mathematical and Implementation Details" => "math.md"
     ]
 )
 
