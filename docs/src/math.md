@@ -266,17 +266,6 @@ u(\vb x, t) &= a(\vb x, t, u) & \vb x \in \mathcal B \subseteq \partial\Omega, \
 ```
 where the functions $a$ are user-provided functions. The conditions \eqref{eq:neumann}--\eqref{eq:dirichlet} are called _Neumann_, _time-dependent Dirichlet_, and _Dirichlet_, respectively. We discuss how we handle incompatible BCs below, and then how each of these three types are implemented. 
 
-## Incompatible boundary conditions
-
-When a user specifies BCs, they are allowed to specify different BCs on different parts of the boundary. One issue with allowing this is that the BCs \eqref{eq:neumann}--\eqref{eq:dirichlet} are not compatible with each other. For example, suppose that we have two consecutive edges $\vb e_1 = \overrightarrow{\vb p\vb q}$ and $\vb e_2 = \overrightarrow{\vb q\vb r}$. If there is a Dirichlet BC on $\vb e_1$ and a Neumann BC on $\vb e_2$, then in general it is not possible to satisfy both of these conditions at $\vb q$. To deal with this, we would instead impose a Dirichlet BC on $\vb e_2$.
-
-The rules we apply in general are as follows: Given two oriented edges $\vb e_1 = \overrightarrow{\vb p\vb q}$ and $\vb e_2 = \overrightarrow{\vb q\vb r}$, with corresponding BCs $\mathcal B_1$ and $\mathcal B_2$:
-1. If $\mathcal B_1$ or $\mathcal B_2$ is a Dirichlet BC \eqref{eq:dirichlet}, then $\mathcal B_2$ is set to be a Dirichlet BC.
-2. If $\mathcal B_1$ or $\mathcal B_2$ is  a time-dependent Dirichlet BC \eqref{eq:dudtdirichlet}, then $\mathcal B_2$ is set to be a time-dependent Dirichlet BC.
-3. If $\mathcal B_1$ and $\mathcal B_2$ are Neumann BCs \eqref{eq:neumann}, then $\mathcal B_2$ is set to be a Neumann BC.
-
-Note that the functions that are used for the BCs in the rules above, if there is a replacement, are those defining the BC $\mathcal B_1$.
-
 ## Dirichlet boundary conditions
 
 When we have a Dirichlet BC of the form \eqref{eq:dirichlet}, the implementation is simple: Rather than using \eqref{eq:interiorapproximation}, we instead leave $\mathrm du_i/\mathrm dt = 0$ and update the value of $u_i$ with $a(\vb x_i, t, u_i)$ at the end of the iteration using a callback; note that the expression $u_i = a(\vb x_i, t, u_i)$ is __not__ an implicit equation for $u_i$, rather it is simply a reassignment of $u_i$ to $a(\vb x_i, t, u_i)$, i.e. $u_i \leftarrow a(\vb x_i, t, u_i)$.
@@ -303,10 +292,11 @@ where $u(\vb x_\sigma, t) = \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sig
 
 # Internal Conditions
 
-We also allow for specifying internal conditions, meaning conditions of the form \eqref{eq:neumann}--\eqref{eq:dirichlet} that are applied away from the boundary. We do not currently allow for internal Neumann conditions.[^1] These conditions are handled in the same way as BCs, except that the user is to provide them per-vertex rather than per-edge.
+We also allow for specifying internal conditions, meaning conditions of the form \eqref{eq:neumann}--\eqref{eq:dirichlet} that are applied away from the boundary. We do not currently allow for internal Neumann conditions directly.[^1] [^2] These conditions are handled in the same way as BCs, except that the user is to provide them per-vertex rather than per-edge.
 
 [^1]: This is a technical limitation due to how the control volumes are defined. For vertices away from the boundary, the control volume edges do not lie along any of the triangle's edges, which is where we would like to impose Neumann conditions.
 
+[^2]: We do provide examples of how to impose them by converting the problems into differential-algebraic problems - see the tutorials. 
 
 # Putting Everything Together 
 
