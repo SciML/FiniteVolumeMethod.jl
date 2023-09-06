@@ -1,17 +1,4 @@
-function has_condition(prob::AbstractFVMProblem, node)
-    return is_dudt_node(prob, node) || is_dirichlet_node(prob, node)
-end
-has_condition(prob::FVMSystem, node, var) = has_condition(prob.problems[var], node)
-is_dudt_node(prob::AbstractFVMProblem, node) = node ∈ keys(prob.conditions.dudt_nodes)
-is_dudt_node(prob::FVMSystem, node, var) = is_dudt_node(prob.problems[var], node)
-is_dirichlet_node(prob::AbstractFVMProblem, node) = node ∈ keys(prob.conditions.dirichlet_nodes)
-is_dirichlet_node(prob::FVMSystem, node, var) = is_dirichlet_node(prob.problems[var], node)
-is_neumann_edge(prob::AbstractFVMProblem, i, j) = (i, j) ∈ keys(prob.conditions.neumann_edges)
-is_neumann_edge(prob::FVMSystem, i, j, var) = is_neumann_edge(prob.problems[var], i, j)
-is_constrained_edge(prob::AbstractFVMProblem, i, j) = (i, j) ∈ keys(prob.conditions.constrained_edges)
-is_constrained_edge(prob::FVMSystem, i, j, var) = is_constrained_edge(prob.problems[var], i, j)
-
-function get_shape_function_coefficients(props::TriangleProperties, T, u, ::AbstractFVMProblem)
+@inline function get_shape_function_coefficients(props::TriangleProperties, T, u, ::AbstractFVMProblem)
     i, j, k = indices(T)
     s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
     α = s₁ * u[i] + s₂ * u[j] + s₃ * u[k]
@@ -19,7 +6,7 @@ function get_shape_function_coefficients(props::TriangleProperties, T, u, ::Abst
     γ = s₇ * u[i] + s₈ * u[j] + s₉ * u[k]
     return α, β, γ
 end
-function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMSystem{N}) where {N}
+@inline function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMSystem{N}) where {N}
     i, j, k = indices(T)
     s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
     α = ntuple(ℓ -> s₁ * u[ℓ, i] + s₂ * u[ℓ, j] + s₃ * u[ℓ, k], Val(N))
@@ -28,7 +15,7 @@ function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMS
     return α, β, γ
 end
 
-function get_flux(prob::AbstractFVMProblem, props, α, β, γ, t, i, j, edge_index)
+@inline function get_flux(prob::AbstractFVMProblem, props, α::A, β, γ, t::T, i, j, edge_index) where {A,T}
     # For checking if an edge is Neumann, we need only check e.g. (i, j) and not (j, i), since we do not allow for internal Neumann edges.
     ij_is_neumann = is_neumann_edge(prob, i, j)
     x, y = props.cv_edge_midpoints[edge_index]
@@ -38,46 +25,44 @@ function get_flux(prob::AbstractFVMProblem, props, α, β, γ, t, i, j, edge_ind
         qx, qy = eval_flux_function(prob, x, y, t, α, β, γ)
         qn = qx * nx + qy * ny
     else
-        function_index = prob.conditions.neumann_edges[(i, j)]
-        a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
-        qn = a(x, y, t, α * x + β * y + γ, ap)
+        function_index = get_neumann_fidx(prob, i, j)
+        qn = eval_condition_fnc(prob, function_index, x, y, t, α * x + β * y + γ)::promote_type(A, T)
     end
-    return qn * ℓ
+    return (qn * ℓ)::promote_type(A, T)
 end
-function get_flux(prob::FVMSystem{N}, props, α, β, γ, t, i, j, edge_index) where {N}
+function get_flux(prob::FVMSystem{N}, props, α::A, β, γ, t::T, i, j, edge_index) where {N,A,T}
     x, y = props.cv_edge_midpoints[edge_index]
     nx, ny = props.cv_edge_normals[edge_index]
     ℓ = props.cv_edge_lengths[edge_index]
     u_shape = ntuple(var -> α[var] * x + β[var] * y + γ[var], Val(N))
     qn = ntuple(Val(N)) do var
-        ij_is_neumann = is_neumann_edge(prob, i, j, ℓ)
+        ij_is_neumann = is_neumann_edge(prob, i, j, var)
         if !ij_is_neumann
-            qx, qy = eval_flux_function(prob.problems[var], x, y, t, α[var], β[var], γ[var])
+            qx, qy = eval_flux_function(get_equation(prob, var), x, y, t, α[var], β[var], γ[var])
             qn = qx * nx + qy * ny
         else
-            function_index = prob.problems[var].conditions.neumann_edges[(i, j)]
-            a, ap = prob.problems[var].conditions.functions[function_index], prob.problems[var].conditions.parameters[function_index]
-            qn = a(x, y, t, u_shape, ap)
+            function_index = get_neumann_fidx(prob, i, j, var)
+            qn = eval_condition_fnc(prob, function_index, var, x, y, t, u_shape)::promote_type(eltype(A), T)
         end
-        return qn * ℓ
+        return (qn * ℓ)::promote_type(eltype(A), T)
     end
     return qn
 end
 
-function get_fluxes(prob, props, α, β, γ, i, j, k, t)
+@inline function get_fluxes(prob, props, α, β, γ, i, j, k, t)
     q1 = get_flux(prob, props, α, β, γ, t, i, j, 1)
     q2 = get_flux(prob, props, α, β, γ, t, j, k, 2)
     q3 = get_flux(prob, props, α, β, γ, t, k, i, 3)
     return q1, q2, q3
 end
 
-function update_du!(du, ::AbstractFVMProblem, i, j, k, summand₁, summand₂, summand₃)
+@inline function update_du!(du, ::AbstractFVMProblem, i, j, k, summand₁, summand₂, summand₃)
     du[i] = du[i] + summand₃ - summand₁
     du[j] = du[j] + summand₁ - summand₂
     du[k] = du[k] + summand₂ - summand₃
     return nothing
 end
-function update_du!(du, ::FVMSystem{N}, i, j, k, ℓ, summand₁, summand₂, summand₃) where {N}
+@inline function update_du!(du, ::FVMSystem{N}, i, j, k, ℓ, summand₁, summand₂, summand₃) where {N}
     for var in 1:N
         du[var, i] = du[var, i] + summand₃[var] - summand₁[var]
         du[var, j] = du[var, j] + summand₁[var] - summand₂[var]
@@ -86,43 +71,58 @@ function update_du!(du, ::FVMSystem{N}, i, j, k, ℓ, summand₁, summand₂, su
     return nothing
 end
 
-function fvm_eqs_single_triangle!(du, u, prob, t, T)
+@inline function fvm_eqs_single_triangle!(du, u, prob, t, T)
     i, j, k = indices(T)
-    props = prob.mesh.triangle_props[(i, j, k)]
+    props = get_triangle_props(prob, i, j, k)
     α, β, γ = get_shape_function_coefficients(props, T, u, prob)
     summand₁, summand₂, summand₃ = get_fluxes(prob, props, α, β, γ, i, j, k, t)
     update_du!(du, prob, i, j, k, summand₁, summand₂, summand₃)
     return nothing
 end
 
-function fvm_eqs_single_source_contribution!(du, u, prob::AbstractFVMProblem, t, i)
-    p = get_point(prob.mesh.triangulation, i)
+@inline function get_source_contribution(prob::AbstractFVMProblem, u::T, t, i) where {T}
+    p = get_point(prob, i)
     x, y = getxy(p)
     if !has_condition(prob, i)
-        du[i] = du[i] / prob.mesh.cv_volumes[i] + prob.source_function(x, y, t, u[i], prob.source_parameters)
+        S = eval_source_fnc(prob, x, y, t, u[i])
     elseif is_dirichlet_node(prob, i)
-        du[i] = zero(eltype(du))
+        S = zero(eltype(u))
     else # Dudt
-        function_index = prob.conditions.dudt_nodes[i]
-        a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
-        du[i] = a(x, y, t, u[i], ap)
+        function_index = get_dudt_fidx(prob, i)
+        S = eval_condition_fnc(prob, function_index, x, y, t, u[i])::eltype(T)
+    end
+    return S::eltype(T)
+end
+@inline function get_source_contribution(prob::FVMSystem{N}, u::T, t, i, var) where {T,N}
+    p = get_point(prob, i)
+    x, y = getxy(p)
+    if !has_condition(prob, i, var)
+        S = @views eval_source_fnc(prob, var, x, y, t, u[:, i])
+    elseif is_dirichlet_node(prob, i)
+        S = zero(eltype(u))
+    else # Dudt
+        function_index = get_dudt_fidx(prob, i, var)
+        S = @views eval_condition_fnc(prob, function_index, var, x, y, t, u[:, i])::eltype(T)
+    end
+    return S::eltype(T)
+end
+
+@inline function fvm_eqs_single_source_contribution!(du::T, u, prob::AbstractFVMProblem, t, i) where {T}
+    S = get_source_contribution(prob, u, t, i)
+    if !has_condition(prob, i)
+        du[i] = du[i] / get_volume(prob, i) + S
+    else
+        du[i] = S
     end
     return nothing
 end
-function fvm_eqs_single_source_contribution!(du, u, prob::FVMSystem{N}, t, i) where {N}
-    p = get_point(prob.mesh.triangulation, i)
-    x, y = getxy(p)
-    uᵢ = @views u[:, i]
-    for j in 1:N
-        if !has_condition(prob, i, j)
-            du[j, i] = du[j, i] / prob.mesh.cv_volumes[i] + prob.problems[j].source_function(x, y, t, uᵢ, prob.problems[j].source_parameters)
-        elseif is_dirichlet_node(prob, i, j)
-            # Need to do Dirichlet first in case Dirichlet and Dudt overlap at this node - Dirichlet takes precedence
-            du[j, i] = zero(eltype(du))
-        else # Dudt
-            function_index = prob.problems[j].conditions.dudt_nodes[i]
-            a, ap = prob.problems[j].conditions.functions[function_index], prob.problems[j].conditions.parameters[function_index]
-            du[j, i] = a(x, y, t, uᵢ, ap)
+@inline function fvm_eqs_single_source_contribution!(du::T, u, prob::FVMSystem{N}, t, i) where {N,T}
+    for var in 1:N
+        S = get_source_contribution(prob, u, t, i, var)
+        if !has_condition(prob, i, var)
+            du[var, i] = du[var, i] / get_volume(prob, i) + S
+        else
+            du[var, i] = S
         end
     end
 end
@@ -186,30 +186,38 @@ function fvm_eqs!(du, u, p, t)
     end
 end
 
-function update_dirichlet_nodes_single!(u, t, prob::AbstractFVMProblem, i, function_index)
-    a, ap = prob.conditions.functions[function_index], prob.conditions.parameters[function_index]
-    p = get_point(prob.mesh.triangulation, i)
+@inline function get_dirichlet_condition(prob::AbstractFVMProblem, u::T, t, i, function_index) where {T}
+    p = get_point(prob, i)
     x, y = getxy(p)
-    u[i] = a(x, y, t, u[i], ap)
+    return eval_condition_fnc(prob, function_index, x, y, t, u[i])::eltype(T)
+end
+@inline function get_dirichlet_condition(prob::FVMSystem{N}, u::T, t, i, var, function_index) where {N,T}
+    p = get_point(prob, i)
+    x, y = getxy(p)
+    return @views eval_condition_fnc(prob, function_index, var, x, y, t, u[:, i])::eltype(T)
+end
+
+@inline function update_dirichlet_nodes_single!(u::T, t, prob::AbstractFVMProblem, i, function_index) where {T}
+    d = get_dirichlet_condition(prob, u, t, i, function_index)::eltype(T)
+    u[i] = d
     return nothing
 end
-function update_dirichlet_nodes_single!(u, t, prob::FVMSystem{N}, i, var, function_index) where {N}
-    a, ap = prob.problems[var].conditions.functions[function_index], prob.problems[var].conditions.parameters[function_index]
-    p = get_point(prob.mesh.triangulation, i)
-    x, y = getxy(p)
-    @views u[j, i] = a(x, y, t, u[:, i], ap)
+@inline function update_dirichlet_nodes_single!(u::T, t, prob::FVMSystem{N}, i, var, function_index) where {N,T}
+    d = get_dirichlet_condition(prob, u, t, i, var, function_index)::eltype(T)
+    u[var, i] = d
+    return nothing
 end
 
 function serial_update_dirichlet_nodes!(u, t, prob::AbstractFVMProblem)
-    for (i, function_index) in prob.conditions.dirichlet_nodes
+    for (i, function_index) in get_dirichlet_nodes(prob)
         update_dirichlet_nodes_single!(u, t, prob, i, function_index)
     end
     return nothing
 end
 function serial_update_dirichlet_nodes!(u, t, prob::FVMSystem{N}) where {N}
-    for j in 1:N
-        for (i, function_index) in prob.problems[j].conditions.dirichlet_nodes
-            update_dirichlet_nodes_single!(u, t, prob, i, j, function_index)
+    for var in 1:N
+        for (i, function_index) in get_dirichlet_nodes(prob, var)
+            update_dirichlet_nodes_single!(u, t, prob, i, var, function_index)
         end
     end
 end
@@ -217,7 +225,7 @@ end
 function parallel_update_dirichlet_nodes!(u, t, p, prob::AbstractFVMProblem)
     dirichlet_nodes = p.dirichlet_nodes
     Threads.@threads for i in dirichlet_nodes
-        function_index = prob.conditions.dirichlet_nodes[i]
+        function_index = get_dirichlet_fidx(prob, i)
         update_dirichlet_nodes_single!(u, t, prob, i, function_index)
     end
     return nothing
@@ -226,7 +234,7 @@ function parallel_update_dirichlet_nodes!(u, t, p, prob::FVMSystem{N}) where {N}
     dirichlet_nodes = p.dirichlet_nodes
     for var in 1:N
         Threads.@threads for i in dirichlet_nodes[j]
-            function_index = prob.problems[j].conditions.dirichlet_nodes[i]
+            function_index = get_dirichlet_fidx(prob, i, var)
             update_dirichlet_nodes_single!(u, t, prob, i, var, function_index)
         end
     end

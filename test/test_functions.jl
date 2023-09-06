@@ -107,7 +107,7 @@ function example_problem()
     parameters = (0.5, 0.2, 0.3, 0.4)
     BCs = BoundaryConditions(mesh, f, conditions; parameters=parameters)
     internal_dirichlet_nodes = Dict([7 + (i - 1) * 12 for i in 2:18] .=> 1)
-    ICs = InternalConditions(((x, y, t, u, p) -> zero(u),); dirichlet_nodes=internal_dirichlet_nodes)
+    ICs = InternalConditions((x, y, t, u, p) -> x+y+t+u+p,; dirichlet_nodes=internal_dirichlet_nodes, parameters=0.29)
     flux_function = (x, y, t, α, β, γ, p) -> let u = α * x + β * y + γ
         (-α * u * p[1] + t, x + t - β * u * p[2])
     end
@@ -141,10 +141,10 @@ function example_bc_ic_setup()
     t = (Dirichlet, Dudt, Neumann, Constrained)
     p = (p1, p2, p3, p4)
     g1 = (x, y, t, u, p) -> x * y * t * u * p
-    g2 = (x, y, t, u, p) -> x * y * t * u * p
-    g3 = (x, y, t, u, p) -> x * y * t * u * p
-    g4 = (x, y, t, u, p) -> x * y * t * u * p
-    g5 = (x, y, t, u, p) -> x * y * t * u * p
+    g2 = (x, y, t, u, p) -> x * y * t * u
+    g3 = (x, y, t, u, p) -> x * y * t * u * p[2]
+    g4 = (x, y, t, u, p) -> x * y * t * u * p[4]
+    g5 = (x, y, t, u, p) -> x * y * t * u * p[1]
     q1 = 0.5
     q2 = nothing
     q3 = (0.3, 0.6, -1.0)
@@ -172,21 +172,51 @@ function test_bc_conditions!(tri, conds, t,
         bc_type = t[-w]
         w -= shift
         if bc_type == Dirichlet
+            @test FiniteVolumeMethod.has_dirichlet_nodes(conds)
+            @test FiniteVolumeMethod.get_dirichlet_nodes(conds) == conds.dirichlet_nodes
             @test conds.dirichlet_nodes[u] == -w
             @test conds.dirichlet_nodes[v] == -w
+            @test FiniteVolumeMethod.is_dirichlet_node(conds, u)
+            @test FiniteVolumeMethod.is_dirichlet_node(conds, v)
+            @test FiniteVolumeMethod.has_condition(conds, u)
+            @test FiniteVolumeMethod.has_condition(conds, v)
+            @test FiniteVolumeMethod.get_dirichlet_fidx(conds, u) == -w
+            @test FiniteVolumeMethod.get_dirichlet_fidx(conds, v) == -w
             push!(dirichlet_nodes, get_point(tri, u, v)...)
+            x, y, tt, u = rand(4)
+            @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) ≈ conds.functions[-w](x, y, tt, u)
+            @inferred conds.functions[-w](x, y, tt, u)
         elseif bc_type == Dudt
             @test conds.dudt_nodes[u] == -w
             @test conds.dudt_nodes[v] == -w
+            @test FiniteVolumeMethod.is_dudt_node(conds, u)
+            @test FiniteVolumeMethod.is_dudt_node(conds, v)
+            @test FiniteVolumeMethod.has_condition(conds, u)
+            @test FiniteVolumeMethod.has_condition(conds, v)
+            @test FiniteVolumeMethod.get_dudt_fidx(conds, u) == -w
+            @test FiniteVolumeMethod.get_dudt_fidx(conds, v) == -w
             push!(dudt_nodes, get_point(tri, u, v)...)
+            x, y, tt, u = rand(4)
+            @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) ≈ conds.functions[-w](x, y, tt, u)
+            @inferred conds.functions[-w](x, y, tt, u)
         elseif bc_type == Neumann
             @test conds.neumann_edges[(u, v)] == -w
             push!(neumann_edges, get_point(tri, u, v)...)
             @test (u, v) ∉ keys(conds.constrained_edges)
+            @test FiniteVolumeMethod.is_neumann_edge(conds, u, v)
+            @test FiniteVolumeMethod.get_neumann_fidx(conds, u, v) == -w
+            x, y, tt, u = rand(4)
+            @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) ≈ conds.functions[-w](x, y, tt, u)
+            @inferred conds.functions[-w](x, y, tt, u)
         else
             @test conds.constrained_edges[(u, v)] == -w
             push!(constrained_edges, get_point(tri, u, v)...)
             @test (u, v) ∉ keys(conds.neumann_edges)
+            @test FiniteVolumeMethod.is_constrained_edge(conds, u, v)
+            @test FiniteVolumeMethod.get_constrained_fidx(conds, u, v) == -w
+            x, y, tt, u = rand(4)
+            @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, t, u) ≈ conds.functions[-w](x, y, tt, u)
+            @inferred conds.functions[-w](x, y, tt, u)
         end
     end
     return nothing
@@ -195,19 +225,33 @@ end
 function test_bc_ic_conditions!(tri, conds, t,
     dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges,
     ics)
-    nif = length(conds.parameters) - DelaunayTriangulation.num_ghost_vertices(tri)
+    nif = length(conds.functions) - DelaunayTriangulation.num_ghost_vertices(tri)
     test_bc_conditions!(tri, conds, t, dirichlet_nodes,
         dudt_nodes, constrained_edges, neumann_edges, nif)
     for (i, idx) in ics.dirichlet_nodes
+        @test FiniteVolumeMethod.has_dirichlet_nodes(conds)
+        @test FiniteVolumeMethod.get_dirichlet_nodes(conds) == conds.dirichlet_nodes
         if !DelaunayTriangulation.is_boundary_node(tri, i)[1]
             @test conds.dirichlet_nodes[i] == idx
             push!(dirichlet_nodes, get_point(tri, i))
+            @test FiniteVolumeMethod.is_dirichlet_node(conds, i)
+            @test FiniteVolumeMethod.has_condition(conds, i)
+            @test FiniteVolumeMethod.get_dirichlet_fidx(conds, i) == idx
+            x, y, t, u = rand(4)
+            @test FiniteVolumeMethod.eval_condition_fnc(conds, idx, x, y, t, u) ≈ conds.functions[idx](x, y, t, u)
+            @inferred conds.functions[idx](x, y, t, u)
         end
     end
     for (i, idx) in ics.dudt_nodes
         if !DelaunayTriangulation.is_boundary_node(tri, i)[1]
             @test conds.dudt_nodes[i] == idx
             push!(dudt_nodes, get_point(tri, i))
+            @test FiniteVolumeMethod.is_dudt_node(conds, i)
+            @test FiniteVolumeMethod.has_condition(conds, i)
+            @test FiniteVolumeMethod.get_dudt_fidx(conds, i) == idx
+            x, y, t, u = rand(4)
+            @test FiniteVolumeMethod.eval_condition_fnc(conds, idx, x, y, t, u) ≈ conds.functions[idx](x, y, t, u)
+            @inferred conds.functions[idx](x, y, t, u)
         end
     end
 end
@@ -272,9 +316,11 @@ function test_get_flux(prob, u, t)
             @inferred prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
             qn = (qx * nx + qy * ny) * ℓ
             @test qn ≈ FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index) atol = 1e-9
+            @inferred FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index)
             push!(_qn, qn)
         end
         @test _qn ≈ collect(FVM.get_fluxes(prob, prob.mesh.triangle_props[T], α, β, γ, T..., t)) atol = 1e-9
+        @inferred FVM.get_fluxes(prob, prob.mesh.triangle_props[T], α, β, γ, T..., t)
     end
 end
 
@@ -292,11 +338,11 @@ function test_single_triangle(prob, u, t)
         for (edge_index, (i, j)) in enumerate(DelaunayTriangulation.triangle_edges(T))
             push!(_qn, FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index))
         end
-        q1, q2, q3 = _qn 
-        dui = -(q1 - q3) 
+        q1, q2, q3 = _qn
+        dui = -(q1 - q3)
         duj = -(-q1 + q2)
         duk = -(-q2 + q3)
-        FVM.fvm_eqs_single_triangle!(du,u,prob,t,T)
+        FVM.fvm_eqs_single_triangle!(du, u, prob, t, T)
         @test du[T[1]] ≈ dui atol = 1e-9
         @test du[T[2]] ≈ duj atol = 1e-9
         @test du[T[3]] ≈ duk atol = 1e-9
@@ -347,4 +393,126 @@ function test_dudt_val(prob, u, t)
     dudt = [get_dudt_val(prob, u, t, i) for i in each_point_index(prob.mesh.triangulation)]
     dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, (prob=prob, parallel=Val(false)), t)
     @test dudt ≈ dudt_fnc
+end
+
+function test_compute_flux(_prob, steady, system, steady_system)
+    local prob
+    for prob in (_prob, steady, system, steady_system)
+        if prob === steady || prob == steady_system
+            prob = prob.problem
+        end
+        if prob isa SteadyFVMProblem
+            u = prob.problem.initial_condition
+        else
+            u = prob.initial_condition
+        end
+        tri = prob.mesh.triangulation
+        for (i, j) in keys(get_boundary_edge_map(tri))
+            k = get_adjacent(tri, i, j)
+            p, q, r = get_point(tri, i, j, k)
+            _i, _j = i, j
+            i, j, k = DelaunayTriangulation.contains_triangle(tri, i, j, k)[1]
+            props = prob.mesh.triangle_props[(i, j, k)]
+            s = props.shape_function_coefficients
+            if FVM.is_system(prob)
+                α = ntuple(ℓ -> s[1] * u[ℓ, i] + s[2] * u[ℓ, j] + s[3] * u[ℓ, k], FVM._neqs(prob))
+                β = ntuple(ℓ -> s[4] * u[ℓ, i] + s[5] * u[ℓ, j] + s[6] * u[ℓ, k], FVM._neqs(prob))
+                γ = ntuple(ℓ -> s[7] * u[ℓ, i] + s[8] * u[ℓ, j] + s[9] * u[ℓ, k], FVM._neqs(prob))
+            else
+                α = s[1] * u[i] + s[2] * u[j] + s[3] * u[k]
+                β = s[4] * u[i] + s[5] * u[j] + s[6] * u[k]
+                γ = s[7] * u[i] + s[8] * u[j] + s[9] * u[k]
+            end
+            qv = FVM.eval_flux_function(prob, ((p .+ q) ./ 2)..., 2.5, α, β, γ)
+            ex, ey = (q .- p) ./ norm(p .- q)
+            nx, ny = ey, -ex
+            @test DelaunayTriangulation.distance_to_polygon((p .+ q) ./ 2 .+ (nx, ny), get_points(tri), get_boundary_nodes(tri)) < 0.0
+            @test DelaunayTriangulation.is_right(DelaunayTriangulation.point_position_relative_to_line(p, q, (p .+ q) ./ 2 .+ (nx, ny)))
+            _qv = compute_flux(prob, _i, _j, u, 2.5)
+            if !FVM.is_system(prob)
+                @test _qv ≈ dot(qv, (nx, ny))
+            else
+                all_qvs = ntuple(ℓ -> dot(qv[ℓ], (nx, ny)), FVM._neqs(prob))
+                @test collect(_qv) ≈ collect(all_qvs)
+                @test all_qvs[1] ≈ compute_flux(prob.problems[1], _i, _j, @views(u[1, :]), 2.5)
+            end
+            @inferred compute_flux(prob, _i, _j, u, 2.5)
+        end
+        for (i, j) in each_solid_edge(tri)
+            if (i, j) ∉ keys(get_boundary_edge_map(tri))
+                p, q = get_point(tri, i, j)
+                k = get_adjacent(tri, j, i)
+                r = get_point(tri, k)
+                a, b, c = j, i, k
+                a, b, c = DelaunayTriangulation.contains_triangle(tri, a, b, c)[1]
+                props = prob.mesh.triangle_props[(a, b, c)]
+                s = props.shape_function_coefficients
+                if FVM.is_system(prob)
+                    α = ntuple(ℓ -> s[1] * u[ℓ, a] + s[2] * u[ℓ, b] + s[3] * u[ℓ, c], FVM._neqs(prob))
+                    β = ntuple(ℓ -> s[4] * u[ℓ, a] + s[5] * u[ℓ, b] + s[6] * u[ℓ, c], FVM._neqs(prob))
+                    γ = ntuple(ℓ -> s[7] * u[ℓ, a] + s[8] * u[ℓ, b] + s[9] * u[ℓ, c], FVM._neqs(prob))
+                else
+                    α = s[1] * u[a] + s[2] * u[b] + s[3] * u[c]
+                    β = s[4] * u[a] + s[5] * u[b] + s[6] * u[c]
+                    γ = s[7] * u[a] + s[8] * u[b] + s[9] * u[c]
+                end
+                qv = FVM.eval_flux_function(prob, ((p .+ q) ./ 2)..., 2.5, α, β, γ)
+                ex, ey = (q .- p) ./ norm(p .- q)
+                nx, ny = ey, -ex
+                @test DelaunayTriangulation.is_right(DelaunayTriangulation.point_position_relative_to_line(p, q, (p .+ q) ./ 2 .+ (nx, ny)))
+                _qv = compute_flux(prob, i, j, u, 2.5)
+                if !FVM.is_system(prob)
+                    @test _qv ≈ dot(qv, (nx, ny))
+                else
+                    all_qvs = ntuple(ℓ -> dot(qv[ℓ], (nx, ny)), FVM._neqs(prob))
+                    @test collect(_qv) ≈ collect(all_qvs)
+                    @test all_qvs[1] ≈ compute_flux(prob.problems[1], i, j, @views(u[1, :]), 2.5)
+                end
+                @inferred compute_flux(prob, i, j, u, 2.5)
+            end
+        end
+    end
+end
+
+function test_jacobian_sparsity(prob::FVMProblem)
+    A = zeros(num_points(prob.mesh.triangulation), num_points(prob.mesh.triangulation))
+    for i in each_solid_vertex(prob.mesh.triangulation)
+        A[i, i] = 1.0
+        for j in get_neighbours(tri, i)
+            DelaunayTriangulation.is_boundary_index(j) && continue
+            A[i, j] = 1.0
+        end
+    end
+    @test A == FVM.jacobian_sparsity(prob)
+end
+
+function test_jacobian_sparsity(prob::FVMSystem{N}) where {N}
+    tri = prob.mesh.triangulation
+    n = num_points(tri)
+    A = zeros(n * N, n * N)
+    idx_map = Vector{Vector{Int}}(undef, n)
+    idx_mat = zeros(N, n)
+    ctr = 1
+    for j in 1:n
+        for i in 1:N
+            idx_mat[i, j] = ctr
+            ctr += 1
+        end
+    end
+    for i in 1:n
+        idx_map[i] = idx_mat[:, i]
+    end
+    for i in each_solid_vertex(tri)
+        node1 = idx_map[i]
+        for j in (i, get_neighbours(tri, i)...)
+            DelaunayTriangulation.is_boundary_index(j) && continue
+            node2 = idx_map[j]
+            for x in node1
+                for y in node2
+                    A[x, y] = 1.0
+                end
+            end
+        end
+    end
+    @test A == FVM.jacobian_sparsity(prob)
 end

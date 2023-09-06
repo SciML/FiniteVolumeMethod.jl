@@ -1,4 +1,20 @@
 abstract type AbstractFVMProblem end
+@inline get_dudt_fidx(prob::AbstractFVMProblem, i) = get_dudt_fidx(prob.conditions, i)
+@inline get_neumann_fidx(prob::AbstractFVMProblem, i, j) = get_neumann_fidx(prob.conditions, i, j)
+@inline get_dirichlet_fidx(prob::AbstractFVMProblem, i) = get_dirichlet_fidx(prob.conditions, i)
+@inline get_constrained_fidx(prob::AbstractFVMProblem, i, j) = get_constrained_fidx(prob.conditions, i, j)
+@inline eval_condition_fnc(prob::AbstractFVMProblem, fidx, x, y, t, u) = eval_condition_fnc(prob.conditions, fidx, x, y, t, u)
+@inline eval_source_fnc(prob::AbstractFVMProblem, x, y, t, u) = prob.source_function(x, y, t, u, prob.source_parameters)
+@inline is_dudt_node(prob::AbstractFVMProblem, node) = is_dudt_node(prob.conditions, node)
+@inline is_neumann_edge(prob::AbstractFVMProblem, i, j) = is_neumann_edge(prob.conditions, i, j)
+@inline is_dirichlet_node(prob::AbstractFVMProblem, node) = is_dirichlet_node(prob.conditions, node)
+@inline is_constrained_edge(prob::AbstractFVMProblem, i, j) = is_constrained_edge(prob.conditions, i, j)
+@inline has_condition(prob::AbstractFVMProblem, node) = has_condition(prob.conditions, node)
+@inline has_dirichlet_nodes(prob::AbstractFVMProblem) = has_dirichlet_nodes(prob.conditions)
+@inline get_triangle_props(prob::AbstractFVMProblem, i, j, k) = prob.mesh.triangle_props[(i, j, k)]
+@inline DelaunayTriangulation.get_point(prob::AbstractFVMProblem, i) = get_point(prob.mesh.triangulation, i)
+@inline get_volume(prob::AbstractFVMProblem, i) = prob.mesh.cv_volumes[i]
+@inline get_dirichlet_nodes(prob::AbstractFVMProblem) = get_dirichlet_nodes(prob.conditions)
 
 """
     FVMProblem(mesh, boundary_conditions[, internal_conditions];
@@ -75,14 +91,7 @@ function Base.show(io::IO, ::MIME"text/plain", prob::FVMProblem)
     tf = prob.final_time
     print(io, "FVMProblem with $(nv) nodes and time span ($t0, $tf)")
 end
-has_dirichlet_nodes(prob::AbstractFVMProblem) = has_dirichlet_nodes(prob.conditions)
-
-function _rewrap_conditions(prob::FVMProblem, neqs::Val{N}) where {N}
-    new_conds = _rewrap_conditions(prob.conditions, eltype(prob.initial_condition), neqs)
-    return FVMProblem(prob.mesh, new_conds, prob.flux_function, prob.flux_parameters, prob.source_function, prob.source_parameters, prob.initial_condition, prob.initial_time, prob.final_time)
-end
-
-eval_flux_function(prob::FVMProblem, x, y, t, α, β, γ) = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
+@inline eval_flux_function(prob::FVMProblem, x, y, t, α, β, γ) = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
 
 function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, internal_conditions::InternalConditions=InternalConditions();
     diffusion_function=nothing,
@@ -127,8 +136,7 @@ function Base.show(io::IO, ::MIME"text/plain", prob::SteadyFVMProblem)
         print(io, "SteadyFVMProblem with $(nv) nodes and $(_neqs(prob)) equations")
     end
 end
-
-eval_flux_function(prob::SteadyFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
+@inline eval_flux_function(prob::SteadyFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
 
 """
     FVMSystem(prob1, prob2, ..., probN)
@@ -174,13 +182,20 @@ struct FVMSystem{N,FG,P,IC,FT} <: AbstractFVMProblem
 end
 Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, "FVMSystem with $N equations and time span ($(prob.initial_time), $(prob.final_time))")
 
-has_dirichlet_nodes(prob::FVMSystem{N}) where {N} = any(i -> has_dirichlet_nodes(prob.problems[i]), 1:length(prob.problems))
-
-eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) where {N} = ntuple(i -> eval_flux_function(prob.problems[i], x, y, t, α[i], β[i], γ[i]), Val(N))
-function _rewrap_conditions(prob::FVMSystem{N}) where {N}
-    problems = ntuple(i -> _rewrap_conditions(prob.problems[i], Val(N)), Val(N))
-    return FVMSystem(prob.mesh, problems, prob.initial_condition, prob.initial_time, prob.final_time)
-end
+@inline get_dudt_fidx(prob::FVMSystem, i, var) = get_dudt_fidx(get_equation(prob, var), i)
+@inline get_neumann_fidx(prob::FVMSystem, i, j, var) = get_neumann_fidx(get_equation(prob, var), i, j)
+@inline get_dirichlet_fidx(prob::FVMSystem, i, var) = get_dirichlet_fidx(get_equation(prob, var), i)
+@inline get_constrained_fidx(prob::FVMSystem, i, j, var) = get_constrained_fidx(get_equation(prob, var), i, j)
+@inline eval_condition_fnc(prob::FVMSystem, fidx, var, x, y, t, u) = eval_condition_fnc(get_equation(prob, var), fidx, x, y, t, u)
+@inline eval_source_fnc(prob::FVMSystem, var, x, y, t, u) = eval_source_fnc(get_equation(prob, var), x, y, t, u)
+@inline is_dudt_node(prob::FVMSystem, node, var) = is_dudt_node(get_equation(prob, var), node)
+@inline is_neumann_edge(prob::FVMSystem, i, j, var) = is_neumann_edge(get_equation(prob, var), i, j)
+@inline is_dirichlet_node(prob::FVMSystem, node, var) = is_dirichlet_node(get_equation(prob, var), node)
+@inline is_constrained_edge(prob::FVMSystem, i, j, var) = is_constrained_edge(get_equation(prob, var), i, j)
+@inline has_condition(prob::FVMSystem, node, var) = has_condition(get_equation(prob, var), node)
+@inline has_dirichlet_nodes(prob::FVMSystem{N}) where {N} = any(i -> has_dirichlet_nodes(get_equation(prob, i)), 1:N)
+@inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(get_equation(prob, var))
+@inline eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) where {N} = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α[i], β[i], γ[i]), Val(N))
 
 function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     N == 0 && error("There must be at least one problem.")
@@ -192,9 +207,10 @@ function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     for (i, prob) in enumerate(probs)
         initial_condition[i, :] .= prob.initial_condition
     end
-    wrapped_probs = ntuple(i -> _rewrap_conditions(probs[i], Val(N)), Val(N))
-    return FVMSystem(mesh, wrapped_probs, initial_condition, initial_time, final_time)
+    return FVMSystem(mesh, probs, initial_condition, initial_time, final_time)
 end
+
+get_equation(system::FVMSystem, var) = system.problems[var]
 
 """
     construct_flux_function(q, D, Dp)

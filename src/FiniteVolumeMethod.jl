@@ -1,13 +1,11 @@
 module FiniteVolumeMethod
 
 using DelaunayTriangulation
-using FunctionWrappersWrappers
 using PreallocationTools
 using LinearAlgebra
 using SparseArrays
 using SciMLBase
 using Base.Threads
-using DiffEqBase
 using ChunkSplitters
 using CommonSolve
 

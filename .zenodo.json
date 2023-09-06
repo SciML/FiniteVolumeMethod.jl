@@ -6,7 +6,7 @@
 			"orcid": "0000-0001-6462-0135"
 		}
 	],
-	"description": "FiniteVolumeMethod.jl: Solver for two-dimensional conservation equations using the finite volume method.",
+	"description": "Solver for two-dimensional conservation equations using the finite volume method in Julia.",
 	"keywords": [
 		"partial-differential-equations",
 		"finite-volume-method"

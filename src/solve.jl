@@ -3,10 +3,10 @@ function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem{N}}) where 
     nt = Threads.nthreads()
     if prob isa FVMProblem
         duplicated_du = DiffCache(similar(u, length(u), nt))
-        dirichlet_nodes = collect(keys(prob.conditions.dirichlet_nodes))
+        dirichlet_nodes = collect(keys(get_dirichlet_nodes(prob)))
     else
         duplicated_du = DiffCache(similar(u, size(u, 1), size(u, 2), nt))
-        dirichlet_nodess = ntuple(i -> collect(keys(prob.problems[i].conditions.dirichlet_nodes)), N)
+        dirichlet_nodes = ntuple(i -> collect(keys(get_dirichlet_nodes(prob, i))), N)
     end
     solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
     solid_vertices = collect(each_solid_vertex(prob.mesh.triangulation))
@@ -99,9 +99,9 @@ function jacobian_sparsity(prob::FVMSystem{N}) where {N}
     return sparse(I, J, V)
 end
 
-@inline function dirichlet_callback(has_saveat, has_dirichlet_nodes)
+@inline function dirichlet_callback(has_saveat, has_dir)
     cb = DiscreteCallback(
-        (u, t, integrator) -> let cb_needed = has_dirichlet_nodes
+        (u, t, integrator) -> let cb_needed = has_dir
             cb_needed
         end,
         update_dirichlet_nodes!,
@@ -157,7 +157,7 @@ function CommonSolve.solve(prob::SteadyFVMProblem, args...;
     parallel::Val{B}=Val(true),
     kwargs...) where {S,B}
     nl_prob = SciMLBase.NonlinearProblem(prob; specialization, jac_prototype, parallel, kwargs...)
-    return CommonSolve.solve(ode_prob, args...; kwargs...)
+    return CommonSolve.solve(nl_prob, args...; kwargs...)
 end
 
 @doc """
