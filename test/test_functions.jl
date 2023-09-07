@@ -107,7 +107,7 @@ function example_problem()
     parameters = (0.5, 0.2, 0.3, 0.4)
     BCs = BoundaryConditions(mesh, f, conditions; parameters=parameters)
     internal_dirichlet_nodes = Dict([7 + (i - 1) * 12 for i in 2:18] .=> 1)
-    ICs = InternalConditions((x, y, t, u, p) -> x+y+t+u+p,; dirichlet_nodes=internal_dirichlet_nodes, parameters=0.29)
+    ICs = InternalConditions((x, y, t, u, p) -> x + y + t + u + p, ; dirichlet_nodes=internal_dirichlet_nodes, parameters=0.29)
     flux_function = (x, y, t, α, β, γ, p) -> let u = α * x + β * y + γ
         (-α * u * p[1] + t, x + t - β * u * p[2])
     end
@@ -271,6 +271,44 @@ function example_diffusion_problem()
     return prob
 end
 
+function example_heat_convection_problem()
+    L = 1.0
+    k = 237.0
+    T₀ = 10.0
+    T∞ = 10.0
+    α = 80e-6
+    q = 10.0
+    h = 25.0
+    tri = triangulate_rectangle(0, L, 0, L, 200, 200; single_boundary=false)
+    mesh = FVMGeometry(tri)
+    bot_wall = (x, y, t, T, p) -> -p.α * p.q / p.k
+    right_wall = (x, y, t, T, p) -> zero(T)
+    top_wall = (x, y, t, T, p) -> -p.α * p.h / p.k * (p.T∞ - T)
+    left_wall = (x, y, t, T, p) -> zero(T)
+    bc_fncs = (bot_wall, right_wall, top_wall, left_wall) # the order is important 
+    types = (Neumann, Neumann, Neumann, Neumann)
+    bot_parameters = (α=α, q=q, k=k)
+    right_parameters = nothing
+    top_parameters = (α=α, h=h, k=k, T∞=T∞)
+    left_parameters = nothing
+    parameters = (bot_parameters, right_parameters, top_parameters, left_parameters)
+    BCs = BoundaryConditions(mesh, bc_fncs, types; parameters)
+    flux_function = (x, y, t, α, β, γ, p) -> begin
+        ∇u = (α, β)
+        return -p.α .* ∇u
+    end
+    flux_parameters = (α=α,)
+    final_time = 2000.0
+    f = (x, y) -> T₀
+    initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+    prob = FVMProblem(mesh, BCs;
+        flux_function,
+        flux_parameters,
+        initial_condition,
+        final_time)
+    return prob
+end
+
 function test_shape_function_coefficients(prob, u)
     for T in each_solid_triangle(prob.mesh.triangulation)
         i, j, k = indices(T)
@@ -314,10 +352,18 @@ function test_get_flux(prob, u, t)
             nx, ny = ey / ℓ, -ex / ℓ
             qx, qy = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
             @inferred prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
-            qn = (qx * nx + qy * ny) * ℓ
-            @test qn ≈ FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index) atol = 1e-9
-            @inferred FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index)
-            push!(_qn, qn)
+            if !FiniteVolumeMethod.is_neumann_edge(prob, i, j)
+                qn = (qx * nx + qy * ny) * ℓ
+                @test qn ≈ FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index) atol = 1e-9
+                @inferred FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index)
+                push!(_qn, qn)
+            else
+                idx = -get_adjacent(prob.mesh.triangulation, j, i)
+                qn = ℓ * prob.conditions.functions[idx](x, y, t, α * x + β * y + γ)
+                @test qn ≈ FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index) atol = 1e-9
+                @inferred FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index)
+                push!(_qn, qn)
+            end
         end
         @test _qn ≈ collect(FVM.get_fluxes(prob, prob.mesh.triangle_props[T], α, β, γ, T..., t)) atol = 1e-9
         @inferred FVM.get_fluxes(prob, prob.mesh.triangle_props[T], α, β, γ, T..., t)
@@ -361,7 +407,32 @@ function test_source_contribution(prob, u, t)
     end
 end
 
-function get_dudt_val(prob, u, t, i)
+# returns true AND the edge its on (1 -> bot, 2 -> right, 3 -> top, 4 -> left)
+function _is_on_square(p, L)
+    x, y = getxy(p)
+    if x ≈ 0.0
+        return true, 4
+    elseif x ≈ L
+        return true, 2
+    elseif y ≈ 0.0
+        return true, 1
+    elseif y ≈ L
+        return true, 3
+    else
+        return false, 0
+    end
+end
+function _both_on_same_edge(p, q, L)
+    p_on, p_edge = _is_on_square(p, L)
+    q_on, q_edge = _is_on_square(q, L)
+    if p_on && q_on
+        return p_edge == q_edge, p_edge
+    else
+        return false, p_edge
+    end
+end
+
+function get_dudt_val(prob, u, t, i, is_diff=true)
     i ∈ keys(prob.conditions.dirichlet_nodes) && return 0.0
     mesh = prob.mesh
     tri = mesh.triangulation
@@ -382,16 +453,36 @@ function get_dudt_val(prob, u, t, i)
         α = s₁ * u[T[1]] + s₂ * u[T[2]] + s₃ * u[T[3]]
         β = s₄ * u[T[1]] + s₅ * u[T[2]] + s₆ * u[T[3]]
         γ = s₇ * u[T[1]] + s₈ * u[T[2]] + s₉ * u[T[3]]
-        q = (-α / 9, -β / 9)
-        int += L * (q[1] * nx + q[2] * ny)
+        if is_diff
+            q = (-α / 9, -β / 9)
+            int += L * (q[1] * nx + q[2] * ny)
+        elseif !is_diff && !_both_on_same_edge(p, q, 1.0)[1]
+            q = (-80e-6 * α, -80e-6 * β)
+            int += L * (q[1] * nx + q[2] * ny)
+        else
+            _, idx = _both_on_same_edge(p, q, 1.0)
+            if idx == 1
+                q = -80e-6 * 10.0 / 237.0
+            elseif idx == 2
+                q = 0.0
+            elseif idx == 3
+                q = -80e-6 * 25.0 / 237.0 * (10.0 - (α * mx + β * my + γ))
+            elseif idx == 4
+                q = 0.0
+            end
+            #q = prob.conditions.functions[idx](mx, my, t, α * mx + β * my + γ)
+            int += L * q
+        end
     end
     dudt = prob.source_function(get_point(tri, i)..., t, u[i], prob.source_parameters) - int / mesh.cv_volumes[i]
     return dudt
 end
 
-function test_dudt_val(prob, u, t)
-    dudt = [get_dudt_val(prob, u, t, i) for i in each_point_index(prob.mesh.triangulation)]
+function test_dudt_val(prob, u, t; is_diff=true)
+    dudt = [get_dudt_val(prob, u, t, i, is_diff) for i in each_point_index(prob.mesh.triangulation)]
     dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, (prob=prob, parallel=Val(false)), t)
+    @test dudt ≈ dudt_fnc
+    dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, FVM.get_multithreading_vectors(prob), t)
     @test dudt ≈ dudt_fnc
 end
 

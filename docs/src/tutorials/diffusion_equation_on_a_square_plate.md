@@ -5,7 +5,7 @@ EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/s
 # Diffusion Equation on a Square Plate
 This tutorial considers a diffusion equation on a square plate:
 ```math
-\begin{equation*}\label{eq:problem}
+\begin{equation*}
 \begin{aligned}
 \pdv{u(\vb x, t)}{t} &= \frac{1}{9}\grad^2 u(\vb x, t)  & \vb x \in \Omega,\,t>0, \\[6pt]
 u(\vb x, t) & =  0  &\vb x \in \partial\Omega,\,t>0,\\[6pt]

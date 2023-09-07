@@ -14,6 +14,7 @@ include("conditions.jl")
 include("problem.jl")
 include("equations.jl")
 include("solve.jl")
+include("utils.jl")
 
 export FVMGeometry,
     FVMProblem,
@@ -26,6 +27,7 @@ export FVMGeometry,
     Dirichlet,
     Constrained,
     solve,
-    compute_flux
+    compute_flux,
+    pl_interpolate
 
 end

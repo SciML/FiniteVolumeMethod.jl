@@ -15,36 +15,47 @@ end
     return α, β, γ
 end
 
-@inline function get_flux(prob::AbstractFVMProblem, props, α::A, β, γ, t::T, i, j, edge_index) where {A,T}
+@inline function _get_cv_components(props, edge_index)
+    x, y = props.cv_edge_midpoints[edge_index]
+    nx, ny = props.cv_edge_normals[edge_index]
+    ℓ = props.cv_edge_lengths[edge_index]
+    return x, y, nx, ny, ℓ
+end
+@inline function _non_neumann_get_flux(prob, x, y, t, α::T, β, γ, nx, ny) where {T}
+    qx, qy = eval_flux_function(prob, x, y, t, α, β, γ)
+    qn = qx * nx + qy * ny
+    return qn * one(eltype(T))
+end
+@inline function _neumann_get_flux(prob, x, y, t, u::T, i, j) where {T}
+    function_index = get_neumann_fidx(prob, i, j)
+    qn = eval_condition_fnc(prob, function_index, x, y, t, u) * one(T)
+    return qn::T
+end
+@inline function _get_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, u::U) where {U}
     # For checking if an edge is Neumann, we need only check e.g. (i, j) and not (j, i), since we do not allow for internal Neumann edges.
     ij_is_neumann = is_neumann_edge(prob, i, j)
-    x, y = props.cv_edge_midpoints[edge_index]
-    nx, ny = props.cv_edge_normals[edge_index]
-    ℓ = props.cv_edge_lengths[edge_index]
-    if !ij_is_neumann
-        qx, qy = eval_flux_function(prob, x, y, t, α, β, γ)
-        qn = qx * nx + qy * ny
+    qn = if !ij_is_neumann
+        _non_neumann_get_flux(prob, x, y, t, α, β, γ, nx, ny)
     else
-        function_index = get_neumann_fidx(prob, i, j)
-        qn = eval_condition_fnc(prob, function_index, x, y, t, α * x + β * y + γ)::promote_type(A, T)
+        _neumann_get_flux(prob, x, y, t, u, i, j)
     end
-    return (qn * ℓ)::promote_type(A, T)
+    return qn
+end
+@inline function get_flux(prob::AbstractFVMProblem, props, α::A, β, γ, t::T, i, j, edge_index) where {A,T}
+    x, y, nx, ny, ℓ = _get_cv_components(props, edge_index)
+    qn = _get_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ)
+    return qn * ℓ
+end
+@inline function _get_flux(prob, x, y, t, α::T, β, γ, u_shape, nx, ny, i, j, var) where {T}
+    qn = _get_flux(get_equation(prob, var), x, y, t, α, β, γ, nx, ny, i, j, u_shape) * one(eltype(T))
+    return qn
 end
 function get_flux(prob::FVMSystem{N}, props, α::A, β, γ, t::T, i, j, edge_index) where {N,A,T}
-    x, y = props.cv_edge_midpoints[edge_index]
-    nx, ny = props.cv_edge_normals[edge_index]
-    ℓ = props.cv_edge_lengths[edge_index]
+    x, y, nx, ny, ℓ = _get_cv_components(props, edge_index)
     u_shape = ntuple(var -> α[var] * x + β[var] * y + γ[var], Val(N))
     qn = ntuple(Val(N)) do var
-        ij_is_neumann = is_neumann_edge(prob, i, j, var)
-        if !ij_is_neumann
-            qx, qy = eval_flux_function(get_equation(prob, var), x, y, t, α[var], β[var], γ[var])
-            qn = qx * nx + qy * ny
-        else
-            function_index = get_neumann_fidx(prob, i, j, var)
-            qn = eval_condition_fnc(prob, function_index, var, x, y, t, u_shape)::promote_type(eltype(A), T)
-        end
-        return (qn * ℓ)::promote_type(eltype(A), T)
+        qn = _get_flux(prob, x, y, t, α, β, γ, u_shape, nx, ny, i, j, var)
+        return qn * ℓ
     end
     return qn
 end
@@ -84,12 +95,12 @@ end
     p = get_point(prob, i)
     x, y = getxy(p)
     if !has_condition(prob, i)
-        S = eval_source_fnc(prob, x, y, t, u[i])
+        S = eval_source_fnc(prob, x, y, t, u[i]) * one(eltype(T))
     elseif is_dirichlet_node(prob, i)
-        S = zero(eltype(u))
+        S = zero(eltype(T))
     else # Dudt
         function_index = get_dudt_fidx(prob, i)
-        S = eval_condition_fnc(prob, function_index, x, y, t, u[i])::eltype(T)
+        S = eval_condition_fnc(prob, function_index, x, y, t, u[i]) * one(eltype(T))
     end
     return S::eltype(T)
 end
@@ -97,18 +108,18 @@ end
     p = get_point(prob, i)
     x, y = getxy(p)
     if !has_condition(prob, i, var)
-        S = @views eval_source_fnc(prob, var, x, y, t, u[:, i])
+        S = @views eval_source_fnc(prob, var, x, y, t, u[:, i]) * one(eltype(T))
     elseif is_dirichlet_node(prob, i)
-        S = zero(eltype(u))
+        S = zero(eltype(T))
     else # Dudt
         function_index = get_dudt_fidx(prob, i, var)
-        S = @views eval_condition_fnc(prob, function_index, var, x, y, t, u[:, i])::eltype(T)
+        S = @views eval_condition_fnc(prob, function_index, var, x, y, t, u[:, i]) * one(eltype(T))
     end
     return S::eltype(T)
 end
 
 @inline function fvm_eqs_single_source_contribution!(du::T, u, prob::AbstractFVMProblem, t, i) where {T}
-    S = get_source_contribution(prob, u, t, i)
+    S = get_source_contribution(prob, u, t, i)::eltype(T)
     if !has_condition(prob, i)
         du[i] = du[i] / get_volume(prob, i) + S
     else
@@ -118,26 +129,54 @@ end
 end
 @inline function fvm_eqs_single_source_contribution!(du::T, u, prob::FVMSystem{N}, t, i) where {N,T}
     for var in 1:N
-        S = get_source_contribution(prob, u, t, i, var)
+        S = get_source_contribution(prob, u, t, i, var)::eltype(T)
         if !has_condition(prob, i, var)
             du[var, i] = du[var, i] / get_volume(prob, i) + S
         else
             du[var, i] = S
         end
     end
+    return nothing
+end
+
+function get_triangle_contributions!(du, u, prob, t)
+    for T in each_solid_triangle(prob.mesh.triangulation)
+        fvm_eqs_single_triangle!(du, u, prob, t, T)
+    end
+    return nothing
+end
+function get_source_contributions!(du, u, prob, t)
+    for i in each_solid_vertex(prob.mesh.triangulation)
+        fvm_eqs_single_source_contribution!(du, u, prob, t, i)
+    end
+    return nothing
 end
 
 function serial_fvm_eqs!(du, u, prob, t)
     fill!(du, zero(eltype(du)))
-    for T in each_solid_triangle(prob.mesh.triangulation)
-        fvm_eqs_single_triangle!(du, u, prob, t, T)
-    end
-    for i in each_solid_vertex(prob.mesh.triangulation)
-        fvm_eqs_single_source_contribution!(du, u, prob, t, i)
-    end
+    get_triangle_contributions!(du, u, prob, t)
+    get_source_contributions!(du, u, prob, t)
     return du
 end
 
+
+function get_parallel_triangle_contributions!(duplicated_du, u, prob, t, chunked_solid_triangles, solid_triangles)
+    Threads.@threads for (triangle_range, chunk_idx) in chunked_solid_triangles
+        _get_parallel_triangle_contributions!(duplicated_du, u, prob, t, triangle_range, chunk_idx, solid_triangles)
+    end
+    return nothing
+end
+function _get_parallel_triangle_contributions!(duplicated_du, u, prob, t, triangle_range, chunk_idx, solid_triangles)
+    for triangle_idx in triangle_range
+        T = solid_triangles[triangle_idx]
+        if prob isa FVMSystem
+            @views fvm_eqs_single_triangle!(duplicated_du[:, :, chunk_idx], u, prob, t, T)
+        else
+            @views fvm_eqs_single_triangle!(duplicated_du[:, chunk_idx], u, prob, t, T)
+        end
+    end
+    return nothing
+end
 function combine_duplicated_du!(du, duplicated_du, prob)
     if prob isa FVMSystem
         for i in axes(duplicated_du, 3)
@@ -147,6 +186,12 @@ function combine_duplicated_du!(du, duplicated_du, prob)
         for _du in eachcol(duplicated_du)
             du .+= _du
         end
+    end
+    return nothing
+end
+function get_parallel_source_contributions!(du, u, prob, t, solid_vertices)
+    Threads.@threads for i in solid_vertices
+        fvm_eqs_single_source_contribution!(du, u, prob, t, i)
     end
     return nothing
 end
@@ -160,20 +205,9 @@ function parallel_fvm_eqs!(du, u, p, t)
     fill!(du, zero(eltype(du)))
     _duplicated_du = get_tmp(duplicated_du, du)
     fill!(_duplicated_du, zero(eltype(du)))
-    Threads.@threads for (triangle_range, chunk_idx) in chunked_solid_triangles
-        for triangle_idx in triangle_range
-            T = solid_triangles[triangle_idx]
-            if prob isa FVMSystem
-                @views fvm_eqs_single_triangle!(_duplicated_du[:, :, chunk_idx], u, prob, t, T)
-            else
-                @views fvm_eqs_single_triangle!(_duplicated_du[:, chunk_idx], u, prob, t, T)
-            end
-        end
-    end
+    get_parallel_triangle_contributions!(_duplicated_du, u, prob, t, chunked_solid_triangles, solid_triangles)
     combine_duplicated_du!(du, _duplicated_du, prob)
-    Threads.@threads for i in solid_vertices
-        fvm_eqs_single_source_contribution!(du, u, prob, t, i)
-    end
+    get_parallel_source_contributions!(du, u, prob, t, solid_vertices)
     return du
 end
 

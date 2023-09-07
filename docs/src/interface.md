@@ -14,6 +14,7 @@ In this section, we describe the basic interface for defining and solving PDEs u
 6. If you want a system of equations, construct an `FVMSystem` from multiple `FVMProblem`s; if you want this problem to be steady, skip step 5 and only now apply `SteadyFVMProblem`.
 7. Solve the problem using `solve`.
 8. For a discussion of custom constraints, see the tutorials.
+9. For interpolation, we provide `pl_interpolate` (but you might prefer [NaturalNeighbours.jl](https://github.com/DanielVandH/NaturalNeighbours.jl) - see [this tutorial for an example](tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.md)).
 
 ## `FVMGeometry`: Defining the mesh 
 
@@ -135,3 +136,13 @@ You can also provide custom constraints. Rather than outlining this here, it is 
 ```@docs
 compute_flux
 ```
+
+## Piecewise linear interpolation
+
+You can evaluate the piecewise linear interpolation corresponding to a solution using `pl_interpolant`, defined below.
+
+```@docs
+pl_interpolate
+```
+
+Better interpolants are available from [NaturalNeighbours.jl](https://github.com/DanielVandH/NaturalNeighbours.jl) - see the [this tutorial](tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.md) for some examples.
