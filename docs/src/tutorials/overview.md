@@ -182,7 +182,7 @@ This last condition $u(1/2, y) = 0$ is the internal condition that needs to be d
 
 # Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems
 
-This [tutorial](equilibrium_temperature_distribution_with_mixed_boundary_conditions.md) considers the equilibrium temperature distribution in a square plate with mixed boundary conditions:
+This [tutorial](equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.md) considers the equilibrium temperature distribution in a square plate with mixed boundary conditions:
 ```math
 \begin{equation}
 \begin{aligned}

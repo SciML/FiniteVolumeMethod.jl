@@ -242,9 +242,9 @@ Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, 
 @inline is_dirichlet_node(prob::FVMSystem, node, var) = is_dirichlet_node(get_equation(prob, var), node)
 @inline is_constrained_edge(prob::FVMSystem, i, j, var) = is_constrained_edge(get_equation(prob, var), i, j)
 @inline has_condition(prob::FVMSystem, node, var) = has_condition(get_equation(prob, var), node)
-@inline has_dirichlet_nodes(prob::FVMSystem{N}) where {N} = any(i -> has_dirichlet_nodes(get_equation(prob, i)), 1:N)
+@inline has_dirichlet_nodes(prob::FVMSystem) = any(i -> has_dirichlet_nodes(get_equation(prob, i)), 1:_neqs(prob))
 @inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(get_equation(prob, var))
-@inline eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) where {N} = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), Val(N))
+@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ)  = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
 
 function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     N == 0 && error("There must be at least one problem.")
@@ -323,7 +323,7 @@ function compute_flux(prob::AbstractFVMProblem, i, j, u, t)
     mx, my = (px + qx) / 2, (py + qy) / 2
     qv = eval_flux_function(prob, mx, my, t, α, β, γ)
     if is_system(prob)
-        qn = ntuple(Val(_neqs(prob))) do var
+        qn = ntuple(_neqs(prob)) do var
             local qvx, qvy
             qvx, qvy = getxy(qv[var])
             return nx * qvx + ny * qvy

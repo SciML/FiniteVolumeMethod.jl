@@ -15,8 +15,8 @@ end
 end
 
 # update du with the fluxes from each centroid-edge edge for a system for all variables
-@inline function update_du!(du, ::FVMSystem{N}, i, j, k, summand₁, summand₂, summand₃) where {N}
-    for var in 1:N
+@inline function update_du!(du, ::FVMSystem, i, j, k, summand₁, summand₂, summand₃) 
+    for var in 1:_neqs(prob)
         du[var, i] = du[var, i] + summand₃[var] - summand₁[var]
         du[var, j] = du[var, j] + summand₁[var] - summand₂[var]
         du[var, k] = du[var, k] + summand₂[var] - summand₃[var]

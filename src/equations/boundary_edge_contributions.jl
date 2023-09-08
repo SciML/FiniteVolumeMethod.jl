@@ -16,8 +16,8 @@ end
 end
 
 # get flux contribution across a boundary edge (i, j), taking care for a Neumann boundary condition for all variables in a system
-@inline function _get_boundary_fluxes(prob::FVMSystem{N}, x, y, t, α, β, γ, nx, ny, i, j, u::T, ℓ) where {N,T}
-    qn = ntuple(Val(N)) do var
+@inline function _get_boundary_fluxes(prob::FVMSystem, x, y, t, α, β, γ, nx, ny, i, j, u::T, ℓ) where {T}
+    qn = ntuple(_neqs(prob)) do var
         _qn = _get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, u, var)
         return _qn * ℓ
     end 
@@ -33,10 +33,10 @@ end
 end
 
 # function for getting both fluxes for a system problem
-@inline function get_boundary_fluxes(prob::FVMSystem{N}, α::T, β, γ, i, j, t) where {N,T}
+@inline function get_boundary_fluxes(prob::FVMSystem, α::T, β, γ, i, j, t) where {T}
     nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ = _get_boundary_cv_components(prob, i, j)
-    u_shapeᵢ = ntuple(var -> α[var] * mᵢx + β[var] * mᵢy + γ[var], Val(N))
-    u_shapeⱼ = ntuple(var -> α[var] * mⱼx + β[var] * mⱼy + γ[var], Val(N))
+    u_shapeᵢ = ntuple(var -> α[var] * mᵢx + β[var] * mᵢy + γ[var], _neqs(prob))
+    u_shapeⱼ = ntuple(var -> α[var] * mⱼx + β[var] * mⱼy + γ[var], _neqs(prob))
     q1 = _get_boundary_fluxes(prob, mᵢx, mᵢy, t, α, β, γ, nx, ny, i, j, u_shapeᵢ, ℓ)
     q2 = _get_boundary_fluxes(prob, mⱼx, mⱼy, t, α, β, γ, nx, ny, i, j, u_shapeⱼ, ℓ)
     return q1, q2
@@ -50,8 +50,8 @@ end
 end
 
 # function for applying both fluxes for a system problem
-@inline function update_du!(du, ::FVMSystem{N}, i, j, summand₁, summand₂) where {N}
-    for var in 1:N
+@inline function update_du!(du, prob::FVMSystem, i, j, summand₁, summand₂) 
+    for var in 1:_neqs(prob)
         du[var, i] = du[var, i] - summand₁[var]
         du[var, j] = du[var, j] - summand₂[var]
     end

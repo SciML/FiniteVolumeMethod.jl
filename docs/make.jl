@@ -6,7 +6,7 @@ using Dates
 DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod, Test);
     recursive=true)
 
-const IS_LIVESERVER = false # get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
+const IS_LIVESERVER = get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
 if IS_LIVESERVER
     using Revise
     Revise.revise()
@@ -98,7 +98,7 @@ const _PAGES = [
         "Laplace's Equation with Internal Dirichlet Conditions" => "tutorials/laplaces_equation_with_internal_dirichlet_conditions.md",
         "Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems" => "tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.md",
         "A Reaction-Diffusion Brusselator System of PDEs" => "tutorials/reaction_diffusion_brusselator_system_of_pdes.md",
-        "Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System" =>  "tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.md",
+        "Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System" => "tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.md",
     ],
     "Mathematical and Implementation Details" => "math.md"
 ]

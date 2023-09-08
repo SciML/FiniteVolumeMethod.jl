@@ -26,15 +26,15 @@ end
 end
 
 # primitive: get flux contribution for a system without a boundary condition for a single variable. This is used as a function barrier
-@inline function _get_flux(prob::FVMSystem{N}, x, y, t, α::T, β, γ, nx, ny, var) where {N,T}
+@inline function _get_flux(prob::FVMSystem, x, y, t, α::T, β, γ, nx, ny, var) where {T}
     qn = _get_flux(get_equation(prob, var), x, y, t, α, β, γ, nx, ny) * one(eltype(T))
     return qn
 end
 
 # get flux contribution for a system, also picking up the cv components first, and getting it for all variables
-function get_flux(prob::FVMSystem{N}, props, α::A, β, γ, t::T, edge_index) where {N,A,T}
+function get_flux(prob::FVMSystem, props, α::A, β, γ, t::T, edge_index) where {A,T}
     x, y, nx, ny, ℓ = _get_cv_components(props, edge_index)
-    qn = ntuple(Val(N)) do var
+    qn = ntuple(_neqs(prob)) do var
         qn = _get_flux(prob, x, y, t, α, β, γ, nx, ny, var)
         return qn * ℓ
     end

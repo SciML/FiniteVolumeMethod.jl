@@ -6,7 +6,7 @@
 end
 
 # primitive: get dirichlet value for a system
-@inline function get_dirichlet_condition(prob::FVMSystem{N}, u::T, t, i, var, function_index) where {N,T}
+@inline function get_dirichlet_condition(prob::FVMSystem, u::T, t, i, var, function_index) where {T}
     p = get_point(prob, i)
     x, y = getxy(p)
     return @views eval_condition_fnc(prob, function_index, var, x, y, t, u[:, i]) * one(eltype(T))
@@ -20,7 +20,7 @@ end
 end
 
 # get the dirichlet value and update u for a system. need this function barriers for inference
-@inline function update_dirichlet_nodes_single!(u::T, t, prob::FVMSystem{N}, i, var, function_index) where {N,T}
+@inline function update_dirichlet_nodes_single!(u::T, t, prob::FVMSystem, i, var, function_index) where {T}
     d = get_dirichlet_condition(prob, u, t, i, var, function_index)::eltype(T)
     u[var, i] = d
     return nothing
@@ -35,8 +35,8 @@ function serial_update_dirichlet_nodes!(u, t, prob::AbstractFVMProblem)
 end
 
 # get the dirichlet value and update u for a system for each dirichlet_node
-function serial_update_dirichlet_nodes!(u, t, prob::FVMSystem{N}) where {N}
-    for var in 1:N
+function serial_update_dirichlet_nodes!(u, t, prob::FVMSystem) 
+    for var in 1:_neqs(prob)
         for (i, function_index) in get_dirichlet_nodes(prob, var)
             update_dirichlet_nodes_single!(u, t, prob, i, var, function_index)
         end
@@ -54,9 +54,9 @@ function parallel_update_dirichlet_nodes!(u, t, p, prob::AbstractFVMProblem)
 end
 
 # get the dirichlet value and update u for a system for each dirichlet_node in parallel
-function parallel_update_dirichlet_nodes!(u, t, p, prob::FVMSystem{N}) where {N}
+function parallel_update_dirichlet_nodes!(u, t, p, prob::FVMSystem) 
     dirichlet_nodes = p.dirichlet_nodes
-    for var in 1:N
+    for var in 1:_neqs(prob)
         Threads.@threads for i in dirichlet_nodes[var]
             function_index = get_dirichlet_fidx(prob, i, var)
             update_dirichlet_nodes_single!(u, t, prob, i, var, function_index)
