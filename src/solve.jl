@@ -11,7 +11,7 @@ function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem{N}}) where 
     solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
     solid_vertices = collect(each_solid_vertex(prob.mesh.triangulation))
     chunked_solid_triangles = chunks(solid_triangles, nt)
-    boundary_edges = keys(get_boundary_edge_map(prob.mesh.triangulation))
+    boundary_edges = collect(keys(get_boundary_edge_map(prob.mesh.triangulation)))
     chunked_boundary_edges = chunks(boundary_edges, nt)
     return (
         duplicated_du=duplicated_du,
@@ -102,6 +102,7 @@ function jacobian_sparsity(prob::FVMSystem{N}) where {N}
     end
     return sparse(I, J, V)
 end
+jacobian_sparsity(prob::SteadyFVMProblem) = jacobian_sparsity(prob.problem)
 
 @inline function dirichlet_callback(has_saveat, has_dir)
     cb = DiscreteCallback(
@@ -119,13 +120,12 @@ function SciMLBase.ODEProblem(prob::Union{FVMProblem,FVMSystem};
     jac_prototype=jacobian_sparsity(prob),
     parallel::Val{B}=Val(true),
     callback=nothing, # need this to check if user provides it
-    kwargs...) where {S,B}
+    saveat=nothing) where {S,B}
     initial_time = prob.initial_time
     final_time = prob.final_time
     time_span = (initial_time, final_time)
     initial_condition = prob.initial_condition
-    kwarg_dict = Dict(kwargs)
-    dirichlet_cb = dirichlet_callback(:saveat ∈ keys(kwarg_dict), has_dirichlet_nodes(prob))
+    dirichlet_cb = dirichlet_callback(!isnothing(saveat), has_dirichlet_nodes(prob))
     if !isnothing(callback)
         cb = CallbackSet(callback, dirichlet_cb)
     else
@@ -133,17 +133,17 @@ function SciMLBase.ODEProblem(prob::Union{FVMProblem,FVMSystem};
     end
     f = ODEFunction{true,S}(fvm_eqs!; jac_prototype)
     p = B ? get_multithreading_vectors(prob) : (prob=prob, parallel=parallel)
-    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb, kwargs...)
+    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb)
     return ode_problem
 end
-function SciMLBase.NonlinearProblem(prob::SteadyFVMProblem;
+function SciMLBase.SteadyStateProblem(prob::SteadyFVMProblem;
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
     parallel::Val{B}=Val(true),
     callback=nothing, # need this to check if user provides it
-    kwargs...) where {S,B}
-    ode_prob = ODEProblem(prob.problem; specialization, jac_prototype, parallel, callback, kwargs...)
-    nl_prob = NonlinearProblem{true}(ode_prob.f, ode_prob.u0, ode_prob.p; kwargs...)
+    saveat=nothing) where {S,B}
+    ode_prob = ODEProblem(prob.problem; specialization, jac_prototype, parallel, callback, saveat)
+    nl_prob = SteadyStateProblem(ode_prob)
     return nl_prob
 end
 
@@ -151,17 +151,29 @@ function CommonSolve.init(prob::Union{FVMProblem,FVMSystem}, args...;
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
     parallel::Val{B}=Val(true),
+    callback=nothing,
+    saveat=nothing,
     kwargs...) where {S,B}
-    ode_prob = SciMLBase.ODEProblem(prob; specialization, jac_prototype, parallel, kwargs...)
-    return CommonSolve.init(ode_prob, args...; kwargs...)
+    ode_prob = SciMLBase.ODEProblem(prob; specialization, jac_prototype, parallel, saveat, callback)
+    if !isnothing(saveat)
+        return CommonSolve.init(ode_prob, args...; saveat, kwargs...)
+    else
+        return CommonSolve.init(ode_prob, args...; kwargs...)
+    end
 end
 function CommonSolve.solve(prob::SteadyFVMProblem, args...;
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
     parallel::Val{B}=Val(true),
+    callback=nothing,
+    saveat=nothing,
     kwargs...) where {S,B}
-    nl_prob = SciMLBase.NonlinearProblem(prob; specialization, jac_prototype, parallel, kwargs...)
-    return CommonSolve.solve(nl_prob, args...; kwargs...)
+    nl_prob = SciMLBase.SteadyStateProblem(prob; specialization, jac_prototype, parallel, callback, saveat)
+    if !isnothing(saveat)
+        return CommonSolve.solve(nl_prob, args...; saveat, kwargs...)
+    else
+        return CommonSolve.solve(nl_prob, args...; kwargs...)
+    end
 end
 
 @doc """

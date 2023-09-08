@@ -123,7 +123,7 @@ function exact_solution(x, y, t, A, β, L, k, h, T∞, q, α) #src
     return T #src
 end #src
 function compare_solutions(sol, tri, L, k, h, T∞, q, α, T₀) #src
-    β, _ = compute_β(L, h, k, (1e-12, 200.0)) #src
+    β, _ = compute_β(L, h, k, (1e-12, 20.0)) #src
     An = compute_An.(β, L, k, h, T₀, T∞, q) #src
     n = DelaunayTriangulation.num_solid_vertices(tri) #src
     x = zeros(n, length(sol)) #src

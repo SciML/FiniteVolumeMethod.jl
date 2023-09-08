@@ -12,13 +12,13 @@ end
     p, q = get_point(tri, i, j)
     px, py = getxy(p)
     qx, qy = getxy(q)
-    ℓᵢⱼ = norm((x - px, qy - py))
+    ℓᵢⱼ = norm((qx - px, qy - py))
     nx, ny = (qy - py) / ℓᵢⱼ, -(qx - px) / ℓᵢⱼ
     mᵢⱼx, mᵢⱼy = (px + qx) / 2, (py + qy) / 2
     mᵢx, mᵢy = (px + mᵢⱼx) / 2, (py + mᵢⱼy) / 2
     mⱼx, mⱼy = (qx + mᵢⱼx) / 2, (qy + mᵢⱼy) / 2
     ℓᵢ = norm((mᵢⱼx - px, mᵢⱼy - py))
-    ℓⱼ = norm((mᵢⱼx - qx, mᵢⱼy - qy))
-    return nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓᵢ, ℓⱼ
+    # ℓⱼ = norm((mᵢⱼx - qx, mᵢⱼy - qy)) # same as the above
+    return nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓᵢ
 end
 

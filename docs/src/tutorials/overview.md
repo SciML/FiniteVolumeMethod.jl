@@ -224,3 +224,18 @@ though as in the previous tutorials we do not reference this exact solution in t
     A_n = \frac{2}{L}\int_0^L \left[T_0 - T_e(y)\right]\cos(\beta_ny) \dd{y}.
     ```
     This gives the exact solution $T(x, y, t) = U(y, t) + T_e(y)$.
+
+# Helmholtz Equation with Inhomogeneous Boundary Conditions 
+This [tutorial](helmholtz_equation_with_inhomogeneous_boundary_conditions.md) considers the Helmholtz equation with inhomogeneous boundary conditions:
+```math
+\begin{equation}
+\begin{aligned}
+\grad^2 u(\vb x) + u(\vb x) &= 0 & \vb x \in [-1, 1]^2 \\
+\pdv{u}{\vb n} &= 1 & \vb x \in\partial[-1,1]^2.
+\end{aligned}
+\end{equation}
+```
+This is different to the other problems considered thus far as the problem is now a _steady state problem_. The exact solution is
+```math
+u(x, y) = -\frac{\cos(x+1)+\cos(1-x)+\cos(y+1)+\cos(1-y)}{\sin(2)}.
+```

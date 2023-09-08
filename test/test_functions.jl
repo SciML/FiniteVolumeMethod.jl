@@ -352,21 +352,77 @@ function test_get_flux(prob, u, t)
             nx, ny = ey / ℓ, -ex / ℓ
             qx, qy = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
             @inferred prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
-            if !FiniteVolumeMethod.is_neumann_edge(prob, i, j)
-                qn = (qx * nx + qy * ny) * ℓ
-                @test qn ≈ FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index) atol = 1e-9
-                @inferred FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index)
-                push!(_qn, qn)
-            else
-                idx = -get_adjacent(prob.mesh.triangulation, j, i)
-                qn = ℓ * prob.conditions.functions[idx](x, y, t, α * x + β * y + γ)
-                @test qn ≈ FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index) atol = 1e-9
-                @inferred FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index)
-                push!(_qn, qn)
-            end
+            @inferred FVM.eval_flux_function(prob, x, y, t, α, β, γ)
+            qn = (qx * nx + qy * ny) * ℓ
+            @test qn ≈ FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, edge_index) atol = 1e-9
+            @inferred FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, edge_index)
+            push!(_qn, qn)
         end
-        @test _qn ≈ collect(FVM.get_fluxes(prob, prob.mesh.triangle_props[T], α, β, γ, T..., t)) atol = 1e-9
-        @inferred FVM.get_fluxes(prob, prob.mesh.triangle_props[T], α, β, γ, T..., t)
+        @test _qn ≈ collect(FVM.get_fluxes(prob, prob.mesh.triangle_props[T], α, β, γ, t))
+        @inferred FVM.get_fluxes(prob, prob.mesh.triangle_props[T], α, β, γ, t)
+    end
+end
+
+function test_get_boundary_flux(prob, u, t, is_diff=true)
+    tri = prob.mesh.triangulation
+    for e in keys(get_boundary_edge_map(tri))
+        i, j = e
+        p, q = get_point(tri, i, j)
+        px, py = p
+        qx, qy = q
+        k = get_adjacent(tri, e)
+        T = (i, j, k)
+        if haskey(prob.mesh.triangle_props, (j, k, i))
+            T = (j, k, i)
+        elseif haskey(prob.mesh.triangle_props, (k, i, j))
+            T = (k, i, j)
+        end
+        s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = prob.mesh.triangle_props[T].shape_function_coefficients
+        α = s₁ * u[T[1]] + s₂ * u[T[2]] + s₃ * u[T[3]]
+        β = s₄ * u[T[1]] + s₅ * u[T[2]] + s₆ * u[T[3]]
+        γ = s₇ * u[T[1]] + s₈ * u[T[2]] + s₉ * u[T[3]]
+        if is_diff
+            # First edge 
+            x, y = (px + (px + qx) / 2) / 2, (py + (py + qy) / 2) / 2
+            nx, ny = (qy - py) / norm(p .- q), -(qx - px) / norm(p .- q)
+            _qx, _qy = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
+            @inferred prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
+            @inferred FVM.eval_flux_function(prob, x, y, t, α, β, γ)
+            q1 = (_qx * nx + _qy * ny) * norm(p .- (p .+ q) ./ 2)
+            @test q1 ≈ FVM._get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ) * norm(p .- (p .+ q) ./ 2) atol = 1e-6
+            @inferred FVM._get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ)
+            # Second edge 
+            x, y = ((px + qx) / 2 + qx) / 2, ((py + qy) / 2 + qy) / 2
+            _qx, _qy = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
+            @inferred prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
+            @inferred FVM.eval_flux_function(prob, x, y, t, α, β, γ)
+            q2 = (_qx * nx + _qy * ny) * norm((p .+ q) ./ 2 .- q)
+            @test q2 ≈ FVM._get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ) * norm((p .+ q) ./ 2 .- q)
+            @inferred FVM._get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ)
+        else
+            # First edge
+            x, y = (px + (px + qx) / 2) / 2, (py + (py + qy) / 2) / 2
+            nx, ny = (qy - py) / norm(p .- q), -(qx - px) / norm(p .- q)
+            idx = -get_adjacent(tri, j, i)
+            fnc = prob.conditions.functions[idx]
+            q1 = fnc(x, y, t, α * x + β * y + γ) * norm(p .- (p .+ q) ./ 2)
+            @inferred FVM.eval_condition_fnc(prob, idx, x, y, t, α * x + β * y + γ)
+            @test q1 ≈ FVM._get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ) * norm(p .- (p .+ q) ./ 2)
+            @inferred FVM._get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ)
+            # Second edge
+            x, y = ((px + qx) / 2 + qx) / 2, ((py + qy) / 2 + qy) / 2
+            nx, ny = (qy - py) / norm(p .- q), -(qx - px) / norm(p .- q)
+            idx = -get_adjacent(tri, j, i)
+            fnc = prob.conditions.functions[idx]
+            q2 = fnc(x, y, t, α*x+β*y+γ) * norm((p .+ q) ./ 2 .- q)
+            @inferred FVM.eval_condition_fnc(prob, idx, x, y, t, α * x + β * y + γ)
+            @test q2 ≈ FVM._get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ) * norm((p .+ q) ./ 2 .- q)
+            @inferred FVM._get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ)
+        end
+        # Compare
+        _q1, _q2 = FVM.get_boundary_fluxes(prob, α, β, γ, e..., t)
+        @test q1 ≈ _q1
+        @test q2 ≈ _q2
     end
 end
 
@@ -382,7 +438,7 @@ function test_single_triangle(prob, u, t)
         γ = s₇ * u[T[1]] + s₈ * u[T[2]] + s₉ * u[T[3]]
         _qn = Float64[]
         for (edge_index, (i, j)) in enumerate(DelaunayTriangulation.triangle_edges(T))
-            push!(_qn, FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, i, j, edge_index))
+            push!(_qn, FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, edge_index))
         end
         q1, q2, q3 = _qn
         dui = -(q1 - q3)
@@ -407,28 +463,32 @@ function test_source_contribution(prob, u, t)
     end
 end
 
-# returns true AND the edge its on (1 -> bot, 2 -> right, 3 -> top, 4 -> left)
 function _is_on_square(p, L)
     x, y = getxy(p)
-    if x ≈ 0.0
-        return true, 4
-    elseif x ≈ L
-        return true, 2
-    elseif y ≈ 0.0
-        return true, 1
-    elseif y ≈ L
-        return true, 3
-    else
-        return false, 0
-    end
+    on_bot = y ≈ 0.0 
+    on_right = x ≈ L
+    on_top = y ≈ L
+    on_left = x ≈ 0.0
+    return any((on_bot, on_right, on_top, on_left))
 end
 function _both_on_same_edge(p, q, L)
-    p_on, p_edge = _is_on_square(p, L)
-    q_on, q_edge = _is_on_square(q, L)
-    if p_on && q_on
-        return p_edge == q_edge, p_edge
-    else
-        return false, p_edge
+    p_on = _is_on_square(p, L)
+    q_on = _is_on_square(q, L)
+    !(p_on && q_on) && return false, 0  
+    px, py = p 
+    qx, qy = q 
+    on_bot = py ≈ 0.0 && qy ≈ 0.0
+    on_right = px ≈ L && qx ≈ L
+    on_top = py ≈ L && qy ≈ L
+    on_left = px ≈ 0.0 && qx ≈ 0.0
+    if on_bot 
+        return true, 1 
+    elseif on_right
+        return true, 2
+    elseif on_top
+        return true, 3
+    elseif on_left
+        return true, 4
     end
 end
 
@@ -454,31 +514,31 @@ function get_dudt_val(prob, u, t, i, is_diff=true)
         β = s₄ * u[T[1]] + s₅ * u[T[2]] + s₆ * u[T[3]]
         γ = s₇ * u[T[1]] + s₈ * u[T[2]] + s₉ * u[T[3]]
         if is_diff
-            q = (-α / 9, -β / 9)
-            int += L * (q[1] * nx + q[2] * ny)
+            _q = (-α / 9, -β / 9)
+            int += L * (_q[1] * nx + _q[2] * ny)
         elseif !is_diff && !_both_on_same_edge(p, q, 1.0)[1]
-            q = (-80e-6 * α, -80e-6 * β)
-            int += L * (q[1] * nx + q[2] * ny)
+            _q = (-80e-6 * α, -80e-6 * β)
+            int += L * (_q[1] * nx + _q[2] * ny)
         else
             _, idx = _both_on_same_edge(p, q, 1.0)
             if idx == 1
-                q = -80e-6 * 10.0 / 237.0
+                _q = -80e-6 * 10.0 / 237.0
             elseif idx == 2
-                q = 0.0
+                _q = 0.0
             elseif idx == 3
-                q = -80e-6 * 25.0 / 237.0 * (10.0 - (α * mx + β * my + γ))
+                _q = -80e-6 * 25.0 / 237.0 * (10.0 - (α * mx + β * my + γ))
             elseif idx == 4
-                q = 0.0
+                _q = 0.0
             end
-            #q = prob.conditions.functions[idx](mx, my, t, α * mx + β * my + γ)
-            int += L * q
+            # _q = prob.conditions.functions[idx](mx, my, t, α * mx + β * my + γ)
+            int += L * _q
         end
     end
     dudt = prob.source_function(get_point(tri, i)..., t, u[i], prob.source_parameters) - int / mesh.cv_volumes[i]
     return dudt
 end
 
-function test_dudt_val(prob, u, t; is_diff=true)
+function test_dudt_val(prob, u, t, is_diff=true)
     dudt = [get_dudt_val(prob, u, t, i, is_diff) for i in each_point_index(prob.mesh.triangulation)]
     dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, (prob=prob, parallel=Val(false)), t)
     @test dudt ≈ dudt_fnc

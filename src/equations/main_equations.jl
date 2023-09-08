@@ -21,10 +21,10 @@ end
 function parallel_fvm_eqs!(du, u, p, t)
     duplicated_du, solid_triangles,
     solid_vertices, chunked_solid_triangles,
-    boundary_edges, chunked_boundary_edges
+    boundary_edges, chunked_boundary_edges,
     prob = p.duplicated_du, p.solid_triangles,
     p.solid_vertices, p.chunked_solid_triangles,
-    p.boundary_edges, p.chunked_boundary_edges
+    p.boundary_edges, p.chunked_boundary_edges,
     p.prob
     fill!(du, zero(eltype(du)))
     _duplicated_du = get_tmp(duplicated_du, du)
@@ -36,6 +36,7 @@ function parallel_fvm_eqs!(du, u, p, t)
     return du
 end
 
+# after the parallel stages are done, we need to combine du back into its original form
 function combine_duplicated_du!(du, duplicated_du, prob)
     if prob isa FVMSystem
         for i in axes(duplicated_du, 3)

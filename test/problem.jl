@@ -118,7 +118,7 @@ u = α * x + β * y + γ
 
 test_compute_flux(prob, steady, system, steady_system)
 
-for prob in (prob, system)
+for prob in (prob, steady, system, steady_system)
     test_jacobian_sparsity(prob)
     @inferred FVM.jacobian_sparsity(prob)
 end

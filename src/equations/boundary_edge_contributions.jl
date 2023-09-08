@@ -1,18 +1,18 @@
 # function for getting both fluxes for a non-system problem
 @inline function get_boundary_fluxes(prob::AbstractFVMProblem, α::T, β, γ, i, j, t) where {T}
-    nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓᵢ, ℓⱼ = _get_boundary_cv_components(prob, i, j)
+    nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ = _get_boundary_cv_components(prob, i, j)
     q1 = _get_boundary_flux(prob, mᵢx, mᵢy, t, α, β, γ, nx, ny, i, j, α * mᵢx + β * mᵢy + γ) * one(eltype(T))
     q2 = _get_boundary_flux(prob, mⱼx, mⱼy, t, α, β, γ, nx, ny, i, j, α * mⱼx + β * mⱼy + γ) * one(eltype(T))
-    return q1 * ℓᵢ, q2 * ℓⱼ
+    return q1 * ℓ, q2 * ℓ
 end
 
 # function for getting both fluxes for a system problem
 @inline function get_boundary_fluxes(prob::FVMSystem{N}, α::T, β, γ, i, j, t) where {N,T}
-    nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓᵢ, ℓⱼ = _get_boundary_cv_components(prob, i, j)
+    nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ = _get_boundary_cv_components(prob, i, j)
     u_shapeᵢ = ntuple(var -> α[var] * mᵢx + β[var] * mᵢy + γ[var], Val(N))
     u_shapeⱼ = ntuple(var -> α[var] * mⱼx + β[var] * mⱼy + γ[var], Val(N))
-    q1 = _get_boundary_fluxes(prob, mᵢx, mᵢy, t, α, β, γ, nx, ny, i, j, u_shapeᵢ, ℓᵢ)
-    q2 = _get_boundary_fluxes(prob, mⱼx, mⱼy, t, α, β, γ, nx, ny, i, j, u_shapeⱼ, ℓⱼ)
+    q1 = _get_boundary_fluxes(prob, mᵢx, mᵢy, t, α, β, γ, nx, ny, i, j, u_shapeᵢ, ℓ)
+    q2 = _get_boundary_fluxes(prob, mⱼx, mⱼy, t, α, β, γ, nx, ny, i, j, u_shapeⱼ, ℓ)
     return q1, q2
 end
 
@@ -36,8 +36,8 @@ end
 @inline function fvm_eqs_single_boundary_edge!(du, u, prob, t, e)
     i, j = DelaunayTriangulation.edge_indices(e)
     k = get_adjacent(prob.mesh.triangulation, e)
-    props = get_triangle_props(prob, i, j, k)
     T = (i, j, k)
+    T, props = _safe_get_triangle_props(prob, T)
     α, β, γ = get_shape_function_coefficients(props, T, u, prob)
     summand₁, summand₂ = get_boundary_fluxes(prob, α, β, γ, i, j, t)
     update_du!(du, prob, i, j, summand₁, summand₂)

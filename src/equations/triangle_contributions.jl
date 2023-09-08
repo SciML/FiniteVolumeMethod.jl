@@ -1,3 +1,4 @@
+# get the fluxes from each centroid-edge edge
 @inline function get_fluxes(prob, props, α, β, γ, t)
     q1 = get_flux(prob, props, α, β, γ, t, 1)
     q2 = get_flux(prob, props, α, β, γ, t, 2)
@@ -5,12 +6,15 @@
     return q1, q2, q3
 end
 
+# update du with the fluxes from each centroid-edge edge for a non-system
 @inline function update_du!(du, ::AbstractFVMProblem, i, j, k, summand₁, summand₂, summand₃)
     du[i] = du[i] + summand₃ - summand₁
     du[j] = du[j] + summand₁ - summand₂
     du[k] = du[k] + summand₂ - summand₃
     return nothing
 end
+
+# update du with the fluxes from each centroid-edge edge for a system for all variables
 @inline function update_du!(du, ::FVMSystem{N}, i, j, k, ℓ, summand₁, summand₂, summand₃) where {N}
     for var in 1:N
         du[var, i] = du[var, i] + summand₃[var] - summand₁[var]
@@ -20,6 +24,7 @@ end
     return nothing
 end
 
+# get the contributions to the dudt system across a single triangle
 @inline function fvm_eqs_single_triangle!(du, u, prob, t, T)
     i, j, k = indices(T)
     props = get_triangle_props(prob, i, j, k)
@@ -29,6 +34,7 @@ end
     return nothing
 end
 
+# get the contributions to the dudt system across all triangles
 function get_triangle_contributions!(du, u, prob, t)
     for T in each_solid_triangle(prob.mesh.triangulation)
         fvm_eqs_single_triangle!(du, u, prob, t, T)
@@ -36,12 +42,15 @@ function get_triangle_contributions!(du, u, prob, t)
     return nothing
 end
 
+# get the contributions to the dudt system across all triangles in parallel
 function get_parallel_triangle_contributions!(duplicated_du, u, prob, t, chunked_solid_triangles, solid_triangles)
     Threads.@threads for (triangle_range, chunk_idx) in chunked_solid_triangles
         _get_parallel_triangle_contributions!(duplicated_du, u, prob, t, triangle_range, chunk_idx, solid_triangles)
     end
     return nothing
 end
+
+# get the contributions to the dudt system across a chunk of triangles
 function _get_parallel_triangle_contributions!(duplicated_du, u, prob, t, triangle_range, chunk_idx, solid_triangles)
     for triangle_idx in triangle_range
         T = solid_triangles[triangle_idx]

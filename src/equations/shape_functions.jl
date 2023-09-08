@@ -1,3 +1,4 @@
+# primitive: get the shape function coefficients for a non-system
 @inline function get_shape_function_coefficients(props::TriangleProperties, T, u, ::AbstractFVMProblem)
     i, j, k = indices(T)
     s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
@@ -6,6 +7,8 @@
     γ = s₇ * u[i] + s₈ * u[j] + s₉ * u[k]
     return α, β, γ
 end
+
+# primitive: get the shape function coefficients for a system
 @inline function get_shape_function_coefficients(props::TriangleProperties, T, u, ::FVMSystem{N}) where {N}
     i, j, k = indices(T)
     s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients

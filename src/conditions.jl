@@ -281,12 +281,12 @@ end
 @inline get_dirichlet_fidx(conds::Conditions, node) = conds.dirichlet_nodes[node]
 @inline get_constrained_fidx(conds::Conditions, i, j) = conds.constrained_edges[(i, j)]
 @inline get_f(conds::Conditions{F}, fidx) where {F} = conds.functions[fidx]
-@inline function eval_condition_fnc(conds::Conditions{F}, fidx, x, y, t, u) where {F}
+@inline function eval_condition_fnc(conds::Conditions{F}, fidx, x, y, t, u::U) where {F,U}
     f = get_f(conds, fidx)
-    return _eval_condition_fnc(f, x, y, t, u)
+    return _eval_condition_fnc(f, x, y, t, u)::eltype(U)
 end
-@inline function _eval_condition_fnc(f::F, x, y, t, u) where {F}
-    return f(x, y, t, u)
+@inline function _eval_condition_fnc(f::F, x, y, t, u::U) where {F, U}
+    return f(x, y, t, u) * one(eltype(U))
 end
 @inline is_dudt_node(conds::Conditions, node) = node ∈ keys(conds.dudt_nodes)
 @inline is_neumann_edge(conds::Conditions, i, j) = (i, j) ∈ keys(conds.neumann_edges)
