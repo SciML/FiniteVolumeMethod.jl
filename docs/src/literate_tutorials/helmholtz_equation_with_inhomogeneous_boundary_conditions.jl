@@ -15,7 +15,12 @@ using DelaunayTriangulation, FiniteVolumeMethod
 tri = triangulate_rectangle(-1, 1, -1, 1, 125, 125, single_boundary=true)
 mesh = FVMGeometry(tri)
 
-#-
+# For the boundary condition, 
+# ```math 
+# \pdv{u}{\vb n} = 1, 
+# ```
+# which is the same as $\grad u \vdot \vu n = 1$, this needs to be expressed in terms of $\vb q$.
+# Since $\vb q = -\grad u$ for this problem, the boundary condition is $\vb q \vdot \vu n = -1$.
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> -one(u), Neumann)
 
 # To now define the problem, we note that the `initial_condition` and `final_time` 
@@ -33,7 +38,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> -one(u), Neumann)
 # ```math
 # \div\vb q = S \quad \textnormal{or} \quad \div[D\grad u] + S = 0.
 # ```
-# So, for this problem, $D = 1$ and $S = u$.
+# So, for this problem, $D = 1$ and $S = u$. 
 diffusion_function = (x, y, t, u, p) -> one(u)
 source_function = (x, y, t, u, p) -> u
 initial_condition = zeros(num_points(tri))
@@ -57,12 +62,14 @@ using NonlinearSolve
 sol = solve(steady_prob, NewtonRaphson())
 copyto!(prob.initial_condition, sol.u) # this also changes steady_prob's initial condition
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()), reltol=1e-4))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 
-#-
+# For this problem, this correction by `DynamicSS` doesn't seem to actually be needed.
+# Now let's visualise.
+
 using CairoMakie
 using ReferenceTests #src
-fig, ax, sc = tricontourf(tri, sol.u)
+fig, ax, sc = tricontourf(tri, sol.u, levels=-2.5:0.15:-1.0, colormap=:matter)
 fig
 @test_reference joinpath(@__DIR__, "../figures", "helmholtz_equation_with_inhomogeneous_boundary_conditions.png") fig #src
 
@@ -81,10 +88,11 @@ function compare_solutions(tri) #src
     return x, y, u #src
 end #src
 x, y, u = compare_solutions(tri) #src
-fig = Figure(fontsize=44)
-ax = Axis(fig[1, 1], width=400, height=400)
-tricontourf!(ax, tri, sol.u, levels=-2.5:0.05:-1, colormap=:viridis)
-ax = Axis(fig[1, 2], width=400, height=400)
-tricontourf!(ax, tri, u, levels=-2.5:0.05:-1, colormap=:viridis)
-resize_to_layout!(fig)
-fig
+fig = Figure(fontsize=44) #src
+ax = Axis(fig[1, 1], width=400, height=400) #src
+tricontourf!(ax, tri, sol.u, levels=-2.5:0.15:-1.0, colormap=:matter) #src
+ax = Axis(fig[1, 2], width=400, height=400) #src
+tricontourf!(ax, tri, u, levels=-2.5:0.15:-1.0, colormap=:matter) #src
+resize_to_layout!(fig) #src
+fig #src
+@test_reference joinpath(@__DIR__, "../figures", "helmholtz_equation_with_inhomogeneous_boundary_conditions_exact_comparisons.png") fig #src

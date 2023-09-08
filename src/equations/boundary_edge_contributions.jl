@@ -1,3 +1,29 @@
+# primitive: get flux contribution across a boundary edge (i, j), taking care for a Neumann boundary condition
+@inline function _get_boundary_flux(prob::AbstractFVMProblem, x, y, t, α, β, γ, nx, ny, i, j, u::T) where {T}
+    # For checking if an edge is Neumann, we need only check e.g. (i, j) and not (j, i), since we do not allow for internal Neumann edges.
+    ij_is_neumann = is_neumann_edge(prob, i, j)
+    qn = if !ij_is_neumann
+        _non_neumann_get_flux(prob, x, y, t, α, β, γ, nx, ny)
+    else
+        _neumann_get_flux(prob, x, y, t, u, i, j)
+    end
+    return qn * one(eltype(T))
+end
+
+# primitive: get flux contribution across a boundary edge (i, j) in a system, taking care for a Neumann boundary condition for a single variable. This is used as a function barrier
+@inline function _get_boundary_flux(prob::FVMSystem, x, y, t, α, β, γ, nx, ny, i, j, u::T, var) where {T}
+    return _get_boundary_flux(get_equation(prob, var), x, y, t, α, β, γ, nx, ny, i, j, u) * one(eltype(T))
+end
+
+# get flux contribution across a boundary edge (i, j), taking care for a Neumann boundary condition for all variables in a system
+@inline function _get_boundary_fluxes(prob::FVMSystem{N}, x, y, t, α, β, γ, nx, ny, i, j, u::T, ℓ) where {N,T}
+    qn = ntuple(Val(N)) do var
+        _qn = _get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, u, var)
+        return _qn * ℓ
+    end 
+    return qn
+end
+
 # function for getting both fluxes for a non-system problem
 @inline function get_boundary_fluxes(prob::AbstractFVMProblem, α::T, β, γ, i, j, t) where {T}
     nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ = _get_boundary_cv_components(prob, i, j)
