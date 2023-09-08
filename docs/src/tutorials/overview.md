@@ -159,3 +159,19 @@ This is different to the other problems considered thus far as the problem is no
 ```math
 u(x, y) = -\frac{\cos(x+1)+\cos(1-x)+\cos(y+1)+\cos(1-y)}{\sin(2)}.
 ```
+
+# Laplace's Equation with Internal Dirichlet Conditions 
+This [tutorial](laplaces_equation_with_internal_dirichlet_conditions.md) considers Laplace's equation with internal Dirichlet conditions:
+```math
+\begin{equation}
+\begin{aligned}
+\grad^2 u &= 0 & \vb x \in [0, 1]^2, \\ 
+u(0, y) &= 100y & 0 \leq y \leq 1, \\
+u(1, y) &= 100y & 0 \leq y \leq 1, \\
+u(x, 0) &= 0 & 0 \leq x \leq 1, \\
+u(x, 1) &= 100 & 0 \leq x \leq 1, \\
+u(1/2, y) &= 0 & 0 \leq y \leq 2/5.
+\end{aligned}
+\end{equation}
+````
+This last condition $u(1/2, y) = 0$ is the internal condition that needs to be dealt with.
