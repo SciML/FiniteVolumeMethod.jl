@@ -57,7 +57,7 @@ end
 function parallel_update_dirichlet_nodes!(u, t, p, prob::FVMSystem{N}) where {N}
     dirichlet_nodes = p.dirichlet_nodes
     for var in 1:N
-        Threads.@threads for i in dirichlet_nodes[j]
+        Threads.@threads for i in dirichlet_nodes[var]
             function_index = get_dirichlet_fidx(prob, i, var)
             update_dirichlet_nodes_single!(u, t, prob, i, var, function_index)
         end

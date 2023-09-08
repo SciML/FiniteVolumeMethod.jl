@@ -50,7 +50,7 @@ end
 end
 
 # function for applying both fluxes for a system problem
-@inline function update_du!(du, ::FVMSystem{N}, i, j, ℓ, summand₁, summand₂) where {N}
+@inline function update_du!(du, ::FVMSystem{N}, i, j, summand₁, summand₂) where {N}
     for var in 1:N
         du[var, i] = du[var, i] - summand₁[var]
         du[var, j] = du[var, j] - summand₂[var]

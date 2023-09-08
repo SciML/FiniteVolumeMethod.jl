@@ -1,0 +1,1 @@
+# # Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System

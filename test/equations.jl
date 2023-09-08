@@ -3,6 +3,8 @@ using Test
 using PolygonOps
 using LinearAlgebra
 using DelaunayTriangulation
+using OrdinaryDiffEq
+using LinearSolve
 const FVM = FiniteVolumeMethod
 const DT = DelaunayTriangulation
 include("test_functions.jl")
@@ -75,4 +77,34 @@ end
     flser = FVM.fvm_eqs!(zeros(num_points(tri)), u, FVM.get_multithreading_vectors(prob), t)[i]
     @test fl ≈ flpar
     @test fl ≈ flser
+end
+
+
+@testset "Diffusion problem" begin
+    prob = example_diffusion_problem()
+    u = prob.initial_condition
+    t = 0.0
+    test_shape_function_coefficients(prob, u)
+    test_get_flux(prob, u, t)
+    test_get_boundary_flux(prob, u, t)
+    test_single_triangle(prob, u, t)
+    test_source_contribution(prob, u, t)
+    test_dudt_val(prob, u, t)
+end
+
+@testset "FVMSystem" begin
+    prob = example_diffusion_problem()
+    @test_throws FVM.InvalidFluxError FVMSystem(prob, prob)
+    sys, prob = example_diffusion_problem_system()
+    solsys = solve(sys, TRBDF2(linsolve=KLUFactorization()), saveat=0.05)
+    solsysser = solve(sys, TRBDF2(linsolve=KLUFactorization()), saveat=0.05, parallel=Val(false))
+    solprob = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.05)
+    solprobser = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.05, parallel=Val(false))
+    solprobu = reduce(hcat, solprob.u)
+    solprobseru = reduce(hcat, solprobser.u)
+    solsysu1 = reduce(hcat, [solsys.u[i][1, :] for i in eachindex(solsys)])
+    solsysu2 = reduce(hcat, [solsys.u[i][2, :] for i in eachindex(solsys)])
+    solsysser1 = reduce(hcat, [solsysser.u[i][1, :] for i in eachindex(solsysser)])
+    solsysser2 = reduce(hcat, [solsysser.u[i][2, :] for i in eachindex(solsysser)])
+    @test all(≈(solprobu), (solprobseru, solsysu1, solsysu2, solsysser1, solsysser2))
 end

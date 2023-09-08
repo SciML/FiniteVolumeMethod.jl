@@ -19,7 +19,7 @@ end
     x, y = getxy(p)
     if !has_condition(prob, i, var)
         S = @views eval_source_fnc(prob, var, x, y, t, u[:, i]) * one(eltype(T))
-    elseif is_dirichlet_node(prob, i)
+    elseif is_dirichlet_node(prob, i, var)
         S = zero(eltype(T))
     else # Dudt
         function_index = get_dudt_fidx(prob, i, var)

@@ -86,7 +86,7 @@ rather than
 \pdv{u(\vb x, t)}{t} + \div \vb q(\vb x, t, u) = S(\vb x, t, u),
 ```
 
-than you need to wrap the `FVMProblem` inside a `SteadyFVMProblem`, defined below; the fields of `SteadyFVMProblem` are not public API, only this wrapper is.
+than you need to wrap the `FVMProblem` inside a `SteadyFVMProblem`, defined below; the fields of `SteadyFVMProblem` are public API.
 
 ```@docs
 SteadyFVMProblem
@@ -107,7 +107,7 @@ We also allow for systems of PDEs to be defined, where this system should take t
 \end{equation*}
 ```
 
-To define this system, you need to provide an `FVMProblem` for each equation, and then construct an `FVMSystem` from these problems. The docstring for `FVMSystem` is below; the fields of `FVMSystem` are not public API, only this wrapper is.
+To define this system, you need to provide an `FVMProblem` for each equation, and then construct an `FVMSystem` from these problems. The docstring for `FVMSystem` is below; the fields of `FVMSystem` are public API.
 
 ```@docs
 FVMSystem
@@ -139,7 +139,7 @@ compute_flux
 
 ## Piecewise linear interpolation
 
-You can evaluate the piecewise linear interpolation corresponding to a solution using `pl_interpolant`, defined below.
+You can evaluate the piecewise linear interpolation corresponding to a solution using `pl_interpolant`, defined below; this function is public API.
 
 ```@docs
 pl_interpolate

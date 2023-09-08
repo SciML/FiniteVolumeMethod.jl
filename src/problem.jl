@@ -96,7 +96,7 @@ end
 function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, internal_conditions::InternalConditions=InternalConditions();
     diffusion_function=nothing,
     diffusion_parameters=nothing,
-    source_function=(x, y, t, u, p) -> zero(u),
+    source_function=(x, y, t, u, p) -> zero(eltype(u)),
     source_parameters=nothing,
     flux_function=nothing,
     flux_parameters=nothing,
@@ -127,9 +127,6 @@ end
 function SteadyFVMProblem(prob::P) where {P}
     return SteadyFVMProblem{P,typeof(prob.mesh)}(prob, prob.mesh)
 end
-#ConstructionBase.constructorof(::Type{SteadyFVMProblem{P}}) where {P<:FVMProblem} = problem -> begin
-#    SteadyFVMProblem{P,typeof(problem.mesh)}(problem)
-#end
 
 function Base.show(io::IO, ::MIME"text/plain", prob::SteadyFVMProblem)
     nv = num_points(prob.mesh.triangulation)
@@ -155,8 +152,16 @@ which for a [`FVMProblem`](@ref) takes the form
 
     q(x, y, t, α, β, γ, p) ↦ (qx, qy),
 
-the same form is used, except `α`, `β`, `γ` are all `Tuple`s so that `α[i]*x + β[i]*y + γ` is the 
-approximation to `uᵢ`.
+the same form is used, except `α`, `β`, `γ` are all `Tuple`s so that `α[i]*x + β[i]*y + γ[i]` is the 
+approximation to `uᵢ`. 
+
+!!! warning "Providing default flux functions"
+
+    Due to this difference in flux functions, and the need to provide 
+    `α`, `β`, and `γ` to the flux function, for `FVMSystem`s you need to 
+    provide a flux function rather than a diffusion function. If you do
+    provide a diffusion function, it will error when you try to solve 
+    the problem.
 
 This problem is solved in the same way as a [`FVMProblem`](@ref), except the problem is defined such that 
 the solution returns a matrix at each time, where the `(j, i)`th component corresponds to the solution at the `i`th 
@@ -175,15 +180,55 @@ struct FVMSystem{N,FG,P,IC,FT} <: AbstractFVMProblem
     initial_condition::IC
     initial_time::FT
     final_time::FT
-    function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::FT, final_time::FT) where {FG,P,IC,FT}
-        @assert length(problems) > 0 "There must be at least one problem."
-        @assert all(p -> p.mesh === mesh, problems) "All problems must have the same mesh."
-        @assert all(p -> p.initial_time === initial_time, problems) "All problems must have the same initial time."
-        @assert all(p -> p.final_time === final_time, problems) "All problems must have the same final time."
-        @assert size(initial_condition) == (length(problems), length(problems[1].initial_condition)) "The initial condition must be a matrix with the same number of rows as the number of problems."
-        return new{length(problems),FG,P,IC,FT}(mesh, problems, initial_condition, initial_time, final_time)
+end
+function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::FT, final_time::FT) where {FG<:FVMGeometry,P,IC,FT}
+    @assert length(problems) > 0 "There must be at least one problem."
+    @assert all(p -> p.mesh === mesh, problems) "All problems must have the same mesh."
+    @assert all(p -> p.initial_time === initial_time, problems) "All problems must have the same initial time."
+    @assert all(p -> p.final_time === final_time, problems) "All problems must have the same final time."
+    @assert size(initial_condition) == (length(problems), length(problems[1].initial_condition)) "The initial condition must be a matrix with the same number of rows as the number of problems."
+    sys = FVMSystem{length(problems),FG,P,IC,FT}(mesh, problems, initial_condition, initial_time, final_time)
+    _check_fvmsystem_flux_function(sys)
+    return sys
+end
+
+const FLUX_ERROR =  """
+                    The flux function errored when evaluated. Please recheck your specification of the function. 
+                    If any of your problems have been defined in terms of a diffusion function D(x, y, t, u, p)
+                    rather than a flux function, then you need to instead provide a flux function q(x, y, t, α, β, γ, p),
+                    recalling the relationship between the two:
+
+                        q(x, y, t, α, β, γ, p) = -D(x, y, t, α*x + β*y + γ, p) .* (α, β)
+
+                    where p is the same argument for both functions.
+                    """
+struct InvalidFluxError <: Exception end 
+function Base.showerror(io::IO, ::InvalidFluxError)
+    print(io, FLUX_ERROR)
+end
+
+function _check_fvmsystem_flux_function(prob::FVMSystem)
+    t0 = prob.initial_time
+    T = first(each_solid_triangle(prob.mesh.triangulation))
+    i, j, k = indices(T)
+    p, q, r = get_point(prob.mesh.triangulation, i, j, k)
+    px, py = getxy(p)
+    qx, qy = getxy(q)
+    rx, ry = getxy(r)
+    cx, cy = (px + qx + rx) / 3, (py + qy + ry) / 3
+    u = prob.initial_condition
+    α, β, γ = get_shape_function_coefficients(prob.mesh.triangle_props[T], T, u, prob)
+    try
+        eval_flux_function(prob, cx, cy, t0, α, β, γ)
+    catch e
+        if e isa MethodError
+            throw(InvalidFluxError())
+         else
+            rethrow(e)
+        end
     end
 end
+
 Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, "FVMSystem with $N equations and time span ($(prob.initial_time), $(prob.final_time))")
 
 @inline get_dudt_fidx(prob::FVMSystem, i, var) = get_dudt_fidx(get_equation(prob, var), i)
@@ -199,7 +244,7 @@ Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, 
 @inline has_condition(prob::FVMSystem, node, var) = has_condition(get_equation(prob, var), node)
 @inline has_dirichlet_nodes(prob::FVMSystem{N}) where {N} = any(i -> has_dirichlet_nodes(get_equation(prob, i)), 1:N)
 @inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(get_equation(prob, var))
-@inline eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) where {N} = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α[i], β[i], γ[i]), Val(N))
+@inline eval_flux_function(prob::FVMSystem{N}, x, y, t, α, β, γ) where {N} = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), Val(N))
 
 function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     N == 0 && error("There must be at least one problem.")

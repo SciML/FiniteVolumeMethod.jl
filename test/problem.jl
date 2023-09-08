@@ -86,14 +86,20 @@ steady = SteadyFVMProblem(prob)
 @test FVM._neqs(steady) == 0
 @test !FVM.is_system(steady)
 
-system = FVMSystem(prob, prob, prob, prob, prob)
-@inferred FVMSystem(prob, prob, prob, prob, prob)
+
+prob1, prob2, prob3, prob4, prob5 = example_problem(1; tri, mesh, initial_condition)[1],
+example_problem(2; tri, mesh, initial_condition)[1],
+example_problem(3; tri, mesh, initial_condition)[1],
+example_problem(4; tri, mesh, initial_condition)[1],
+example_problem(5; tri, mesh, initial_condition)[1]
+system = FVMSystem(prob1, prob2, prob3, prob4, prob5)
+@inferred FVMSystem(prob1, prob2, prob3, prob4, prob5)
 _α = ntuple(_ -> α, 5)
 _β = ntuple(_ -> β, 5)
 _γ = ntuple(_ -> γ, 5)
 @test FVM.eval_flux_function(system, x, y, t, _α, _β, _γ) == ntuple(_ -> (qx, qy), 5)
 @inferred FVM.eval_flux_function(system, x, y, t, _α, _β, _γ)
-@test system.initial_condition == [initial_condition initial_condition initial_condition initial_condition initial_condition]'
+@test system.initial_condition ≈ [initial_condition initial_condition initial_condition initial_condition initial_condition]'
 @test FVM._neqs(system) == 5
 @test FVM.is_system(system)
 @test system.initial_time == 2.0

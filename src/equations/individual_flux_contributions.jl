@@ -8,7 +8,7 @@ end
 # primitive: flux contribution with a Neumann boundary condition
 @inline function _neumann_get_flux(prob, x, y, t, u::T, i, j) where {T}
     function_index = get_neumann_fidx(prob, i, j)
-    qn = eval_condition_fnc(prob, function_index, x, y, t, u) * one(T)
+    qn = eval_condition_fnc(prob, function_index, x, y, t, u) * one(eltype(T))
     return qn * one(eltype(T))
 end
 

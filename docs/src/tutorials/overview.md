@@ -1,5 +1,9 @@
 # Section Overview 
 
+```@contents
+Pages = ["overview.md"]
+```
+
 We provide many tutorials in this section. Each tutorial is self-contained, although 
 more detail will be offered in the earlier examples. At the end of each tutorial we show the uncommented code, but if you want to see the actual script itself that generates these tutorials, then click on the `Edit on GitHub` section on the top right of the respective tutorial.
 
@@ -217,3 +221,41 @@ text!(ax, [(0.001, 0.03)], text=L"\Gamma_1", fontsize=44)
 ```@example equilex 
 fig #hide
 ```
+
+# A Reaction-Diffusion Brusselator System of PDEs 
+In this [tutorial](reaction_diffusion_brusselator_system_of_pdes.md) we consider the following system:
+```math
+\begin{equation}
+\begin{aligned}
+\pdv{\Phi}{t} &= \frac14\grad^2 \Phi + \Phi^2\Psi - 2\Phi, \\
+\pdv{\Psi}{t} &= \frac14\grad^2 \Psi - \Phi^2\Psi + \Phi,
+\end{aligned} \quad \vb x \in [0, 1]^2,
+\end{equation}
+```
+which has a solution[^6]
+```math
+\begin{equation}\label{eq:brusleexct}
+\begin{aligned}
+\Phi(x, y, t) &=\exp(-x-y-t/2), \\
+\Psi(x, y, t) &= \exp(x+y+t/2).
+\end{aligned}
+\end{equation}
+```
+
+We use this exact solution to define the initial condition and Neumann boundary conditions.
+
+[^6]: See [Islam, Ali, and Haq (2010)](https://doi.org/10.1016/j.apm.2010.03.028).
+
+# Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System
+In this [tutorial](gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.md) we consider the Gray-Scott model, given by
+```math
+\begin{equation}
+\begin{aligned}
+\pdv{u}{t} &= \varepsilon_1\grad^2u+b(1-u)-uv^2, \\
+\pdv{v}{t} &= \varepsilon_2\grad v - dv+uv^2,
+\end{aligned}
+\end{equation}
+```
+with zero flux boundary conditions. We use this example to explore how changing parameters slightly leads to some amazing patterns, known as _Turing patterns_.[^7]
+
+[^7]: There are many papers discussing this. See, e.g., [Gandy and Nelson (2022)](https://epubs.siam.org/doi/epdf/10.1137/21M1402868) for a recent paper.

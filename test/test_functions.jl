@@ -95,9 +95,10 @@ function example_tri_rect()
     return tri
 end
 
-function example_problem()
-    tri = example_tri_rect()
-    mesh = FVMGeometry(tri)
+function example_problem(idx=1;
+    tri=example_tri_rect(),
+    mesh=FVMGeometry(tri),
+    initial_condition=rand(num_points(tri)))
     f1 = (x, y, t, u, p) -> x * y + u - p
     f2 = (x, y, t, u, p) -> u + p - t
     f3 = (x, y, t, u, p) -> x
@@ -108,13 +109,12 @@ function example_problem()
     BCs = BoundaryConditions(mesh, f, conditions; parameters=parameters)
     internal_dirichlet_nodes = Dict([7 + (i - 1) * 12 for i in 2:18] .=> 1)
     ICs = InternalConditions((x, y, t, u, p) -> x + y + t + u + p, ; dirichlet_nodes=internal_dirichlet_nodes, parameters=0.29)
-    flux_function = (x, y, t, α, β, γ, p) -> let u = α * x + β * y + γ
-        (-α * u * p[1] + t, x + t - β * u * p[2])
+    flux_function = (x, y, t, α, β, γ, p) -> let u = α[idx] * x + β[idx] * y + γ[idx]
+        (-α[idx] * u * p[1] + t, x + t - β[idx] * u * p[2])
     end
     flux_parameters = (-0.5, 1.3)
     source_function = (x, y, t, u, p) -> u + p
     source_parameters = 1.5
-    initial_condition = rand(num_points(tri))
     initial_time = 2.0
     final_time = 5.0
     prob = FVMProblem(mesh, BCs, ICs;
@@ -270,6 +270,23 @@ function example_diffusion_problem()
     prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
     return prob
 end
+function example_diffusion_problem_system()
+    a, b, c, d = 0.0, 2.0, 0.0, 2.0
+    nx, ny = 25, 25
+    tri = triangulate_rectangle(a, b, c, d, nx, ny, single_boundary=true)
+    mesh = FVMGeometry(tri)
+    bc = (x, y, t, u, p) -> zero(u[1]) * zero(u[2])
+    BCs = BoundaryConditions(mesh, bc, Dirichlet)
+    f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
+    initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+    D = (x, y, t, u, p) -> 1 / 9
+    q1 = (x, y, t, α, β, γ, p) -> (-α[1] / 9, -β[1] / 9)
+    q2 = (x, y, t, α, β, γ, p) -> (-α[2] / 9, -β[2] / 9)
+    final_time = 0.5
+    prob1 = FVMProblem(mesh, BCs; flux_function=q1, initial_condition, final_time)
+    prob2 = FVMProblem(mesh, BCs; flux_function=q2, initial_condition, final_time)
+    return FVMSystem(prob1, prob2), example_diffusion_problem()
+end
 
 function example_heat_convection_problem()
     L = 1.0
@@ -414,7 +431,7 @@ function test_get_boundary_flux(prob, u, t, is_diff=true)
             nx, ny = (qy - py) / norm(p .- q), -(qx - px) / norm(p .- q)
             idx = -get_adjacent(tri, j, i)
             fnc = prob.conditions.functions[idx]
-            q2 = fnc(x, y, t, α*x+β*y+γ) * norm((p .+ q) ./ 2 .- q)
+            q2 = fnc(x, y, t, α * x + β * y + γ) * norm((p .+ q) ./ 2 .- q)
             @inferred FVM.eval_condition_fnc(prob, idx, x, y, t, α * x + β * y + γ)
             @test q2 ≈ FVM._get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ) * norm((p .+ q) ./ 2 .- q)
             @inferred FVM._get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, α * x + β * y + γ)
@@ -466,7 +483,7 @@ end
 
 function _is_on_square(p, L)
     x, y = getxy(p)
-    on_bot = y ≈ 0.0 
+    on_bot = y ≈ 0.0
     on_right = x ≈ L
     on_top = y ≈ L
     on_left = x ≈ 0.0
@@ -475,15 +492,15 @@ end
 function _both_on_same_edge(p, q, L)
     p_on = _is_on_square(p, L)
     q_on = _is_on_square(q, L)
-    !(p_on && q_on) && return false, 0  
-    px, py = p 
-    qx, qy = q 
+    !(p_on && q_on) && return false, 0
+    px, py = p
+    qx, qy = q
     on_bot = py ≈ 0.0 && qy ≈ 0.0
     on_right = px ≈ L && qx ≈ L
     on_top = py ≈ L && qy ≈ L
     on_left = px ≈ 0.0 && qx ≈ 0.0
-    if on_bot 
-        return true, 1 
+    if on_bot
+        return true, 1
     elseif on_right
         return true, 2
     elseif on_top
@@ -667,5 +684,5 @@ function test_jacobian_sparsity(prob::FVMSystem{N}) where {N}
         end
     end
     @test A == FVM.jacobian_sparsity(prob)
-end 
+end
 test_jacobian_sparsity(prob::SteadyFVMProblem) = test_jacobian_sparsity(prob.problem)
