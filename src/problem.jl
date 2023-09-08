@@ -123,10 +123,14 @@ See also [`FVMProblem`](@ref) and [`FVMSystem`](@ref).
 struct SteadyFVMProblem{P<:AbstractFVMProblem,M<:FVMGeometry} <: AbstractFVMProblem
     problem::P
     mesh::M
-    function SteadyFVMProblem(prob::P) where {P}
-        return new{P,typeof(prob.mesh)}(prob, prob.mesh)
-    end
 end
+function SteadyFVMProblem(prob::P) where {P}
+    return SteadyFVMProblem{P,typeof(prob.mesh)}(prob, prob.mesh)
+end
+#ConstructionBase.constructorof(::Type{SteadyFVMProblem{P}}) where {P<:FVMProblem} = problem -> begin
+#    SteadyFVMProblem{P,typeof(problem.mesh)}(problem)
+#end
+
 function Base.show(io::IO, ::MIME"text/plain", prob::SteadyFVMProblem)
     nv = num_points(prob.mesh.triangulation)
     is_sys = is_system(prob)

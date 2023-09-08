@@ -460,6 +460,7 @@ function test_source_contribution(prob, u, t)
         end
         FVM.fvm_eqs_single_source_contribution!(du, u, prob, t, i)
         @test du[i] ≈ _du
+        @inferred FVM.get_source_contribution(prob, u, t, i)
     end
 end
 
@@ -666,4 +667,5 @@ function test_jacobian_sparsity(prob::FVMSystem{N}) where {N}
         end
     end
     @test A == FVM.jacobian_sparsity(prob)
-end
+end 
+test_jacobian_sparsity(prob::SteadyFVMProblem) = test_jacobian_sparsity(prob.problem)

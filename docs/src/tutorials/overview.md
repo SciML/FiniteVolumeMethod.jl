@@ -173,5 +173,47 @@ u(x, 1) &= 100 & 0 \leq x \leq 1, \\
 u(1/2, y) &= 0 & 0 \leq y \leq 2/5.
 \end{aligned}
 \end{equation}
-````
+```
 This last condition $u(1/2, y) = 0$ is the internal condition that needs to be dealt with.
+
+# Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems
+
+This [tutorial](equilibrium_temperature_distribution_with_mixed_boundary_conditions.md) considers the equilibrium temperature distribution in a square plate with mixed boundary conditions:
+```math
+\begin{equation}
+\begin{aligned}
+\grad^2 T &= 0 & \vb x \in \Omega, \\
+\grad T \vdot \vu n &= 0 & \vb x \in \Gamma_1, \\
+T &= 40 & \vb x \in \Gamma_2, \\
+k\grad T \vdot \vu n &= h(T_{\infty} - T) & \vb x \in \Gamma_3, \\
+T &= 70 & \vb x \in \Gamma_4. \\
+\end{aligned}
+\end{equation}
+```
+This domain $\Omega$ with boundary $\partial\Omega=\Gamma_1\cup\Gamma_2\cup\Gamma_3\cup\Gamma_4$ is shown below. For this tutorial, we also consider how varying $T_{\infty}$ affects the results, using interpolation and `EnsembleProblem`s to study this efficiently.
+
+```@setup equilex
+using CairoMakie
+A = (0.0, 0.06)
+B = (0.03, 0.06)
+F = (0.03, 0.05)
+G = (0.05, 0.03)
+C = (0.06, 0.03)
+D = (0.06, 0.0)
+E = (0.0, 0.0)
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel="x", ylabel="y")
+lines!(ax, [A, E, D], color=:red, linewidth=5)
+lines!(ax, [B, F, G, C], color=:blue, linewidth=5)
+lines!(ax, [C, D], color=:black, linewidth=5)
+lines!(ax, [A, B], color=:magenta, linewidth=5)
+text!(ax, [(0.03, 0.001)], text=L"\Gamma_1", fontsize=44)
+text!(ax, [(0.055, 0.01)], text=L"\Gamma_2", fontsize=44)
+text!(ax, [(0.04, 0.04)], text=L"\Gamma_3", fontsize=44)
+text!(ax, [(0.015, 0.053)], text=L"\Gamma_4", fontsize=44)
+text!(ax, [(0.001, 0.03)], text=L"\Gamma_1", fontsize=44)
+```
+
+```@example equilex 
+fig #hide
+```

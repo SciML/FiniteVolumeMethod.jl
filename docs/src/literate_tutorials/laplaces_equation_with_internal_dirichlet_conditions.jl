@@ -12,7 +12,7 @@
 # u(1/2, y) &= 0 & 0 \leq y \leq 2/5.
 # \end{aligned}
 # \end{equation}
-# ````
+# ```
 # To start with solving this problem, let us define an initial mesh. 
 using DelaunayTriangulation, FiniteVolumeMethod
 tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary=false)
@@ -26,6 +26,7 @@ tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary=false)
 # [^1]: Of course, by defining the grid spacing appropriately we could have such points, but we just want to show here how we can add these points in if needed. 
 
 # Let us now add in the points. 
+using CairoMakie
 new_points = LinRange(0, 2 / 5, 250)
 for y in new_points
     add_point!(tri, 1 / 2, y)
@@ -83,7 +84,7 @@ ICs = InternalConditions((x, y, t, u, p) -> zero(u),
     dirichlet_nodes=Dict(vertices .=> 1))
 
 # Now we can define the problem. As discussed in 
-# the [Helmholtz tutorial](helmholtz_equation_with_inhomogeneous_boundary_conditions),
+# the [Helmholtz tutorial](helmholtz_equation_with_inhomogeneous_boundary_conditions.html),
 # we are looking to define a steady state problem, and so 
 # the initial condition needs to be a suitable initial guess of 
 # what the solution could be. Looking to the boundary and internal conditions, 
@@ -113,7 +114,6 @@ using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
 sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 
 #-
-using CairoMakie 
 fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 100, 28))
 tightlimits!(ax)
 fig

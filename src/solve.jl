@@ -110,7 +110,7 @@ jacobian_sparsity(prob::SteadyFVMProblem) = jacobian_sparsity(prob.problem)
             cb_needed
         end,
         update_dirichlet_nodes!,
-        save_positions=(!has_saveat, !has_saveat)
+        save_positions=(!has_saveat, !has_saveat),
     )
     return cb
 end
@@ -143,7 +143,7 @@ function SciMLBase.SteadyStateProblem(prob::SteadyFVMProblem;
     callback=nothing, # need this to check if user provides it
     saveat=nothing) where {S,B}
     ode_prob = ODEProblem(prob.problem; specialization, jac_prototype, parallel, callback, saveat)
-    nl_prob = SteadyStateProblem(ode_prob)
+    nl_prob = SteadyStateProblem{true}(ode_prob.f, ode_prob.u0, ode_prob.p; ode_prob.kwargs...)
     return nl_prob
 end
 

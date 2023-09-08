@@ -22,8 +22,8 @@ Note that the PDE is provided in polar form, but Cartesian coordinates
 are assumed for the operators in our code. The conversion is easy, noting
 that the two Neumann conditions are just equations of the form $\grad u \vdot \vu n = 0$.
 Moreover, although the right-hand side of the PDE is given as a Laplacian,
-recall that $\grad^2 = \div\grad$, so we can write the PDE as $\partial u/\partial t + \div q = 0$,
-where $\div q = -\grad u$.
+recall that $\grad^2 = \div\grad$, so we can write the PDE as $\partial u/\partial t + \div \vb q = 0$,
+where $\vb q = -\grad u$.
 
 Let us now setup the problem. To define the geometry,
 we need to be careful that the `Triangulation` recognises
@@ -99,7 +99,7 @@ If you did want to use the flux formulation, you would need to provide
 flux = (x, y, t, α, β, γ, p) -> (-α, -β)
 ````
 
-which replace `u` with `αx + βy + γ` so that we approximate $\grad u$ by $(\alpha,\beta)^{\mkern-1.5mu\mathsf{T}}$,
+which replaces `u` with `αx + βy + γ` so that we approximate $\grad u$ by $(\alpha,\beta)^{\mkern-1.5mu\mathsf{T}}$,
 and the negative is needed since $\vb q = -\grad u$.
 
 We now solve the problem. We provide the solver for this problem.
