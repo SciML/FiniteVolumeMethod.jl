@@ -66,7 +66,9 @@ bc2 = (x, y, t, T, p) -> oftype(T, 40.0) # T=40
 bc3 = (x, y, t, T, p) -> -p.h * (p.T∞ - T) / p.k # k∇T⋅n=h(T∞-T). The minus is since q = -∇T 
 bc4 = (x, y, t, T, p) -> oftype(T, 70.0) # T=70
 parameters = (nothing, nothing, (h=h, T∞=T∞, k=k), nothing)
-BCs = BoundaryConditions(mesh, (bc1, bc2, bc3, bc4), (Neumann, Dirichlet, Neumann, Dirichlet); parameters)
+BCs = BoundaryConditions(mesh, (bc1, bc2, bc3, bc4),
+    (Neumann, Dirichlet, Neumann, Dirichlet);
+    parameters)
 
 # Now we can define the actual problem. For the initial condition, 
 # which recall is used as an initial guess for steady state problems, 
@@ -89,7 +91,7 @@ using OrdinaryDiffEq, SteadyStateDiffEq
 sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
 
 #-
-fig, ax, sc = tricontourf(tri, sol.u, levels=25)
+fig, ax, sc = tricontourf(tri, sol.u, levels=40:70, axis=(xlabel="x", ylabel="y"))
 fig
 using ReferenceTests #src
 @test_reference joinpath(@__DIR__, "../figures", "equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.png") fig #src
@@ -102,7 +104,7 @@ using ReferenceTests #src
 # a good idea to use a new initial condition given by the solution of the previous problem.
 copyto!(prob.initial_condition, sol.u)
 using Accessors
-T∞_range = LinRange(-100, 100, 100)
+T∞_range = LinRange(-100, 100, 101)
 ens_prob = EnsembleProblem(steady_prob,
     prob_func=(prob, i, repeat) -> let T∞_range = T∞_range, h = h, k = k
         _prob =
@@ -129,15 +131,34 @@ fig
 # We see that the temperature at this point seems to increase linearly 
 # with $T_{\infty}$. Let us find precisely where this curve 
 # meets $T=50$ and $T=55$.
-using NonlinearSolve
+using NonlinearSolve, DataInterpolations
 itp = LinearInterpolation(itp_vals, T∞_range)
-rootf = (u, p) -> p.itp(u) - p.τ[] 
+rootf = (u, p) -> p.itp(u) - p.τ[]
 Tthresh = Ref(50.0)
-prob = IntervalNonlinearProblem(rootf, (-100.0, 100.0), (itp=itp,τ=Tthresh))
-sol50 = solve(prob, ITP()) 
+prob = IntervalNonlinearProblem(rootf, (-100.0, 100.0), (itp=itp, τ=Tthresh))
+sol50 = solve(prob, ITP())
 
 #-
 Tthresh[] = 55.0
 sol55 = solve(prob, ITP())
 
 # So, it seems like the answer to our question is $-11.8 \leq T_{\infty} \leq 55$.
+# Here is an an animation of the temperature distribution as $T_{\infty}$ varies.
+fig = Figure(fontsize=33)
+i = Observable(1)
+tt = map(i -> L"T_{\infty} = %$(rpad(round(T∞_range[i], digits=3),5,'0'))", i)
+u = map(i -> esol.u[i], i)
+ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y",
+    title=tt, titlealign=:left)
+tricontourf!(ax, tri, u, levels=40:70, extendlow=:auto, extendhigh=:auto)
+tightlimits!(ax)
+record(fig, joinpath(@__DIR__, "../figures", "temperature_animation.mp4"), eachindex(esol);
+    framerate=12) do _i
+    i[] = _i
+end; 
+
+# ```@raw html
+# <figure>
+#     <img src='../figures/temperature_animation.mp4', alt='Animation of the temperature distribution'><br>
+# </figure>
+# ```
