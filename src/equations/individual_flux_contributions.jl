@@ -54,12 +54,12 @@ end
 end
 
 # primitive: get flux contribution across a boundary edge (i, j) in a system, taking care for a Neumann boundary condition for a single variable. This is used as a function barrier
-@inline function _get_boundary_flux(prob::FVMSystem, x, y, t, α, β, γ, nx, ny, i, j, u::T, var)
+@inline function _get_boundary_flux(prob::FVMSystem, x, y, t, α, β, γ, nx, ny, i, j, u::T, var) where {T}
     return _get_boundary_flux(get_equation(prob, var), x, y, t, α, β, γ, nx, ny, i, j, u) * one(eltype(T))
 end
 
 # get flux contribution across a boundary edge (i, j), taking care for a Neumann boundary condition for all variables in a system
-@inline function _get_boundary_fluxes(prob::FVMSystem{N}, x, y, t, α, β, γ, nx, ny, i, j, u::T, ℓ) where {T}
+@inline function _get_boundary_fluxes(prob::FVMSystem{N}, x, y, t, α, β, γ, nx, ny, i, j, u::T, ℓ) where {N,T}
     qn = ntuple(Val(N)) do var
         _qn = _get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, u, var)
         return _qn * ℓ
