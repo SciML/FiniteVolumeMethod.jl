@@ -11,12 +11,16 @@ function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem{N}}) where 
     solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
     solid_vertices = collect(each_solid_vertex(prob.mesh.triangulation))
     chunked_solid_triangles = chunks(solid_triangles, nt)
+    boundary_edges = keys(get_boundary_edge_map(prob.mesh.triangulation))
+    chunked_boundary_edges = chunks(boundary_edges, nt)
     return (
         duplicated_du=duplicated_du,
         dirichlet_nodes=dirichlet_nodes,
         solid_triangles=solid_triangles,
         solid_vertices=solid_vertices,
         chunked_solid_triangles=chunked_solid_triangles,
+        boundary_edges=boundary_edges,
+        chunked_boundary_edges=chunked_boundary_edges,
         parallel=Val(true),
         prob=prob
     )
