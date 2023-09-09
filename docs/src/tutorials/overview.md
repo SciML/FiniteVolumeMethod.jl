@@ -312,17 +312,14 @@ In this [tutorial](solving_mazes_with_laplaces_equation.md), we consider solving
 ```
 The solution can then be found by looking at the potential $\grad\phi$.
 
-# A Cyclic Competition Model 
-In this [tutorial](a_cyclic_competition_model.md), we consider a cyclic competition model, given by[^10]
-```math
-\begin{equation}
+# Keller-Segel Model of Chemotaxis 
+In this [tutorial](keller_segel_model_chemotaxis.md), we consider the following Keller-Segel model of chemotaxis:
+```math 
+\begin{equation*}
 \begin{aligned}
-\pdv{u}{t} &= D_u\grad^2 u + u(1-u-av-bw), \\
-\pdv{v}{t} &= D_v\grad^2 v + v(1-bu-v-aw), \\
-\pdv{w}{t} &= D_w\grad^2 w + w(1-au-bv-w),
+\pdv{u}{t} &= \grad^2u - \div \left(\frac{cu}{1+u^2}\grad v\right) + u(1-u), \\
+\pdv{v}{t} &= D\grad^2 v + u - av,
 \end{aligned}
-\end{equation}
+\end{equation*}
 ```
-with homogeneous Neumann boundary conditions on a rectangle.
-
-[^10]: We borrow this example from [VisualPDE](https://visualpde.com/mathematical-biology/cyclic-competition.html).
+inside the square $[0, 100]^2$ with homogeneous Neumann boundary conditions.

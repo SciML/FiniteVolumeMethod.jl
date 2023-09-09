@@ -131,7 +131,7 @@ If you want to make a steady-state problem for an `FVMSystem`, you should apply 
 You can use `solve` from the SciMLBase ecosystem to solve these PDEs. This allows you to use [any of the available algorithms from DifferentialEquations.jl](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/) for solving these problems. For non-steady problems, the relevant function is (which is public API)
 
 ```@docs
-solve(::Union{FVMProblem,FVMSystem,FVMDAEProblem}, ::Any; kwargs...)
+solve(::Union{FVMProblem,FVMSystem}, ::Any; kwargs...)
 ```
 
 For steady-state problems, the algorithms to use are those from [NonlinearSolve.jl](https://docs.sciml.ai/NonlinearSolve/stable/). The relevant function is still `solve` and is public API:

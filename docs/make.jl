@@ -102,7 +102,7 @@ const _PAGES = [
         "Diffusion Equation on an Annulus" => "tutorials/diffusion_equation_on_an_annulus.md",
         "Mean Exit Time" => "tutorials/mean_exit_time.md",
         "Solving Mazes with Laplace's Equation" => "tutorials/solving_mazes_with_laplaces_equation.md",
-        "A Cyclic Competition Model" => "tutorials/a_cyclic_competition_model.md",
+        "Keller-Segel model of Chemotaxis" => "tutorials/keller_segel_chemotaxis.md"
     ],
     "Mathematical and Implementation Details" => "math.md"
 ]
