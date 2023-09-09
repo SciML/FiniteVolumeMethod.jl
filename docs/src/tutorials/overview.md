@@ -252,7 +252,7 @@ In this [tutorial](gray_scott_model_turing_patterns_from_a_coupled_reaction_diff
 \begin{equation}
 \begin{aligned}
 \pdv{u}{t} &= \varepsilon_1\grad^2u+b(1-u)-uv^2, \\
-\pdv{v}{t} &= \varepsilon_2\grad v - dv+uv^2,
+\pdv{v}{t} &= \varepsilon_2\grad^2 v - dv+uv^2,
 \end{aligned}
 \end{equation}
 ```

@@ -6,7 +6,7 @@
 # \begin{equation}
 # \begin{aligned}
 # \pdv{u}{t} &= \varepsilon_1\grad^2u+b(1-u)-uv^2, \\
-# \pdv{v}{t} &= \varepsilon_2\grad v - dv+uv^2,
+# \pdv{v}{t} &= \varepsilon_2\grad^2 v - dv+uv^2,
 # \end{aligned}
 # \end{equation}
 # ```
@@ -14,8 +14,8 @@
 # initial conditions we use are:
 # ```math
 # \begin{align*}
-# u(x, y) &= 1 -\exp\left[-80\left(x^2 + y^2\right)\right], \\
-# v(x, y) &= \exp\left[-80\left(x^2+y^2\right)\right].
+# u(x, y, 0) &= 1 -\exp\left[-80\left(x^2 + y^2\right)\right], \\
+# v(x, y, 0) &= \exp\left[-80\left(x^2+y^2\right)\right].
 # \end{align*}
 # ```
 # The domain we use is $[-1, 1]^2$, and we use 
@@ -70,6 +70,7 @@ u = map(i -> reshape(sol.u[i][2, :], 200, 200), i)
 x = LinRange(-1, 1, 200)
 y = LinRange(-1, 1, 200)
 heatmap!(ax, x, y, u, colorrange=(0.0, 0.4))
+hidedecorations!(ax)
 record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachindex(sol);
     framerate=60) do _i
     i[] = _i
