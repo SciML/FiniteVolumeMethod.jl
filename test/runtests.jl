@@ -49,16 +49,16 @@ for file in files
 end
 =#
 @test length(files) == length(file_names) # make sure we didn't miss any 
-safe_include(joinpath(dir, file_names[1]))
-safe_include(joinpath(dir, file_names[2]))
-safe_include(joinpath(dir, file_names[3]))
-safe_include(joinpath(dir, file_names[4]))
-safe_include(joinpath(dir, file_names[5]))
-safe_include(joinpath(dir, file_names[6]))
-safe_include(joinpath(dir, file_names[7]))
-safe_include(joinpath(dir, file_names[8]))
-safe_include(joinpath(dir, file_names[9]))
-safe_include(joinpath(dir, file_names[10]))
-safe_include(joinpath(dir, file_names[11]))
-safe_include(joinpath(dir, file_names[12]))
-safe_include(joinpath(dir, file_names[13]))
+safe_include(joinpath(dir, file_names[1])) # diffusion_equation_in_a_wedge_with_mixed_boundary_conditions
+safe_include(joinpath(dir, file_names[2])) # diffusion_equation_on_a_square_plate
+safe_include(joinpath(dir, file_names[3])) # diffusion_equation_on_an_annulus
+safe_include(joinpath(dir, file_names[4])) # equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems
+safe_include(joinpath(dir, file_names[5])) # helmholtz_equation_with_inhomogeneous_boundary_conditions
+safe_include(joinpath(dir, file_names[6])) # laplaces_equation_with_internal_dirichlet_conditions
+safe_include(joinpath(dir, file_names[7])) # mean_exit_time
+safe_include(joinpath(dir, file_names[8])) # piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+safe_include(joinpath(dir, file_names[9])) # porous_fisher_equation_and_travelling_waves
+safe_include(joinpath(dir, file_names[10])) # porous_medium_equation
+safe_include(joinpath(dir, file_names[11])) # reaction_diffusion_brusselator_system_of_pdes
+safe_include(joinpath(dir, file_names[12])) # reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk
+safe_include(joinpath(dir, file_names[13])) # solving_mazes_with_laplaces_equation
