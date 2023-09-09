@@ -280,7 +280,7 @@ lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
 fig
 ````
 
-### Adding obstacles
+## Adding obstacles
 Let us now add some obstacles into the problem. We add in components
 one at a time, exploring the impact of each component individually. When
 we update the triangulation, we do need to update the `mesh` since it is
