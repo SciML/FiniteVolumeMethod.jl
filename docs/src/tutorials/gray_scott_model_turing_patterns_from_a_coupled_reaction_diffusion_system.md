@@ -1,7 +1,3 @@
-```@meta
-EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.jl"
-```
-
 # Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System
 
 In this tutorial, we explore some pattern formation from the
@@ -65,16 +61,16 @@ v_prob = FVMProblem(mesh, v_BCs;
 prob = FVMSystem(u_prob, v_prob)
 ````
 
-Now that we have our systme, we can solve.
+Now that we have our system, we can solve.
 
-````@example gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system
+````julia
 using OrdinaryDiffEq, LinearSolve
 sol = solve(prob, FBDF(linsolve=KLUFactorization()), saveat=10.0) # quite slow due to how stiff the PDE is
 ````
 
 Here is an animation of the solution, looking only at the $v$ variable.
 
-````@example gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system
+````julia
 using CairoMakie
 fig = Figure(fontsize=33)
 ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")
@@ -88,8 +84,7 @@ hidedecorations!(ax)
 record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachindex(sol);
     framerate=60) do _i
     i[] = _i
-end;
-nothing #hide
+end
 ````
 
 ```@raw html
@@ -100,7 +95,6 @@ nothing #hide
 
 ## Just the code
 An uncommented version of this example is given below.
-You can view the source code for this file [here](https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/new-docs/docs/src/literate_tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.jl).
 
 ```julia
 using FiniteVolumeMethod, DelaunayTriangulation
@@ -155,8 +149,3 @@ record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachind
     i[] = _i
 end;
 ```
-
----
-
-*This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-
