@@ -154,22 +154,6 @@ You can also provide custom constraints. Rather than outlining this precisely he
 compute_flux
 ```
 
-While differential-algebraic equations do require a lot more work from the user to define them, we do 
-provide some functions that help with the wrapping of the problem. The docstrings for these functions are below; these functions are public API.
-
-```@docs 
-get_dae_initial_condition 
-get_differential_vars
-```
-
-The functions above are in case you need more complicated problems. For most use cases, the `FVMDAEProblem` wrapper of a `DAEProblem` is sufficient:
-
-```@docs 
-FVMDAEProblem
-```
-
-The method for solving this was already provided in the `solve` docstrings above.
-
 
 # Piecewise linear interpolation
 

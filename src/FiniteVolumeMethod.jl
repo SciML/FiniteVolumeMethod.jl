@@ -20,7 +20,6 @@ include("equations/main_equations.jl")
 include("equations/shape_functions.jl")
 include("equations/source_contributions.jl")
 include("equations/triangle_contributions.jl")
-include("dae.jl")
 include("solve.jl")
 include("utils.jl")
 
@@ -28,7 +27,6 @@ export FVMGeometry,
     FVMProblem,
     FVMSystem,
     SteadyFVMProblem,
-    FVMDAEProblem,
     BoundaryConditions,
     InternalConditions,
     Neumann,
@@ -37,8 +35,6 @@ export FVMGeometry,
     Constrained,
     solve,
     compute_flux,
-    pl_interpolate,
-    get_dae_initial_condition,
-    get_differential_vars
+    pl_interpolate
 
 end

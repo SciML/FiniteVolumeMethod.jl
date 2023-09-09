@@ -294,71 +294,43 @@ _neqs(prob::SteadyFVMProblem) = _neqs(prob.problem)
 is_system(prob::AbstractFVMProblem) = _neqs(prob) > 0
 
 """
-    FVMDAEProblem(prob::AbstractFVMProblem, f; 
-        specialization::Type{S}=SciMLBase.AutoSpecialize, 
-        parallel::Val{B}=Val(true),
-        dae_parameters=nothing, 
-        num_constraints) where {S, B}
+    compute_flux(prob::AbstractFVMProblem, i, j, u, t)
 
-Construct a `DAEProblem` from a given `prob <: AbstractFVMProblem`.
-
-# Arguments 
-- `prob`
-
-The `AbstractFVMProblem` from which to construct the `DAEProblem`.
-- `f`
-
-A function of the form `(out, du, u, p, t)` that computes the right-hand side of the DAE. The argument 
-`p` should be defined so that it has fields
-
-    - `p.prob`: The original `prob` above. 
-    - `p.pde_parameters`: The parameters for the PDE. 
-    - `p.dae_parameters`: The parameters for the DAE, provided below.
-
-A good example of such an `f` is given in the mean exit time tutorial. 
-
-# Keyword Arguments 
-- `specialization=SciMLBase.AutoSpecialize`: The type of specialization to be used. See https://docs.sciml.ai/DiffEqDocs/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation.
-- `parallel::Val{<:Bool}=Val(true)`: Whether to use multithreading. Use `Val(false)` to disable multithreading.
-- `dae_parameters=nothing`: The parameters for the DAE.
-- `num_constraints`: The number of constraints in the DAE. 
-- `saveat=nothing`: For technical reasons relating to callbacks, you need to provide the `saveat` argument here rather than in `solve` later.
-- `kwargs...`: Any other keyword arguments to be passed to `DAEProblem`.
-
-# Output 
-The output is a `FVMDAEProblem`, that wraps the `DAEProblem`, with fields:
-
-- `problem`: The original `prob` above.
-- `mesh`: The mesh from `prob`.
-- `dae_problem`: The `DAEProblem` constructed from `prob` and `f`.
-
-You can apply `solve` to this `FVMDAEProblem` as you would any other problem.
+Given an edge with indices `(i, j)`, a solution vector `u`, a current time `t`, 
+and a problem `prob`, computes the flux `∇⋅q(x, y, t, α, β, γ, p) ⋅ n`, 
+where `n` is the normal vector to the edge, `q` is the flux function from `prob`,
+`(x, y)` is the midpoint of the edge, `(α, β, γ)` are the shape function coefficients, 
+and `p` are the flux parameters from `prob`. If `prob` is an [`FVMSystem`](@ref), the returned 
+value is a `Tuple` for each individual flux. The normal vector `n` is a clockwise rotation of 
+the edge, meaning pointing right of the edge `(i, j)`.
 """
-struct FVMDAEProblem{P<:AbstractFVMProblem,M<:FVMGeometry,D<:DAEProblem,S}
-    problem::P
-    mesh::M
-    dae_problem::D
-    saveat::S
-end
-function FVMDAEProblem(prob::AbstractFVMProblem, f;
-    specialization::Type{S}=SciMLBase.AutoSpecialize,
-    parallel::Val{B}=Val(true),
-    dae_parameters=nothing,
-    num_constraints,
-    saveat=nothing,
-    kwargs...) where {S,B}
-    dae_problem = DAEProblem(prob, f;
-        specialization,
-        parallel,
-        dae_parameters,
-        num_constraints,
-        saveat,
-        kwargs...)
-    return FVMDAEProblem(prob, prob.mesh, dae_problem, saveat)
-end
-function Base.show(io::IO, ::MIME"text/plain", prob::FVMDAEProblem)
-    nv = num_points(prob.mesh.triangulation)
-    t0 = prob.problem.initial_time
-    tf = prob.problem.final_time
-    print(io, "FVMDAEProblem with $(nv) nodes and time span ($t0, $tf)")
+function compute_flux(prob::AbstractFVMProblem, i, j, u, t)
+    tri = prob.mesh.triangulation
+    p, q = get_point(tri, i, j)
+    px, py = getxy(p)
+    qx, qy = getxy(q)
+    ex, ey = qx - px, qy - py
+    ℓ = norm((ex, ey))
+    nx, ny = ey / ℓ, -ex / ℓ
+    k = get_adjacent(tri, j, i) # want the vertex in the direction of the normal
+    if DelaunayTriangulation.is_boundary_index(k)
+        k = get_adjacent(tri, i, j)
+    else
+        i, j = j, i
+    end
+    T, props = _safe_get_triangle_props(prob, (i, j, k))
+    α, β, γ = get_shape_function_coefficients(props, T, u, prob)
+    mx, my = (px + qx) / 2, (py + qy) / 2
+    qv = eval_flux_function(prob, mx, my, t, α, β, γ)
+    if is_system(prob)
+        qn = ntuple(_neqs(prob)) do var
+            local qvx, qvy
+            qvx, qvy = getxy(qv[var])
+            return nx * qvx + ny * qvy
+        end
+        return qn
+    else
+        qvx, qvy = getxy(qv)
+        return nx * qvx + ny * qvy
+    end
 end
