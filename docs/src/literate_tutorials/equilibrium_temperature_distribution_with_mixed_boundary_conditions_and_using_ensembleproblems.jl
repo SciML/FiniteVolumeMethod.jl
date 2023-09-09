@@ -121,12 +121,12 @@ using NaturalNeighbours
 itps = [interpolate(tri, esol[i].u) for i in eachindex(esol)];
 itp_vals = [itp(0.03, 0.03; method=Sibson()) for itp in itps]
 ## If you want piecewise linear interpolation, use either method=Triangle()
-## or itp_vals = [pl_interpolate(sol, T, 0.03, 0.03) for sol in esol], where 
+## or itp_vals = [pl_interpolate(prob, T, sol.u, 0.03, 0.03) for sol in esol], where 
 ## T = jump_and_march(tri, (0.03, 0.03)).
 using Test #src
 _T = jump_and_march(tri, (0.03, 0.03)) #src
-_itp_vals = [pl_interpolate(sol, _T, 0.03, 0.03) for sol in esol] #src
-@test _itp_vals ≈ itp_vals rtol=1e-4 #src
+_itp_vals = [pl_interpolate(prob, _T, sol.u, 0.03, 0.03) for sol in esol] #src
+@test _itp_vals ≈ itp_vals rtol = 1e-4 #src
 fig = Figure(fontsize=33)
 ax = Axis(fig[1, 1], xlabel=L"T_{\infty}", ylabel=L"T(0.03, 0.03)")
 lines!(ax, T∞_range, itp_vals, linewidth=4)
@@ -159,7 +159,7 @@ tightlimits!(ax)
 record(fig, joinpath(@__DIR__, "../figures", "temperature_animation.mp4"), eachindex(esol);
     framerate=12) do _i
     i[] = _i
-end; 
+end;
 
 # ```@raw html
 # <figure>

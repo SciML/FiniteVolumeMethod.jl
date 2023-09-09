@@ -115,8 +115,8 @@ end
     SteadyFVMProblem(prob::AbstractFVMProblem)
 
 This is a wrapper for an `AbstractFVMProblem` that indicates that the problem is to be solved as a steady-state problem. 
-You can then solve the problem using [`solve(::SteadyFVMProblem, ::Any; kwargs...)`](@ref) from NonlinearSolve.jl. Note that the final time is treated 
-as infinity rather than as `prob.final_time`.
+You can then solve the problem using [`solve(::SteadyFVMProblem, ::Any; kwargs...)`](@ref) from NonlinearSolve.jl. Note that you 
+need to have set the final time to `Inf` if you want a steady state out at infinity rather than some finite actual time.
 
 See also [`FVMProblem`](@ref) and [`FVMSystem`](@ref).
 """
@@ -192,17 +192,17 @@ function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::F
     return sys
 end
 
-const FLUX_ERROR =  """
-                    The flux function errored when evaluated. Please recheck your specification of the function. 
-                    If any of your problems have been defined in terms of a diffusion function D(x, y, t, u, p)
-                    rather than a flux function, then you need to instead provide a flux function q(x, y, t, α, β, γ, p),
-                    recalling the relationship between the two:
+const FLUX_ERROR = """
+                   The flux function errored when evaluated. Please recheck your specification of the function. 
+                   If any of your problems have been defined in terms of a diffusion function D(x, y, t, u, p)
+                   rather than a flux function, then you need to instead provide a flux function q(x, y, t, α, β, γ, p),
+                   recalling the relationship between the two:
 
-                        q(x, y, t, α, β, γ, p) = -D(x, y, t, α*x + β*y + γ, p) .* (α, β)
+                       q(x, y, t, α, β, γ, p) = -D(x, y, t, α*x + β*y + γ, p) .* (α, β)
 
-                    where p is the same argument for both functions.
-                    """
-struct InvalidFluxError <: Exception end 
+                   where p is the same argument for both functions.
+                   """
+struct InvalidFluxError <: Exception end
 function Base.showerror(io::IO, ::InvalidFluxError)
     print(io, FLUX_ERROR)
 end
@@ -223,7 +223,7 @@ function _check_fvmsystem_flux_function(prob::FVMSystem)
     catch e
         if e isa MethodError
             throw(InvalidFluxError())
-         else
+        else
             rethrow(e)
         end
     end
@@ -244,7 +244,7 @@ Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, 
 @inline has_condition(prob::FVMSystem, node, var) = has_condition(get_equation(prob, var), node)
 @inline has_dirichlet_nodes(prob::FVMSystem) = any(i -> has_dirichlet_nodes(get_equation(prob, i)), 1:_neqs(prob))
 @inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(get_equation(prob, var))
-@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ)  = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
+@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ) = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
 
 function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     N == 0 && error("There must be at least one problem.")
@@ -294,43 +294,71 @@ _neqs(prob::SteadyFVMProblem) = _neqs(prob.problem)
 is_system(prob::AbstractFVMProblem) = _neqs(prob) > 0
 
 """
-    compute_flux(prob::AbstractFVMProblem, i, j, u, t)
+    FVMDAEProblem(prob::AbstractFVMProblem, f; 
+        specialization::Type{S}=SciMLBase.AutoSpecialize, 
+        parallel::Val{B}=Val(true),
+        dae_parameters=nothing, 
+        num_constraints) where {S, B}
 
-Given an edge with indices `(i, j)`, a solution vector `u`, a current time `t`, 
-and a problem `prob`, computes the flux `∇⋅q(x, y, t, α, β, γ, p) ⋅ n`, 
-where `n` is the normal vector to the edge, `q` is the flux function from `prob`,
-`(x, y)` is the midpoint of the edge, `(α, β, γ)` are the shape function coefficients, 
-and `p` are the flux parameters from `prob`. If `prob` is an [`FVMSystem`](@ref), the returned 
-value is a `Tuple` for each individual flux. The normal vector `n` is a clockwise rotation of 
-the edge, meaning pointing right of the edge `(i, j)`.
+Construct a `DAEProblem` from a given `prob <: AbstractFVMProblem`.
+
+# Arguments 
+- `prob`
+
+The `AbstractFVMProblem` from which to construct the `DAEProblem`.
+- `f`
+
+A function of the form `(out, du, u, p, t)` that computes the right-hand side of the DAE. The argument 
+`p` should be defined so that it has fields
+
+    - `p.prob`: The original `prob` above. 
+    - `p.pde_parameters`: The parameters for the PDE. 
+    - `p.dae_parameters`: The parameters for the DAE, provided below.
+
+A good example of such an `f` is given in the mean exit time tutorial. 
+
+# Keyword Arguments 
+- `specialization=SciMLBase.AutoSpecialize`: The type of specialization to be used. See https://docs.sciml.ai/DiffEqDocs/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation.
+- `parallel::Val{<:Bool}=Val(true)`: Whether to use multithreading. Use `Val(false)` to disable multithreading.
+- `dae_parameters=nothing`: The parameters for the DAE.
+- `num_constraints`: The number of constraints in the DAE. 
+- `saveat=nothing`: For technical reasons relating to callbacks, you need to provide the `saveat` argument here rather than in `solve` later.
+- `kwargs...`: Any other keyword arguments to be passed to `DAEProblem`.
+
+# Output 
+The output is a `FVMDAEProblem`, that wraps the `DAEProblem`, with fields:
+
+- `problem`: The original `prob` above.
+- `mesh`: The mesh from `prob`.
+- `dae_problem`: The `DAEProblem` constructed from `prob` and `f`.
+
+You can apply `solve` to this `FVMDAEProblem` as you would any other problem.
 """
-function compute_flux(prob::AbstractFVMProblem, i, j, u, t)
-    tri = prob.mesh.triangulation
-    p, q = get_point(tri, i, j)
-    px, py = getxy(p)
-    qx, qy = getxy(q)
-    ex, ey = qx - px, qy - py
-    ℓ = norm((ex, ey))
-    nx, ny = ey / ℓ, -ex / ℓ
-    k = get_adjacent(tri, j, i) # want the vertex in the direction of the normal
-    if DelaunayTriangulation.is_boundary_index(k)
-        k = get_adjacent(tri, i, j)
-    else
-        i, j = j, i
-    end
-    i, j, k = indices(DelaunayTriangulation.contains_triangle(tri, i, j, k)[1]) # so that the key in triangle_props is (i, j, k) not e.g. (j, k, i)
-    α, β, γ = get_shape_function_coefficients(prob.mesh.triangle_props[(i, j, k)], (i, j, k), u, prob)
-    mx, my = (px + qx) / 2, (py + qy) / 2
-    qv = eval_flux_function(prob, mx, my, t, α, β, γ)
-    if is_system(prob)
-        qn = ntuple(_neqs(prob)) do var
-            local qvx, qvy
-            qvx, qvy = getxy(qv[var])
-            return nx * qvx + ny * qvy
-        end
-        return qn
-    else
-        qvx, qvy = getxy(qv)
-        return nx * qvx + ny * qvy
-    end
+struct FVMDAEProblem{P<:AbstractFVMProblem,M<:FVMGeometry,D<:DAEProblem,S}
+    problem::P
+    mesh::M
+    dae_problem::D
+    saveat::S
+end
+function FVMDAEProblem(prob::AbstractFVMProblem, f;
+    specialization::Type{S}=SciMLBase.AutoSpecialize,
+    parallel::Val{B}=Val(true),
+    dae_parameters=nothing,
+    num_constraints,
+    saveat=nothing,
+    kwargs...) where {S,B}
+    dae_problem = DAEProblem(prob, f;
+        specialization,
+        parallel,
+        dae_parameters,
+        num_constraints,
+        saveat,
+        kwargs...)
+    return FVMDAEProblem(prob, prob.mesh, dae_problem, saveat)
+end
+function Base.show(io::IO, ::MIME"text/plain", prob::FVMDAEProblem)
+    nv = num_points(prob.mesh.triangulation)
+    t0 = prob.problem.initial_time
+    tf = prob.problem.final_time
+    print(io, "FVMDAEProblem with $(nv) nodes and time span ($t0, $tf)")
 end

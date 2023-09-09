@@ -136,6 +136,7 @@ function SciMLBase.ODEProblem(prob::Union{FVMProblem,FVMSystem};
     ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb)
     return ode_problem
 end
+
 function SciMLBase.SteadyStateProblem(prob::SteadyFVMProblem;
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
@@ -145,6 +146,33 @@ function SciMLBase.SteadyStateProblem(prob::SteadyFVMProblem;
     ode_prob = ODEProblem(prob.problem; specialization, jac_prototype, parallel, callback, saveat)
     nl_prob = SteadyStateProblem{true}(ode_prob.f, ode_prob.u0, ode_prob.p; ode_prob.kwargs...)
     return nl_prob
+end
+
+function SciMLBase.DAEProblem(prob::Union{FVMProblem,FVMSystem}, f;
+    specialization::Type{S}=SciMLBase.AutoSpecialize,
+    jac_prototype=nothing, # just so it doesn't get passed at all 
+    parallel::Val{B}=Val(true),
+    callback=nothing, # need this to check if user provides it
+    saveat=nothing,
+    dae_parameters=nothing,
+    num_constraints,
+    kwargs...) where {S,B}
+    initial_time = prob.initial_time
+    final_time = prob.final_time
+    time_span = (initial_time, final_time)
+    u0, du0 = get_dae_initial_condition(prob, num_constraints)
+    differential_vars = get_differential_vars(prob, num_constraints)
+    dirichlet_cb = dirichlet_callback(!isnothing(saveat), has_dirichlet_nodes(prob))
+    if !isnothing(callback)
+        cb = CallbackSet(callback, dirichlet_cb)
+    else
+        cb = CallbackSet(dirichlet_cb)
+    end
+    dae_f = DAEFunction{true,S}(f)
+    pde_p = B ? get_multithreading_vectors(prob) : (prob=prob, parallel=parallel)
+    p = (prob=prob, pde_parameters=pde_p, dae_parameters=dae_parameters)
+    dae_problem = DAEProblem(dae_f, du0, u0, time_span, p; callback=cb, differential_vars=differential_vars, kwargs...)
+    return dae_problem
 end
 
 function CommonSolve.init(prob::Union{FVMProblem,FVMSystem}, args...;
@@ -175,16 +203,24 @@ function CommonSolve.solve(prob::SteadyFVMProblem, args...;
         return CommonSolve.solve(nl_prob, args...; kwargs...)
     end
 end
+function CommonSolve.init(prob::FVMDAEProblem, args...; kwargs...)
+    saveat = prob.saveat 
+    if !isnothing(saveat) 
+        return CommonSolve.init(prob.dae_problem, args...; saveat, kwargs...)
+    else
+        return CommonSolve.init(prob.dae_problem, args...; kwargs...)
+    end
+end
 
 @doc """
-    solve(prob::Union{FVMProblem,FVMSystem}, alg; 
+    solve(prob::Union{FVMProblem,FVMSystem,FVMDAEProblem}, alg; 
         specialization=SciMLBase.AutoSpecialize, 
-        jac_prototype=jacobian_sparsity(prob),
+        jac_prototype=jacobian_sparsity(prob), # only for FVMProblem and FVMSystem
         parallel::Val{<:Bool}=Val(true),
         kwargs...)
 
 
-Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the algorithm `alg`.
+Solves the given [`FVMProblem`](@ref), [`FVMSystem`](@ref) or [`FVMDAEProblem`](@ref) `prob` with the algorithm `alg`.
 
 # Arguments 
 - `prob`: The problem to be solved.
@@ -192,19 +228,25 @@ Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the alg
 
 # Keyword Arguments
 - `specialization=SciMLBase.AutoSpecialize`: The type of specialization to be used. See https://docs.sciml.ai/DiffEqDocs/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation.
-- `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`.
-- `parallel::Val{<:Bool}=Val(true)`: Whether to use multithreading. Use `Val(false)` to disable multithreading.
+- `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`. This is only used for [`FVMProblem`](@ref) and [`FVMSystem`](@ref).
+- `parallel::Val{<:Bool}=Val(true)`: Whether to use multithreading. Use `Val(false)` to disable multithreading. 
+- `kwargs...`: Any other keyword arguments to be passed to the solver.
 
 # Outputs 
-The returned value `sol` depends on whether the problem is a [`FVMProblem`](@ref) or an [`FVMSystem`](@ref), but in 
-each case it is an `ODESolution` type that can be accessed like the solutions in DifferentialEquations.jl:
+The returned value `sol` depends on the type of the problem.
 - [`FVMProblem`](@ref)
 
-In this case, `sol` is such that the `i`th component of `sol` refers to the `i`th node of the underlying mesh.
+In this case, `sol::ODESolution` is such that the `i`th component of `sol` refers to the `i`th node of the underlying mesh.
 - [`FVMSystem`](@ref)
 
-In this case, the `(j, i)`th component of `sol` refers to the `i`th node of the underlying mesh for the `j`th component of the system.
-""" solve(::Union{FVMProblem,FVMSystem}, ::Any; kwargs...)
+In this case, the `(j, i)`th component of `sol::ODESolution` refers to the `i`th node of the underlying mesh for the `j`th component of the system.
+- [`FVMDAEProblem`](@ref)
+
+In this case, `sol::DAESolution` is a bit more complicated. The vector `sol.u[j]` is the solution at time `sol.t[j]`, but even for an underlying [`FVMSystem`](@ref)
+`sol.u[j]` will still be a vector. If `n` is the number of points in the underlying triangulation of the problem, then the `i`th variable lies inside 
+`sol.u[j][1:i:N*n]`, where `N` is the number of equations in the system. You may like to reshape the result into a matrix using `reshape(sol.u[j], N, n)` 
+to match the [`FVMSystem`](@ref) form above for an `ODEProblem`. Similarly for an underlying `FVMProblem`, except there is no worry about indexing.
+""" solve(::Union{FVMProblem,FVMSystem,FVMDAEProblem}, ::Any; kwargs...)
 
 @doc """
     solve(prob::SteadyFVMProblem, alg; 
@@ -224,6 +266,7 @@ Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the alg
 - `specialization=SciMLBase.AutoSpecialize`: The type of specialization to be used. See https://docs.sciml.ai/DiffEqDocs/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation.
 - `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`.
 - `parallel::Val{<:Bool}=Val(true)`: Whether to use multithreading. Use `Val(false)` to disable multithreading.
+- `kwargs...`: Any other keyword arguments to be passed to the solver.
 
 # Outputs 
 The returned value `sol` depends on whether the underlying problem is a [`FVMProblem`](@ref) or an [`FVMSystem`](@ref), but in 

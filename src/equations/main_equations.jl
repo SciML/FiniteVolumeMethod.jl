@@ -1,4 +1,30 @@
 # the main entry point
+"""
+    fvm_eqs!(du, u, p, t)
+
+Computes the finite volume method equations for the current time `t` 
+and solution `u`. This function is public API.
+
+The argument `p` depends on whether the problem is being solved 
+in parallel or not. If it is solved serially, than the fields are:
+
+- `p.prob`: The `prob <: AbstractFVMProblem`.
+- `p.parallel`: `Val(false)`.
+
+If the problem is solved in parallel, then the fields are:
+
+- `p.prob`: The `prob <: AbstractFVMProblem`.
+- `p.parallel`: `Val(true)`.   
+- `p.duplicated_du`: A `Matrix` of the same size as `du` that is used to store the contributions to `du` from each thread. 
+- `p.solid_triangles`: A `Vector` of the solid triangles in the triangulation.
+- `p.solid_vertices`: A `Vector` of the solid vertices in the triangulation.
+- `p.chunked_solid_triangles`: A `Vector` of tuples of the form `(range, chunk_idx)` where `range` is a range of indices into `p.solid_triangles` and `chunk_idx` is the index of the chunk.
+- `p.boundary_edges`: A `Vector` of the boundary edges in the triangulation.
+- `p.chunked_boundary_edges`: A `Vector` of tuples of the form `(range, chunk_idx)` where `range` is a range of indices into `p.boundary_edges` and `chunk_idx` is the index of the chunk.
+
+These fields are public API, although note that they are not intended to be modified by the user, and we may freely 
+add in new fields over new versions.
+"""
 function fvm_eqs!(du, u, p, t)
     prob, parallel = p.prob, p.parallel
     if parallel == Val(false)

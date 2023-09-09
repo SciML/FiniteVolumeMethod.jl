@@ -146,7 +146,7 @@ using NaturalNeighbours
 itps = [interpolate(tri, esol[i].u) for i in eachindex(esol)];
 itp_vals = [itp(0.03, 0.03; method=Sibson()) for itp in itps]
 # If you want piecewise linear interpolation, use either method=Triangle()
-# or itp_vals = [pl_interpolate(sol, T, 0.03, 0.03) for sol in esol], where
+# or itp_vals = [pl_interpolate(prob, T, sol.u, 0.03, 0.03) for sol in esol], where
 # T = jump_and_march(tri, (0.03, 0.03)).
 fig = Figure(fontsize=33)
 ax = Axis(fig[1, 1], xlabel=L"T_{\infty}", ylabel=L"T(0.03, 0.03)")
@@ -267,7 +267,7 @@ using NaturalNeighbours
 itps = [interpolate(tri, esol[i].u) for i in eachindex(esol)];
 itp_vals = [itp(0.03, 0.03; method=Sibson()) for itp in itps]
 # If you want piecewise linear interpolation, use either method=Triangle()
-# or itp_vals = [pl_interpolate(sol, T, 0.03, 0.03) for sol in esol], where
+# or itp_vals = [pl_interpolate(prob, T, sol.u, 0.03, 0.03) for sol in esol], where
 # T = jump_and_march(tri, (0.03, 0.03)).
 fig = Figure(fontsize=33)
 ax = Axis(fig[1, 1], xlabel=L"T_{\infty}", ylabel=L"T(0.03, 0.03)")

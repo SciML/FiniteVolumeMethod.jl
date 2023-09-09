@@ -1,5 +1,9 @@
 # Mathematical and Implementation Details
 
+```@contents
+Pages = ["math.md"]
+```
+
 Here we outline the mathematical and implementation details involved in implementing the finite volume method (FVM). We assume that our partial differential equation (PDE) is given by 
 ```math
 \begin{equation}

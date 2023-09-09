@@ -11,24 +11,14 @@ function _safe_get_triangle_props(prob::AbstractFVMProblem, T)
 end
 
 """
-    pl_interpolate(sol, T, i, x, y)
-    pl_interpolate(sol, T, x, y)
+    pl_interpolate(prob, T, u, x, y)
 
-Given a solution `sol` from a `AbstractFVMProblem`, a triangle `T` containing a point `(x, y)`,
-and a time index `i`, interpolates the solution at the point `(x, y)` at time `sol.t[i]` using 
-piecewise linear interpolation.
-
-In the latter method, it is assumed that the underlying problem is a `SteadyFVMProblem`.
+Given a `prob <: AbstractFVMProblem`, a triangle `T` containing a point `(x, y)`, 
+and a set of function values `u` at the corresponding nodes of `prob`, interpolates 
+the solution at the point `(x, y)` using piecewise linear interpolation.
 """
-function pl_interpolate(sol, T, i, x, y)
-    prob = sol.prob.p.prob
+function pl_interpolate(prob, T, u, x, y)
     T, props = _safe_get_triangle_props(prob, T)
-    α, β, γ = get_shape_function_coefficients(props, T, sol.u[i], prob)
-    return α .* x .+ β .* y .+ γ
-end
-function pl_interpolate(sol, T, x, y)
-    prob = sol.prob.p.prob
-    T, props = _safe_get_triangle_props(prob, T)
-    α, β, γ = get_shape_function_coefficients(props, T, sol.u, prob)
+    α, β, γ = get_shape_function_coefficients(props, T, u, prob)
     return α .* x .+ β .* y .+ γ
 end

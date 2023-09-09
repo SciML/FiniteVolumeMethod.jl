@@ -26,9 +26,8 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> -one(u), Neumann)
 # To now define the problem, we note that the `initial_condition` and `final_time` 
 # fields have different interpretations for steady state problems. The 
 # `initial_condition` now serves as an initial estimate for the steady state solution,
-# which is needed for the nonlinear solver, and `final_time` is now no longer 
-# used. While `final_time` is no longer used, it still needs to be provided 
-# as `final_time = Inf`. For the initial condition, let us simply let 
+# which is needed for the nonlinear solver, and `final_time` should now 
+# be `Inf`. For the initial condition, let us simply let 
 # the initial estimate be all zeros. For the diffusion and source terms, 
 # note that previously we have been considered equations of the form 
 # ```math

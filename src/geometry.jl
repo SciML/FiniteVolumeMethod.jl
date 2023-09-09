@@ -1,4 +1,15 @@
 # Properties of a control volume's intersection with a triangle
+"""
+    TriangleProperties(shape_function_coefficients, cv_edge_midpoints, cv_edge_normals, cv_edge_lengths)
+
+This is a struct for holding the properties of a control volume's intersection with a triangle.
+
+# Fields
+- `shape_function_coefficients::NTuple{9,Float64}`: The shape function coefficients for the triangle.
+- `cv_edge_midpoints::NTuple{3,NTuple{2,Float64}}`: The midpoints of the control volume edges. If the triangle is `(i, j, k)`, then the edges are given in the order `(i, j)`, `(j, k)`, and `(k, i)`, where 'edge' refers to the edge joining e.g. the midpoint of the edge `(i, j)` to the centroid of the triangle. 
+- `cv_edge_normals::NTuple{3,NTuple{2,Float64}}`: The normal vectors to the control volume edges, in the same order as in `cv_edge_midpoints`.
+- `cv_edge_lengths::NTuple{3,Float64}`: The lengths of the control volume edges, in the same order as in `cv_edge_midpoints`.
+"""
 struct TriangleProperties
     shape_function_coefficients::NTuple{9,Float64}
     cv_edge_midpoints::NTuple{3,NTuple{2,Float64}}
@@ -13,6 +24,12 @@ This is a constructor for the [`FVMGeometry`](@ref) struct, which holds the mesh
 
 !!! note
     It is assumed that all vertices in `tri` are in the triangulation, meaning `v` is in `tri` for each `v` in `each_point_index(tri)`.
+
+# Fields 
+- `triangulation`: The underlying `Triangulation` from DelaunayTriangulation.jl.
+- `triangulation_statistics`: The statistics of the triangulation. 
+- `cv_volumes::Vector{Float64}`: A `Vector` of the volumes of each control volume.
+- `triangle_props::Dict{NTuple{3,Int},TriangleProperties}`: A `Dict` mapping the indices of each triangle to its [`TriangleProperties`].
 """
 struct FVMGeometry{T,S}
     triangulation::T

@@ -99,6 +99,8 @@ const _PAGES = [
         "Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems" => "tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.md",
         "A Reaction-Diffusion Brusselator System of PDEs" => "tutorials/reaction_diffusion_brusselator_system_of_pdes.md",
         "Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System" => "tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.md",
+        "Diffusion Equation on an Annulus" => "tutorials/diffusion_equation_on_an_annulus.md",
+        "Mean Exit Time on a Compound Disk and Differential-Algebraic Equations" => "tutorials/mean_exit_time_on_a_compound_disk_and_differential_algebraic_equations.md",
     ],
     "Mathematical and Implementation Details" => "math.md"
 ]

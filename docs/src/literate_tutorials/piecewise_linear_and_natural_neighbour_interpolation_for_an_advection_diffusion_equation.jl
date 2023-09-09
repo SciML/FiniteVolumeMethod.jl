@@ -174,7 +174,7 @@ interpolated_vals = zeros(length(x), length(y), length(sol))
 for k in eachindex(sol)
     for j in eachindex(y)
         for i in eachindex(x)
-            interpolated_vals[i, j, k] = pl_interpolate(sol, triangles[i, j], k, x[i], y[j])
+            interpolated_vals[i, j, k] = pl_interpolate(prob, triangles[i, j], sol.u[k], x[i], y[j])
         end
     end
 end
@@ -223,7 +223,7 @@ _y = [y for _ in x, y in y] |> vec
 
 # [^1]: This list is available from `?NaturalNeighbours.AbstractInterpolator`. Look at the help page (`?`) for the respective interpolators or NaturalNeighbours.jl's documentation for more information.
 sibson_vals = itp(_x, _y; method=Sibson())
-triangle_vals = itp(_x, _y; method=Triangle()) # this is the same as pl_interpolant
+triangle_vals = itp(_x, _y; method=Triangle()) # this is the same as pl_interpolate
 laplace_vals = itp(_x, _y; method=Laplace())
 sibson_1_vals = itp(_x, _y; method=Sibson(1))
 nearest_vals = itp(_x, _y; method=Nearest())
@@ -269,4 +269,4 @@ fig
 # with, say, holes or non-convex boundaries, you may run into issues. For such 
 # cases, you should usually call the interpolant with `project=false` to at least 
 # help the procedure a bit. You may also be interested in `identify_exterior_points`.
-# We consider interpolating data over a region with holes in [this annulus example](mean_exit_time_on_an_annulus.md).
+# We consider interpolating data over a region with holes in [this annulus example](diffusion_equation_on_an_annulus.md).

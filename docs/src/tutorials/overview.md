@@ -259,3 +259,43 @@ In this [tutorial](gray_scott_model_turing_patterns_from_a_coupled_reaction_diff
 with zero flux boundary conditions. We use this example to explore how changing parameters slightly leads to some amazing patterns, known as _Turing patterns_.[^7]
 
 [^7]: There are many papers discussing this. See, e.g., [Gandy and Nelson (2022)](https://epubs.siam.org/doi/epdf/10.1137/21M1402868) for a recent paper.
+
+# Diffusion Equation on an Annulus 
+In this [tutorial](diffusion_equation_on_an_annulus.md) we consider the diffusion equation on an annulus:[^8]
+```math
+\begin{equation}
+\begin{aligned}
+\pdv{u(\vb x, t)}{t} &= \grad^2 u(\vb x, t) & \vb x \in \Omega, \\
+\grad u(\vb x, t) \vdot \vu n(\vb x) &= 0 & \vb x \in \mathcal D(0, 1), \\
+u(\vb x, t) &= c(t) & \vb x \in \mathcal D(0,0.2), \\
+u(\vb x, t) &= u_0(\vb x),
+\end{aligned}
+\end{equation}
+```
+demonstrating how we can solve PDEs over multiply-connected domains. Here, $\mathcal D(0, r)$ is a circle of radius $r$ centred at the origin,  $\Omega$ is the annulus between $\mathcal D(0,0.2)$ and $\mathcal D(0, 1)$, $c(t) = 50[1-\mathrm{e}^{-t/2}]$, and 
+```math
+u_0(x) = 10\mathrm{e}^{-25\left[\left(x+\frac12\right)^2+\left(y+\frac12\right)^2\right]} - 10\mathrm{e}^{-45\left[\left(x-\frac12\right)^2+\left(y-\frac12\right)^2\right]} - 5\mathrm{e}^{-50\left[\left(x+\frac{3}{10}\right)^2+\left(y+\frac12\right)^2\right]}.
+```
+We also use this tutorial as an opportunity to give an example of 
+performing natural neighbour interpolation on a multiply-connected domain.
+
+[^8]: This example comes from [here](http://onelab.info/wiki/Tutorial/Heat_equation_with_Dirichlet_boundary_control).
+
+# Mean Exit Time on a Compound Disk and Differential-Algebraic Equations
+In this [tutorial](mean_exit_time_on_a_compound_disk_and_differential_algebraic_equations.md) we consider the mean exit time problem on a compound Disk with a perturbed interface, defined by the steady state problem:[^9]
+```math
+\begin{equation}
+\begin{aligned}
+D_1\grad^2 T^{(1)}(\vb x) &= -1 & 0 < r < \mathcal R_1(\theta), \\
+D_2\grad^2 T^{(2)}(\vb x) &= -1 & \mathcal R_1(\theta) < r < R_2(\theta), \\
+T^{(1)}(\mathcal R_1(\theta),\theta) &= T^{(2)}(\mathcal R_1(\theta),\theta), \\
+D_1\grad T^{(1)}(\mathcal R_1(\theta), \theta) \vdot \vu n(\theta) &= D_2\grad T^{(2)}(\mathcal R_1(\theta), \theta) \vdot \vu n(\theta), \\
+T^{(2)}(R_2, \theta) &= 0, \\
+\end{aligned}
+\end{equation}
+```
+which describes the mean exit time of a problem on  a compound disk, meaning with different diffusivities in two parts of the disk, with a perturbed interface $\mathcal R_1(\theta) = R_1(1+\varepsilon g(\theta))$, $g(\theta)=\sin(3\theta)+\cos(5\theta)$. The conditions at the interface are needed to enforce continuity. The variable $T^{(1)}$ is the mean exit time in $0 < r < \mathcal R_1(\theta)$, and $T^{(2)}$ is the mean exit time in $\mathcal R_1(\theta) < r < R_2(\theta)$. Since there are two variables, we solve this as a system of PDEs. Moreover, with our interface, the continuity conditions cannot be directly enforced, since they rely on the other variable. Instead, we use a differential-algebraic approach to solve this problem, which we discuss in this tutorial.
+
+This problem can more easily be formulated in terms of a single variable $T$ with a space-varying diffusivity. We also discuss this formulation - the complicated formulation with two variables and a differential-algebraic formulation is simply to present the ideas you might need for more complicated problems.
+
+[^9]: This problem comes from [Carr et al. (2022)](https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d/meta).

@@ -158,7 +158,7 @@ interpolated_vals = zeros(length(x), length(y), length(sol))
 for k in eachindex(sol)
     for j in eachindex(y)
         for i in eachindex(x)
-            interpolated_vals[i, j, k] = pl_interpolate(sol, triangles[i, j], k, x[i], y[j])
+            interpolated_vals[i, j, k] = pl_interpolate(prob, triangles[i, j], sol.u[k], x[i], y[j])
         end
     end
 end
@@ -218,7 +218,7 @@ We will look at all the interpolants provided by NaturalNeighbours.jl.[^1]
 
 ````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
 sibson_vals = itp(_x, _y; method=Sibson())
-triangle_vals = itp(_x, _y; method=Triangle()) # this is the same as pl_interpolant
+triangle_vals = itp(_x, _y; method=Triangle()) # this is the same as pl_interpolate
 laplace_vals = itp(_x, _y; method=Laplace())
 sibson_1_vals = itp(_x, _y; method=Sibson(1))
 nearest_vals = itp(_x, _y; method=Nearest())
@@ -267,7 +267,7 @@ for constrained triangulations. In this case it is fine, but for regions
 with, say, holes or non-convex boundaries, you may run into issues. For such
 cases, you should usually call the interpolant with `project=false` to at least
 help the procedure a bit. You may also be interested in `identify_exterior_points`.
-We consider interpolating data over a region with holes in [this annulus example](mean_exit_time_on_an_annulus.md).
+We consider interpolating data over a region with holes in [this annulus example](diffusion_equation_on_an_annulus.md).
 ## Just the code
 An uncommented version of this example is given below.
 You can view the source code for this file [here](https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/new-docs/docs/src/literate_tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.jl).
@@ -341,7 +341,7 @@ interpolated_vals = zeros(length(x), length(y), length(sol))
 for k in eachindex(sol)
     for j in eachindex(y)
         for i in eachindex(x)
-            interpolated_vals[i, j, k] = pl_interpolate(sol, triangles[i, j], k, x[i], y[j])
+            interpolated_vals[i, j, k] = pl_interpolate(prob, triangles[i, j], sol.u[k], x[i], y[j])
         end
     end
 end
@@ -367,7 +367,7 @@ _x = [x for x in x, _ in y] |> vec
 _y = [y for _ in x, y in y] |> vec
 
 sibson_vals = itp(_x, _y; method=Sibson())
-triangle_vals = itp(_x, _y; method=Triangle()) # this is the same as pl_interpolant
+triangle_vals = itp(_x, _y; method=Triangle()) # this is the same as pl_interpolate
 laplace_vals = itp(_x, _y; method=Laplace())
 sibson_1_vals = itp(_x, _y; method=Sibson(1))
 nearest_vals = itp(_x, _y; method=Nearest())

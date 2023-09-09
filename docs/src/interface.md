@@ -4,6 +4,10 @@ CurrentModule = FiniteVolumeMethod
 
 # Interface 
 
+```@contents 
+Pages = ["interface.md"]
+```
+
 In this section, we describe the basic interface for defining and solving PDEs using this package. This interface will also be made clearer in the tutorials. The basic summary of the discussion below is as follows:
 
 1. Use `FVMGeometry` to define the problem's mesh.
@@ -16,15 +20,22 @@ In this section, we describe the basic interface for defining and solving PDEs u
 8. For a discussion of custom constraints, see the tutorials.
 9. For interpolation, we provide `pl_interpolate` (but you might prefer [NaturalNeighbours.jl](https://github.com/DanielVandH/NaturalNeighbours.jl) - see [this tutorial for an example](tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.md)).
 
-## `FVMGeometry`: Defining the mesh 
+# `FVMGeometry`: Defining the mesh 
 
-The finite volume method (FVM) requires an underlying triangular mesh, as outlined in the [mathematical details section](math.md). This triangular mesh is to be defined from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl). The `FVMGeometry` type wraps the resulting `Triangulation` and computes information about the geometry required for solving the PDEs. The docstring for `FVMGeometry` is below; the fields of `FVMGeometry` are not public API, only this wrapper is.
+The finite volume method (FVM) requires an underlying triangular mesh, as outlined in the [mathematical details section](math.md). This triangular mesh is to be defined from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl). The `FVMGeometry` type wraps the resulting `Triangulation` and computes information about the geometry required for solving the PDEs. The docstring for `FVMGeometry` is below; the fields of `FVMGeometry` are public API. 
 
 ```@docs
 FVMGeometry
 ```
 
-## `BoundaryConditions`: Defining boundary conditions
+The `FVMGeometry` struct uses `TriangleProperties` for storing properties of a control volume that intersects a given triangle, defined below. This struct is 
+public API, although it is unlikely you would ever need it. 
+
+```@docs
+TriangleProperties
+```
+
+# `BoundaryConditions`: Defining boundary conditions
 
 Once a mesh is defined, you need to associate each part of the boundary with a set of boundary nodes. Since you have a `Triangulation`, the boundary of the mesh already meets the necessary assumptions made by this package about the boundary; these assumptions are simply that they match the specification of a boundary [here in DelaunayTriangulation.jl's docs](https://danielvandh.github.io/DelaunayTriangulation.jl/dev/boundary_handling/#Boundary-Specification) (for example, the boundary points connect, the boundary is positively oriented, etc.).
 
@@ -44,7 +55,7 @@ Dirichlet
 Constrained
 ```
 
-## `InternalConditions`: Defining internal conditions
+# `InternalConditions`: Defining internal conditions
 
 If you like, you can also put some constraints for nodes away from the boundary. In this case, only `Dudt` and `Dirichlet` conditions can be imposed; for `Neumann` or `Constrained` conditions, you need to consider differential-algebraic problems as considered in the tutorials. The docstring for `InternalConditions` is below; the fields of `InternalConditions` are not public API, only this wrapper is.
 
@@ -52,7 +63,7 @@ If you like, you can also put some constraints for nodes away from the boundary.
 InternalConditions
 ```
 
-## `FVMProblem`: Defining the PDE
+# `FVMProblem`: Defining the PDE
 
 Once you have defined the mesh, the boundary conditions, and possibly the internal conditions, you can now construct the PDE itself. This is done using `FVMProblem`, whose docstring is below; the fields of `FVMProblem` are public API.
 
@@ -72,7 +83,7 @@ Additionally, `FVMProblem` merges the provided boundary conditions and internal 
 Conditions
 ```
 
-## `SteadyFVMProblem`: Making the problem a steady-state problem
+# `SteadyFVMProblem`: Making the problem a steady-state problem
 
 To make an `FVMProblem` a steady-state problem, meaning that you are solving
 
@@ -92,7 +103,7 @@ than you need to wrap the `FVMProblem` inside a `SteadyFVMProblem`, defined belo
 SteadyFVMProblem
 ```
 
-## `FVMSystem`: Defining a system of PDEs
+# `FVMSystem`: Defining a system of PDEs
 
 We also allow for systems of PDEs to be defined, where this system should take the form
 
@@ -115,12 +126,12 @@ FVMSystem
 
 If you want to make a steady-state problem for an `FVMSystem`, you should apply `SteadyFVMProblem` to `FVMSystem` rather than to each `FVMProblem` individually.
 
-## `solve`: Solving the PDE
+# `solve`: Solving the PDE
 
 You can use `solve` from the SciMLBase ecosystem to solve these PDEs. This allows you to use [any of the available algorithms from DifferentialEquations.jl](https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/) for solving these problems. For non-steady problems, the relevant function is (which is public API)
 
 ```@docs
-solve(::Union{FVMProblem,FVMSystem}, ::Any; kwargs...)
+solve(::Union{FVMProblem,FVMSystem,FVMDAEProblem}, ::Any; kwargs...)
 ```
 
 For steady-state problems, the algorithms to use are those from [NonlinearSolve.jl](https://docs.sciml.ai/NonlinearSolve/stable/). The relevant function is still `solve` and is public API:
@@ -129,17 +140,40 @@ For steady-state problems, the algorithms to use are those from [NonlinearSolve.
 solve(::SteadyFVMProblem, ::Any; kwargs...)
 ```
 
-## Custom constraints 
+These `solve` functions rely on `fvm_eqs!` for evaluating the equations. You should never need to use `fvm_eqs!` directly, unless you are using a differential-algebraic equation, as in e.g. [this tutorial](tutorials/mean_exit_time_on_a_compound_disk_and_differential_algebraic_equations.md). The docstring for `fvm_eqs!` is below; this function is public API.
 
-You can also provide custom constraints. Rather than outlining this here, it is best explained in the tutorials. We note that one useful function for this is `compute_flux`, which allows you to compute the flux across a given edge. The docstring for `compute_flux` is below, and this function is public API.
+```@docs
+fvm_eqs!
+```
+
+# Custom constraints 
+
+You can also provide custom constraints. Rather than outlining this precisely here, it is best explained in the tutorials, the clearest tutorial being [this one](tutorials/mean_exit_time_on_a_compound_disk_and_differential_algebraic_equations.md). We note that one useful function for this is `compute_flux`, which allows you to compute the flux across a given edge. The docstring for `compute_flux` is below, and this function is public API.
 
 ```@docs
 compute_flux
 ```
 
-## Piecewise linear interpolation
+While differential-algebraic equations do require a lot more work from the user to define them, we do 
+provide some functions that help with the wrapping of the problem. The docstrings for these functions are below; these functions are public API.
 
-You can evaluate the piecewise linear interpolation corresponding to a solution using `pl_interpolant`, defined below; this function is public API.
+```@docs 
+get_dae_initial_condition 
+get_differential_vars
+```
+
+The functions above are in case you need more complicated problems. For most use cases, the `FVMDAEProblem` wrapper of a `DAEProblem` is sufficient:
+
+```@docs 
+FVMDAEProblem
+```
+
+The method for solving this was already provided in the `solve` docstrings above.
+
+
+# Piecewise linear interpolation
+
+You can evaluate the piecewise linear interpolation corresponding to a solution using `pl_interpolate`, defined below; this function is public API.
 
 ```@docs
 pl_interpolate
