@@ -281,8 +281,8 @@ performing natural neighbour interpolation on a multiply-connected domain.
 
 [^8]: This example comes from [here](http://onelab.info/wiki/Tutorial/Heat_equation_with_Dirichlet_boundary_control).
 
-# Mean Exit Time on a Compound Disk and Differential-Algebraic Equations
-In this [tutorial](mean_exit_time_on_a_compound_disk_and_differential_algebraic_equations.md) we consider the mean exit time problem on a compound Disk with a perturbed interface, defined by the steady state problem:[^9]
+# Mean Exit Time 
+In this [tutorial](mean_exit_time.md), we consider mean time problems. The main problem we consider is that of mean exit time on a compound disk:[^9]
 ```math
 \begin{equation}
 \begin{aligned}
@@ -294,8 +294,6 @@ T^{(2)}(R_2, \theta) &= 0, \\
 \end{aligned}
 \end{equation}
 ```
-which describes the mean exit time of a problem on  a compound disk, meaning with different diffusivities in two parts of the disk, with a perturbed interface $\mathcal R_1(\theta) = R_1(1+\varepsilon g(\theta))$, $g(\theta)=\sin(3\theta)+\cos(5\theta)$. The conditions at the interface are needed to enforce continuity. The variable $T^{(1)}$ is the mean exit time in $0 < r < \mathcal R_1(\theta)$, and $T^{(2)}$ is the mean exit time in $\mathcal R_1(\theta) < r < R_2(\theta)$. Since there are two variables, we solve this as a system of PDEs. Moreover, with our interface, the continuity conditions cannot be directly enforced, since they rely on the other variable. Instead, we use a differential-algebraic approach to solve this problem, which we discuss in this tutorial.
-
-This problem can more easily be formulated in terms of a single variable $T$ with a space-varying diffusivity. We also discuss this formulation - the complicated formulation with two variables and a differential-algebraic formulation is simply to present the ideas you might need for more complicated problems.
+with a perturbed interface $\mathcal R_1(\theta) = R_1(1+\varepsilon g(\theta))$, $g(\theta)=\sin(3\theta)+\cos(5\theta)$. The conditions at the interface are needed to enforce continuity. The variable $T^{(1)}$ is the mean exit time in $0 < r < \mathcal R_1(\theta)$, and $T^{(2)}$ is the mean exit time in $\mathcal R_1(\theta) < r < R_2(\theta)$. The end of this tutorial also considers mean exit time with obstacles and internal conditions.
 
 [^9]: This problem comes from [Carr et al. (2022)](https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d/meta).
