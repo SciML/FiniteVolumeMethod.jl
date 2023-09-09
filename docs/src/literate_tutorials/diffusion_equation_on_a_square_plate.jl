@@ -53,7 +53,6 @@ prob.flux_function
 # OrdinaryDiffEq), the algorithm is chosen automatically. Moreover, note that, 
 # in the `solve` call below, multithreading is enabled by default.
 using DifferentialEquations
-@inferred ODEProblem(prob) #src
 sol = solve(prob, saveat=0.05)
 
 # To visualise the solution, we can use `tricontourf!` from Makie.jl. 
