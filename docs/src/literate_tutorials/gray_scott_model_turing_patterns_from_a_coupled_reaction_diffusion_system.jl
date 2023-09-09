@@ -1,4 +1,5 @@
 # # Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System
+
 # In this tutorial, we explore some pattern formation from the 
 # Gray-Scott model:
 # ```math
@@ -13,14 +14,14 @@
 # initial conditions we use are:
 # ```math
 # \begin{align*}
-# u(x, y) &= 1 -\exp\left\{-80\left[\left(x+\frac12\right)^2 + \left(y + \frac15\right)^2\right]\right\}, \\
-# v(x, y) &= \exp\left\{-80\left[\left(x-\frac12\right)^2+\left(y-\frac15\right)^2\right]\right\}.
+# u(x, y) &= 1 -\exp\left[-80\left(x^2 + y^2\right)\right], \\
+# v(x, y) &= \exp\left[-80\left(x^2+y^2\right)\right].
 # \end{align*}
 # ```
 # The domain we use is $[-1, 1]^2$, and we use 
 # zero flux boundary conditions.
 using FiniteVolumeMethod, DelaunayTriangulation
-tri = triangulate_rectangle(-1, 1, -1, 1, 20, 20, single_boundary=true)
+tri = triangulate_rectangle(-1, 1, -1, 1, 200, 200, single_boundary=true)
 mesh = FVMGeometry(tri)
 
 #-
@@ -41,43 +42,48 @@ u_qp = ε₁
 v_qp = ε₂
 u_Sp = b
 v_Sp = d
-u_icf = (x, y) -> 1 - exp(-80 * ((x)^2 + (y) .^ 2))
-v_icf = (x, y) -> exp(-80 * ((x) .^ 2 + (y) .^ 2))
+u_icf = (x, y) -> 1 - exp(-80 * (x^2 + y .^ 2))
+v_icf = (x, y) -> exp(-80 * (x .^ 2 + y .^ 2))
 u_ic = [u_icf(x, y) for (x, y) in each_point(tri)]
 v_ic = [v_icf(x, y) for (x, y) in each_point(tri)]
 u_prob = FVMProblem(mesh, u_BCs;
     flux_function=u_q, flux_parameters=u_qp,
     source_function=u_S, source_parameters=u_Sp,
-    initial_condition=u_ic, final_time=3500.0)
+    initial_condition=u_ic, final_time=6000.0)
 v_prob = FVMProblem(mesh, v_BCs;
     flux_function=v_q, flux_parameters=v_qp,
     source_function=v_S, source_parameters=v_Sp,
-    initial_condition=v_ic, final_time=3500.0)
+    initial_condition=v_ic, final_time=6000.0)
 prob = FVMSystem(u_prob, v_prob)
 
 # Now that we have our systme, we can solve. 
 using OrdinaryDiffEq, LinearSolve
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=10.0)
+sol = solve(prob, FBDF(linsolve=KLUFactorization()), saveat=10.0) # quite slow due to how stiff the PDE is
 
-alg = TRBDF2(linsolve=KLUFactorization())
-@benchmark solve($prob, $alg, saveat=$10.0)
+# Here is an animation of the solution, looking only at the $v$ variable.
+using CairoMakie
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y")
+tightlimits!(ax)
+i = Observable(1)
+u = map(i -> reshape(sol.u[i][2, :], 200, 200), i)
+x = LinRange(-1, 1, 200)
+y = LinRange(-1, 1, 200)
+heatmap!(ax, x, y, u, colorrange=(0.0, 0.4))
+record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachindex(sol);
+    framerate=60) do _i
+    i[] = _i
+end;
+# ```@raw html
+# <figure>
+#     <img src='../figures/gray_scott_patterns.mp4', alt='Animation of the Gray-Scott model'><br>
+# </figure>
+# ```
 
-du = zero(prob.initial_condition)
-u = prob.initial_condition 
-p = FiniteVolumeMethod.get_multithreading_vectors(prob)
-t = 0.0
-@benchmark $FiniteVolumeMethod.fvm_eqs!($du,$u,$p,$t)
-
-tricontourf(tri, sol.u[10][2, :])
-
-julia> @benchmark $FiniteVolumeMethod.fvm_eqs!($du,$u,$p,$t)
-BenchmarkTools.Trial: 1685 samples with 1 evaluation.
- Range (min … max):  211.000 μs … 333.495 ms  ┊ GC (min … max):  0.00% … 99.36%
- Time  (median):       2.174 ms               ┊ GC (median):     0.00%
- Time  (mean ± σ):     2.957 ms ±  15.922 ms  ┊ GC (mean ± σ):  26.27% ±  4.84%
-
-                                            ▂▅▅█▄▄▂
-  ▂▂▂▂▂▁▂▂▁▁▁▁▁▁▁▁▁▂▁▁▁▂▁▁▁▁▁▂▁▁▁▁▂▂▂▂▂▃▃▄▅▇████████▆▅▄▄▃▃▃▂▂▂▂ ▃
-  211 μs           Histogram: frequency by time         2.84 ms <
-
- Memory estimate: 9.52 MiB, allocs estimate: 33297.
+using ReferenceTests #src
+fig = Figure() #src
+tricontourf!(Axis(fig[1, 1]), tri, sol.u[end÷2][1, :]) #src
+tricontourf!(Axis(fig[1, 2]), tri, sol.u[end÷2][2, :]) #src
+tricontourf!(Axis(fig[2, 1]), tri, sol.u[end][1, :]) #src
+tricontourf!(Axis(fig[2, 2]), tri, sol.u[end][2, :]) #src
+@test_reference joinpath(@__DIR__, "../figures", "gray_scott_turing_patterns_from_a_coupled_reaction_diffusion_system.png") fig #src

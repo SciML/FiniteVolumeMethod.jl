@@ -29,8 +29,8 @@ end
 end
 
 # add on the final source term for a single node for a non-system
-@inline function fvm_eqs_single_source_contribution!(du::T, u, prob::AbstractFVMProblem, t, i) where {T}
-    S = get_source_contribution(prob, u, t, i)
+@inline function fvm_eqs_single_source_contribution!(du, u::T, prob::AbstractFVMProblem, t, i) where {T}
+    S = get_source_contribution(prob, u, t, i)::eltype(T)
     if !has_condition(prob, i)
         du[i] = du[i] / get_volume(prob, i) + S
     else
@@ -40,7 +40,7 @@ end
 end
 
 # add on the final source term for a single node for a system for all variables
-@inline function fvm_eqs_single_source_contribution!(du::T, u, prob::FVMSystem, t, i) where {T}
+@inline function fvm_eqs_single_source_contribution!(du, u::T, prob::FVMSystem, t, i) where {T}
     for var in 1:_neqs(prob)
         S = get_source_contribution(prob, u, t, i, var)::eltype(T)
         if !has_condition(prob, i, var)

@@ -35,8 +35,8 @@ end
 function get_flux(prob::FVMSystem, props, α::A, β, γ, t::T, edge_index) where {A,T}
     x, y, nx, ny, ℓ = _get_cv_components(props, edge_index)
     qn = ntuple(_neqs(prob)) do var
-        qn = _get_flux(prob, x, y, t, α, β, γ, nx, ny, var)
-        return qn * ℓ
+        _qn = _get_flux(prob, x, y, t, α, β, γ, nx, ny, var)
+        return _qn * ℓ
     end
     return qn
 end
