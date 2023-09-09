@@ -22,7 +22,7 @@
 #  Here is what the maze 
 # looks like, where the start is in blue and the end is in red.
 using DelaunayTriangulation, CairoMakie, DelimitedFiles
-A = readdlm("maze.txt")
+A = readdlm(joinpath(@__DIR__, "../tutorials/maze.txt"))
 A = unique(A, dims=1)
 x = A[1:10:end, 2] # downsample to make the problem faster
 y = A[1:10:end, 1]
