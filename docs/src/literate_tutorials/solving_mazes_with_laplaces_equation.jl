@@ -96,7 +96,7 @@ tricontourf(tri, ∇norms, colormap=:matter)
 using Accessors
 prob = @set prob.final_time = 1e8
 LogRange(a, b, n) = exp10.(LinRange(log10(a), log10(b), n))
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=LogRange(1e3, prob.final_time, 24))
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=LogRange(1e2, prob.final_time, 24*10))
 all_∇norms = map(sol.u) do u
     itp = interpolate(tri, u; derivatives=true)
     ∇ = NaturalNeighbours.get_gradient(itp)
@@ -104,12 +104,12 @@ all_∇norms = map(sol.u) do u
 end
 i = Observable(1)
 ∇norms = map(i -> all_∇norms[i], i)
-fig, ax, sc = tricontourf(tri, ∇norms, colormap=:matter, levels=LinRange(0, 0.005, 25), extendlow=:auto, extendhigh=:auto)
+fig, ax, sc = tricontourf(tri, ∇norms, colormap=:matter, levels=LinRange(0, 0.0035, 25), extendlow=:auto, extendhigh=:auto)
 hidedecorations!(ax)
 tightlimits!(ax)
 fig
 record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol);
-    framerate=2) do _i
+    framerate=24) do _i
     i[] = _i
 end;
 # ```@raw html
@@ -117,3 +117,22 @@ end;
 #     <img src='../figures/maze_solution_1.mp4', alt='Animation of the solution to the first maze'><br>
 # </figure>
 # ```
+
+# ## The second maze
+# We now consider a maze that has a different form, namely the paths in the maze are made by 
+# internal edges rather than from one contiguous boundary. This creates complications for us, 
+# as we do not have a way to directly enforce Neumann conditions on internal edges. Instead, we must 
+# represent the problem as a _differential-algebraic equation_, where the constrained equations 
+# represent the Neumann conditions. 
+# Before we do this, let's actually generate the maze.
+using Mazes 
+M = Maze(15, 25)
+
+# This maze is an undirected graph.
+M.T 
+
+# We need to convert into something we can mesh.
+using SimpleGraphs
+xy = M.T.cache[:xy]
+G = Mazes.Grid(M.r, M.c)
+non_edge_list = [e for e in G.E if !has(M.T, e[1], e[2])]
