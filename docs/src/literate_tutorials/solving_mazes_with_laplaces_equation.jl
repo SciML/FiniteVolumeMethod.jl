@@ -105,7 +105,6 @@ i = Observable(1)
 fig, ax, sc = tricontourf(tri, ∇norms, colormap=:matter, levels=LinRange(0, 0.0035, 25), extendlow=:auto, extendhigh=:auto)
 hidedecorations!(ax)
 tightlimits!(ax)
-fig
 record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol);
     framerate=24) do _i
     i[] = _i

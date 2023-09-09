@@ -311,3 +311,18 @@ In this [tutorial](solving_mazes_with_laplaces_equation.md), we consider solving
 \end{equation}
 ```
 The solution can then be found by looking at the potential $\grad\phi$.
+
+# A Cyclic Competition Model 
+In this [tutorial](a_cyclic_competition_model.md), we consider a cyclic competition model, given by[^10]
+```math
+\begin{equation}
+\begin{aligned}
+\pdv{u}{t} &= D_u\grad^2 u + u(1-u-av-bw), \\
+\pdv{v}{t} &= D_v\grad^2 v + v(1-bu-v-aw), \\
+\pdv{w}{t} &= D_w\grad^2 w + w(1-au-bv-w),
+\end{aligned}
+\end{equation}
+```
+with homogeneous Neumann boundary conditions on a rectangle.
+
+[^10]: We borrow this example from [VisualPDE](https://visualpde.com/mathematical-biology/cyclic-competition.html).
