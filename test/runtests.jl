@@ -5,7 +5,9 @@ ct() = Dates.format(now(), "HH:MM:SS")
 function safe_include(filename) # Workaround for not being able to interpolate into SafeTestset test names
     mod = @eval module $(gensym()) end
     @info "[$(ct())] Testing $filename"
-    return Base.include(mod, filename)
+    @testset "Example: $filename" begin
+        Base.include(mod, filename)
+    end
 end
 
 @testset "Geometry" begin
