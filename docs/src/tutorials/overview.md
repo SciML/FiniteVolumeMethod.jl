@@ -310,4 +310,4 @@ In this [tutorial](solving_mazes_with_laplaces_equation.md), we consider solving
 \end{aligned}
 \end{equation}
 ```
-The solution can then be found by looking at the potential $\grad\phi$. We will consider two types of mazes for this: One where the maze is one big boundary, in which case boundary conditions work for applying the conditions. We then consider a maze where the edges are obstacles, i.e. the walls have no thickness, in which case we have to apply internal constraints for applying the no flux conditions.
+The solution can then be found by looking at the potential $\grad\phi$.
