@@ -82,6 +82,7 @@ prob = FVMProblem(mesh, BCs;
     initial_condition)
 
 #- 
+using OrdinaryDiffEq, LinearSolve
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.2)
 
 #-

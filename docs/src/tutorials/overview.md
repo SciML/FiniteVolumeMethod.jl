@@ -297,3 +297,17 @@ T^{(2)}(R_2, \theta) &= 0, \\
 with a perturbed interface $\mathcal R_1(\theta) = R_1(1+\varepsilon g(\theta))$, $g(\theta)=\sin(3\theta)+\cos(5\theta)$. The conditions at the interface are needed to enforce continuity. The variable $T^{(1)}$ is the mean exit time in $0 < r < \mathcal R_1(\theta)$, and $T^{(2)}$ is the mean exit time in $\mathcal R_1(\theta) < r < R_2(\theta)$. The end of this tutorial also considers mean exit time with obstacles and internal conditions.
 
 [^9]: This problem comes from [Carr et al. (2022)](https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d/meta).
+
+# Solving Mazes with Laplace's Equation 
+In this [tutorial](solving_mazes_with_laplaces_equation.md), we consider solving mazes using Laplace's equation, applying the result of [Conolly, Burns, and Weis (1990)](https://doi.org/10.1109/ROBOT.1990.126315). In particular, given a maze $\mathcal M$, represented as a collection of edges together with some starting point $\mathcal S_1$ and an endpoint $\mathcal S_2$, Laplace's equation can be used to find the solution:
+```math
+\begin{equation}
+\begin{aligned}
+\grad^2 \phi &= 0, & \vb x \in \mathcal M, \\
+\phi &= 0 & \vb x \in \mathcal S_1, \\
+\phi &= 1 & \vb x \in \mathcal S_2, \\
+\grad\phi\vdot\vu n &= 0 & \vb x \in \partial M \setminus (\mathcal S_1 \cup \mathcal S_2).
+\end{aligned}
+\end{equation}
+```
+The solution can then be found by looking at the potential $\grad\phi$. We will consider two types of mazes for this: One where the maze is one big boundary, in which case boundary conditions work for applying the conditions. We then consider a maze where the edges are obstacles, i.e. the walls have no thickness, in which case we have to apply internal constraints for applying the no flux conditions. 

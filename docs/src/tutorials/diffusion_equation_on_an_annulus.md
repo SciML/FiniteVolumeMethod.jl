@@ -99,6 +99,7 @@ prob = FVMProblem(mesh, BCs;
 ````
 
 ````@example diffusion_equation_on_an_annulus
+using OrdinaryDiffEq, LinearSolve
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.2)
 ````
 
@@ -236,6 +237,7 @@ prob = FVMProblem(mesh, BCs;
     final_time,
     initial_condition)
 
+using OrdinaryDiffEq, LinearSolve
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.2)
 
 fig = Figure(fontsize=38)

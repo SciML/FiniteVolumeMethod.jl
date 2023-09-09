@@ -148,7 +148,7 @@ fvm_eqs!
 
 # Custom constraints 
 
-You can also provide custom constraints. Rather than outlining this precisely here, it is best explained in the tutorials, the clearest tutorial being [this one](tutorials/mean_exit_time_on_a_compound_disk_and_differential_algebraic_equations.md). We note that one useful function for this is `compute_flux`, which allows you to compute the flux across a given edge. The docstring for `compute_flux` is below, and this function is public API.
+You can also provide custom constraints. Rather than outlining this precisely here, it is best explained in the tutorials, namely [this tutorial](tutorials/solving_mazes_with_laplaces_equation.md). We note that one useful function for this is `compute_flux`, which allows you to compute the flux across a given edge. The docstring for `compute_flux` is below, and this function is public API.
 
 ```@docs
 compute_flux
