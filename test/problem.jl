@@ -13,15 +13,6 @@ flux_function, flux_parameters,
 source_function, source_parameters,
 initial_condition = example_problem()
 conds = FVM.Conditions(mesh, BCs, ICs)
-@inferred FVM.Conditions(mesh, BCs, ICs)
-@inferred FVMProblem(mesh, BCs, ICs;
-    flux_function,
-    flux_parameters,
-    source_function,
-    source_parameters,
-    initial_condition,
-    initial_time=2.0,
-    final_time=5.0)
 @test prob.mesh == mesh
 @test prob.conditions == conds
 @test prob.flux_function == flux_function

@@ -139,7 +139,7 @@ triplot(tri)
 mesh = FVMGeometry(tri)
 
 # The boundary conditions are simple absorbing conditions.
-BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
+BCs = BoundaryConditions(mesh, ((x, y, t, u, p) -> zero(u),), (Dirichlet,))
 
 # For the problem, let us first define the diffusivity. 
 D₁, D₂ = 6.25e-4, 6.25e-5
