@@ -1,4 +1,4 @@
-# Keller-Segel Chemotaxis 
+# Keller-Segel Model of Chemotaxis 
 In this tutorial, we consider the following Keller-Segel model of chemotaxis:
 ```math 
 \begin{equation*}
