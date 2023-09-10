@@ -165,4 +165,4 @@ record(fig, joinpath(@__DIR__, "../figures", "temperature_animation.mp4"), eachi
     i[] = _i
 end;
 
-# ![Animation of the temperature distribution](../figures/temperature.mp4)
+# ![Animation of the temperature distribution](../figures/temperature_animation.mp4)
