@@ -296,11 +296,9 @@ where $u(\vb x_\sigma, t) = \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sig
 
 # Internal Conditions
 
-We also allow for specifying internal conditions, meaning conditions of the form \eqref{eq:neumann}--\eqref{eq:dirichlet} that are applied away from the boundary. We do not currently allow for internal Neumann conditions directly.[^1] [^2] These conditions are handled in the same way as BCs, except that the user is to provide them per-vertex rather than per-edge.
+We also allow for specifying internal conditions, meaning conditions of the form \eqref{eq:neumann}--\eqref{eq:dirichlet} that are applied away from the boundary. We do not currently allow for internal Neumann conditions directly.[^1] These conditions are handled in the same way as BCs, except that the user is to provide them per-vertex rather than per-edge.
 
 [^1]: This is a technical limitation due to how the control volumes are defined. For vertices away from the boundary, the control volume edges do not lie along any of the triangle's edges, which is where we would like to impose Neumann conditions.
-
-[^2]: We do provide examples of how to impose them by converting the problems into differential-algebraic problems - see the tutorials. 
 
 # Putting Everything Together 
 
