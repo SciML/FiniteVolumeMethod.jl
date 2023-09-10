@@ -79,11 +79,7 @@ record(fig, joinpath(@__DIR__, "../figures", "keller_segel_chemotaxis.mp4"), eac
 end;
 ```
 
-```@raw html
-<figure>
-    <img src='../figures/keller_segel_chemotaxis.mp4', alt='Animation of the solution'><br>
-</figure>
-```
+![Animation of the Gray-Scott model](../figures/gray_scott_patterns.mp4)
 
 Some pretty amazing patterns!
 

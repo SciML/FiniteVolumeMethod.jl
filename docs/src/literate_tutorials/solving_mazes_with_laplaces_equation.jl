@@ -109,20 +109,4 @@ record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(s
     framerate=24) do _i
     i[] = _i
 end;
-# ```@raw html
-# <figure>
-#     <img src='/figures/maze_solution_1.mp4', alt='Animation of the solution to the first maze'><br>
-# </figure>
-# ```
-# ![](../figures/maze_solution_1.mp4)
-
-# ```@raw html
-# <figure>
-#     <img src='docs/src/figures/maze_solution_1.mp4', alt='Animation of the solution to the first maze'><br>
-# </figure>
-# ```
-# ```@raw html
-# <figure>
-#     <img src='./figures/maze_solution_1.mp4', alt='Animation of the solution to the first maze'><br>
-# </figure>
-# ```
+# ![Animation of the solution of the maze](../figures/maze_solution_1.mp4)

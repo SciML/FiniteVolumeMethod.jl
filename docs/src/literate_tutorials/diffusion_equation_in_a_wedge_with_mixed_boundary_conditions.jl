@@ -85,7 +85,7 @@ flux = (x, y, t, α, β, γ, p) -> (-α, -β)
 # In my experience, I've found that `TRBDF2(linsolve=KLUFactorization())` typically 
 # has the best performance for these problems.
 using OrdinaryDiffEq, LinearSolve
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.01)
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.01, parallel=Val(false))
 
 #-
 using CairoMakie

@@ -87,11 +87,7 @@ record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachind
 end
 ````
 
-```@raw html
-<figure>
-    <img src='../figures/gray_scott_patterns.mp4', alt='Animation of the Gray-Scott model'><br>
-</figure>
-```
+![Animation of the Gray-Scott model](../figures/gray_scott_patterns.mp4)
 
 ## Just the code
 An uncommented version of this example is given below.

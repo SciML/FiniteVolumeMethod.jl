@@ -84,7 +84,7 @@ ICs = InternalConditions((x, y, t, u, p) -> zero(u),
     dirichlet_nodes=Dict(vertices .=> 1))
 
 # Now we can define the problem. As discussed in 
-# the [Helmholtz tutorial](helmholtz_equation_with_inhomogeneous_boundary_conditions.html),
+# the [Helmholtz tutorial](helmholtz_equation_with_inhomogeneous_boundary_conditions.md),
 # we are looking to define a steady state problem, and so 
 # the initial condition needs to be a suitable initial guess of 
 # what the solution could be. Looking to the boundary and internal conditions, 

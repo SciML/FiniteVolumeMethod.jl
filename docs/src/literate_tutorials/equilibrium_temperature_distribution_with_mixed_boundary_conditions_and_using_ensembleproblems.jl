@@ -161,8 +161,4 @@ record(fig, joinpath(@__DIR__, "../figures", "temperature_animation.mp4"), eachi
     i[] = _i
 end;
 
-# ```@raw html
-# <figure>
-#     <img src='../figures/temperature_animation.mp4', alt='Animation of the temperature distribution'><br>
-# </figure>
-# ```
+# ![Animation of the temperature distribution](../figures/temperature.mp4)
