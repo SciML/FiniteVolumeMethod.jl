@@ -313,7 +313,7 @@ In this [tutorial](solving_mazes_with_laplaces_equation.md), we consider solving
 The solution can then be found by looking at the potential $\grad\phi$.
 
 # Keller-Segel Model of Chemotaxis 
-In this [tutorial](keller_segel_chemotaxis.md), we consider the following Keller-Segel model of chemotaxis:
+In this [tutorial](keller_segel_chemotaxis.md), we consider the following Keller-Segel model of chemotaxis:[^10]
 ```math 
 \begin{equation*}
 \begin{aligned}
@@ -323,3 +323,5 @@ In this [tutorial](keller_segel_chemotaxis.md), we consider the following Keller
 \end{equation*}
 ```
 inside the square $[0, 100]^2$ with homogeneous Neumann boundary conditions.
+
+[^10]: This example comes from [VisualPDE](https://visualpde.com/mathematical-biology/keller-segel.html).
