@@ -1,32 +1,40 @@
 module FiniteVolumeMethod
 
 using DelaunayTriangulation
-using FunctionWrappersWrappers
 using PreallocationTools
 using LinearAlgebra
 using SparseArrays
 using SciMLBase
 using Base.Threads
-using DiffEqBase
-using MuladdMacro
-import DiffEqBase: dualgen
 using ChunkSplitters
-
-using DelaunayTriangulation: number_type
+using CommonSolve
 
 include("geometry.jl")
-include("boundary_conditions.jl")
+include("conditions.jl")
 include("problem.jl")
-include("equations.jl")
-include("parallel_equations.jl")
+include("equations/boundary_edge_contributions.jl")
+include("equations/control_volumes.jl")
+include("equations/dirichlet.jl")
+include("equations/individual_flux_contributions.jl")
+include("equations/main_equations.jl")
+include("equations/shape_functions.jl")
+include("equations/source_contributions.jl")
+include("equations/triangle_contributions.jl")
 include("solve.jl")
-include("interpolant.jl")
+include("utils.jl")
 
-export FVMGeometry
-export BoundaryConditions
-export FVMProblem
-export eval_interpolant
-export eval_interpolant!
-export jacobian_sparsity
+export FVMGeometry,
+    FVMProblem,
+    FVMSystem,
+    SteadyFVMProblem,
+    BoundaryConditions,
+    InternalConditions,
+    Neumann,
+    Dudt,
+    Dirichlet,
+    Constrained,
+    solve,
+    compute_flux,
+    pl_interpolate
 
 end

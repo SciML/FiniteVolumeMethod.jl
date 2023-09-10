@@ -1,81 +1,68 @@
 using FiniteVolumeMethod
 using Test
-using SafeTestsets
+using Dates
+ct() = Dates.format(now(), "HH:MM:SS")
+function safe_include(filename) # Workaround for not being able to interpolate into SafeTestset test names
+    mod = @eval module $(gensym()) end
+    @info "[$(ct())] Testing $filename"
+    @testset "Example: $filename" begin
+        Base.include(mod, filename)
+    end
+end
 
-@testset verbose = true "FiniteVolumeMethod" begin
-    @safetestset "FVMGeometry" begin
-        include("geometry.jl")
+@testset "FiniteVolumeMethod.jl" begin
+    @testset "Geometry" begin
+        safe_include("geometry.jl")
     end
-    @safetestset "BoundaryConditions" begin
-        include("boundary_conditions.jl")
+    @testset "Conditions" begin
+        safe_include("conditions.jl")
     end
-    @safetestset "FVMProblem" begin
-        include("problem.jl")
+    @testset "Problem" begin
+        safe_include("problem.jl")
     end
-    @safetestset "FVMEquations" begin
-        include("equations.jl")
+    @testset "Equations" begin
+        safe_include("equations.jl")
     end
-    @testset verbose = true "Example PDEs" begin
-        @safetestset "Diffusion equation on a square plate" begin
-            include("diffusion_example.jl")
-        end
-        @safetestset "Diffusion equation on a wedge with mixed BCs" begin
-            include("wedge_example.jl")
-        end
-        @safetestset "Reaction-diffusion equation with a dudt BC on a disk" begin
-            include("reaction_example.jl")
-        end
-        @safetestset "Porous-Medium equation" begin
-            include("porous_example.jl")
-        end
-        @safetestset "Porous-Medium equation with a linear source" begin
-            include("porous_linear_example.jl")
-        end
-        @safetestset "Travelling wave problem" begin
-            include("travelling_wave_example.jl")
-        end
-        @safetestset "Diffusion in an annulus" begin
-            include("annulus_example.jl")
-        end
-        @safetestset "Laplace's equation" begin
-            include("laplaces_equation.jl")
-        end
+    @testset "README" begin
+        safe_include("README.jl")
     end
-    @testset verbose = true "MET Problems" begin
-        @safetestset "Circle" begin
-            include("met_circle.jl")
-        end
-        @safetestset "Perturbed circle" begin
-            include("met_perturbed_circle.jl")
-        end
-        @safetestset "Ellipse" begin
-            include("met_ellipse.jl")
-        end
-        @safetestset "Perturbed ellipse" begin
-            include("met_perturbed_ellipse.jl")
-        end
-        @safetestset "Annulus" begin
-            include("met_annulus.jl")
-        end
-        @safetestset "Perturbed annulus" begin
-            include("met_perturbed_annulus.jl")
+
+    dir = joinpath(dirname(@__DIR__), "docs", "src", "literate_tutorials")
+    files = readdir(dir)
+    file_names = [
+        "diffusion_equation_in_a_wedge_with_mixed_boundary_conditions.jl",
+        "diffusion_equation_on_a_square_plate.jl",
+        "diffusion_equation_on_an_annulus.jl",
+        "equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.jl",
+        "helmholtz_equation_with_inhomogeneous_boundary_conditions.jl",
+        "laplaces_equation_with_internal_dirichlet_conditions.jl",
+        "mean_exit_time.jl",
+        "piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.jl",
+        "porous_fisher_equation_and_travelling_waves.jl",
+        "porous_medium_equation.jl",
+        "reaction_diffusion_brusselator_system_of_pdes.jl",
+        "reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk.jl",
+        "solving_mazes_with_laplaces_equation.jl"
+    ] # do it manually just to make it easier for testing individual files rather than in a loop, e.g. one like 
+    #=
+    for file in files
+        @testset "Example: $file" begin
+            safe_include(joinpath(dir, file))
         end
     end
-    @safetestset "Interpolants" begin
-        include("interpolants.jl")
-    end
-    @testset verbose = true "Parallel" begin
-        @safetestset "Parallel equations for the diffusion equation on a square plate problem" begin
-            include("parallel_diffusion_example.jl")
-        end
-        @safetestset "Parallel equations for the diffusion equation on a wedge problem" begin
-            include("parallel_wedge_example.jl")
-        end
-        @safetestset "Parallel equations for the reaction-diffusion on a disk problem" begin
-            include("parallel_reaction_example.jl")
-        end
-        @safetestset "Testing the parallel equations for a tissue problem" begin
-            include("parallel_tissue_example.jl")
-        end
-    end
+    =#
+    @test length(files) == length(file_names) # make sure we didn't miss any 
+    safe_include(joinpath(dir, file_names[1])) # diffusion_equation_in_a_wedge_with_mixed_boundary_conditions
+    safe_include(joinpath(dir, file_names[2])) # diffusion_equation_on_a_square_plate
+    safe_include(joinpath(dir, file_names[3])) # diffusion_equation_on_an_annulus
+    safe_include(joinpath(dir, file_names[4])) # equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems
+    safe_include(joinpath(dir, file_names[5])) # helmholtz_equation_with_inhomogeneous_boundary_conditions
+    safe_include(joinpath(dir, file_names[6])) # laplaces_equation_with_internal_dirichlet_conditions
+    safe_include(joinpath(dir, file_names[7])) # mean_exit_time
+    safe_include(joinpath(dir, file_names[8])) # piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+    safe_include(joinpath(dir, file_names[9])) # porous_fisher_equation_and_travelling_waves
+    safe_include(joinpath(dir, file_names[10])) # porous_medium_equation
+    safe_include(joinpath(dir, file_names[11])) # reaction_diffusion_brusselator_system_of_pdes
+    safe_include(joinpath(dir, file_names[12])) # reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk
+    safe_include(joinpath(dir, file_names[13])) # solving_mazes_with_laplaces_equation
 end

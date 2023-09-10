@@ -1,380 +1,122 @@
 using ..FiniteVolumeMethod
-include("test_setup.jl")
 using Test
-using SciMLBase
+using LinearAlgebra
+using DelaunayTriangulation
+using StructEquality
+const FVM = FiniteVolumeMethod
+const DT = DelaunayTriangulation
+@struct_hash_equal FVM.Conditions
+include("test_functions.jl")
 
-## Make sure that the flux function is being constructed correctly
-for iip_flux in (true, false)
-        flux_function = nothing
-        flux_parameters = nothing
-        delay_function = nothing
-        delay_parameters = nothing
-        diffusion_function = (x, y, t, u, p) -> x * y
-        diffusion_parameters = nothing
-        flux_fnc = FVM.construct_flux_function(iip_flux, flux_function, delay_function, delay_parameters, diffusion_function, diffusion_parameters)
-        x, y, t, α, β, γ, p = rand(), rand(), rand(), rand(), rand(), rand(), nothing
-        if iip_flux
-            q = zeros(2)
-            @inferred flux_fnc(q, x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(q, x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-diffusion_function(x, y, t, u, diffusion_parameters) * α, -diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        else
-            @inferred flux_fnc(x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(x, y, t, α, β, γ, p)
-            q = flux_fnc(x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-diffusion_function(x, y, t, u, diffusion_parameters) * α, -diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        end
-
-        diffusion_function = (x, y, t, u, p) -> x * y + p
-        diffusion_parameters = 3.7
-        x, y, t, α, β, γ, p = rand(), rand(), rand(), rand(), rand(), rand(), nothing
-        flux_fnc = FVM.construct_flux_function(iip_flux, flux_function, delay_function, delay_parameters, diffusion_function, diffusion_parameters)
-        if iip_flux
-            q = zeros(2)
-            @inferred flux_fnc(q, x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(q, x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-diffusion_function(x, y, t, u, diffusion_parameters) * α, -diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        else
-            @inferred flux_fnc(x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(x, y, t, α, β, γ, p)
-            q = flux_fnc(x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-diffusion_function(x, y, t, u, diffusion_parameters) * α, -diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        end
-
-        diffusion_function = (x, y, t, u, p) -> x * y
-        diffusion_parameters = nothing
-        delay_function = (x, y, t, u, p) -> 1 / (1 + exp(-t))
-        delay_parameters = nothing
-        flux_fnc = FVM.construct_flux_function(iip_flux, flux_function, delay_function, delay_parameters, diffusion_function, diffusion_parameters)
-        x, y, t, α, β, γ, p = rand(), rand(), rand(), rand(), rand(), rand(), nothing
-        if iip_flux
-            q = zeros(2)
-            @inferred flux_fnc(q, x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(q, x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α,
-                -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        else
-            @inferred flux_fnc(x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(x, y, t, α, β, γ, p)
-            q = flux_fnc(x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α,
-                -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        end
-
-        diffusion_function = (x, y, t, u, p) -> x * y + p
-        diffusion_parameters = 3.7
-        delay_function = (x, y, t, u, p) -> 1 / (1 + exp(-t))
-        delay_parameters = nothing
-        flux_fnc = FVM.construct_flux_function(iip_flux, flux_function, delay_function, delay_parameters, diffusion_function, diffusion_parameters)
-        x, y, t, α, β, γ, p = rand(), rand(), rand(), rand(), rand(), rand(), nothing
-        if iip_flux
-            q = zeros(2)
-            @inferred flux_fnc(q, x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(q, x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α,
-                -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        else
-            @inferred flux_fnc(x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(x, y, t, α, β, γ, p)
-            q = flux_fnc(x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α,
-                -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        end
-
-        diffusion_function = (x, y, t, u, p) -> x * y
-        diffusion_parameters = nothing
-        delay_function = (x, y, t, u, p) -> 1 / (1 + exp(-t)) + p[1] * p[3]
-        delay_parameters = (1.0, 0.5, 2.0)
-        x, y, t, α, β, γ, p = rand(), rand(), rand(), rand(), rand(), rand(), nothing
-        flux_fnc = FVM.construct_flux_function(iip_flux, flux_function, delay_function, delay_parameters, diffusion_function, diffusion_parameters)
-        if iip_flux
-            q = zeros(2)
-            @inferred flux_fnc(q, x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(q, x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α,
-                -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        else
-            @inferred flux_fnc(x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(x, y, t, α, β, γ, p)
-            q = flux_fnc(x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α,
-                -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        end
-
-        diffusion_function = (x, y, t, u, p) -> x * y + p
-        diffusion_parameters = 3.7
-        delay_function = (x, y, t, u, p) -> 1 / (1 + exp(-t)) + p[1]
-        delay_parameters = 1.5
-        x, y, t, α, β, γ, p = rand(), rand(), rand(), rand(), rand(), rand(), nothing
-        flux_fnc = FVM.construct_flux_function(iip_flux, flux_function, delay_function, delay_parameters, diffusion_function, diffusion_parameters)
-        if iip_flux
-            q = zeros(2)
-            @inferred flux_fnc(q, x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(q, x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α,
-                -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        else
-            @inferred flux_fnc(x, y, t, α, β, γ, p)
-            SHOW_WARNTYPE && @code_warntype flux_fnc(x, y, t, α, β, γ, p)
-            q = flux_fnc(x, y, t, α, β, γ, p)
-            u = α * x + β * y + γ
-            @test all(q .≈ [-delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α,
-                -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β])
-        end
-
-        flux_function = (x, y, t, α, β, γ, p) -> x * y * t + α * β * γ + p[1]
-        flux_fnc = FVM.construct_flux_function(iip_flux, flux_function, delay_function, delay_parameters, diffusion_function, diffusion_parameters)
-        @test flux_fnc === flux_function
+prob, tri, mesh, BCs, ICs,
+flux_function, flux_parameters,
+source_function, source_parameters,
+initial_condition = example_problem()
+conds = FVM.Conditions(mesh, BCs, ICs)
+@test prob.mesh == mesh
+@test prob.conditions == conds
+@test prob.flux_function == flux_function
+@test prob.flux_parameters == flux_parameters
+@test prob.source_function == source_function
+@test prob.source_parameters == source_parameters
+@test prob.initial_condition == initial_condition
+@test prob.initial_time == 2.0
+@test prob.final_time == 5.0
+x, y, t, α, β, γ, p = 0.5, -1.0, 2.3, 0.371, -5.37, 17.5, flux_parameters
+u = α * x + β * y + γ
+qx = -α * u * p[1] + t
+qy = x + t - β * u * p[2]
+@test FVM.eval_flux_function(prob, x, y, t, α, β, γ) == (qx, qy)
+@inferred FVM.eval_flux_function(prob, x, y, t, α, β, γ)
+@test FVM._neqs(prob) == 0
+@test !FVM.is_system(prob)
+@test FVM.has_dirichlet_nodes(prob)
+for (i, idx) in prob.conditions.dirichlet_nodes
+    @test FVM.get_dirichlet_fidx(prob, i) == idx
 end
-
-## Make sure the reaction function is being constructed correctly
-reaction_function = (x, y, t, u, p) -> u * (1 - u / p)
-reaction_parameters = 1.2
-delay_function = (x, y, t, u, p) -> x * y * t
-delay_parameters = 5.0
-reaction_fnc = FVM.construct_reaction_function(reaction_function, reaction_parameters,
-    delay_function, delay_parameters)
-x, y, t, u, p = rand(), rand(), rand(), rand(), nothing
-@inferred reaction_fnc(x, y, t, u, nothing)
-SHOW_WARNTYPE && @code_warntype reaction_fnc(x, y, t, u, nothing)
-@test reaction_fnc(x, y, t, u, nothing) ≈ reaction_function(x, y, t, u, reaction_parameters) * delay_function(x, y, t, u, delay_parameters)
-
-delay_function = nothing
-delay_parameters = nothing
-reaction_fnc = FVM.construct_reaction_function(reaction_function, reaction_parameters,
-    delay_function, delay_parameters)
-@test reaction_fnc === reaction_function
-
-reaction_function = nothing
-reaction_parameters = 1.2
-delay_function = (x, y, t, u, p) -> x * y * t
-delay_parameters = 5.0
-reaction_fnc = FVM.construct_reaction_function(reaction_function, reaction_parameters,
-    delay_function, delay_parameters)
-x, y, t, u, p = rand(), rand(), rand(), rand(), nothing
-@inferred reaction_fnc(x, y, t, u, nothing)
-SHOW_WARNTYPE && @code_warntype reaction_fnc(x, y, t, u, nothing)
-@test reaction_fnc(x, y, t, u, nothing) ≈ 0.0
-@test reaction_fnc(x, y, t, Float32(0), nothing) === 0.0f0
-
-reaction_function = nothing
-reaction_parameters = nothing
-delay_function = nothing
-delay_parameters = nothing
-reaction_fnc = FVM.construct_reaction_function(reaction_function, reaction_parameters,
-    delay_function, delay_parameters)
-x, y, t, u, p = rand(), rand(), rand(), rand(), nothing
-@inferred reaction_fnc(x, y, t, u, nothing)
-SHOW_WARNTYPE && @code_warntype reaction_fnc(x, y, t, u, nothing)
-@test reaction_fnc(x, y, t, u, nothing) ≈ 0.0
-@test reaction_fnc(x, y, t, Float32(0), nothing) === 0.0f0
-
-## Now check that the object is constructed correctly 
-a, b, c, d, nx, ny, tri = example_triangulation()
-for coordinate_type in (NTuple{2,Float64}, SVector{2,Float64})
-    for control_volume_storage_type_vector in (Vector{coordinate_type}, SVector{3,coordinate_type})
-        for control_volume_storage_type_scalar in (Vector{Float64}, SVector{3,Float64})
-            for shape_function_coefficient_storage_type in (Vector{Float64}, NTuple{9,Float64})
-                for interior_edge_storage_type in (Vector{Int64}, NTuple{2,Int64},)
-                    for interior_edge_pair_storage_type in (Vector{interior_edge_storage_type}, NTuple{2,interior_edge_storage_type})
-                        local x, y, t, reaction_function, reaction_parameters, u, delay_function, delay_parameters
-                        geo = FVMGeometry(tri;
-                            coordinate_type, control_volume_storage_type_vector,
-                            control_volume_storage_type_scalar, shape_function_coefficient_storage_type,
-                            interior_edge_storage_type, interior_edge_pair_storage_type)
-                        dirichlet_f1 = (x, y, t, u, p) -> x^2 + y^2
-                        dirichlet_f2 = (x, y, t, u, p) -> x * p[1] * p[2] + u
-                        neumann_f1 = (x, y, t, u, p) -> 0.0
-                        neumann_f2 = (x, y, t, u, p) -> u * p[1]
-                        dudt_dirichlet_f1 = (x, y, t, u, p) -> x * y + 1
-                        dudt_dirichlet_f2 = (x, y, t, u, p) -> u + y * t
-                        functions = (dirichlet_f2, neumann_f1, dudt_dirichlet_f1, dudt_dirichlet_f2)
-                        types = (:D, :N, :dudt, :dudt)
-                        params = ((1.0, 2.0), nothing, nothing, nothing)
-                        BCs = FVM.BoundaryConditions(geo, functions, types; params)
-                        iip_flux = true
-                        flux_function = (q, x, y, t, α, β, γ, p) -> (q[1] = x * y * t; q[2] = t; nothing)
-                        initial_condition = zeros(20)
-                        final_time = 5.0
-                        prob = FVMProblem(geo, BCs; iip_flux, flux_function, initial_condition, final_time)
-                        @test FVM.get_triangulation(prob) == tri 
-                        @test each_point_index(prob) == each_point_index(tri)
-                        @test isinplace(prob) == iip_flux
-                        @test !FiniteVolumeMethod.is_steady(prob)
-                        @test prob.boundary_conditions == BCs
-                        @test prob.flux_function == flux_function
-                        @test prob.initial_condition == initial_condition
-                        @test prob.mesh == geo == FVM.get_mesh(prob)
-                        @test prob.reaction_parameters === nothing
-                        @test prob.final_time == final_time
-                        @test prob.flux_parameters === nothing
-                        @test prob.initial_time == 0.0
-                        @test prob.reaction_function(rand(), rand(), rand(), rand(), nothing) == 0.0
-                        @inferred prob.reaction_function(rand(), rand(), rand(), rand(), nothing)
-                        SHOW_WARNTYPE && @code_warntype prob.reaction_function(rand(), rand(), rand(), rand(), nothing)
-                        @test prob.reaction_function(rand(), rand(), rand(), rand(Float32), nothing) == 0.0f0
-                        @test prob.steady == false
-
-                        flux_function = (q, x, y, t, α, β, γ, p) -> (q[1] = x * y * t; q[2] = p; nothing)
-                        flux_parameters = 3.81
-                        prob = FVMProblem(geo, BCs; iip_flux, flux_function, initial_condition, final_time, flux_parameters)
-                        @test prob.flux_function == flux_function
-                        @test prob.flux_parameters == flux_parameters
-                        q = zeros(2)
-                        x, y, t, α, β, γ = rand(6)
-                        prob.flux_function(q, x, y, t, α, β, γ, flux_parameters)
-                        @test q ≈ [x * y * t, flux_parameters]
-                        @test prob.boundary_conditions == BCs == FVM.get_boundary_conditions(prob)
-                        @test prob.flux_function == flux_function
-                        @test prob.initial_condition == initial_condition
-                        @test prob.mesh == geo
-                        @test prob.reaction_parameters === nothing
-                        @test prob.final_time == final_time
-                        @test prob.flux_parameters === flux_parameters
-                        @test prob.initial_time == 0.0
-
-                        diffusion_function = (x, y, t, u, p) -> u^2 + p[1] * p[2]
-                        diffusion_parameters = (2.0, 3.0)
-                        reaction_function = (x, y, t, u, p) -> u * (1 - u / p[1])
-                        reaction_parameters = [5.0]
-                        prob = FVMProblem(geo, BCs; iip_flux, diffusion_function, diffusion_parameters, initial_condition, reaction_function, reaction_parameters, final_time, initial_time=3.71)
-                        @test isinplace(prob) == iip_flux
-                        @test prob.boundary_conditions == BCs == FVM.get_boundary_conditions(prob)
-                        q1 = zeros(2)
-                        x, y, t, α, β, γ = rand(6)
-                        prob.flux_function(q1, x, y, t, α, β, γ, nothing)
-                        u = α * x + β * y + γ
-                        q2 = [-diffusion_function(x, y, t, u, diffusion_parameters) * α, -diffusion_function(x, y, t, u, diffusion_parameters) * β]
-                        @test q1 ≈ q2
-                        @test prob.reaction_function(x, y, t, u, prob.reaction_parameters) == reaction_function(x, y, t, u, reaction_parameters)
-                        @inferred prob.reaction_function(x, y, t, u, prob.reaction_parameters)
-                        SHOW_WARNTYPE && @code_warntype prob.reaction_function(x, y, t, u, prob.reaction_parameters)
-                        @test prob.boundary_conditions == BCs
-                        @test prob.initial_condition == initial_condition
-                        @test prob.mesh == geo
-                        @test prob.reaction_parameters === reaction_parameters
-                        @test prob.final_time == final_time
-                        @test prob.flux_parameters === nothing
-                        @test prob.initial_time == 3.71
-
-                        delay_function = (x, y, t, u, p) -> 1 / (1 + exp(-t * p[1]))
-                        delay_parameters = [2.371]
-                        prob = FVMProblem(geo, BCs; iip_flux, diffusion_function, diffusion_parameters, initial_condition, delay_function, delay_parameters, reaction_function, reaction_parameters, final_time, initial_time=3.71)
-                        @test isinplace(prob) == iip_flux
-                        @test prob.boundary_conditions == BCs
-                        q1 = zeros(2)
-                        x, y, t, α, β, γ = rand(6)
-                        prob.flux_function(q1, x, y, t, α, β, γ, nothing)
-                        SHOW_WARNTYPE && @code_warntype prob.flux_function(q1, x, y, t, α, β, γ, nothing)
-                        u = α * x + β * y + γ
-                        q2 = [-delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α, -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β]
-                        @test q1 ≈ q2
-                        @test prob.reaction_function(x, y, t, u, prob.reaction_parameters) ≈ delay_function(x, y, t, u, delay_parameters) * reaction_function(x, y, t, u, reaction_parameters)
-                        @test prob.initial_condition == initial_condition
-                        @test prob.mesh == geo
-                        @test prob.reaction_parameters === reaction_parameters
-                        @test prob.final_time == final_time
-                        @test prob.flux_parameters === nothing
-                        @test prob.initial_time == 3.71
-                        @test prob.steady == false
-
-                        ## Test some of the getters 
-                        for V in each_solid_triangle(tri)
-                            @test FVM.gets(prob, V) == prob.mesh.element_information_list[V].shape_function_coefficients
-                            for i in 1:9
-                                @test FVM.gets(prob, V, i) == prob.mesh.element_information_list[V].shape_function_coefficients[i]
-                            end
-                            @test FVM.get_midpoints(prob, V) == prob.mesh.element_information_list[V].midpoints
-                            for i in 1:3
-                                @test FVM.get_midpoints(prob, V, i) == prob.mesh.element_information_list[V].midpoints[i]
-                            end
-                            @test FVM.get_control_volume_edge_midpoints(prob, V) == prob.mesh.element_information_list[V].control_volume_edge_midpoints
-                            for i in 1:3
-                                @test FVM.get_control_volume_edge_midpoints(prob, V, i) == prob.mesh.element_information_list[V].control_volume_edge_midpoints[i]
-                            end
-                            @test FVM.get_normals(prob, V) == prob.mesh.element_information_list[V].normals
-                            for i in 1:3
-                                @test FVM.get_normals(prob, V, i) == prob.mesh.element_information_list[V].normals[i]
-                            end
-                            @test FVM.get_lengths(prob, V) == prob.mesh.element_information_list[V].lengths
-                            for i in 1:3
-                                @test FVM.get_lengths(prob, V, i) == prob.mesh.element_information_list[V].lengths[i]
-                            end
-                        end
-                        x, y, t, α, β, γ = rand(6)
-                        flux_cache = zeros(2)
-                        FVM.get_flux!(flux_cache, prob, x, y, t, α, β, γ)
-                        flux_cache_2 = zeros(2)
-                        prob.flux_function(flux_cache_2, x, y, t, α, β, γ, prob.flux_parameters)
-                        @test all(flux_cache .≈ flux_cache_2)
-                        prob = FVMProblem(geo, BCs; iip_flux=false, diffusion_function, diffusion_parameters, initial_condition, delay_function, delay_parameters, reaction_function, reaction_parameters, final_time, initial_time=3.71)
-                        flux_cache = FVM.get_flux(prob, x, y, t, α, β, γ)
-                        @test all(flux_cache .≈ flux_cache_2)
-                        SHOW_WARNTYPE && @code_warntype FVM.get_flux(prob, x, y, t, α, β, γ)
-                        @test FVM.get_interior_or_neumann_nodes(prob) == prob.boundary_conditions.interior_or_neumann_nodes
-                        for j ∈ FVM.get_interior_or_neumann_nodes(prob)
-                            @test FVM.is_interior_or_neumann_node(prob, j)
-                        end
-                        j = rand(Int64, 500)
-                        setdiff!(j, FVM.get_interior_or_neumann_nodes(prob))
-                        for j ∈ j
-                            @test !FVM.is_interior_or_neumann_node(prob, j)
-                        end
-                        @test FVM.get_interior_elements(prob) == prob.mesh.interior_information.elements
-                        true_interior_edge_boundary_element_identifier = get_interior_identifier_for_example_triangulation(interior_edge_pair_storage_type)
-                        for (V, E) in true_interior_edge_boundary_element_identifier
-                            @test FVM.get_interior_edges(prob, V) == E
-                        end
-                        @test FVM.get_boundary_elements(prob) == prob.mesh.boundary_information.boundary_elements
-                        for j in each_point_index(tri)
-                            @test get_point(prob, j) == Tuple(get_points(tri)[j])
-                            @test FVM.get_volumes(prob, j) == prob.mesh.volumes[j]
-                        end
-                        x, y, t, u = rand(4)
-                        @test FVM.get_reaction(prob, x, y, t, u) == prob.reaction_function(x, y, t, u, prob.reaction_parameters)
-                        @inferred FVM.get_reaction(prob, x, y, t, u)
-                        SHOW_WARNTYPE && @code_warntype FVM.get_reaction(prob, x, y, t, u)
-                        @test FVM.get_dirichlet_nodes(prob) == prob.boundary_conditions.dirichlet_nodes
-                        @test FVM.get_neumann_nodes(prob) == prob.boundary_conditions.neumann_nodes
-                        @test FVM.get_dudt_nodes(prob) == prob.boundary_conditions.dudt_nodes
-                        @test FVM.get_boundary_nodes(prob) == prob.mesh.boundary_information.boundary_nodes
-                        for i in eachindex(prob.boundary_conditions.parameters)
-                            @test FVM.get_boundary_function_parameters(prob, i) == prob.boundary_conditions.parameters[i]
-                        end
-                        for j in FVM.get_boundary_nodes(prob)
-                            @test FVM.map_node_to_segment(prob, j) == prob.boundary_conditions.type_map[j]
-                        end
-                        x, y, t, u = rand(4)
-                        @test FVM.evaluate_boundary_function(prob, 1, x, y, t, u) ≈ prob.boundary_conditions.functions[1](x, y, t, u, FVM.get_boundary_function_parameters(prob, 1))
-                        @test FVM.evaluate_boundary_function(prob, 2, x, y, t, u) ≈ prob.boundary_conditions.functions[2](x, y, t, u, FVM.get_boundary_function_parameters(prob, 2))
-                        @test FVM.evaluate_boundary_function(prob, 3, x, y, t, u) ≈ prob.boundary_conditions.functions[3](x, y, t, u, FVM.get_boundary_function_parameters(prob, 3))
-                        @test FVM.evaluate_boundary_function(prob, 4, x, y, t, u) ≈ prob.boundary_conditions.functions[4](x, y, t, u, FVM.get_boundary_function_parameters(prob, 4))
-                        @test FVM.get_neighbours(prob) == tri.graph
-                        @test FVM.get_initial_condition(prob) == prob.initial_condition
-                        @test FVM.get_initial_time(prob) == prob.initial_time
-                        @test FVM.get_final_time(prob) == prob.final_time
-                        @test FVM.get_time_span(prob) == (prob.initial_time, prob.final_time)
-                        @test FVM.get_points(prob) == get_points(tri)
-                        @test num_points(prob) == num_points(tri)
-                        @test FVM.num_boundary_edges(prob) == length(FVM.get_boundary_nodes(prob))
-                        @test FVM.get_adjacent(prob) == get_adjacent(tri)
-                        @test FVM.get_adjacent2vertex(prob) == get_adjacent2vertex(tri)
-                        @test FVM.get_elements(prob) == each_solid_triangle(tri)
-                        @test FVM.get_element_type(prob) == NTuple{3,Int64}
-                    end
-                end
-            end
-        end
+@test FVM.get_dirichlet_nodes(prob) == prob.conditions.dirichlet_nodes
+for (e, idx) in prob.conditions.neumann_edges
+    @test FVM.get_neumann_fidx(prob, e...) == idx
+end
+for e in each_edge(prob.mesh.triangulation)
+    if e ∉ keys(prob.conditions.neumann_edges)
+        @test !FVM.is_neumann_edge(prob, e...)
+    else
+        @test FVM.is_neumann_edge(prob, e...)
     end
 end
+for i in each_point_index(prob.mesh.triangulation)
+    if i ∈ keys(prob.conditions.dirichlet_nodes)
+        @test FVM.has_condition(prob, i)
+        @test FVM.is_dirichlet_node(prob, i)
+    else
+        @test !FVM.has_condition(prob, i)
+        @test !FVM.is_dirichlet_node(prob, i)
+    end
+end
+x, y, t, u = 0.2, 0.3, 0.4, 0.5
+@test FVM.eval_condition_fnc(prob, 1, x, y, t, u) ≈ x + y + t + u + 0.29
+@test FVM.eval_condition_fnc(prob, 2, x, y, t, u) ≈ x * y + u - 0.5
+@test FVM.eval_condition_fnc(prob, 3, x, y, t, u) ≈ u + 0.2 - t
+@test FVM.eval_condition_fnc(prob, 4, x, y, t, u) ≈ x
+@test FVM.eval_condition_fnc(prob, 5, x, y, t, u) ≈ y - x
+@test FVM.eval_source_fnc(prob, x, y, t, u) ≈ u + 1.5
+i, j, k = first(each_solid_triangle(prob.mesh.triangulation))
+@test FVM.get_triangle_props(prob, i, j, k) == prob.mesh.triangle_props[(i, j, k)]
+@test get_point(prob, i) == get_point(prob.mesh.triangulation, i)
+@test FVM.get_volume(prob, i) == prob.mesh.cv_volumes[i]
+
+x, y, t, α, β, γ, p = 0.5, -1.0, 2.3, 0.371, -5.37, 17.5, flux_parameters
+u = α * x + β * y + γ
+qx = -α * u * p[1] + t
+qy = x + t - β * u * p[2]
+steady = SteadyFVMProblem(prob)
+@inferred SteadyFVMProblem(prob)
+@test FVM.eval_flux_function(steady, x, y, t, α, β, γ) == (qx, qy)
+@inferred FVM.eval_flux_function(steady, x, y, t, α, β, γ)
+@test FVM._neqs(steady) == 0
+@test !FVM.is_system(steady)
+
+
+prob1, prob2, prob3, prob4, prob5 = example_problem(1; tri, mesh, initial_condition)[1],
+example_problem(2; tri, mesh, initial_condition)[1],
+example_problem(3; tri, mesh, initial_condition)[1],
+example_problem(4; tri, mesh, initial_condition)[1],
+example_problem(5; tri, mesh, initial_condition)[1]
+system = FVMSystem(prob1, prob2, prob3, prob4, prob5)
+@inferred FVMSystem(prob1, prob2, prob3, prob4, prob5)
+_α = ntuple(_ -> α, 5)
+_β = ntuple(_ -> β, 5)
+_γ = ntuple(_ -> γ, 5)
+@test FVM.eval_flux_function(system, x, y, t, _α, _β, _γ) == ntuple(_ -> (qx, qy), 5)
+@inferred FVM.eval_flux_function(system, x, y, t, _α, _β, _γ)
+@test system.initial_condition ≈ [initial_condition initial_condition initial_condition initial_condition initial_condition]'
+@test FVM._neqs(system) == 5
+@test FVM.is_system(system)
+@test system.initial_time == 2.0
+@test system.final_time == 5.0
+
+steady_system = SteadyFVMProblem(system)
+@inferred SteadyFVMProblem(system)
+@test FVM.eval_flux_function(steady_system, x, y, t, _α, _β, _γ) == ntuple(_ -> (qx, qy), 5)
+@inferred FVM.eval_flux_function(steady_system, x, y, t, _α, _β, _γ)
+@test FVM._neqs(steady_system) == 5
+@test FVM.is_system(steady_system)
+
+_q = FVM.construct_flux_function(flux_function, nothing, nothing)
+@test _q == flux_function
+D = (x, y, t, u, p) -> x + y + t + u + p[2]
+Dp = (0.2, 5.73)
+_q = FVM.construct_flux_function(nothing, D, Dp)
+x, y, t, α, β, γ = rand(6)
+u = α * x + β * y + γ
+@test _q(x, y, t, α, β, γ, nothing) == (-α, -β) .* D(x, y, t, u, Dp)
+@inferred _q(x, y, t, α, β, γ, nothing)
+
+test_compute_flux(prob, steady, system, steady_system)
+
+for prob in (prob, steady, system, steady_system)
+    test_jacobian_sparsity(prob)
+    @inferred FVM.jacobian_sparsity(prob)
+end
+

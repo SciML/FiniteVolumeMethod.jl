@@ -1,264 +1,336 @@
-struct FVMProblem{iip_flux,FG,BC,F,FP,R,RP,IC,FT}
-    mesh::FG
-    boundary_conditions::BC
-    flux_function::F
-    flux_parameters::FP
-    reaction_function::R
-    reaction_parameters::RP
-    initial_condition::IC
-    initial_time::FT
-    final_time::FT
-    steady::Bool
-end
+abstract type AbstractFVMProblem end
+@inline get_dudt_fidx(prob::AbstractFVMProblem, i) = get_dudt_fidx(prob.conditions, i)
+@inline get_neumann_fidx(prob::AbstractFVMProblem, i, j) = get_neumann_fidx(prob.conditions, i, j)
+@inline get_dirichlet_fidx(prob::AbstractFVMProblem, i) = get_dirichlet_fidx(prob.conditions, i)
+@inline get_constrained_fidx(prob::AbstractFVMProblem, i, j) = get_constrained_fidx(prob.conditions, i, j)
+@inline eval_condition_fnc(prob::AbstractFVMProblem, fidx, x, y, t, u) = eval_condition_fnc(prob.conditions, fidx, x, y, t, u)
+@inline eval_source_fnc(prob::AbstractFVMProblem, x, y, t, u) = prob.source_function(x, y, t, u, prob.source_parameters)
+@inline is_dudt_node(prob::AbstractFVMProblem, node) = is_dudt_node(prob.conditions, node)
+@inline is_neumann_edge(prob::AbstractFVMProblem, i, j) = is_neumann_edge(prob.conditions, i, j)
+@inline is_dirichlet_node(prob::AbstractFVMProblem, node) = is_dirichlet_node(prob.conditions, node)
+@inline is_constrained_edge(prob::AbstractFVMProblem, i, j) = is_constrained_edge(prob.conditions, i, j)
+@inline has_condition(prob::AbstractFVMProblem, node) = has_condition(prob.conditions, node)
+@inline has_dirichlet_nodes(prob::AbstractFVMProblem) = has_dirichlet_nodes(prob.conditions)
+@inline get_triangle_props(prob::AbstractFVMProblem, i, j, k) = prob.mesh.triangle_props[(i, j, k)]
+@inline DelaunayTriangulation.get_point(prob::AbstractFVMProblem, i) = get_point(prob.mesh.triangulation, i)
+@inline get_volume(prob::AbstractFVMProblem, i) = prob.mesh.cv_volumes[i]
+@inline get_dirichlet_nodes(prob::AbstractFVMProblem) = get_dirichlet_nodes(prob.conditions)
 
 """
-    FVMProblem{iip_flux,FG,BC,F,FP,R,RP,IC,FT}
-
-Struct representing the PDE problem. 
-
-# Fields 
-- `mesh::FG`
-
-The underlying mesh, given as a [`FVMGeometry`](@ref) struct. 
-- `boundary_conditions::BC`
-
-The boundary conditions, given a a [`BoundaryConditions`](@ref) struct. 
-- `flux_function::F`
-
-The function for the flux vector, taking either of the forms `flux!(q, x, y, t, α, β, γ, p)` (if `iip_flux`) and `flux(x, y, t, α, β, γ, p)` (if `!iip_flux`), where `u = αx + βy + γ`.
-- `flux_parameters::FP`
-
-The argument `p` in `flux_function`.
-- `reaction_function::R`
-
-The function for the reaction term, taking the form `R(x, y, t, u, p)`.
-- `reaction_parameters::RP`
-
-The argument `p` in `reaction_function`.
-- `initial_condition::IC`
-
-The initial condition for the problem, with `initial_condition[i]` the initial value at the `i`th node of the mesh. 
-- `initial_time::FT`
-
-The time to start solving the PDE at. 
-- `final_time::FT`
-
-The time to stop solving the PDE at. 
-- `steady::Bool`
-
-Whether `∂u/∂t = 0` or not. When this is `true`, the problem is defined as a `NonlinearProblem` with initial guess coming 
-from the initial condition above.
-
-# Constructor 
-
-    FVMProblem(mesh, boundary_conditions;
-        iip_flux=true,
+    FVMProblem(mesh, boundary_conditions[, internal_conditions];
         diffusion_function=nothing,
         diffusion_parameters=nothing,
-        reaction_function=nothing,
-        reaction_parameters=nothing,
-        delay_function=nothing,
-        delay_parameters=nothing,
+        source_function=nothing,
+        source_parameters=nothing,
         flux_function=nothing,
         flux_parameters=nothing,
         initial_condition,
         initial_time=0.0,
-        final_time,
-        steady=false)
+        final_time)
 
-Constructor for the [`FVMProblem`](@ref).
+Constructs an `FVMProblem`. See also [`FVMSystem`](@ref) and [`SteadyFVMProblem`](@ref).
 
 # Arguments 
-- `mesh`: The [`FVMGeometry`](@ref) representing the underlying mesh. 
-- `boundary_conditions`: The [`BoundaryConditions`](@ref) representing the boundary conditions for the problem. 
+- `mesh::FVMGeometry`
 
-# Keyword Arguments 
-- `iip_flux=true`: Whether the flux vector is computed in-place or not.
-- `diffusion_function=nothing`: If `flux_function===nothing`, this can be used to provide a diffusion term for the reaction-diffusion formulation, taking the form `D(x, y, t, u, p)`. See also [`construct_flux_function`](@ref).
-- `diffusion_parameters=nothing`: The argument `p` in the diffusion function. 
-- `reaction_function=nothing`: The reaction term, taking the form `R(x, y, t, u, p)`. If not provided, it is set to the zero function. See also [`construct_reaction_function`](@ref).
-- `reaction_parameters=nothing`: The argument `p` in the reaction function. 
-- `delay_function=nothing`: The delay function `T(x, y, t, u, p)` for the PDE that can be used to scale the diffusion and reaction functions, assuming `flux_function===nothing`. See also [`construct_reaction_function`](@ref) and [`construct_flux_function`](@ref).
-- `delay_parameters=nothing`: The argument `p` in the delay function. 
-- `flux_function=nothing`: The flux function, taking either of the forms `flux!(q, x, y, t, α, β, γ, p)` (if `iip_flux`) and `flux(x, y, t, α, β, γ, p)` (if `!iip_flux`), where `u = αx + βy + γ`. If `flux_function===nothing`, thne this function is constructed from the diffusion and delay functions. 
-- `flux_parameters=nothing`: The argument `p` in the flux function. 
-- `initial_condition`: The initial condition for the problem, with `initial_condition[i]` the initial value at the `i`th node of the mesh. 
-- `initial_time=0.0`: The time to start solving the PDE at. 
-- `final_time`: The time to stop solving the PDE at. 
-- `steady::Bool`: Whether `∂u/∂t = 0` or not. If the problem is steady, then the initial estimate used for the nonlinear solver that finds the steady state is given by the initial condition, and `final_time` is set to `∞`.
+The mesh on which the PDE is defined, given as a [`FVMGeometry`](@ref).
+- `boundary_conditions::BoundaryConditions`
 
-# Outputs 
-Returns the [`FVMProblem`](@ref) object.
+The boundary conditions for the PDE, given as a [`BoundaryConditions`](@ref).
+- `internal_conditions::InternalConditions=InternalConditions()`
+
+The internal conditions for the PDE, given as an [`InternalConditions`](@ref). This argument 
+is optional.
+
+# Keyword Arguments
+- `diffusion_function=nothing`
+
+If `isnothing(flux_function)`, then this can be provided to give the diffusion-source formulation. See also [`construct_flux_function`](@ref). Should be of the form `D(x, y, t, u, p)`.
+- `diffusion_parameters=nothing`
+
+The argument `p` for `diffusion_function`.
+- `source_function=(x, y, t, u, p) -> zero(u)`
+
+The source term, given in the form `S(x, y, t, u, p)`.
+- `source_parameters=nothing`
+
+The argument `p` for `source_function`.
+- `flux_function=nothing`
+
+The flux function, given in the form `q(x, y, t, α, β, γ, p) ↦ (qx, qy)`, where `(qx, qy)` is the flux vector, `(α, β, γ)` are the shape function coefficients for estimating `u ≈ αx+βy+γ`. If `isnothing(flux_function)`, then `diffusion_function` is used instead to construct the function.
+- `flux_parameters=nothing`
+
+The argument `p` for `flux_function`.
+- `initial_condition`
+
+The initial condition, with `initial_condition[i]` the initial value at the `i`th node of the `mesh`.
+- `initial_time=0.0`
+
+The initial time.
+- `final_time`
+
+The final time.
+
+# Outputs
+The returned value is the corresponding [`FVMProblem`](@ref) struct. You can then solve the problem using [`solve(::Union{FVMProblem,FVMSystem}, ::Any; kwargs...)`](@ref) from DifferentialEquations.jl.
 """
-function FVMProblem end
-function FVMProblem(mesh, boundary_conditions;
-    iip_flux=true,
+struct FVMProblem{FG,BC,F,FP,R,RP,IC,FT} <: AbstractFVMProblem
+    mesh::FG
+    conditions::BC
+    flux_function::F
+    flux_parameters::FP
+    source_function::R
+    source_parameters::RP
+    initial_condition::IC
+    initial_time::FT
+    final_time::FT
+end
+function Base.show(io::IO, ::MIME"text/plain", prob::FVMProblem)
+    nv = num_points(prob.mesh.triangulation)
+    t0 = prob.initial_time
+    tf = prob.final_time
+    print(io, "FVMProblem with $(nv) nodes and time span ($t0, $tf)")
+end
+@inline eval_flux_function(prob::FVMProblem, x, y, t, α, β, γ) = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
+
+function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, internal_conditions::InternalConditions=InternalConditions();
     diffusion_function=nothing,
     diffusion_parameters=nothing,
-    reaction_function=nothing,
-    reaction_parameters=nothing,
-    delay_function=nothing,
-    delay_parameters=nothing,
+    source_function=(x, y, t, u, p) -> zero(eltype(u)),
+    source_parameters=nothing,
     flux_function=nothing,
     flux_parameters=nothing,
     initial_condition,
     initial_time=0.0,
-    final_time,
-    steady=false)
-    updated_flux_fnc = construct_flux_function(iip_flux, flux_function,
-        delay_function, delay_parameters,
-        diffusion_function, diffusion_parameters)
-    updated_reaction_fnc = construct_reaction_function(reaction_function, reaction_parameters,
-        delay_function, delay_parameters)
-    return FVMProblem{iip_flux,
-        typeof(mesh),typeof(boundary_conditions),
-        typeof(updated_flux_fnc),typeof(flux_parameters),
-        typeof(updated_reaction_fnc),typeof(reaction_parameters),
-        typeof(initial_condition),
-        typeof(initial_time)}(
-        mesh, boundary_conditions,
+    final_time)
+    updated_flux_fnc = construct_flux_function(flux_function, diffusion_function, diffusion_parameters)
+    conditions = Conditions(mesh, boundary_conditions, internal_conditions)
+    return FVMProblem(mesh, conditions,
         updated_flux_fnc, flux_parameters,
-        updated_reaction_fnc, reaction_parameters,
-        initial_condition,
-        initial_time, final_time,
-        steady
-    )
+        source_function, source_parameters,
+        initial_condition, initial_time, final_time)
 end
-SciMLBase.isinplace(::FVMProblem{iip_flux,FG,BC,F,FP,R,RP,IC,FT}) where {iip_flux,FG,BC,F,FP,R,RP,IC,FT} = iip_flux
-get_boundary_conditions(prob::FVMProblem) = prob.boundary_conditions
-get_initial_condition(prob::FVMProblem) = prob.initial_condition
-get_initial_time(prob::FVMProblem) = prob.initial_time
-get_final_time(prob::FVMProblem) = prob.final_time
-get_time_span(prob::FVMProblem) = (get_initial_time(prob), get_final_time(prob))
-is_steady(prob::FVMProblem) = prob.steady
 
 """
-    construct_flux_function(iip_flux,
-        flux_function,
-        delay_function, delay_parameters,
-        diffusion_function, diffusion_parameters)
+    SteadyFVMProblem(prob::AbstractFVMProblem)
 
-Constructs the flux function. The arguments are as in [`FVMProblem`](@ref), and the output depends on the following, where `D`
-denotes the diffusion function, `T` the delay function, `dₚ` the diffusion parameters, and `tₚ` the delay parameters: 
+This is a wrapper for an `AbstractFVMProblem` that indicates that the problem is to be solved as a steady-state problem. 
+You can then solve the problem using [`solve(::SteadyFVMProblem, ::Any; kwargs...)`](@ref) from NonlinearSolve.jl. Note that you 
+need to have set the final time to `Inf` if you want a steady state out at infinity rather than some finite actual time.
 
-- If `flux_function===nothing` and `delay_function===nothing`, defines the flux function as `(x, y, t, α, β, γ, _) -> -D(x, y, t, αx + βy + γ, dₚ)[α, β]`.
-- If `flux_function===nothing`, defines the flux function as `(x, y, t, α, β, γ, _) -> -T(x, y, t, αx + βy + γ, tₚ)D(x, y, t, αx + βy + γ, dₚ)[α, β]`.
-
-If `iip_flux`, then the functions above have an extra argument in the first position, `q`, that the flux vectors are stored in. Otherwise, the flux vector is 
-returned as a tuple `(q1, q2)`. If `flux_function !== nothing`, then just returns `flux_function`.
+See also [`FVMProblem`](@ref) and [`FVMSystem`](@ref).
 """
-function construct_flux_function(iip_flux,
-    flux_function,
-    delay_function, delay_parameters,
-    diffusion_function, diffusion_parameters) 
-    if isnothing(flux_function)
-        if !isnothing(delay_function)
-            if iip_flux
-                flux_fnc = (q, x, y, t, α, β, γ, p) -> begin
-                    u = α * x + β * y + γ
-                    q[1] = -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α
-                    q[2] = -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β
-                    return nothing
-                end
-                return flux_fnc
-            else
-                flux_fnc = (x, y, t, α, β, γ, p) -> begin
-                    u = α * x + β * y + γ
-                    q1 = -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * α
-                    q2 = -delay_function(x, y, t, u, delay_parameters) * diffusion_function(x, y, t, u, diffusion_parameters) * β
-                    return q1, q2
-                end
-                return flux_fnc
-            end
-            return flux_fnc
-        else
-            if iip_flux
-                flux_fnc = (q, x, y, t, α, β, γ, p) -> begin
-                    u = α * x + β * y + γ
-                    q[1] = -diffusion_function(x, y, t, u, diffusion_parameters) * α
-                    q[2] = -diffusion_function(x, y, t, u, diffusion_parameters) * β
-                    return nothing
-                end
-                return flux_fnc
-            else
-                flux_fnc = (x, y, t, α, β, γ, p) -> begin
-                    u = α * x + β * y + γ
-                    q1 = -diffusion_function(x, y, t, u, diffusion_parameters) * α
-                    q2 = -diffusion_function(x, y, t, u, diffusion_parameters) * β
-                    return q1, q2
-                end
-                return flux_fnc
-            end
-            return flux_fnc
-        end
+struct SteadyFVMProblem{P<:AbstractFVMProblem,M<:FVMGeometry} <: AbstractFVMProblem
+    problem::P
+    mesh::M
+end
+function SteadyFVMProblem(prob::P) where {P}
+    return SteadyFVMProblem{P,typeof(prob.mesh)}(prob, prob.mesh)
+end
+
+function Base.show(io::IO, ::MIME"text/plain", prob::SteadyFVMProblem)
+    nv = num_points(prob.mesh.triangulation)
+    is_sys = is_system(prob)
+    if !is_sys
+        print(io, "SteadyFVMProblem with $(nv) nodes")
     else
+        print(io, "SteadyFVMProblem with $(nv) nodes and $(_neqs(prob)) equations")
+    end
+end
+@inline eval_flux_function(prob::SteadyFVMProblem, x, y, t, α, β, γ) = eval_flux_function(prob.problem, x, y, t, α, β, γ)
+
+"""
+    FVMSystem(prob1, prob2, ..., probN)
+
+Constructs a representation for a system of PDEs, where each `probi` is 
+a [`FVMProblem`](@ref) for the `i`th component of the system.
+
+For these [`FVMProblem`](@ref)s, the functions involved, such as the condition functions, should 
+all be defined so that the `u` argument assumes the form `u = (u₁, u₂, ..., uN)` (both `Tuple`s and `Vector`s will be passed), 
+where `uᵢ` is the solution for the `i`th component of the system. For the flux functions, 
+which for a [`FVMProblem`](@ref) takes the form
+
+    q(x, y, t, α, β, γ, p) ↦ (qx, qy),
+
+the same form is used, except `α`, `β`, `γ` are all `Tuple`s so that `α[i]*x + β[i]*y + γ[i]` is the 
+approximation to `uᵢ`. 
+
+!!! warning "Providing default flux functions"
+
+    Due to this difference in flux functions, and the need to provide 
+    `α`, `β`, and `γ` to the flux function, for `FVMSystem`s you need to 
+    provide a flux function rather than a diffusion function. If you do
+    provide a diffusion function, it will error when you try to solve 
+    the problem.
+
+This problem is solved in the same way as a [`FVMProblem`](@ref), except the problem is defined such that 
+the solution returns a matrix at each time, where the `(j, i)`th component corresponds to the solution at the `i`th 
+node for the `j`th component.
+
+See also [`FVMProblem`](@ref) and [`SteadyFVMProblem`](@ref).
+
+!!! note 
+    To construct a steady-state problem for an `FVMSystem`, you need to apply 
+    [`SteadyFVMProblem`](@ref) to the system rather than first applying it to
+    each individual [`FVMProblem`](@ref) in the system.
+"""
+struct FVMSystem{N,FG,P,IC,FT} <: AbstractFVMProblem
+    mesh::FG
+    problems::P
+    initial_condition::IC
+    initial_time::FT
+    final_time::FT
+end
+function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::FT, final_time::FT) where {FG<:FVMGeometry,P,IC,FT}
+    @assert length(problems) > 0 "There must be at least one problem."
+    @assert all(p -> p.mesh === mesh, problems) "All problems must have the same mesh."
+    @assert all(p -> p.initial_time === initial_time, problems) "All problems must have the same initial time."
+    @assert all(p -> p.final_time === final_time, problems) "All problems must have the same final time."
+    @assert size(initial_condition) == (length(problems), length(problems[1].initial_condition)) "The initial condition must be a matrix with the same number of rows as the number of problems."
+    sys = FVMSystem{length(problems),FG,P,IC,FT}(mesh, problems, initial_condition, initial_time, final_time)
+    _check_fvmsystem_flux_function(sys)
+    return sys
+end
+
+const FLUX_ERROR = """
+                   The flux function errored when evaluated. Please recheck your specification of the function. 
+                   If any of your problems have been defined in terms of a diffusion function D(x, y, t, u, p)
+                   rather than a flux function, then you need to instead provide a flux function q(x, y, t, α, β, γ, p),
+                   recalling the relationship between the two:
+
+                       q(x, y, t, α, β, γ, p) = -D(x, y, t, α*x + β*y + γ, p) .* (α, β)
+
+                   where p is the same argument for both functions.
+                   """
+struct InvalidFluxError <: Exception end
+function Base.showerror(io::IO, ::InvalidFluxError)
+    print(io, FLUX_ERROR)
+end
+
+function _check_fvmsystem_flux_function(prob::FVMSystem)
+    t0 = prob.initial_time
+    T = first(each_solid_triangle(prob.mesh.triangulation))
+    i, j, k = indices(T)
+    p, q, r = get_point(prob.mesh.triangulation, i, j, k)
+    px, py = getxy(p)
+    qx, qy = getxy(q)
+    rx, ry = getxy(r)
+    cx, cy = (px + qx + rx) / 3, (py + qy + ry) / 3
+    u = prob.initial_condition
+    α, β, γ = get_shape_function_coefficients(prob.mesh.triangle_props[T], T, u, prob)
+    try
+        eval_flux_function(prob, cx, cy, t0, α, β, γ)
+    catch e
+        if e isa MethodError
+            throw(InvalidFluxError())
+        else
+            rethrow(e)
+        end
+    end
+end
+
+Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, "FVMSystem with $N equations and time span ($(prob.initial_time), $(prob.final_time))")
+
+@inline get_dudt_fidx(prob::FVMSystem, i, var) = get_dudt_fidx(get_equation(prob, var), i)
+@inline get_neumann_fidx(prob::FVMSystem, i, j, var) = get_neumann_fidx(get_equation(prob, var), i, j)
+@inline get_dirichlet_fidx(prob::FVMSystem, i, var) = get_dirichlet_fidx(get_equation(prob, var), i)
+@inline get_constrained_fidx(prob::FVMSystem, i, j, var) = get_constrained_fidx(get_equation(prob, var), i, j)
+@inline eval_condition_fnc(prob::FVMSystem, fidx, var, x, y, t, u) = eval_condition_fnc(get_equation(prob, var), fidx, x, y, t, u)
+@inline eval_source_fnc(prob::FVMSystem, var, x, y, t, u) = eval_source_fnc(get_equation(prob, var), x, y, t, u)
+@inline is_dudt_node(prob::FVMSystem, node, var) = is_dudt_node(get_equation(prob, var), node)
+@inline is_neumann_edge(prob::FVMSystem, i, j, var) = is_neumann_edge(get_equation(prob, var), i, j)
+@inline is_dirichlet_node(prob::FVMSystem, node, var) = is_dirichlet_node(get_equation(prob, var), node)
+@inline is_constrained_edge(prob::FVMSystem, i, j, var) = is_constrained_edge(get_equation(prob, var), i, j)
+@inline has_condition(prob::FVMSystem, node, var) = has_condition(get_equation(prob, var), node)
+@inline has_dirichlet_nodes(prob::FVMSystem) = any(i -> has_dirichlet_nodes(get_equation(prob, i)), 1:_neqs(prob))
+@inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(get_equation(prob, var))
+@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ) = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
+
+function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
+    N == 0 && error("There must be at least one problem.")
+    mesh = probs[1].mesh
+    initial_time = probs[1].initial_time
+    final_time = probs[1].final_time
+    ic₁ = probs[1].initial_condition
+    initial_condition = similar(ic₁, N, length(ic₁))
+    for (i, prob) in enumerate(probs)
+        initial_condition[i, :] .= prob.initial_condition
+    end
+    return FVMSystem(mesh, probs, initial_condition, initial_time, final_time)
+end
+
+get_equation(system::FVMSystem, var) = system.problems[var]
+
+"""
+    construct_flux_function(q, D, Dp)
+
+If `isnothing(q)`, then this returns the flux function based on the diffusion function `D` and 
+diffusion parameters `Dp`, so that the new function is 
+
+    (x, y, t, α, β, γ, _) -> -D(x, y, t, α*x + β*y + γ, Dp)[α, β]
+
+Otherwise, just returns `q` again.
+"""
+function construct_flux_function(q, D, Dp)
+    if isnothing(q)
+        flux_function = let D = D, Dp = Dp
+            (x, y, t, α, β, γ, p) -> begin
+                u = α * x + β * y + γ
+                Dval = D(x, y, t, u, Dp)
+                qx = -Dval * α
+                qy = -Dval * β
+                return (qx, qy)
+            end
+        end
         return flux_function
-    end
-end
-
-"""
-    construct_reaction_function(reaction_function, reaction_parameters,
-        delay_function, delay_parameters)
-
-Constructs the reaction function. The arguments are as in [`FVMProblem`](@ref), and the output depends on the following, where `R`
-            denotes the reaction function, `T` the delay function, `rₚ` the reaction parameters, and `tₚ` the delay parameters: 
-
-- If `reaction_function===nothing`, defines the reaction function as `(x, y, t, u, _) = 0.0`.
-- If `reaction_function !== nothing` and `delay_function !== nothing`, defines the reaction function as `(x, y, t, u, _) -> T(x, y, t, u, tₚ)R(x, y, t, u, rₚ)`.
-- Otherwise, just returns `reaction_function`.
-"""
-function construct_reaction_function(reaction_function, reaction_parameters,
-    delay_function, delay_parameters)
-    if !isnothing(reaction_function)
-        if !isnothing(delay_function)
-            reaction_fnc = (x, y, t, u, p) -> begin
-                return delay_function(x, y, t, u, delay_parameters) * reaction_function(x, y, t, u, reaction_parameters)
-            end
-            return reaction_fnc
-        else
-            return reaction_function
-        end
     else
-        reaction_fnc = ((x, y, t, u::T, p) where {T}) -> zero(T)
-        return reaction_fnc
+        return q
     end
 end
 
-@inline get_mesh(prob::FVMProblem) = prob.mesh
-@inline gets(prob::FVMProblem, T) = gets(get_mesh(prob), T)
-@inline gets(prob::FVMProblem, T, i) = gets(prob, T)[i]
-@inline get_midpoints(prob::FVMProblem, T) = get_midpoints(get_mesh(prob), T)
-@inline get_midpoints(prob::FVMProblem, T, i) = get_midpoints(prob, T)[i]
-@inline get_control_volume_edge_midpoints(prob::FVMProblem, T) = get_control_volume_edge_midpoints(get_mesh(prob), T)
-@inline get_control_volume_edge_midpoints(prob::FVMProblem, T, i) = get_control_volume_edge_midpoints(prob, T)[i]
-@inline get_normals(prob::FVMProblem, T) = get_normals(get_mesh(prob), T)
-@inline get_normals(prob::FVMProblem, T, i) = get_normals(prob, T)[i]
-@inline get_lengths(prob::FVMProblem, T) = get_lengths(get_mesh(prob), T)
-@inline get_lengths(prob::FVMProblem, T, i) = get_lengths(prob, T)[i]
-@inline get_flux(prob::FVMProblem, x, y, t, α, β, γ) = prob.flux_function(x, y, t, α, β, γ, prob.flux_parameters)
-@inline get_flux!(flux_cache, prob::FVMProblem, x, y, t, α, β, γ) = prob.flux_function(flux_cache, x, y, t, α, β, γ, prob.flux_parameters)
-@inline get_interior_or_neumann_nodes(prob::FVMProblem) = get_interior_or_neumann_nodes(get_boundary_conditions(prob))
-@inline get_interior_elements(prob::FVMProblem) = get_interior_elements(get_mesh(prob))
-@inline get_interior_edges(prob::FVMProblem, T) = get_interior_edges(get_mesh(prob), T)
-@inline get_boundary_elements(prob::FVMProblem) = get_boundary_elements(get_mesh(prob))
-@inline DelaunayTriangulation.get_point(prob::FVMProblem, j) = get_point(get_mesh(prob), j)
-@inline DelaunayTriangulation.get_points(prob::FVMProblem) = get_points(get_mesh(prob))
-@inline get_volumes(prob::FVMProblem, j) = get_volumes(get_mesh(prob), j)
-@inline get_reaction(prob::FVMProblem, x, y, t, u) = prob.reaction_function(x, y, t, u, prob.reaction_parameters)
-@inline get_dirichlet_nodes(prob::FVMProblem) = get_dirichlet_nodes(get_boundary_conditions(prob))
-@inline get_neumann_nodes(prob::FVMProblem) = get_neumann_nodes(get_boundary_conditions(prob))
-@inline get_dudt_nodes(prob::FVMProblem) = get_dudt_nodes(get_boundary_conditions(prob))
-@inline DelaunayTriangulation.get_boundary_nodes(prob::FVMProblem) = get_boundary_nodes(get_mesh(prob))
-@inline get_boundary_function_parameters(prob::FVMProblem, i) = get_boundary_function_parameters(get_boundary_conditions(prob), i)
-@inline DelaunayTriangulation.get_neighbours(prob::FVMProblem) = get_neighbours(get_mesh(prob))
-@inline map_node_to_segment(prob::FVMProblem, j) = map_node_to_segment(get_boundary_conditions(prob), j)
-@inline is_interior_or_neumann_node(prob::FVMProblem, j) = is_interior_or_neumann_node(get_boundary_conditions(prob), j)
-@inline evaluate_boundary_function(prob::FVMProblem, idx, x, y, t, u) = evaluate_boundary_function(get_boundary_conditions(prob), idx, x, y, t, u)
-@inline DelaunayTriangulation.num_points(prob::FVMProblem) = DelaunayTriangulation.num_points(get_points(prob))
-@inline DelaunayTriangulation.num_boundary_edges(prob::FVMProblem) = num_boundary_edges(get_mesh(prob)) # This will be the same value as the above, but this makes the code clearer to read
-@inline DelaunayTriangulation.get_adjacent(prob::FVMProblem) = get_adjacent(get_mesh(prob))
-@inline DelaunayTriangulation.get_adjacent2vertex(prob::FVMProblem) = get_adjacent2vertex(get_mesh(prob))
-@inline get_elements(prob::FVMProblem) = get_elements(get_mesh(prob))
-@inline get_element_type(prob::FVMProblem) = get_element_type(get_mesh(prob))
-@inline get_triangulation(prob::FVMProblem) = get_triangulation(get_mesh_information(get_mesh(prob)))
-@inline DelaunayTriangulation.each_point_index(prob::FVMProblem) = each_point_index(get_triangulation(prob))
+_neqs(::FVMProblem) = 0 # We test for N > 0 in _rewrap_conditions, so let this be 0
+_neqs(::FVMSystem{N}) where {N} = N
+_neqs(prob::SteadyFVMProblem) = _neqs(prob.problem)
+is_system(prob::AbstractFVMProblem) = _neqs(prob) > 0
+
+"""
+    compute_flux(prob::AbstractFVMProblem, i, j, u, t)
+
+Given an edge with indices `(i, j)`, a solution vector `u`, a current time `t`, 
+and a problem `prob`, computes the flux `∇⋅q(x, y, t, α, β, γ, p) ⋅ n`, 
+where `n` is the normal vector to the edge, `q` is the flux function from `prob`,
+`(x, y)` is the midpoint of the edge, `(α, β, γ)` are the shape function coefficients, 
+and `p` are the flux parameters from `prob`. If `prob` is an [`FVMSystem`](@ref), the returned 
+value is a `Tuple` for each individual flux. The normal vector `n` is a clockwise rotation of 
+the edge, meaning pointing right of the edge `(i, j)`.
+"""
+function compute_flux(prob::AbstractFVMProblem, i, j, u, t)
+    tri = prob.mesh.triangulation
+    p, q = get_point(tri, i, j)
+    px, py = getxy(p)
+    qx, qy = getxy(q)
+    ex, ey = qx - px, qy - py
+    ℓ = norm((ex, ey))
+    nx, ny = ey / ℓ, -ex / ℓ
+    k = get_adjacent(tri, j, i) # want the vertex in the direction of the normal
+    if DelaunayTriangulation.is_boundary_index(k)
+        k = get_adjacent(tri, i, j)
+    else
+        i, j = j, i
+    end
+    T, props = _safe_get_triangle_props(prob, (i, j, k))
+    α, β, γ = get_shape_function_coefficients(props, T, u, prob)
+    mx, my = (px + qx) / 2, (py + qy) / 2
+    qv = eval_flux_function(prob, mx, my, t, α, β, γ)
+    if is_system(prob)
+        qn = ntuple(_neqs(prob)) do var
+            local qvx, qvy
+            qvx, qvy = getxy(qv[var])
+            return nx * qvx + ny * qvy
+        end
+        return qn
+    else
+        qvx, qvy = getxy(qv)
+        return nx * qvx + ny * qvy
+    end
+end

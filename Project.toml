@@ -1,25 +1,21 @@
 name = "FiniteVolumeMethod"
 uuid = "d4f04ab7-4f65-4d72-8a28-7087bc7f46f4"
 authors = ["Daniel VandenHeuvel <danj.vandenheuvel@gmail.com>"]
-version = "0.4.9"
+version = "1.0.0-DEV"
 
 [deps]
 ChunkSplitters = "ae650224-84b6-46f8-82ea-d812ca08434e"
+CommonSolve = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
 DelaunayTriangulation = "927a84f5-c5f4-47a5-9785-b46e178433df"
-DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
-FunctionWrappersWrappers = "77dc65aa-8811-40c2-897b-53d922fa7daf"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
 PreallocationTools = "d236fae5-4411-538c-8e31-a6e3d9e00b46"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 ChunkSplitters = "0.1, 1.0, 2.0"
+CommonSolve = "0.2"
 DelaunayTriangulation = "0.7, 0.8"
-DiffEqBase = "6"
-FunctionWrappersWrappers = "0.1"
-MuladdMacro = "0.2"
 PreallocationTools = "0.4"
 SciMLBase = "1"
 julia = "1"
