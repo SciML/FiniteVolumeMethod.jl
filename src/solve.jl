@@ -1,4 +1,4 @@
-function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem{N}}) where {N}
+function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem}) 
     u = prob.initial_condition
     nt = Threads.nthreads()
     if prob isa FVMProblem
@@ -6,7 +6,7 @@ function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem{N}}) where 
         dirichlet_nodes = collect(keys(get_dirichlet_nodes(prob)))
     else
         duplicated_du = DiffCache(similar(u, size(u, 1), size(u, 2), nt))
-        dirichlet_nodes = ntuple(i -> collect(keys(get_dirichlet_nodes(prob, i))), N)
+        dirichlet_nodes = ntuple(i -> collect(keys(get_dirichlet_nodes(prob, i))), _neqs(prob))
     end
     solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
     solid_vertices = collect(each_solid_vertex(prob.mesh.triangulation))
