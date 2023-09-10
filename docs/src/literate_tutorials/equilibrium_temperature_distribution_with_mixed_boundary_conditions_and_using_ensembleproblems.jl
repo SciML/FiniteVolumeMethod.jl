@@ -63,7 +63,7 @@ h = 20.0
 T∞ = 20.0
 bc1 = (x, y, t, T, p) -> zero(T) # ∇T⋅n=0 
 bc2 = (x, y, t, T, p) -> oftype(T, 40.0) # T=40
-bc3 = (x, y, t, T, p) -> -p.h * (p.T∞ - T) / p.k # k∇T⋅n=h(T∞-T). The minus is since q = -∇T 
+bc3 = (x, y, t, T, p) -> -p.h * (p.T∞- T) / p.k # k∇T⋅n=h(T∞-T). The minus is since q = -∇T 
 bc4 = (x, y, t, T, p) -> oftype(T, 70.0) # T=70
 parameters = (nothing, nothing, (h=h, T∞=T∞, k=k), nothing)
 BCs = BoundaryConditions(mesh, (bc1, bc2, bc3, bc4),
@@ -109,7 +109,11 @@ ens_prob = EnsembleProblem(steady_prob,
     prob_func=(prob, i, repeat) -> let T∞_range = T∞_range, h = h, k = k
         _prob =
             @set prob.problem.conditions.functions[3].parameters =
-                (h=h, T∞=T∞_range[i], k=k)
+                (h=h, T∞=T∞_range[i], k=k) 
+        # This way of accessing the parameters is using some internals (specifically,
+        # the functions field of conditions is not public API). 
+        # A better way could be to e.g. make T∞ mutable initially, e.g. Ref(20),
+        # and then mutate it.
         return _prob
     end,
     safetycopy=false)

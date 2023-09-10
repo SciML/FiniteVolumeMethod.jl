@@ -257,16 +257,13 @@ A `Dict` that stores all [`Dirichlet`](@ref) points `u` as keys, with keys mappi
 
 A `Dict` that stores all [`Dudt`](@ref) points `u` as keys, with keys mapping to indices
 `idx` that refer to the corresponding condition function and parameters in `functions`.
-- `functions::F`
-
-A `Tuple` of functions that correspond to the condition function. Can also be a single function.
 """
 struct Conditions{F}
     neumann_edges::Dict{NTuple{2,Int},Int}
     constrained_edges::Dict{NTuple{2,Int},Int}
     dirichlet_nodes::Dict{Int,Int}
     dudt_nodes::Dict{Int,Int}
-    functions::F
+    functions::F # NOT PUBLIC.
     @inline function Conditions(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions::F) where {F}
         if F <: Tuple{<:Function}
             return new{eltype(F)}(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions[1])
