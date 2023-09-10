@@ -140,7 +140,7 @@ For steady-state problems, the algorithms to use are those from [NonlinearSolve.
 solve(::SteadyFVMProblem, ::Any; kwargs...)
 ```
 
-These `solve` functions rely on `fvm_eqs!` for evaluating the equations. You should never need to use `fvm_eqs!` directly, unless you are using a differential-algebraic equation, as in e.g. [this tutorial](tutorials/mean_exit_time_on_a_compound_disk_and_differential_algebraic_equations.md). The docstring for `fvm_eqs!` is below; this function is public API.
+These `solve` functions rely on `fvm_eqs!` for evaluating the equations. You should never need to use `fvm_eqs!` directly, unless you are using a differential-algebraic equation. The docstring for `fvm_eqs!` is below; this function is public API.
 
 ```@docs
 fvm_eqs!
