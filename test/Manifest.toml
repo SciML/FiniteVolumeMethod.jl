@@ -1406,9 +1406,9 @@ version = "1.0.2"
 
 [[deps.NaturalNeighbours]]
 deps = ["ChunkSplitters", "DelaunayTriangulation", "ElasticArrays", "LinearAlgebra", "Random"]
-git-tree-sha1 = "9dcbfabd9bed9977e84017a111a3680a694db67f"
+git-tree-sha1 = "47e5a7abe5c4fe9403b85e96d2ff10005731768d"
 uuid = "f16ad982-4edb-46b1-8125-78e5a8b5a9e6"
-version = "1.2.1"
+version = "1.2.2"
 
 [[deps.Netpbm]]
 deps = ["FileIO", "ImageCore", "ImageMetadata"]
