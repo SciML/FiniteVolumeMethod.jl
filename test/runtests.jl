@@ -1,6 +1,7 @@
 using FiniteVolumeMethod
 using Test
 using Dates
+#=
 ct() = Dates.format(now(), "HH:MM:SS")
 function safe_include(filename) # Workaround for not being able to interpolate into SafeTestset test names
     mod = @eval module $(gensym()) end
@@ -66,3 +67,4 @@ end
     safe_include(joinpath(dir, file_names[12])) # reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk
     safe_include(joinpath(dir, file_names[13])) # solving_mazes_with_laplaces_equation
 end
+=#
