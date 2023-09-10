@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0-beta2"
 manifest_format = "2.0"
-project_hash = "ce665e6ff147a4b12790fe33afe3d567b1017633"
+project_hash = "6728229bac8e8e807c7ac9d7afa05ab4ab381266"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "d68758475ff90600488eb975b5ac222709a7dd6f"
@@ -700,12 +700,6 @@ version = "2.21.1"
     BandedMatrices = "aae01518-5342-5314-be14-df237901396f"
     BlockBandedMatrices = "ffab5731-97b5-5995-9138-79e8c1846df0"
     StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
-
-[[deps.FiniteVolumeMethod]]
-deps = ["ChunkSplitters", "CommonSolve", "DelaunayTriangulation", "LinearAlgebra", "PreallocationTools", "SciMLBase", "SparseArrays"]
-path = "C:\\Users\\User\\.julia\\dev\\FiniteVolumeMethod"
-uuid = "d4f04ab7-4f65-4d72-8a28-7087bc7f46f4"
-version = "1.0.0-DEV"
 
 [[deps.FixedPointNumbers]]
 deps = ["Statistics"]
