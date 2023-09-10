@@ -60,26 +60,28 @@ outputdir = joinpath(@__DIR__, "src", folder)
 files = readdir(dir)
 filter!(file -> endswith(file, ".jl") && !occursin("just_the_code", file), files)
 for file in files
-    # See also https://github.com/Ferrite-FEM/Ferrite.jl/blob/d474caf357c696cdb80d7c5e1edcbc7b4c91af6b/docs/generate.jl for some of this
-    file_path = joinpath(dir, file)
-    new_file_path = add_just_the_code_section(dir, file)
-    script = Literate.script(file_path, session_tmp, name=splitext(file)[1] * "_just_the_code_cleaned")
-    code = strip(read(script, String))
-    @info "[$(ct())] Processing $file: Converting markdown script"
-    line_ending_symbol = occursin(code, "\r\n") ? "\r\n" : "\n"
-    code_clean = join(filter(x -> !endswith(x, "#hide"), split(code, r"\n|\r\n")), line_ending_symbol)
-    code_clean = replace(code_clean, r"^# This file was generated .*$"m => "")
-    code_clean = strip(code_clean)
-    post_strip = content -> replace(content, "@__CODE__" => code_clean)
-    editurl_update = content -> update_edit_url(content, file, folder)
-    Literate.markdown(
-        new_file_path,
-        outputdir;
-        documenter=true,
-        postprocess=editurl_update ∘ post_strip,
-        credit=true,
-        name=splitext(file)[1]
-    )
+    if file == "solving_mazes_with_laplaces_equation.jl"
+        # See also https://github.com/Ferrite-FEM/Ferrite.jl/blob/d474caf357c696cdb80d7c5e1edcbc7b4c91af6b/docs/generate.jl for some of this
+        file_path = joinpath(dir, file)
+        new_file_path = add_just_the_code_section(dir, file)
+        script = Literate.script(file_path, session_tmp, name=splitext(file)[1] * "_just_the_code_cleaned")
+        code = strip(read(script, String))
+        @info "[$(ct())] Processing $file: Converting markdown script"
+        line_ending_symbol = occursin(code, "\r\n") ? "\r\n" : "\n"
+        code_clean = join(filter(x -> !endswith(x, "#hide"), split(code, r"\n|\r\n")), line_ending_symbol)
+        code_clean = replace(code_clean, r"^# This file was generated .*$"m => "")
+        code_clean = strip(code_clean)
+        post_strip = content -> replace(content, "@__CODE__" => code_clean)
+        editurl_update = content -> update_edit_url(content, file, folder)
+        Literate.markdown(
+            new_file_path,
+            outputdir;
+            documenter=true,
+            postprocess=editurl_update ∘ post_strip,
+            credit=true,
+            name=splitext(file)[1]
+        )
+    end
 end
 
 # All the pages to be included
