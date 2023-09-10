@@ -258,7 +258,7 @@ In this [tutorial](gray_scott_model_turing_patterns_from_a_coupled_reaction_diff
 ```
 with zero flux boundary conditions. We use this example to explore how changing parameters slightly leads to some amazing patterns, known as _Turing patterns_.[^7]
 
-[^7]: There are many papers discussing this. See, e.g., [Gandy and Nelson (2022)](https://epubs.siam.org/doi/epdf/10.1137/21M1402868) for a recent paper.
+[^7]: There are many papers discussing this. See, e.g., [Gandy and Nelson (2022)](https://epubs.siam.org/doi/epdf/10.1137/21M1402868) for a recent paper. The parameter values we use come from [this Chebfun example](https://www.chebfun.org/examples/pde/GrayScott.html).
 
 # Diffusion Equation on an Annulus 
 In this [tutorial](diffusion_equation_on_an_annulus.md) we consider the diffusion equation on an annulus:[^8]
