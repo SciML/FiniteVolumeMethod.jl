@@ -1,5 +1,5 @@
 # # Solving Mazes with Laplace's Equation 
-# In this [tutorial](solving_mazes_with_laplaces_equation.md), we consider solving 
+# In this tutorial, we consider solving 
 # mazes using Laplace's equation, applying the result of 
 # [Conolly, Burns, and Weis (1990)](https://doi.org/10.1109/ROBOT.1990.126315). 
 # In particular, given a maze $\mathcal M$, represented as a collection of edges together with some starting point 
