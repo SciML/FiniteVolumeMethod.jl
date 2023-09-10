@@ -114,3 +114,13 @@ end;
 #     <img src='../figures/maze_solution_1.mp4', alt='Animation of the solution to the first maze'><br>
 # </figure>
 # ```
+# ```@raw html
+# <figure>
+#     <img src='docs/src/figures/maze_solution_1.mp4', alt='Animation of the solution to the first maze'><br>
+# </figure>
+# ```
+# ```@raw html
+# <figure>
+#     <img src='./figures/maze_solution_1.mp4', alt='Animation of the solution to the first maze'><br>
+# </figure>
+# ```
