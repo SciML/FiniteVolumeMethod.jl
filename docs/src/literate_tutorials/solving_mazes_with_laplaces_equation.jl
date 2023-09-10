@@ -111,9 +111,11 @@ record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(s
 end;
 # ```@raw html
 # <figure>
-#     <img src='./tutorials/figures/maze_solution_1.mp4', alt='Animation of the solution to the first maze'><br>
+#     <img src='/figures/maze_solution_1.mp4', alt='Animation of the solution to the first maze'><br>
 # </figure>
 # ```
+# ![](../figures/maze_solution_1.mp4)
+
 # ```@raw html
 # <figure>
 #     <img src='docs/src/figures/maze_solution_1.mp4', alt='Animation of the solution to the first maze'><br>
