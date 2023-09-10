@@ -1,6 +1,7 @@
 using FiniteVolumeMethod
 using Test
 using Dates
+
 ct() = Dates.format(now(), "HH:MM:SS")
 function safe_include(filename) # Workaround for not being able to interpolate into SafeTestset test names
     mod = @eval module $(gensym()) end
@@ -65,4 +66,10 @@ end
     safe_include(joinpath(dir, file_names[11])) # reaction_diffusion_brusselator_system_of_pdes
     safe_include(joinpath(dir, file_names[12])) # reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk
     safe_include(joinpath(dir, file_names[13])) # solving_mazes_with_laplaces_equation
+
+    using Aqua
+    @testset "Aqua" begin
+        Aqua.test_all(FiniteVolumeMethod; ambiguities=false, project_extras=false) # don't care about julia < 1.2
+        Aqua.test_ambiguities(FiniteVolumeMethod) # don't pick up Base and Core...
+    end
 end
