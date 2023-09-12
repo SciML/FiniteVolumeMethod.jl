@@ -73,8 +73,8 @@ end
     fl = -(1 / A) * sum((flux1, flux2, flux3, flux4))
     fltest = get_dudt_val(prob, u, t, i, false)
     @test fl ≈ fltest
-    flpar = FVM.fvm_eqs!(zeros(num_points(tri)), u, (prob=prob, parallel=Val(false)), t)[i]
-    flser = FVM.fvm_eqs!(zeros(num_points(tri)), u, FVM.get_multithreading_vectors(prob), t)[i]
+    flpar = FVM.fvm_eqs!(zeros(DelaunayTriangulation.num_solid_vertices(tri)), u, (prob=prob, parallel=Val(false)), t)[i]
+    flser = FVM.fvm_eqs!(zeros(DelaunayTriangulation.num_solid_vertices(tri)), u, FVM.get_multithreading_vectors(prob), t)[i]
     @test fl ≈ flpar
     @test fl ≈ flser
 end

@@ -23,12 +23,15 @@ include("equations/triangle_contributions.jl")
 include("solve.jl")
 include("utils.jl")
 
+include("specific_problems/abstract_templates.jl")
+
 export FVMGeometry,
     FVMProblem,
     FVMSystem,
     SteadyFVMProblem,
     BoundaryConditions,
     InternalConditions,
+    Conditions,
     Neumann,
     Dudt,
     Dirichlet,
@@ -99,8 +102,8 @@ using PrecompileTools
         q_u_parameters = (c=4.0,)
         q_v_parameters = (D=1.0,)
         S_v_parameters = (a=0.1,)
-        u_initial_condition = 0.01rand(num_points(tri))
-        v_initial_condition = zeros(num_points(tri))
+        u_initial_condition = 0.01rand(DelaunayTriangulation.num_solid_vertices(tri))
+        v_initial_condition = zeros(DelaunayTriangulation.num_solid_vertices(tri))
         final_time = 1000.0
         u_prob = FVMProblem(mesh, BCs_u;
             flux_function=q_u, flux_parameters=q_u_parameters,

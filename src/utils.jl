@@ -1,14 +1,15 @@
-function _safe_get_triangle_props(prob::AbstractFVMProblem, T)
+function _safe_get_triangle_props(mesh::FVMGeometry, T)
     i, j, k = indices(T)
-    props = prob.mesh.triangle_props
+    props = mesh.triangle_props
     if haskey(props, (i, j, k))
-        return (i, j, k), get_triangle_props(prob, i, j, k)
+        return (i, j, k), get_triangle_props(mesh, i, j, k)
     elseif haskey(props, (j, k, i))
-        return (j, k, i), get_triangle_props(prob, j, k, i)
+        return (j, k, i), get_triangle_props(mesh, j, k, i)
     else
-        return (k, i, j), get_triangle_props(prob, k, i, j)
+        return (k, i, j), get_triangle_props(mesh, k, i, j)
     end
 end
+_safe_get_triangle_props(prob::AbstractFVMProblem, T) = _safe_get_triangle_props(prob.mesh, T)
 
 """
     pl_interpolate(prob, T, u, x, y)

@@ -18,4 +18,14 @@ using the finite volume method, with additional support for steady-state problem
 \pdv{u(\vb x, t)}{t} = \div\left[D(\vb x, t, u)\grad u(\vb x, t)\right] + S(\vb x, t, u).
 ```
 
-The tutorials in the sidebar demonstrate the many possibilities of this package.
+The [tutorials](tutorials/overview.md) in the sidebar demonstrate the many possibilities of this package. In addition to these two generic forms, we also provide support for specific problems that can be solved in a more efficient manner, namely:
+
+1. Diffusion equations: $\partial_tu = \div[D(\vb x)\grad u]$.
+2. Mean exit time problems: $\div[D(\vb x)\grad T(\vb x)] = -1$.
+3. Linear reaction-diffusion equations: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
+4. Semilinear equations: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
+5. Semiinear systems: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
+6. Poisson's equation: $\grad^2 u = f(\vb x)$.
+7. Laplace's equation: $\grad^2 u = 0$.
+
+See the [Solvers for Specific Problems, and Writing Your Own](wyos/overview.md) section for more information on these templates.

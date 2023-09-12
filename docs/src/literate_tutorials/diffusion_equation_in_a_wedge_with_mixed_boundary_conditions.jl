@@ -53,6 +53,7 @@ refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 
 # This is the mesh we've constructed.
+using CairoMakie
 fig, ax, sc = triplot(tri)
 fig
 

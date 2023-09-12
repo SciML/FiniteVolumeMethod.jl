@@ -127,10 +127,10 @@ yin = @views @. R₁ * sin(θ)[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = num_points(tri)
+    n = DelaunayTriangulation.num_solid_vertices(tri)
     add_edge!(tri, n - 1, n)
 end
-n = num_points(tri)
+n = DelaunayTriangulation.num_solid_vertices(tri)
 add_edge!(tri, n - 1, n)
 refine!(tri; max_area=1e-3get_total_area(tri))
 triplot(tri)
@@ -209,10 +209,10 @@ yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = num_points(tri)
+    n = DelaunayTriangulation.num_solid_vertices(tri)
     add_edge!(tri, n - 1, n)
 end
-n = num_points(tri)
+n = DelaunayTriangulation.num_solid_vertices(tri)
 add_edge!(tri, n - 1, n)
 refine!(tri; max_area=1e-3get_total_area(tri))
 triplot(tri)
@@ -270,7 +270,7 @@ fig
 # any nearby particles, i.e. $T(0,0)=0$.
 add_point!(tri, 0.0, 0.0)
 mesh = FVMGeometry(tri)
-ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(num_points(tri) => 1))
+ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(DelaunayTriangulation.num_solid_vertices(tri) => 1))
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
 initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
@@ -309,19 +309,18 @@ yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = num_points(tri)
+    n = DelaunayTriangulation.num_solid_vertices(tri)
     add_edge!(tri, n - 1, n)
 end
-n = num_points(tri)
+n = DelaunayTriangulation.num_solid_vertices(tri)
 add_edge!(tri, n - 1, n)
 add_point!(tri, 0.0, 0.0)
-origin_idx = num_points(tri)
+origin_idx = DelaunayTriangulation.num_solid_vertices(tri)
 refine!(tri; max_area=1e-3get_total_area(tri))
 triplot(tri)
 
 #-
 mesh = FVMGeometry(tri)
-ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(origin_idx => 1))
 zero_f = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, (zero_f, zero_f), (Neumann, Dirichlet))
 ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(origin_idx => 1))
@@ -357,14 +356,14 @@ yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = num_points(tri)
+    n = DelaunayTriangulation.num_solid_vertices(tri)
     add_edge!(tri, n - 1, n)
 end
-n = num_points(tri)
+n = DelaunayTriangulation.num_solid_vertices(tri)
 add_edge!(tri, n - 1, n)
 add_point!(tri, -2.0, 0.0)
 add_point!(tri, 0.0, 2.95)
-pointhole_idxs = [num_points(tri), num_points(tri)-1]
+pointhole_idxs = [DelaunayTriangulation.num_solid_vertices(tri), DelaunayTriangulation.num_solid_vertices(tri)-1]
 refine!(tri; max_area=1e-3get_total_area(tri))
 triplot(tri)
 

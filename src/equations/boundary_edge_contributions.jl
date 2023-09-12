@@ -7,12 +7,12 @@
     else
         _neumann_get_flux(prob, x, y, t, u, i, j)
     end
-    return qn * one(eltype(T))
+    return qn 
 end
 
 # primitive: get flux contribution across a boundary edge (i, j) in a system, taking care for a Neumann boundary condition for a single variable. This is used as a function barrier
 @inline function _get_boundary_flux(prob::FVMSystem, x, y, t, α, β, γ, nx, ny, i, j, u::T, var) where {T}
-    return _get_boundary_flux(get_equation(prob, var), x, y, t, α, β, γ, nx, ny, i, j, u) * one(eltype(T))
+    return _get_boundary_flux(get_equation(prob, var), x, y, t, α, β, γ, nx, ny, i, j, u) 
 end
 
 # get flux contribution across a boundary edge (i, j), taking care for a Neumann boundary condition for all variables in a system
@@ -26,15 +26,15 @@ end
 
 # function for getting both fluxes for a non-system problem
 @inline function get_boundary_fluxes(prob::AbstractFVMProblem, α::T, β, γ, i, j, t) where {T}
-    nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ = _get_boundary_cv_components(prob, i, j)
-    q1 = _get_boundary_flux(prob, mᵢx, mᵢy, t, α, β, γ, nx, ny, i, j, α * mᵢx + β * mᵢy + γ) * one(eltype(T))
-    q2 = _get_boundary_flux(prob, mⱼx, mⱼy, t, α, β, γ, nx, ny, i, j, α * mⱼx + β * mⱼy + γ) * one(eltype(T))
+    nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ = get_boundary_cv_components(prob.mesh, i, j)
+    q1 = _get_boundary_flux(prob, mᵢx, mᵢy, t, α, β, γ, nx, ny, i, j, α * mᵢx + β * mᵢy + γ)
+    q2 = _get_boundary_flux(prob, mⱼx, mⱼy, t, α, β, γ, nx, ny, i, j, α * mⱼx + β * mⱼy + γ) 
     return q1 * ℓ, q2 * ℓ
 end
 
 # function for getting both fluxes for a system problem
 @inline function get_boundary_fluxes(prob::FVMSystem, α::T, β, γ, i, j, t) where {T}
-    nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ = _get_boundary_cv_components(prob, i, j)
+    nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ = get_boundary_cv_components(prob.mesh, i, j)
     u_shapeᵢ = ntuple(var -> α[var] * mᵢx + β[var] * mᵢy + γ[var], _neqs(prob))
     u_shapeⱼ = ntuple(var -> α[var] * mⱼx + β[var] * mⱼy + γ[var], _neqs(prob))
     q1 = _get_boundary_fluxes(prob, mᵢx, mᵢy, t, α, β, γ, nx, ny, i, j, u_shapeᵢ, ℓ)
