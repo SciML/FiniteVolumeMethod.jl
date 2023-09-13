@@ -102,7 +102,7 @@ using Test #src
 # when `FVMProblem`s assume that we are solving $0 = \div[D(\vb x)\grad u] + f(\vb x)$.
 initial_condition = zeros(num_points(tri))
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
-    diffusion_function=let D = diffusion_function
+    diffusion_function=let D = dielectric_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     source_function=let S = source_function
