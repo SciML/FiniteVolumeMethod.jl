@@ -78,14 +78,18 @@ end
             "mean_exit_time.jl",
             "linear_reaction_diffusion_equations.jl",
             "poissons_equation.jl",
-            "semilinear_system.jl"
+            "laplaces_equation.jl",
+            "semilinear_equations.jl",
+            "semilinear_systems.jl",
         ]
         @test length(files) == length(file_names) # make sure we didn't miss any
         safe_include(joinpath(dir, file_names[1])) # diffusion_equations
         safe_include(joinpath(dir, file_names[2])) # mean_exit_time
         safe_include(joinpath(dir, file_names[3])) # linear_reaction_diffusion_equations
         safe_include(joinpath(dir, file_names[4])) # poissons_equation
-        safe_include(joinpath(dir, file_names[5])) # semilinear_system
+        safe_include(joinpath(dir, file_names[5])) # laplaces_equation
+        safe_include(joinpath(dir, file_names[6])) # semilinear_equations
+        safe_include(joinpath(dir, file_names[7])) # semilinear_systems
     end
 
     @testset "Aqua" begin

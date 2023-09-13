@@ -75,7 +75,6 @@ end
 # Now let us test this problem. To test, we will consider the last 
 # problem [here](../tutorials/mean_exit_time.md) which 
 # includes mixed boundary conditions and also an internal condition. 
-using OrdinaryDiffEq
 ## Define the triangulation
 θ = LinRange(0, 2π, 250)
 R₁, R₂ = 2.0, 3.0
@@ -168,7 +167,7 @@ fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
     initial_condition)
 
 # Let's compare the two solutions.
-using SteadyStateDiffEq
+using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
 
 ax = Axis(fig[1, 2], width=600, height=600, title="Template")
@@ -181,9 +180,9 @@ using Test #src
 @test fvm_sol.u ≈ sol.u rtol = 1e-2 #src
 
 # ## Using the Provided Template 
-# Let's now use the built-in `MeanExitTimeProblem()` which implements the above template 
+# Let's now use the built-in `MeanExitTimeProblem` which implements the above template 
 # inside FiniteVolumeMethod.jl.
-_u = deepcopy(sol.u)
+_u = deepcopy(sol.u) #src
 prob = MeanExitTimeProblem(mesh, BCs, ICs;
     diffusion_function,
     diffusion_parameters)

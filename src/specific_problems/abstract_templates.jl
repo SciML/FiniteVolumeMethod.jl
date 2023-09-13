@@ -169,3 +169,27 @@ function boundary_edge_contributions!(A, b, mesh, conditions,
         end
     end
 end
+
+"""
+    create_rhs_b!(A, mesh, conditions, source_function, source_parameters)
+
+Create the vector `b` defined by 
+
+    b = [source_function(x, y, source_parameters) for (x, y) in each_point(mesh.triangulation)],
+
+and `b[i] = 0` whenever `i` is a Dirichlet node. In cases where `i` is a Dirichlet node, the matrix `A` 
+is updated so that `A[i, i] = 1`.
+"""
+function create_rhs_b!(A, mesh, conditions, source_function, source_parameters)
+    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    for i in each_solid_vertex(mesh.triangulation)
+        if !is_dirichlet_node(conditions, i)
+            p = get_point(mesh, i)
+            x, y = getxy(p)
+            b[i] = source_function(x, y, source_parameters)
+        else
+            A[i, i] = 1.0 # b[i] = is already zero
+        end
+    end
+    return b
+end

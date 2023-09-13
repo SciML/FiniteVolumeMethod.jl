@@ -5,7 +5,9 @@ A struct for defining a problem representing a linear reaction-diffusion equatio
 ```math
 \pdv{u}{t} = \div\left[D(\vb x)\grad u\right] + f(\vb x)u
 ```
-inside a domain $\Omega$. You can solve this problem using [`solve`](@ref solve(::AbstractFVMTemplate, args...; kwargs...)).
+inside a domain $\Omega$. 
+
+You can solve this problem using [`solve`](@ref solve(::AbstractFVMTemplate, args...; kwargs...)).
 
 !!! warning 
 
@@ -95,6 +97,9 @@ function LinearReactionDiffusionEquation(mesh::FVMGeometry,
     Af = sparse(Afull)
     Aop = MatrixOperator(Af)
     prob = ODEProblem(Aop, _ic, (initial_time, final_time); kwargs...)
-    return LinearReactionDiffusionEquation(mesh, conditions, diffusion_function, diffusion_parameters,
-        source_function, source_parameters, initial_condition, initial_time, final_time, sparse(A), b, Aop, prob)
+    return LinearReactionDiffusionEquation(mesh, conditions,
+        diffusion_function, diffusion_parameters,
+        source_function, source_parameters,
+        initial_condition, initial_time, final_time,
+        sparse(A), b, Aop, prob)
 end

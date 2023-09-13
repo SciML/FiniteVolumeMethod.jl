@@ -5,7 +5,9 @@ A struct for defining a problem representing a diffusion equation:
 ```math
 \pdv{u}{t} = \div\left[D(\vb x)\grad u\right]
 ```
-inside a domain $\Omega$. You can solve this problem using [`solve`](@ref solve(::AbstractFVMTemplate, args...; kwargs...)).
+inside a domain $\Omega$. 
+
+You can solve this problem using [`solve`](@ref solve(::AbstractFVMTemplate, args...; kwargs...)).
 
 !!! warning 
 
@@ -85,8 +87,10 @@ function DiffusionEquation(mesh::FVMGeometry,
     apply_dirichlet_conditions!(_ic, mesh, conditions)
     A_op = MatrixOperator(sparse(Afull))
     prob = ODEProblem(A_op, _ic, (initial_time, final_time); kwargs...)
-    return DiffusionEquation(mesh, conditions, diffusion_function, diffusion_parameters,
-        initial_condition, initial_time, final_time, sparse(A), b, A_op, prob)
+    return DiffusionEquation(mesh, conditions,
+        diffusion_function, diffusion_parameters,
+        initial_condition, initial_time, final_time,
+        sparse(A), b, A_op, prob)
 end
 
 function linear_source_contributions!(A, mesh, conditions, source_function, source_parameters)

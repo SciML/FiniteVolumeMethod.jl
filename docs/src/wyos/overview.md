@@ -77,4 +77,5 @@ FiniteVolumeMethod.triangle_contributions!
 FiniteVolumeMethod.apply_dirichlet_conditions!
 FiniteVolumeMethod.apply_dudt_conditions! 
 FiniteVolumeMethod.boundary_edge_contributions!
+FiniteVolumeMethod.create_rhs_b!
 ```

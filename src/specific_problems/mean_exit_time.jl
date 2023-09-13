@@ -69,17 +69,11 @@ function MeanExitTimeProblem(mesh::FVMGeometry,
     b = create_met_b!(A, mesh, conditions)
     Asp = sparse(A)
     prob = LinearProblem(Asp, b; kwargs...)
-    return MeanExitTimeProblem(mesh, conditions, diffusion_function, diffusion_parameters, Asp, b, prob)
+    return MeanExitTimeProblem(mesh, conditions,
+        diffusion_function, diffusion_parameters,
+        Asp, b, prob)
 end
 
 function create_met_b!(A, mesh, conditions)
-    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
-    for i in each_solid_vertex(mesh.triangulation)
-        if !is_dirichlet_node(conditions, i)
-            b[i] = -1
-        else
-            A[i, i] = 1.0 # b[i] = is already zero
-        end
-    end
-    return b
+    return create_rhs_b!(A, mesh, conditions, (x, y, p) -> -1.0, nothing)
 end
