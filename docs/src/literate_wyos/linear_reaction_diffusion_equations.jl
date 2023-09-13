@@ -1,6 +1,6 @@
 # # Linear Reaction-Diffusion Equations 
 # ```@contents
-# Pages = ["linear_reaction_diffusion_equations.jl"]
+# Pages = ["linear_reaction_diffusion_equations.md"]
 # ```
 # Next, we write a specialised solver for solving linear reaction-diffusion equations. What 
 # we produce in this section can also be accessed in `FiniteVolumeMethod.LinearReactionDiffusionEquation`.
