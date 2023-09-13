@@ -56,7 +56,6 @@ alg = FBDF(linsolve=UMFPACKFactorization(), autodiff=false)
 sol = solve(prob, alg, saveat=0.01)
 
 #-
-using CairoMakie
 using ReferenceTests #src
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
