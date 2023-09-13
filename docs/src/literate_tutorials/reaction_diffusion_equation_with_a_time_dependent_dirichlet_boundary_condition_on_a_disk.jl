@@ -31,6 +31,7 @@ refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 
 #-
+using CairoMakie
 triplot(tri)
 
 # Now we define the boundary conditions and the PDE.

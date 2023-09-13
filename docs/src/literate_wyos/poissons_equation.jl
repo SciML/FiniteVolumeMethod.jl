@@ -134,9 +134,125 @@ using BenchmarkTools
 #-
 @btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
 
-# Let's now also solve a generalised Poisson equation. Following the example 
-# in Section 7 of [this paper](https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf)
+# Let's now also solve a generalised Poisson equation. Based 
+# on Section 7 of [this paper](https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf)
 # by Nagel (2012), we consider an equation of the form 
 # ```math 
-# \div\left[\epsilon(\vb r)\grad V(\vb r)] = -\frac{\rho(\vb r)}{\epsilon_0}.
+# \div\left[\epsilon(\vb x)\grad V(\vb x)] = -\frac{\rho(\vb x)}{\epsilon_0}.
 # ``` 
+# We consider this equation on the domain $\Omega = [0, 10]^2$. We put two parallel capacitor plates 
+# inside the domain, with the first in $2 \leq x \leq 8$ along $y = 3$, and the other at $2 \leq x \leq 8$ along $y=7$.
+# We use $V = 1$ on the top plate, and $V = -1$ on the bottom plate. For the domain boundaries, $\partial\Omega$, we use homogeneous 
+# Dirichlet conditions on the top and bottom sides, and homogeneous Neumann conditions on the left and right sides.
+# For the space-varying electric constant $\epsilon(\vb x)$, we use[^2]
+# ```math 
+# \epsilon(\vb x) = 1 + \frac12(\epsilon_0 - 1)\left[1 + \erf\left(\frac{r}{\Delta}\right)\right],
+# ```
+# where $r$ is the distance between $\vb x$ and the parallel plates, $\Delta  = 4$. The value of $\epsilon_0$
+# is approximately $\epsilon_0 = 8.8541878128 \times 10^{-12}$. For the charge density $\rho(\vb x)$, we use
+# a Gaussian density,
+# ```math 
+# \rho(\vb x) = \frac{Q}{2\pi}\mathrm{e}^{-r^2/2},
+# ```
+# where, again, $r$ is the distance between $\vb x$ and the parallel plates, and $Q = 10^{-6}$.
+# [^2]: This form of $\epsilon(\vb x)$ is based on [this paper](https://doi.org/10.1063/1.4939125) by Fisicaro et al. (2016).
+
+# To define this problem, let us first define the mesh. We will need to manually put in the capacitor plates so that 
+# we can enforce Dirichlet conditions on them.  
+a, b, c, d = 0.0, 10.0, 0.0, 10.0
+e, f = (2.0, 3.0), (8.0, 3.0)
+g, h = (2.0, 7.0), (8.0, 7.0)
+points = [(a, c), (b, c), (b, d), (a, d), e, f, g, h]
+boundary_nodes = [[1, 2], [2, 3], [3, 4], [4, 1]]
+edges = Set(((5, 6), (7, 8)))
+tri = triangulate(points; boundary_nodes, edges, delete_ghosts=false)
+refine!(tri; max_area=1e-4get_total_area(tri))
+fig, ax, sc = triplot(tri, show_constrained_edges=true, constrained_edge_linewidth=5)
+fig
+
+#-
+mesh = FVMGeometry(tri)
+
+# The boundary conditions are given by:
+zero_f = (x, y, t, u, p) -> zero(x)
+bc_f = (zero_f, zero_f, zero_f, zero_f)
+bc_types = (Dirichlet, Neumann, Dirichlet, Neumann) # bot, right, top, left 
+BCs = BoundaryConditions(mesh, bc_f, bc_types)
+
+# To define the internal conditions, we need to get the indices for the plates. 
+function find_vertices_on_plates(tri)
+    lower_plate = Int[]
+    upper_plate = Int[]
+    for i in each_solid_vertex(tri)
+        x, y = get_point(tri, i)
+        in_range = 2 ≤ x ≤ 8
+        if in_range
+            y == 3 && push!(lower_plate, i)
+            y == 7 && push!(upper_plate, i)
+        end
+    end
+    return lower_plate, upper_plate
+end
+lower_plate, upper_plate = find_vertices_on_plates(tri)
+dirichlet_nodes = Dict(
+    (lower_plate .=> 1)...,
+    (upper_plate .=> 2)...
+)
+internal_f = ((x, y, t, u, p) -> -one(x), (x, y, t, u, p) -> one(x))
+ICs = InternalConditions(internal_f, dirichlet_nodes=dirichlet_nodes)
+
+# Next, we define $\epsilon(\vb x)$ and $\rho(\vb x)$. We need a function that computes the distance 
+# between a point and the plates. For the distance between a point and a line segment, we can use:[^3]
+using LinearAlgebra
+function dist_to_line(p, a, b)
+    ℓ² = norm(a .- b)^2
+    t = max(0.0, min(1.0, dot(p .- a, b .- a) / ℓ²))
+    pv = a .+ t .* (b .- a)
+    return norm(p .- pv)
+end
+# [^3]: Taken from [here](https://stackoverflow.com/a/1501725).
+# Thus, the distance between a point and the two plates is: 
+function dist_to_plates(x, y)
+    p = (x, y)
+    a1, b1 = (2.0, 3.0), (8.0, 3.0)
+    a2, b2 = (2.0, 7.0), (8.0, 7.0)
+    d1 = dist_to_line(p, a1, b1)
+    d2 = dist_to_line(p, a2, b2)
+    return min(d1, d2)
+end
+
+# So, our function $\epsilon(\vb x)$ is defined by:
+using SpecialFunctions
+function dielectric_function(x, y, p)
+    r = dist_to_plates(x, y)
+    return 1 + (p.ϵ₀ - 1) * (1 + erf(r / p.Δ)) / 2
+end
+
+# The charge density is:
+function charge_density(x, y, p)
+    r = dist_to_plates(x, y)
+    return p.Q / (2π) * exp(-r^2 / 2)
+end
+
+# Using this charge density, our source function is defined by:
+function plate_source_function(x, y, p)
+    ρ = charge_density(x, y, p)
+    return -ρ/p.ϵ₀
+end
+
+# Now we can define our problem.  
+diffusion_parameters = (ϵ₀=8.8541878128e-12, Δ=4.0)
+source_parameters = (ϵ₀=8.8541878128e-12, Q = 1e-6)
+prob = PoissonsEquation(mesh, BCs, ICs;
+    diffusion_function=dielectric_function,
+    diffusion_parameters=diffusion_parameters,
+    source_function=plate_source_function,
+    source_parameters=source_parameters)
+
+#-
+sol = solve(prob, KLUFactorization())
+
+# With this solution, we can also define the electric field $\vb E$, using $\vb E = -\grad V$.
+# To compute the gradients, we use NaturalNeighbours.jl. 
+using NaturalNeighbours
+itp = interpolate(tri, sol.u; derivatives=true)
