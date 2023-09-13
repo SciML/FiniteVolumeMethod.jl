@@ -49,7 +49,7 @@ record(fig, "anim.gif", eachindex(sol)) do i
 end
 ```
 
-![Animation of a solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/imp_clean/anim.gif)
+![Animation of a solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/anim.gif)
 
 We could have equivalently used the `DiffusionEquation` template, so that `prob` could have also been defined by 
 
@@ -57,4 +57,4 @@ We could have equivalently used the `DiffusionEquation` template, so that `prob`
 prob = DiffusionEquation(mesh, BCs; diffusion_function=D, initial_condition, final_time)
 ```
 
-and be solved much more efficiently.
+and be solved much more efficiently. See the documentation for more information.

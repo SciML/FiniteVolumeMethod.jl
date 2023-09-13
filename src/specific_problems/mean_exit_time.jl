@@ -75,5 +75,13 @@ function MeanExitTimeProblem(mesh::FVMGeometry,
 end
 
 function create_met_b!(A, mesh, conditions)
-    return create_rhs_b!(A, mesh, conditions, (x, y, p) -> -1.0, nothing)
+    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    for i in each_solid_vertex(mesh.triangulation)
+        if !is_dirichlet_node(conditions, i)
+            b[i] = -1
+        else
+            A[i, i] = 1.0 # b[i] = is already zero
+        end
+    end
+    return b
 end

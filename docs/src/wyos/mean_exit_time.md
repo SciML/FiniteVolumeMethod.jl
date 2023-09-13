@@ -66,7 +66,7 @@ Let us now define the function which gives us our matrices $\vb A$ and $\vb b$. 
 return the problem as a `LinearProblem` from LinearSolve.jl.
 
 ````@example mean_exit_time
-using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation
+using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
 const FVM = FiniteVolumeMethod
 function met_problem(mesh::FVMGeometry,
     BCs::BoundaryConditions, # the actual implementation also checks that the types are only Dirichlet/Neumann
@@ -87,7 +87,6 @@ problem [here](../tutorials/mean_exit_time.md) which
 includes mixed boundary conditions and also an internal condition.
 
 ````@example mean_exit_time
-using OrdinaryDiffEq
 # Define the triangulation
 θ = LinRange(0, 2π, 250)
 R₁, R₂ = 2.0, 3.0
@@ -155,7 +154,6 @@ prob.A
 We will use `KLUFactorization`.
 
 ````@example mean_exit_time
-using LinearSolve
 sol = solve(prob, KLUFactorization())
 ````
 
@@ -195,7 +193,7 @@ fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
 Let's compare the two solutions.
 
 ````@example mean_exit_time
-using SteadyStateDiffEq
+using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
 
 ax = Axis(fig[1, 2], width=600, height=600, title="Template")
@@ -205,11 +203,10 @@ fig
 ````
 
 ## Using the Provided Template
-Let's now use the built-in `MeanExitTimeProblem()` which implements the above template
+Let's now use the built-in `MeanExitTimeProblem` which implements the above template
 inside FiniteVolumeMethod.jl.
 
 ````@example mean_exit_time
-_u = deepcopy(sol.u)
 prob = MeanExitTimeProblem(mesh, BCs, ICs;
     diffusion_function,
     diffusion_parameters)
@@ -253,7 +250,7 @@ function create_met_b!(A, mesh, conditions)
     return b
 end
 
-using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation
+using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
 const FVM = FiniteVolumeMethod
 function met_problem(mesh::FVMGeometry,
     BCs::BoundaryConditions, # the actual implementation also checks that the types are only Dirichlet/Neumann
@@ -268,7 +265,6 @@ function met_problem(mesh::FVMGeometry,
     return LinearProblem(sparse(A), b)
 end
 
-using OrdinaryDiffEq
 # Define the triangulation
 θ = LinRange(0, 2π, 250)
 R₁, R₂ = 2.0, 3.0
@@ -327,7 +323,6 @@ prob = met_problem(mesh, BCs, ICs; diffusion_function, diffusion_parameters)
 
 prob.A
 
-using LinearSolve
 sol = solve(prob, KLUFactorization())
 
 using CairoMakie
@@ -353,7 +348,7 @@ fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
     final_time=Inf,
     initial_condition)
 
-using SteadyStateDiffEq
+using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
 
 ax = Axis(fig[1, 2], width=600, height=600, title="Template")
@@ -361,7 +356,6 @@ tricontourf!(ax, tri, fvm_sol.u, levels=0:1000:15000, extendhigh=:auto)
 resize_to_layout!(fig)
 fig
 
-_u = deepcopy(sol.u)
 prob = MeanExitTimeProblem(mesh, BCs, ICs;
     diffusion_function,
     diffusion_parameters)

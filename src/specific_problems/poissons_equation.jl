@@ -35,7 +35,7 @@ You can solve this problem using [`solve`](@ref solve(::AbstractFVMTemplate, arg
 
 # Fields
 The struct has extra fields in addition to the arguments above:
-- `A`: This is a sparse matrix `A` so that `AT = b`.    
+- `A`: This is a sparse matrix `A` so that `Au = b`.    
 - `b`: The `b` above.
 - `problem`: The `LinearProblem` that represents the problem. This is the problem that is solved when you call [`solve`](@ref solve(::AbstractFVMTemplate, args...; kwargs...)) on the struct.
 """
@@ -67,8 +67,10 @@ function PoissonsEquation(mesh::FVMGeometry,
     has_dudt_nodes(conditions) && throw(ArgumentError("PoissonsEquation does not support Dudt nodes."))
     n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
     A = zeros(n, n)
+    b = create_rhs_b(mesh, conditions, source_function, source_parameters)
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
-    b = create_rhs_b!(A, mesh, conditions, source_function, source_parameters)
+    boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
     Asp = sparse(A)
     prob = LinearProblem(Asp, b; kwargs...)
     return PoissonsEquation(mesh, conditions,

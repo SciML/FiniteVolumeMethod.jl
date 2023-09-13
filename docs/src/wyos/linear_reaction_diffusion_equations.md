@@ -4,7 +4,7 @@ EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/s
 
 # Linear Reaction-Diffusion Equations
 ```@contents
-Pages = ["linear_reaction_diffusion_equations.jl"]
+Pages = ["linear_reaction_diffusion_equations.md"]
 ```
 Next, we write a specialised solver for solving linear reaction-diffusion equations. What
 we produce in this section can also be accessed in `FiniteVolumeMethod.LinearReactionDiffusionEquation`.
@@ -31,7 +31,7 @@ const FVM = FiniteVolumeMethod
 function linear_source_contributions!(A, mesh, conditions, source_function, source_parameters)
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.has_condition(conditions, i)
-            x, y = FVM.get_point(mesh, i)
+            x, y = get_point(mesh, i)
             A[i, i] += source_function(x, y, source_parameters)
         end
     end
@@ -165,7 +165,7 @@ const FVM = FiniteVolumeMethod
 function linear_source_contributions!(A, mesh, conditions, source_function, source_parameters)
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.has_condition(conditions, i)
-            x, y = FVM.get_point(mesh, i)
+            x, y = get_point(mesh, i)
             A[i, i] += source_function(x, y, source_parameters)
         end
     end

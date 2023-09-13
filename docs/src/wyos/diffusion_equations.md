@@ -404,7 +404,7 @@ resize_to_layout!(fig)
 fig
 ````
 
-Here is a benchmark comparison
+Here is a benchmark comparison.
 
 ````@example diffusion_equations
 @btime solve($prob, $Tsit5(), saveat=$100.0);
@@ -414,6 +414,14 @@ nothing #hide
 ````@example diffusion_equations
 @btime solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$100.0);
 nothing #hide
+````
+
+These problems also work with the `pl_interpolate` function:
+
+````@example diffusion_equations
+q = (30.0, 45.0)
+T = jump_and_march(tri, q)
+val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])
 ````
 
 ## Just the code
@@ -623,6 +631,10 @@ fig
 @btime solve($prob, $Tsit5(), saveat=$100.0);
 
 @btime solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$100.0);
+
+q = (30.0, 45.0)
+T = jump_and_march(tri, q)
+val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])
 ```
 
 ---

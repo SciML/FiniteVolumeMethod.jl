@@ -171,25 +171,42 @@ function boundary_edge_contributions!(A, b, mesh, conditions,
 end
 
 """
-    create_rhs_b!(A, mesh, conditions, source_function, source_parameters)
+    create_rhs_b(mesh, conditions, source_function, source_parameters)
 
 Create the vector `b` defined by 
 
     b = [source_function(x, y, source_parameters) for (x, y) in each_point(mesh.triangulation)],
 
-and `b[i] = 0` whenever `i` is a Dirichlet node. In cases where `i` is a Dirichlet node, the matrix `A` 
-is updated so that `A[i, i] = 1`.
+and `b[i] = 0` whenever `i` is a Dirichlet node.
 """
-function create_rhs_b!(A, mesh, conditions, source_function, source_parameters)
+function create_rhs_b(mesh, conditions, source_function, source_parameters)
     b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !is_dirichlet_node(conditions, i)
             p = get_point(mesh, i)
             x, y = getxy(p)
             b[i] = source_function(x, y, source_parameters)
-        else
-            A[i, i] = 1.0 # b[i] = is already zero
         end
     end
     return b
+end
+
+@doc raw"""
+    apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+
+Applies the Dirichlet conditions specified in `conditions` to the `initial_condition`. The boundary 
+conditions are assumed to take the form `a(x, y, t, u, p) -> Number`, but `t` and `u` are passed 
+as `nothing`. Note that this assumes that the associated system `(A, b)` is such that `A[i, :]` is all 
+zero, and `b[i]` is zero, where `i` is a node with a Dirichlet condition.
+
+For a steady problem `Au = b`, applies the Dirichlet boundary conditions specified by `conditions` 
+so that `A[i, i] = 1` and `b[i]` is the condition, where `i` is a boundary node. Note that this 
+assumes that all of `A[i, :]` is zero before setting `A[i, i] = 1`.
+"""
+function apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    for (i, function_index) in get_dirichlet_nodes(conditions)
+        x, y = get_point(mesh, i)
+        b[i] = eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+        A[i, i] = 1.0
+    end
 end

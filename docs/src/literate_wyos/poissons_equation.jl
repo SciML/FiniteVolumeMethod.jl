@@ -15,6 +15,7 @@
 # $f(\vb x) = -1$ for mean exit time problems. Note that this is actually 
 # a generalised Poisson equation - typically these equations look like 
 # $\grad^2 u = f$.[^1]
+#
 # [^1]: See, for example, [this paper](https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf).
 #
 # From these similarities, we already know that 
@@ -26,23 +27,29 @@
 
 # ## Implementation
 # Let us now implement our problem. For [mean exit time problems](mean_exit_time.md), we
-# had a function `create_met_b!` that we used for defining $\vb b$. We should generalised 
+# had a function `create_met_b` that we used for defining $\vb b$. We should generalise
 # that function to now accept a source function:
-function create_rhs_b!(A, mesh, conditions, source_function, source_parameters)
+function create_rhs_b(mesh, conditions, source_function, source_parameters)
     b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.is_dirichlet_node(conditions, i)
             p = get_point(mesh, i)
             x, y = getxy(p)
             b[i] = source_function(x, y, source_parameters)
-        else
-            A[i, i] = 1.0 # b[i] = is already zero
         end
     end
     return b
 end
 
-# With this definition, `create_met_b!(A, mesh, conditions) = create_rhs_b!(A, mesh, conditions, Returns(-1), nothing)`.
+# We also need a function that applies the Dirichlet conditions.
+function apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
+        x, y = get_point(mesh, i)
+        b[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+        A[i, i] = 1.0
+    end
+end
+
 # So, our problem can be defined by: 
 using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
 const FVM = FiniteVolumeMethod
@@ -56,8 +63,10 @@ function poissons_equation(mesh::FVMGeometry,
     conditions = Conditions(mesh, BCs, ICs)
     n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
     A = zeros(n, n)
+    b = create_rhs_b(mesh, conditions, source_function, source_parameters)
     FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
-    b = create_rhs_b!(A, mesh, conditions, source_function, source_parameters)
+    FVM.boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
     return LinearProblem(sparse(A), b)
 end
 
@@ -93,7 +102,7 @@ using Test #src
 # change the sign of the source function, since above we are solving $\div[D(\vb x)\grad u] = f(\vb x)$,
 # when `FVMProblem`s assume that we are solving $0 = \div[D(\vb x)\grad u] + f(\vb x)$.
 initial_condition = zeros(num_points(tri))
-fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs;
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
@@ -101,7 +110,7 @@ fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs;
         (x, y, t, u, p) -> -S(x, y, p)
     end,
     initial_condition,
-    final_time=Inf)
+    final_time=Inf))
 
 #-
 using SteadyStateDiffEq, OrdinaryDiffEq
@@ -138,7 +147,7 @@ using BenchmarkTools
 # on Section 7 of [this paper](https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf)
 # by Nagel (2012), we consider an equation of the form 
 # ```math 
-# \div\left[\epsilon(\vb x)\grad V(\vb x)] = -\frac{\rho(\vb x)}{\epsilon_0}.
+# \div\left[\epsilon(\vb x)\grad V(\vb x)\right] = -\frac{\rho(\vb x)}{\epsilon_0}.
 # ``` 
 # We consider this equation on the domain $\Omega = [0, 10]^2$. We put two parallel capacitor plates 
 # inside the domain, with the first in $2 \leq x \leq 8$ along $y = 3$, and the other at $2 \leq x \leq 8$ along $y=7$.
@@ -155,6 +164,7 @@ using BenchmarkTools
 # \rho(\vb x) = \frac{Q}{2\pi}\mathrm{e}^{-r^2/2},
 # ```
 # where, again, $r$ is the distance between $\vb x$ and the parallel plates, and $Q = 10^{-6}$.
+
 # [^2]: This form of $\epsilon(\vb x)$ is based on [this paper](https://doi.org/10.1063/1.4939125) by Fisicaro et al. (2016).
 
 # To define this problem, let us first define the mesh. We will need to manually put in the capacitor plates so that 
@@ -256,7 +266,7 @@ sol = solve(prob, KLUFactorization())
 # To compute the gradients, we use NaturalNeighbours.jl. 
 using NaturalNeighbours
 itp = interpolate(tri, sol.u; derivatives=true)
-E = itp.gradient
+E = map(.-, itp.gradient) # E = -∇V
 
 # For plotting the electric field, we will show the electric field intensity $\|\vb E\|$,
 # and we can also show the arrows. Rather than showing all arrows, we will show them at 
@@ -267,7 +277,7 @@ x = LinRange(0, 10, 25)
 y = LinRange(0, 10, 25)
 x_vec = [x for x in x, y in y] |> vec
 y_vec = [y for x in x, y in y] |> vec
-E_itp = ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2))
+E_itp = map(.-, ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2)))
 E_intensity = norm.(E_itp)
 
 #-
@@ -288,9 +298,10 @@ arrows!(ax, arrow_positions, arrow_directions,
 tightlimits!(ax)
 resize_to_layout!(fig)
 fig
+@test_reference joinpath(@__DIR__, "../figures", "poissons_equation_template_2.png") fig by = psnr_equality(20) #src
 
 # To finish, let us benchmark the `PoissonsEquation` approach against the `FVMProblem` approach.
-fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = dielectric_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
@@ -300,7 +311,7 @@ fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
     diffusion_parameters=diffusion_parameters,
     source_parameters=source_parameters,
     initial_condition=zeros(num_points(tri)),
-    final_time=Inf)
+    final_time=Inf))
 
 #-
 @btime solve($prob, $KLUFactorization());

@@ -156,14 +156,14 @@ function T_exact(x, y)
     end
 end
 initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)] # an initial guess 
-fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     diffusion_parameters,
     source_function=(x, y, t, u, p) -> one(u),
     final_time=Inf,
-    initial_condition)
+    initial_condition))
 
 # Let's compare the two solutions.
 using SteadyStateDiffEq, OrdinaryDiffEq
