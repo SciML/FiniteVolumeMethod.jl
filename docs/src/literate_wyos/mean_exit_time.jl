@@ -57,7 +57,7 @@ end
 
 # Let us now define the function which gives us our matrices $\vb A$ and $\vb b$. We will 
 # return the problem as a `LinearProblem` from LinearSolve.jl.
-using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation
+using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
 const FVM = FiniteVolumeMethod
 function met_problem(mesh::FVMGeometry,
     BCs::BoundaryConditions, # the actual implementation also checks that the types are only Dirichlet/Neumann
@@ -136,7 +136,6 @@ prob = met_problem(mesh, BCs, ICs; diffusion_function, diffusion_parameters)
 prob.A
 
 # We will use `KLUFactorization`.
-using LinearSolve
 sol = solve(prob, KLUFactorization())
 
 # We can easily visualise our solution: 
