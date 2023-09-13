@@ -20,13 +20,13 @@ julia> using FiniteVolumeMethod
 
 julia> subtypes(FiniteVolumeMethod.AbstractFVMTemplate)
 7-element Vector{Any}:
- FiniteVolumeMethod.DiffusionEquation
- FiniteVolumeMethod.LinearReactionDiffusionEquation
- FiniteVolumeMethod.MeanExitTimeProblem
- FiniteVolumeMethod.SemilinearEquation
- FiniteVolumeMethod.SemilinearSystem
- FiniteVolumeMethod.PoissonsEquation
- FiniteVolumeMethod.LaplacesEquation
+ DiffusionEquation
+ LaplacesEquation
+ LinearReactionDiffusionEquation
+ MeanExitTimeProblem
+ PoissonsEquation
+ SemilinearEquation
+ SemilinearSystem
 ```
 
 The constructor for each problem is defined in its docstring. Note that all the problems above are exported.

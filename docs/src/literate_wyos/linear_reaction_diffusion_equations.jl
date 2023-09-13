@@ -140,7 +140,7 @@ using Test #src
 
 # Here is a benchmark comparison of `LinearReactionDiffusionEquation` versus `FVMProblem`.
 using BenchmarkTools 
-@btime solve($prob, $Tsit5(); saveat=$2);
+@benchmark solve($prob, $Tsit5(); saveat=$2)
 
 #-
-@btime solve($fvm_prob, $TRBDF2(linsolve=$KLUFactorization()); saveat=$2);
+@benchmark solve($fvm_prob, $TRBDF2(linsolve=$KLUFactorization()); saveat=$2)

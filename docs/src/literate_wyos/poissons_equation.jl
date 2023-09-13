@@ -56,7 +56,7 @@ const FVM = FiniteVolumeMethod
 function poissons_equation(mesh::FVMGeometry,
     BCs::BoundaryConditions,
     ICs::InternalConditions=InternalConditions();
-    diffusion_function,
+    diffusion_function=(x,y,p)->1.0,
     diffusion_parameters=nothing,
     source_function,
     source_parameters=nothing)
@@ -82,9 +82,8 @@ end
 tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
-diffusion_function = (x, y, p) -> 1.0
 source_function = (x, y, p) -> -sin(π * x) * sin(π * y)
-prob = poissons_equation(mesh, BCs; diffusion_function, source_function)
+prob = poissons_equation(mesh, BCs;  source_function)
 
 #-
 sol = solve(prob, KLUFactorization())
@@ -138,10 +137,10 @@ sol = solve(prob, KLUFactorization())
 
 # Here is a benchmark comparison of the `PoissonsEquation` approach against the `FVMProblem` approach.
 using BenchmarkTools
-@btime solve($prob, $KLUFactorization());
+@benchmark solve($prob, $KLUFactorization())
 
 #-
-@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
+@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 
 # Let's now also solve a generalised Poisson equation. Based 
 # on Section 7 of [this paper](https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf)
@@ -279,8 +278,6 @@ x_vec = [x for x in x, y in y] |> vec
 y_vec = [y for x in x, y in y] |> vec
 E_itp = map(.-, ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2)))
 E_intensity = norm.(E_itp)
-
-#-
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600, titlealign=:left,
     xlabel="x", ylabel="y", title="Voltage")
@@ -314,10 +311,10 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     final_time=Inf))
 
 #-
-@btime solve($prob, $KLUFactorization());
+@benchmark solve($prob, $KLUFactorization())
 
 #-
-@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
+@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()))) #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-4 #src

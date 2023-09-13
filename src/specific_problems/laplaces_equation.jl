@@ -14,7 +14,7 @@ You can solve this problem using [`solve`](@ref solve(::AbstractFVMTemplate, arg
     LaplacesEquation(mesh::FVMGeometry,
         BCs::BoundaryConditions,
         ICs::InternalConditions=InternalConditions();
-        diffusion_function,
+        diffusion_function=(x,y,p)->1.0,
         diffusion_parameters=nothing,
         kwargs...)
 
@@ -24,7 +24,7 @@ You can solve this problem using [`solve`](@ref solve(::AbstractFVMTemplate, arg
 - `ICs::InternalConditions=InternalConditions()`: The [`InternalConditions`](@ref). For these internal conditions, all functions should still be of the form `(x, y, t, u, p) -> Number`, but the `t` and `u` arguments should be unused as they will be replaced with `nothing`.
 
 ## Keyword Arguments
-- `diffusion_function`: The diffusion function. Should be of the form `(x, y, p) -> Number`, where `p = diffusion_parameters` below.
+- `diffusion_function=(x,y,p)->1.0`: The diffusion function. Should be of the form `(x, y, p) -> Number`, where `p = diffusion_parameters` below.
 - `diffusion_parameters=nothing`: The argument `p` in `diffusion_function`.
 - `kwargs...`: Any other keyword arguments are passed to the `LinearProblem` (from LinearSolve.jl) that represents the problem.
 
@@ -51,7 +51,7 @@ end
 function LaplacesEquation(mesh::FVMGeometry,
     BCs::BoundaryConditions,
     ICs::InternalConditions=InternalConditions();
-    diffusion_function,
+    diffusion_function=(x, y, p) -> 1.0,
     diffusion_parameters=nothing,
     kwargs...)
     conditions = Conditions(mesh, BCs, ICs)
