@@ -237,12 +237,12 @@ end
 # Using this charge density, our source function is defined by:
 function plate_source_function(x, y, p)
     ρ = charge_density(x, y, p)
-    return -ρ/p.ϵ₀
+    return -ρ / p.ϵ₀
 end
 
 # Now we can define our problem.  
 diffusion_parameters = (ϵ₀=8.8541878128e-12, Δ=4.0)
-source_parameters = (ϵ₀=8.8541878128e-12, Q = 1e-6)
+source_parameters = (ϵ₀=8.8541878128e-12, Q=1e-6)
 prob = PoissonsEquation(mesh, BCs, ICs;
     diffusion_function=dielectric_function,
     diffusion_parameters=diffusion_parameters,
@@ -256,3 +256,57 @@ sol = solve(prob, KLUFactorization())
 # To compute the gradients, we use NaturalNeighbours.jl. 
 using NaturalNeighbours
 itp = interpolate(tri, sol.u; derivatives=true)
+E = itp.gradient
+
+# For plotting the electric field, we will show the electric field intensity $\|\vb E\|$,
+# and we can also show the arrows. Rather than showing all arrows, we will show them at 
+# a smaller grid of values, which requires differentiating `itp` so that we can get the 
+# gradients at arbitary points. 
+∂ = differentiate(itp, 1)
+x = LinRange(0, 10, 25)
+y = LinRange(0, 10, 25)
+x_vec = [x for x in x, y in y] |> vec
+y_vec = [y for x in x, y in y] |> vec
+E_itp = ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2))
+E_intensity = norm.(E_itp)
+
+#-
+fig = Figure(fontsize=38)
+ax = Axis(fig[1, 1], width=600, height=600, titlealign=:left,
+    xlabel="x", ylabel="y", title="Voltage")
+tricontourf!(ax, tri, sol.u, levels=15, colormap=:ocean)
+arrow_positions = [Point2f(x, y) for (x, y) in zip(x_vec, y_vec)]
+arrow_directions = [Point2f(e...) for e in E_itp]
+arrows!(ax, arrow_positions, arrow_directions,
+    lengthscale=0.3, normalize=true, arrowcolor=E_intensity, linecolor=E_intensity)
+tightlimits!(ax)
+ax = Axis(fig[1, 2], width=600, height=600, titlealign=:left,
+    xlabel="x", ylabel="y", title="Electric Field")
+tricontourf!(ax, tri, norm.(E), levels=15, colormap=:ocean)
+arrows!(ax, arrow_positions, arrow_directions,
+    lengthscale=0.3, normalize=true, arrowcolor=E_intensity, linecolor=E_intensity)
+tightlimits!(ax)
+resize_to_layout!(fig)
+fig
+
+# To finish, let us benchmark the `PoissonsEquation` approach against the `FVMProblem` approach.
+fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
+    diffusion_function=let D = dielectric_function
+        (x, y, t, u, p) -> D(x, y, p)
+    end,
+    source_function=let S = plate_source_function
+        (x, y, t, u, p) -> -S(x, y, p)
+    end,
+    diffusion_parameters=diffusion_parameters,
+    source_parameters=source_parameters,
+    initial_condition=zeros(num_points(tri)),
+    final_time=Inf)
+
+#-
+@btime solve($prob, $KLUFactorization());
+
+#-
+@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
+
+fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()))) #src
+@test sol.u ≈ fvm_sol.u rtol = 1e-4 #src
