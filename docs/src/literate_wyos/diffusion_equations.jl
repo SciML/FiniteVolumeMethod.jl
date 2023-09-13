@@ -370,8 +370,15 @@ u_template = sol[begin:end-1, 2:end] #src
 u_fvm = fvm_sol[:, 2:end] #src
 @test u_template ≈ u_fvm rtol = 1e-3 #src
 
-# Here is a benchmark comparison 
+# Here is a benchmark comparison.
 @btime solve($prob, $Tsit5(), saveat=$100.0);
 
 #-
 @btime solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$100.0);
+
+# These problems also work with the `pl_interpolate` function:
+q = (30.0, 45.0)
+T = jump_and_march(tri, q)
+val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])
+using Test #src
+@test pl_interpolate(prob, T, sol.u[3], q[1], q[2]) ≈ pl_interpolate(fvm_prob, T, fvm_sol.u[3], q[1], q[2]) rtol = 1e-3 #src
