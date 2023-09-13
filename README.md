@@ -16,11 +16,11 @@ in two dimensions using the finite volume method, with support also provided for
 1. Diffusion equations: $\partial_tu = \div[D(\vb x)\grad u]$.
 2. Mean exit time problems: $\div[D(\vb x)\grad T(\vb x)] = -1$.
 3. Linear reaction-diffusion equations: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
-4. Semilinear equations: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
-5. Semiinear systems: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
-6. Poisson's equation: $\grad^2 u = f(\vb x)$.
-7. Laplace's equation: $\grad^2 u = 0$.
-
+4. Poisson's equation: $\grad^2 u = f(\vb x)$.
+5. Laplace's equation: $\grad^2 u = 0$.
+6. Semilinear equations: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
+7. Semiinear systems: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
+8. 
 See the documentation for more information.
 
 If this package doesn't suit what you need, you may like to review some of the other PDE packages shown [here](https://github.com/JuliaPDE/SurveyofPDEPackages).

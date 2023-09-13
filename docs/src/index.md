@@ -23,9 +23,9 @@ The [tutorials](tutorials/overview.md) in the sidebar demonstrate the many possi
 1. Diffusion equations: $\partial_tu = \div[D(\vb x)\grad u]$.
 2. Mean exit time problems: $\div[D(\vb x)\grad T(\vb x)] = -1$.
 3. Linear reaction-diffusion equations: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
-4. Semilinear equations: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
-5. Semiinear systems: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
-6. Poisson's equation: $\grad^2 u = f(\vb x)$.
-7. Laplace's equation: $\grad^2 u = 0$.
+4. Poisson's equation: $\grad^2 u = f(\vb x)$.
+5. Laplace's equation: $\grad^2 u = 0$.
+6. Semilinear equations: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
+7. Semiinear systems: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
 
 See the [Solvers for Specific Problems, and Writing Your Own](wyos/overview.md) section for more information on these templates.
