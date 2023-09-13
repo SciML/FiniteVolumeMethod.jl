@@ -180,14 +180,14 @@ function T_exact(x, y)
     end
 end
 initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)] # an initial guess
-fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     diffusion_parameters,
     source_function=(x, y, t, u, p) -> one(u),
     final_time=Inf,
-    initial_condition)
+    initial_condition))
 ````
 
 Let's compare the two solutions.
@@ -223,13 +223,11 @@ This matches what we have above. To finish, here is a benchmark comparing the ap
 
 ````@example mean_exit_time
 using BenchmarkTools
-@benchmark solve($prob, $KLUFactorization());
-nothing #hide
+@benchmark solve($prob, $KLUFactorization())
 ````
 
 ````@example mean_exit_time
-@benchmark solve($fvm_prob, $DynamicSS($Rosenbrock23()));
-nothing #hide
+@benchmark solve($fvm_prob, $DynamicSS($Rosenbrock23()))
 ````
 
 Very fast!
@@ -339,14 +337,14 @@ function T_exact(x, y)
     end
 end
 initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)] # an initial guess
-fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     diffusion_parameters,
     source_function=(x, y, t, u, p) -> one(u),
     final_time=Inf,
-    initial_condition)
+    initial_condition))
 
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
@@ -366,9 +364,9 @@ fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
 fig
 
 using BenchmarkTools
-@benchmark solve($prob, $KLUFactorization());
+@benchmark solve($prob, $KLUFactorization())
 
-@benchmark solve($fvm_prob, $DynamicSS($Rosenbrock23()));
+@benchmark solve($fvm_prob, $DynamicSS($Rosenbrock23()))
 ```
 
 ---

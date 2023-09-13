@@ -20,12 +20,12 @@ using the finite volume method, with additional support for steady-state problem
 
 The [tutorials](tutorials/overview.md) in the sidebar demonstrate the many possibilities of this package. In addition to these two generic forms, we also provide support for specific problems that can be solved in a more efficient manner, namely:
 
-1. Diffusion equations: $\partial_tu = \div[D(\vb x)\grad u]$.
-2. Mean exit time problems: $\div[D(\vb x)\grad T(\vb x)] = -1$.
-3. Linear reaction-diffusion equations: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
-4. (Generalised) Poisson's equation: $\div[D(\vb x)\grad u]  f(\vb x)$.
-5. (Generalised) Laplace's equation: $\div[D(\vb x)\grad u] = 0$.
-6. Semilinear equations: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
-7. Semiinear systems: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
+1. `DiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u]$.
+2. `MeanExitTimeProblem`s: $\div[D(\vb x)\grad T(\vb x)] = -1$.
+3. `LinearReactionDiffusionEquation`s: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
+4. `PoissonsEquation`: $\div[D(\vb x)\grad u]  f(\vb x)$.
+5. `LaplacesEquation`: $\div[D(\vb x)\grad u] = 0$.
+6. `SemilinearEquation`s: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
+7. `SemilinearSystem`s: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
 
 See the [Solvers for Specific Problems, and Writing Your Own](wyos/overview.md) section for more information on these templates.

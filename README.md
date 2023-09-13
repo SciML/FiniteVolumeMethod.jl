@@ -13,14 +13,14 @@ $$
 
 in two dimensions using the finite volume method, with support also provided for steady-state problems and for systems of PDEs of the above form. In addition to this generic form above, we also provide support for specific problems that can be solved in a more efficient manner, namely:
 
-1. Diffusion equations: $\partial_tu = \div[D(\vb x)\grad u]$.
-2. Mean exit time problems: $\div[D(\vb x)\grad T(\vb x)] = -1$.
-3. Linear reaction-diffusion equations: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
-4. (Generalised) Poisson's equation: $\div[D(\vb x)\grad u]  f(\vb x)$.
-5. (Generalised) Laplace's equation: $\div[D(\vb x)\grad u] = 0$.
-6. Semilinear equations: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
-7. Semiinear systems: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
-8. 
+1. `DiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u]$.
+2. `MeanExitTimeProblem`s: $\div[D(\vb x)\grad T(\vb x)] = -1$.
+3. `LinearReactionDiffusionEquation`s: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
+4. `PoissonsEquation`: $\div[D(\vb x)\grad u]  f(\vb x)$.
+5. `LaplacesEquation`: $\div[D(\vb x)\grad u] = 0$.
+6. `SemilinearEquation`s: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
+7. `SemilinearSystem`s: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
+
 See the documentation for more information.
 
 If this package doesn't suit what you need, you may like to review some of the other PDE packages shown [here](https://github.com/JuliaPDE/SurveyofPDEPackages).

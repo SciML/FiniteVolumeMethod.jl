@@ -146,13 +146,11 @@ Here is a benchmark comparison of `LinearReactionDiffusionEquation` versus `FVMP
 
 ````@example linear_reaction_diffusion_equations
 using BenchmarkTools
-@btime solve($prob, $Tsit5(); saveat=$2);
-nothing #hide
+@benchmark solve($prob, $Tsit5(); saveat=$2)
 ````
 
 ````@example linear_reaction_diffusion_equations
-@btime solve($fvm_prob, $TRBDF2(linsolve=$KLUFactorization()); saveat=$2);
-nothing #hide
+@benchmark solve($fvm_prob, $TRBDF2(linsolve=$KLUFactorization()); saveat=$2)
 ````
 
 ## Just the code
@@ -247,9 +245,9 @@ prob = LinearReactionDiffusionEquation(mesh, BCs;
 sol = solve(prob, Tsit5(); saveat=2)
 
 using BenchmarkTools
-@btime solve($prob, $Tsit5(); saveat=$2);
+@benchmark solve($prob, $Tsit5(); saveat=$2)
 
-@btime solve($fvm_prob, $TRBDF2(linsolve=$KLUFactorization()); saveat=$2);
+@benchmark solve($fvm_prob, $TRBDF2(linsolve=$KLUFactorization()); saveat=$2)
 ```
 
 ---

@@ -17,13 +17,13 @@ which is faster to solve than if we were to treat it as a nonlinear problem
 (which is done by default). For this reason, we define some templates 
 for specific types of problems, namely:
 
-1. Diffusion equations: $\partial_tu = \div[D(\vb x)\grad u]$.
-2. Mean exit time problems: $\div[D(\vb x)\grad T(\vb x)] = -1$.
-3. Linear reaction-diffusion equations: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
-4. (Generalised) Poisson's equation: $\div[D(\vb x)\grad u]  f(\vb x)$.
-5. (Generalised) Laplace's equation: $\div[D(\vb x)\grad u] = 0$.
-6. Semilinear equations: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
-7. Semiinear systems: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
+1. `DiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u]$.
+2. `MeanExitTimeProblem`s: $\div[D(\vb x)\grad T(\vb x)] = -1$.
+3. `LinearReactionDiffusionEquation`s: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
+4. `PoissonsEquation`: $\div[D(\vb x)\grad u]  f(\vb x)$.
+5. `LaplacesEquation`: $\div[D(\vb x)\grad u] = 0$.
+6. `SemilinearEquation`s: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
+7. `SemilinearSystem`s: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
 
 The docstrings below define the templates for these problems.
 
@@ -47,7 +47,7 @@ that evaluates the system of ODEs. In the sections that follow, we will demonstr
 
 With these two steps, you should be able to also know how to write your own solver for any problem you like. 
 
-## Relevant Docstrings 
+## Relevant Docstrings for Writing Your Own Solver
 
 For writing these solvers, there are some specific functions that might be of use to you. 
 Here, we provide the docstrings for these functions. These functions are public API.

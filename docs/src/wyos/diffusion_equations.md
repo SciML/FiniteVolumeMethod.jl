@@ -312,17 +312,17 @@ fvm_prob = FVMProblem(mesh, BCs;
 
 ````@example diffusion_equations
 using BenchmarkTools
-@btime solve($diff_eq, $Tsit5(), saveat=$0.05);
-nothing #hide
+@benchmark solve($diff_eq, $Tsit5(), saveat=$0.05)
 ````
 
 ````@example diffusion_equations
-@btime solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$0.05);
-nothing #hide
+using LinearSolve
+@benchmark solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$0.05)
 ````
 
-Much better! The `DiffusionEquation` approach is about 10 times faster. To finish this example,
-let's solve a diffusion equation with constant Neumann boundary conditions:
+Much better! The `DiffusionEquation` approach is about 10 times faster.
+
+To finish this example, let's solve a diffusion equation with constant Neumann boundary conditions:
 ```math
 \begin{equation*}
 \begin{aligned}
@@ -381,7 +381,6 @@ since $\grad u \vdot \vu n = 2$, we have $-D\grad u \vdot \vu n = -2D = -4$, so
 $\vb q \vdot \vu n = -4$. Here is a comparison of the two solutions.
 
 ````@example diffusion_equations
-using LinearSolve
 BCs_prob = BoundaryConditions(mesh, (x, y, t, u, p) -> -4, Neumann)
 fvm_prob = FVMProblem(mesh, BCs_prob;
     diffusion_function=let D = diffusion_function
@@ -407,13 +406,11 @@ fig
 Here is a benchmark comparison.
 
 ````@example diffusion_equations
-@btime solve($prob, $Tsit5(), saveat=$100.0);
-nothing #hide
+@benchmark solve($prob, $Tsit5(), saveat=$100.0)
 ````
 
 ````@example diffusion_equations
-@btime solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$100.0);
-nothing #hide
+@benchmark solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$100.0)
 ````
 
 These problems also work with the `pl_interpolate` function:
@@ -568,9 +565,10 @@ fvm_prob = FVMProblem(mesh, BCs;
     final_time)
 
 using BenchmarkTools
-@btime solve($diff_eq, $Tsit5(), saveat=$0.05);
+@benchmark solve($diff_eq, $Tsit5(), saveat=$0.05)
 
-@btime solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$0.05);
+using LinearSolve
+@benchmark solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$0.05)
 
 L = 320.0
 tri = triangulate_rectangle(0, L, 0, L, 100, 100, single_boundary=true)
@@ -606,7 +604,6 @@ end
 resize_to_layout!(fig)
 fig
 
-using LinearSolve
 BCs_prob = BoundaryConditions(mesh, (x, y, t, u, p) -> -4, Neumann)
 fvm_prob = FVMProblem(mesh, BCs_prob;
     diffusion_function=let D = diffusion_function
@@ -628,9 +625,9 @@ end
 resize_to_layout!(fig)
 fig
 
-@btime solve($prob, $Tsit5(), saveat=$100.0);
+@benchmark solve($prob, $Tsit5(), saveat=$100.0)
 
-@btime solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$100.0);
+@benchmark solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$100.0)
 
 q = (30.0, 45.0)
 T = jump_and_march(tri, q)

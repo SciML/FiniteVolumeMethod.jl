@@ -68,7 +68,7 @@ const FVM = FiniteVolumeMethod
 function poissons_equation(mesh::FVMGeometry,
     BCs::BoundaryConditions,
     ICs::InternalConditions=InternalConditions();
-    diffusion_function,
+    diffusion_function=(x,y,p)->1.0,
     diffusion_parameters=nothing,
     source_function,
     source_parameters=nothing)
@@ -97,9 +97,8 @@ u &= 0 & \vb x \in\partial[0,1]^2.
 tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
-diffusion_function = (x, y, p) -> 1.0
 source_function = (x, y, p) -> -sin(π * x) * sin(π * y)
-prob = poissons_equation(mesh, BCs; diffusion_function, source_function)
+prob = poissons_equation(mesh, BCs;  source_function)
 ````
 
 ````@example poissons_equation
@@ -120,7 +119,7 @@ when `FVMProblem`s assume that we are solving $0 = \div[D(\vb x)\grad u] + f(\vb
 
 ````@example poissons_equation
 initial_condition = zeros(num_points(tri))
-fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs;
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
@@ -128,7 +127,7 @@ fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs;
         (x, y, t, u, p) -> -S(x, y, p)
     end,
     initial_condition,
-    final_time=Inf)
+    final_time=Inf))
 ````
 
 ````@example poissons_equation
@@ -154,13 +153,11 @@ Here is a benchmark comparison of the `PoissonsEquation` approach against the `F
 
 ````@example poissons_equation
 using BenchmarkTools
-@btime solve($prob, $KLUFactorization());
-nothing #hide
+@benchmark solve($prob, $KLUFactorization())
 ````
 
 ````@example poissons_equation
-@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
-nothing #hide
+@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 ````
 
 Let's now also solve a generalised Poisson equation. Based
@@ -318,7 +315,7 @@ To compute the gradients, we use NaturalNeighbours.jl.
 ````@example poissons_equation
 using NaturalNeighbours
 itp = interpolate(tri, sol.u; derivatives=true)
-E = itp.gradient
+E = map(.-, itp.gradient) # E = -∇V
 ````
 
 For plotting the electric field, we will show the electric field intensity $\|\vb E\|$,
@@ -332,11 +329,8 @@ x = LinRange(0, 10, 25)
 y = LinRange(0, 10, 25)
 x_vec = [x for x in x, y in y] |> vec
 y_vec = [y for x in x, y in y] |> vec
-E_itp = ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2))
+E_itp = map(.-, ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2)))
 E_intensity = norm.(E_itp)
-````
-
-````@example poissons_equation
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600, titlealign=:left,
     xlabel="x", ylabel="y", title="Voltage")
@@ -359,7 +353,7 @@ fig
 To finish, let us benchmark the `PoissonsEquation` approach against the `FVMProblem` approach.
 
 ````@example poissons_equation
-fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = dielectric_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
@@ -369,17 +363,15 @@ fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
     diffusion_parameters=diffusion_parameters,
     source_parameters=source_parameters,
     initial_condition=zeros(num_points(tri)),
-    final_time=Inf)
+    final_time=Inf))
 ````
 
 ````@example poissons_equation
-@btime solve($prob, $KLUFactorization());
-nothing #hide
+@benchmark solve($prob, $KLUFactorization())
 ````
 
 ````@example poissons_equation
-@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
-nothing #hide
+@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 ````
 
 ## Just the code
@@ -412,7 +404,7 @@ const FVM = FiniteVolumeMethod
 function poissons_equation(mesh::FVMGeometry,
     BCs::BoundaryConditions,
     ICs::InternalConditions=InternalConditions();
-    diffusion_function,
+    diffusion_function=(x,y,p)->1.0,
     diffusion_parameters=nothing,
     source_function,
     source_parameters=nothing)
@@ -429,9 +421,8 @@ end
 tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
-diffusion_function = (x, y, p) -> 1.0
 source_function = (x, y, p) -> -sin(π * x) * sin(π * y)
-prob = poissons_equation(mesh, BCs; diffusion_function, source_function)
+prob = poissons_equation(mesh, BCs;  source_function)
 
 sol = solve(prob, KLUFactorization())
 
@@ -441,7 +432,7 @@ tightlimits!(ax)
 fig
 
 initial_condition = zeros(num_points(tri))
-fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs;
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
@@ -449,7 +440,7 @@ fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs;
         (x, y, t, u, p) -> -S(x, y, p)
     end,
     initial_condition,
-    final_time=Inf)
+    final_time=Inf))
 
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
@@ -461,9 +452,9 @@ prob = PoissonsEquation(mesh, BCs;
 sol = solve(prob, KLUFactorization())
 
 using BenchmarkTools
-@btime solve($prob, $KLUFactorization());
+@benchmark solve($prob, $KLUFactorization())
 
-@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
+@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 
 a, b, c, d = 0.0, 10.0, 0.0, 10.0
 e, f = (2.0, 3.0), (8.0, 3.0)
@@ -549,16 +540,15 @@ sol = solve(prob, KLUFactorization())
 
 using NaturalNeighbours
 itp = interpolate(tri, sol.u; derivatives=true)
-E = itp.gradient
+E = map(.-, itp.gradient) # E = -∇V
 
 ∂ = differentiate(itp, 1)
 x = LinRange(0, 10, 25)
 y = LinRange(0, 10, 25)
 x_vec = [x for x in x, y in y] |> vec
 y_vec = [y for x in x, y in y] |> vec
-E_itp = ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2))
+E_itp = map(.-, ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2)))
 E_intensity = norm.(E_itp)
-
 fig = Figure(fontsize=38)
 ax = Axis(fig[1, 1], width=600, height=600, titlealign=:left,
     xlabel="x", ylabel="y", title="Voltage")
@@ -577,7 +567,7 @@ tightlimits!(ax)
 resize_to_layout!(fig)
 fig
 
-fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = dielectric_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
@@ -587,11 +577,11 @@ fvm_prob = (SteadyFVMProblem ∘ FVMProblem)(mesh, BCs, ICs;
     diffusion_parameters=diffusion_parameters,
     source_parameters=source_parameters,
     initial_condition=zeros(num_points(tri)),
-    final_time=Inf)
+    final_time=Inf))
 
-@btime solve($prob, $KLUFactorization());
+@benchmark solve($prob, $KLUFactorization())
 
-@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
+@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 ```
 
 ---

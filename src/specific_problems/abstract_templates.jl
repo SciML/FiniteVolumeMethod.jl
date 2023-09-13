@@ -70,7 +70,8 @@ Add the contributions from each triangle to the matrix `A`, based on the equatio
 ```math 
 \dv{u_i}{t} = \frac{1}{V_i}\sum_{\sigma \in \mathcal E_i} D(\vb x_\sigma)\left[\left(s_{k, 11}n_\sigma^x + s_{k, 21}n_\sigma^y\right)u_{k1} + \left(s_{k, 12}n_\sigma^x + s_{k, 22}n_\sigma^y\right)u_{k2} + \left(s_{k, 13}n_\sigma^x + s_{k, 23}n_\sigma^y\right)u_{k3}\right]L_\sigma + S_i, 
 ```
-as explained in the docs.
+as explained in the docs. Will not update any rows corresponding to 
+[`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
 """
 function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
@@ -136,7 +137,8 @@ Add the contributions from each boundary edge to the matrix `A`, based on the eq
 \dv{u_i}{t} = \frac{1}{V_i}\sum_{\sigma \in \mathcal E_i} D(\vb x_\sigma)\left[\left(s_{k, 11}n_\sigma^x + s_{k, 21}n_\sigma^y\right)u_{k1} + \left(s_{k, 12}n_\sigma^x + s_{k, 22}n_\sigma^y\right)u_{k2} + \left(s_{k, 13}n_\sigma^x + s_{k, 23}n_\sigma^y\right)u_{k3}\right]L_\sigma + S_i, 
 ```
 
-as explained in the docs.
+as explained in the docs. Will not update any rows corresponding to 
+[`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
 """
 function boundary_edge_contributions!(A, b, mesh, conditions,
     diffusion_function, diffusion_parameters)
