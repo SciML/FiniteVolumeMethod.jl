@@ -1,4 +1,4 @@
-function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem}) 
+function get_multithreading_parameters(prob::Union{FVMProblem,FVMSystem})
     u = prob.initial_condition
     nt = Threads.nthreads()
     if prob isa FVMProblem
@@ -13,6 +13,8 @@ function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem})
     chunked_solid_triangles = chunks(solid_triangles, nt)
     boundary_edges = collect(keys(get_boundary_edge_map(prob.mesh.triangulation)))
     chunked_boundary_edges = chunks(boundary_edges, nt)
+    flux_du = DiffCache(similar(u))
+    source_du = DiffCache(similar(u))
     return (
         duplicated_du=duplicated_du,
         dirichlet_nodes=dirichlet_nodes,
@@ -22,8 +24,30 @@ function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem})
         boundary_edges=boundary_edges,
         chunked_boundary_edges=chunked_boundary_edges,
         parallel=Val(true),
-        prob=prob
+        prob=prob,
+        flux_du=flux_du,
+        source_du=source_du
     )
+end
+
+function get_serial_parameters(prob::Union{FVMProblem,FVMSystem})
+    u = prob.initial_condition
+    flux_du = DiffCache(similar(u))
+    source_du = DiffCache(similar(u))
+    return (
+        parallel=Val(false),
+        prob=prob,
+        flux_du=flux_du,
+        source_du=source_du
+    )
+end
+
+function get_fvm_parameters(prob::Union{FVMProblem,FVMSystem}, parallel::Val{B}) where {B}
+    if B
+        return get_multithreading_parameters(prob)
+    else
+        return get_serial_parameters(prob)
+    end
 end
 
 function jacobian_sparsity(prob::FVMProblem)
@@ -105,13 +129,31 @@ end
 jacobian_sparsity(prob::SteadyFVMProblem) = jacobian_sparsity(prob.problem)
 
 @inline function dirichlet_callback(has_saveat, has_dir)
-    cb = DiscreteCallback(
-        (u, t, integrator) -> let cb_needed = has_dir
-            cb_needed
-        end,
-        update_dirichlet_nodes!,
-        save_positions=(!has_saveat, !has_saveat),
-    )
+    if has_dir
+        cb = DiscreteCallback(
+            (u, t, integrator) -> true,
+            update_dirichlet_nodes!,
+            save_positions=(!has_saveat, !has_saveat),
+        )
+    else
+        cb = CallbackSet()
+    end
+    return cb
+end
+
+"""
+    get_dirichlet_callback(prob; kwargs...)
+
+Get the callback for updating [`Dirichlet`](@ref) nodes. The `kwargs...` argument is ignored, 
+except to detect if a user has already provided a callback, in which case the 
+callback gets merged into a `CallbackSet` with the [`Dirichlet`](@ref) callback. If the problem 
+`prob` has no [`Dirichlet`](@ref) nodes, the returned callback does nothing and is never 
+called.
+"""
+@inline function get_dirichlet_callback(prob; saveat=(), callback=CallbackSet(), kwargs...)
+    has_dir_nodes = has_dirichlet_nodes(prob)
+    dir_callback = dirichlet_callback(!isempty(saveat), has_dir_nodes)
+    cb = CallbackSet(dir_callback, callback)
     return cb
 end
 
@@ -119,27 +161,15 @@ function SciMLBase.ODEProblem(prob::Union{FVMProblem,FVMSystem};
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
     parallel::Val{B}=Val(true),
-    mass_matrix=LinearAlgebra.I,
-    f=fvm_eqs!,
-    callback=nothing, # need this to check if user provides it
-    saveat=nothing) where {S,B}
+    kwargs...) where {S,B}
     initial_time = prob.initial_time
     final_time = prob.final_time
     time_span = (initial_time, final_time)
     initial_condition = prob.initial_condition
-    dirichlet_cb = dirichlet_callback(!isnothing(saveat), has_dirichlet_nodes(prob))
-    if !isnothing(callback)
-        cb = CallbackSet(callback, dirichlet_cb)
-    else
-        cb = CallbackSet(dirichlet_cb)
-    end
-    if mass_matrix ≠ LinearAlgebra.I
-        _f = ODEFunction{true,S}(f; mass_matrix)
-    else
-        _f = ODEFunction{true,S}(f; mass_matrix, jac_prototype)
-    end
-    p = B ? get_multithreading_vectors(prob) : (prob=prob, parallel=parallel)
-    ode_problem = ODEProblem{true,S}(_f, initial_condition, time_span, p; callback=cb)
+    cb = get_dirichlet_callback(prob; kwargs...)
+    f = SplitFunction{true,S}(fvm_eqs_flux!, fvm_eqs_source!; jac_prototype)
+    p = get_fvm_parameters(prob, parallel)
+    ode_problem = SplitODEProblem{true}(f, initial_condition, time_span, p; callback=cb)
     return ode_problem
 end
 
@@ -147,11 +177,8 @@ function SciMLBase.SteadyStateProblem(prob::SteadyFVMProblem;
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
     parallel::Val{B}=Val(true),
-    mass_matrix=LinearAlgebra.I,
-    f=fvm_eqs!,
-    callback=nothing, # need this to check if user provides it
-    saveat=nothing) where {S,B}
-    ode_prob = ODEProblem(prob.problem; specialization, jac_prototype, parallel, callback, saveat, mass_matrix, f)
+    kwargs...) where {S,B}
+    ode_prob = ODEProblem(prob.problem; specialization, jac_prototype, parallel, kwargs...)
     nl_prob = SteadyStateProblem{true}(ode_prob.f, ode_prob.u0, ode_prob.p; ode_prob.kwargs...)
     return nl_prob
 end
@@ -160,42 +187,25 @@ function CommonSolve.init(prob::Union{FVMProblem,FVMSystem}, args...;
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
     parallel::Val{B}=Val(true),
-    mass_matrix=LinearAlgebra.I,
-    f=fvm_eqs!,
-    callback=nothing,
-    saveat=nothing,
     kwargs...) where {S,B}
-    ode_prob = SciMLBase.ODEProblem(prob; specialization, jac_prototype, parallel, saveat, callback, mass_matrix, f)
-    if !isnothing(saveat)
-        return CommonSolve.init(ode_prob, args...; saveat, kwargs...)
-    else
-        return CommonSolve.init(ode_prob, args...; kwargs...)
-    end
+    ode_prob = SciMLBase.ODEProblem(prob; specialization, jac_prototype, parallel, kwargs...)
+    return CommonSolve.init(ode_prob, args...; kwargs...)
 end
 function CommonSolve.solve(prob::SteadyFVMProblem, args...;
     specialization::Type{S}=SciMLBase.AutoSpecialize,
     jac_prototype=jacobian_sparsity(prob),
     parallel::Val{B}=Val(true),
-    mass_matrix=LinearAlgebra.I,
-    f=fvm_eqs!,
-    callback=nothing,
-    saveat=nothing,
     kwargs...) where {S,B}
-    nl_prob = SciMLBase.SteadyStateProblem(prob; specialization, jac_prototype, parallel, callback, saveat, mass_matrix, f)
-    if !isnothing(saveat)
-        return CommonSolve.solve(nl_prob, args...; saveat, kwargs...)
-    else
-        return CommonSolve.solve(nl_prob, args...; kwargs...)
-    end
+    nl_prob = SciMLBase.SteadyStateProblem(prob; specialization, jac_prototype, parallel, kwargs...)
+    return CommonSolve.solve(nl_prob, args...; kwargs...)
 end
+
 
 @doc """
     solve(prob::Union{FVMProblem,FVMSystem}, alg; 
         specialization=SciMLBase.AutoSpecialize, 
         jac_prototype=jacobian_sparsity(prob), 
         parallel::Val{<:Bool}=Val(true),
-        mass_matrix=I,
-        f=fvm_eqs!,
         kwargs...)
 
 
@@ -207,10 +217,8 @@ Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the alg
 
 # Keyword Arguments
 - `specialization=SciMLBase.AutoSpecialize`: The type of specialization to be used. See https://docs.sciml.ai/DiffEqDocs/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation.
-- `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`. Ignored if the mass matrix is not `I`.
+- `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`.
 - `parallel::Val{<:Bool}=Val(true)`: Whether to use multithreading. Use `Val(false)` to disable multithreading. 
-- `mass_matrix=I`: The mass matrix to be used in the problem. This argument can be useful for defining differential-algebraic equations.
-- `f=fvm_eqs!`: The function defining the PDEs. You should only need to change this if you need a differential-algebraic equation. See the maze tutorial in the docs.
 - `kwargs...`: Any other keyword arguments to be passed to the solver.
 
 # Outputs 
@@ -228,8 +236,6 @@ In this case, the `(j, i)`th component of `sol::ODESolution` refers to the `i`th
         specialization=SciMLBase.AutoSpecialize, 
         jac_prototype=jacobian_sparsity(prob),
         parallel::Val{<:Bool}=Val(true),
-        mass_matrix=I,
-        f = fvm_eqs!,
         kwargs...)
 
 
@@ -241,10 +247,8 @@ Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the alg
 
 # Keyword Arguments
 - `specialization=SciMLBase.AutoSpecialize`: The type of specialization to be used. See https://docs.sciml.ai/DiffEqDocs/stable/features/low_dep/#Controlling-Function-Specialization-and-Precompilation.
-- `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`. Ignored if the mass matrix is not `I`.
+- `jac_prototype=jacobian_sparsity(prob)`: The prototype for the Jacobian matrix, constructed by default from `jacobian_sparsity`.
 - `parallel::Val{<:Bool}=Val(true)`: Whether to use multithreading. Use `Val(false)` to disable multithreading.
-- `mass_matrix=I`: The mass matrix to be used in the problem. This argument can be useful for defining differential-algebraic equations.
-- `f=fvm_eqs!`: The function defining the PDEs. You should only need to change this if you need a differential-algebraic equation. See the maze tutorial in the docs.
 - `kwargs...`: Any other keyword arguments to be passed to the solver.
 
 # Outputs 

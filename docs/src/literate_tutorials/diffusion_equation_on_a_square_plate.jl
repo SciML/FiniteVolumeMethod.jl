@@ -53,7 +53,7 @@ prob.flux_function
 # OrdinaryDiffEq), the algorithm is chosen automatically. Moreover, note that, 
 # in the `solve` call below, multithreading is enabled by default.
 using DifferentialEquations
-sol = solve(prob, saveat=0.05)
+@time solve(prob, SBDF2(),dt=0.001, saveat=0.05, parallel=Val(true))
 
 # To visualise the solution, we can use `tricontourf!` from Makie.jl. 
 using CairoMakie

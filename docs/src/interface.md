@@ -140,12 +140,6 @@ For steady-state problems, the algorithms to use are those from [NonlinearSolve.
 solve(::SteadyFVMProblem, ::Any; kwargs...)
 ```
 
-These `solve` functions rely on `fvm_eqs!` for evaluating the equations. You should never need to use `fvm_eqs!` directly, unless you are using a differential-algebraic equation. The docstring for `fvm_eqs!` is below; this function is public API.
-
-```@docs
-fvm_eqs!
-```
-
 # Custom constraints 
 
 You can also provide custom constraints. Rather than outlining this precisely here, it is best explained in the tutorials, namely [this tutorial](tutorials/solving_mazes_with_laplaces_equation.md). We note that one useful function for this is `compute_flux`, which allows you to compute the flux across a given edge. The docstring for `compute_flux` is below, and this function is public API.

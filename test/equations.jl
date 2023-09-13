@@ -33,6 +33,14 @@ end
     test_dudt_val(prob, u, t, false)
 end
 
+const fvm_eqs! = (du, u, p, t) -> begin
+    du1 = zero(du)
+    du2 = zero(du)
+    FVM.fvm_eqs_flux!(du1, u, p, t)
+    FVM.fvm_eqs_source!(du2, u, p, t)
+    du .= du1 .+ du2
+    return du
+end
 @testset "Exact test for a corner point: Can we get the Neumann edge contributions correct?" begin
     prob = example_heat_convection_problem()
     u = prob.initial_condition
@@ -73,8 +81,8 @@ end
     fl = -(1 / A) * sum((flux1, flux2, flux3, flux4))
     fltest = get_dudt_val(prob, u, t, i, false)
     @test fl ≈ fltest
-    flpar = FVM.fvm_eqs!(zeros(num_points(tri)), u, (prob=prob, parallel=Val(false)), t)[i]
-    flser = FVM.fvm_eqs!(zeros(num_points(tri)), u, FVM.get_multithreading_vectors(prob), t)[i]
+    flpar = fvm_eqs!(zeros(num_points(tri)), u, FVM.get_fvm_parameters(prob, Val(false)), t)[i]
+    flser = fvm_eqs!(zeros(num_points(tri)), u, FVM.get_fvm_parameters(prob, Val(true)), t)[i]
     @test fl ≈ flpar
     @test fl ≈ flser
 end

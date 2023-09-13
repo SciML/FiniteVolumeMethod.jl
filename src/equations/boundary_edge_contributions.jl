@@ -43,17 +43,17 @@ end
 end
 
 # function for applying both fluxes for a non-system problem
-@inline function update_du!(du, ::AbstractFVMProblem, i, j, summand₁, summand₂)
-    du[i] = du[i] - summand₁
-    du[j] = du[j] - summand₂
+@inline function update_du!(du, prob::AbstractFVMProblem, i, j, summand₁, summand₂)
+    has_condition(prob, i) || (du[i] = du[i] - summand₁)
+    has_condition(prob, j) || (du[j] = du[j] - summand₂)
     return nothing
 end
 
 # function for applying both fluxes for a system problem
 @inline function update_du!(du, prob::FVMSystem, i, j, summand₁, summand₂) 
     for var in 1:_neqs(prob)
-        du[var, i] = du[var, i] - summand₁[var]
-        du[var, j] = du[var, j] - summand₂[var]
+        has_condition(prob, i, var) || (du[var, i] = du[var, i] - summand₁[var])
+        has_condition(prob, j, var) || (du[var, j] = du[var, j] - summand₂[var])
     end
     return nothing
 end

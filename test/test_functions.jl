@@ -458,9 +458,9 @@ function test_single_triangle(prob, u, t)
             push!(_qn, FVM.get_flux(prob, prob.mesh.triangle_props[T], α, β, γ, t, edge_index))
         end
         q1, q2, q3 = _qn
-        dui = -(q1 - q3)
-        duj = -(-q1 + q2)
-        duk = -(-q2 + q3)
+        dui = FVM.has_condition(prob, T[1]) ? 0.0 : -(q1 - q3)
+        duj = FVM.has_condition(prob, T[2]) ? 0.0 : -(-q1 + q2)
+        duk = FVM.has_condition(prob, T[3]) ? 0.0 : -(-q2 + q3)
         FVM.fvm_eqs_single_triangle!(du, u, prob, t, T)
         @test du[T[1]] ≈ dui atol = 1e-9
         @test du[T[2]] ≈ duj atol = 1e-9
@@ -471,12 +471,12 @@ end
 function test_source_contribution(prob, u, t)
     du = rand(length(u))
     for i in each_solid_vertex(prob.mesh.triangulation)
-        _du = du[i] / prob.mesh.cv_volumes[i]
-        if i ∈ keys(prob.conditions.dirichlet_nodes)
-            _du = 0.0
-        end
+        #_du = du[i] / prob.mesh.cv_volumes[i]
+        #if i ∈ keys(prob.conditions.dirichlet_nodes)
+        #    _du = 0.0
+        #end
         FVM.fvm_eqs_single_source_contribution!(du, u, prob, t, i)
-        @test du[i] ≈ _du
+        @test du[i] ≈ 0.0
         @inferred FVM.get_source_contribution(prob, u, t, i)
     end
 end
@@ -556,11 +556,21 @@ function get_dudt_val(prob, u, t, i, is_diff=true)
     return dudt
 end
 
+const __fvm_eqs! = (du, u, p, t) -> begin
+    du1 = zero(du)
+    du2 = zero(du)
+    FVM.fvm_eqs_flux!(du1, u, p, t)
+    FVM.fvm_eqs_source!(du2, u, p, t)
+    du .= du1 .+ du2
+    return du
+end
 function test_dudt_val(prob, u, t, is_diff=true)
     dudt = [get_dudt_val(prob, u, t, i, is_diff) for i in each_point_index(prob.mesh.triangulation)]
-    dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, (prob=prob, parallel=Val(false)), t)
+    p = FVM.get_fvm_parameters(prob, Val(false))
+    dudt_fnc = __fvm_eqs!(zero(dudt), u, p, t)
     @test dudt ≈ dudt_fnc
-    dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, FVM.get_multithreading_vectors(prob), t)
+    p = FVM.get_fvm_parameters(prob, Val(true))
+    dudt_fnc = __fvm_eqs!(zero(dudt), u, p, t)
     @test dudt ≈ dudt_fnc
 end
 

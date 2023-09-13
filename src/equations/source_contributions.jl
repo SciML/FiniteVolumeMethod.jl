@@ -31,11 +31,7 @@ end
 # add on the final source term for a single node for a non-system
 @inline function fvm_eqs_single_source_contribution!(du, u::T, prob::AbstractFVMProblem, t, i) where {T}
     S = get_source_contribution(prob, u, t, i)::eltype(T)
-    if !has_condition(prob, i)
-        du[i] = du[i] / get_volume(prob, i) + S
-    else
-        du[i] = S
-    end
+    du[i] = S
     return nothing
 end
 
@@ -43,11 +39,7 @@ end
 @inline function fvm_eqs_single_source_contribution!(du, u::T, prob::FVMSystem, t, i) where {T}
     for var in 1:_neqs(prob)
         S = get_source_contribution(prob, u, t, i, var)::eltype(T)
-        if !has_condition(prob, i, var)
-            du[var, i] = du[var, i] / get_volume(prob, i) + S
-        else
-            du[var, i] = S
-        end
+        du[var, i] = S
     end
     return nothing
 end

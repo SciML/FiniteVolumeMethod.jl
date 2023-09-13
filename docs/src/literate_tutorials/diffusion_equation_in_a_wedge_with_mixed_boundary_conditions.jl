@@ -53,6 +53,7 @@ refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 
 # This is the mesh we've constructed.
+using CairoMakie
 fig, ax, sc = triplot(tri)
 fig
 
@@ -88,7 +89,6 @@ using OrdinaryDiffEq, LinearSolve
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.01, parallel=Val(false))
 
 #-
-using CairoMakie
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
     ax = Axis(fig[1, i], width=600, height=600,

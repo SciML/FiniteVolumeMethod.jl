@@ -7,19 +7,19 @@
 end
 
 # update du with the fluxes from each centroid-edge edge for a non-system
-@inline function update_du!(du, ::AbstractFVMProblem, i, j, k, summand₁, summand₂, summand₃)
-    du[i] = du[i] + summand₃ - summand₁
-    du[j] = du[j] + summand₁ - summand₂
-    du[k] = du[k] + summand₂ - summand₃
+@inline function update_du!(du, prob::AbstractFVMProblem, i, j, k, summand₁, summand₂, summand₃)
+    has_condition(prob, i) || (du[i] = du[i] + summand₃ - summand₁)
+    has_condition(prob, j) || (du[j] = du[j] + summand₁ - summand₂)
+    has_condition(prob, k) || (du[k] = du[k] + summand₂ - summand₃)
     return nothing
 end
 
 # update du with the fluxes from each centroid-edge edge for a system for all variables
 @inline function update_du!(du, prob::FVMSystem, i, j, k, summand₁, summand₂, summand₃) 
     for var in 1:_neqs(prob)
-        du[var, i] = du[var, i] + summand₃[var] - summand₁[var]
-        du[var, j] = du[var, j] + summand₁[var] - summand₂[var]
-        du[var, k] = du[var, k] + summand₂[var] - summand₃[var]
+        has_condition(prob, i, var) || (du[var, i] = du[var, i] + summand₃[var] - summand₁[var])
+        has_condition(prob, j, var) || (du[var, j] = du[var, j] + summand₁[var] - summand₂[var])
+        has_condition(prob, k, var) || (du[var, k] = du[var, k] + summand₂[var] - summand₃[var])
     end
     return nothing
 end

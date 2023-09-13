@@ -20,6 +20,7 @@ include("equations/main_equations.jl")
 include("equations/shape_functions.jl")
 include("equations/source_contributions.jl")
 include("equations/triangle_contributions.jl")
+include("equations/volume_normalisation.jl")
 include("solve.jl")
 include("utils.jl")
 
