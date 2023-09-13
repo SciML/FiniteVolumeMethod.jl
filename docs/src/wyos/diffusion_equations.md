@@ -378,7 +378,7 @@ fig
 For the corresponding `FVMProblem`, note that the Neumann boundary conditions need to be
 defined in terms of $\vb q = -D(\vb x)\grad u$ rather than $\grad u \vdot \vu n$. So,
 since $\grad u \vdot \vu n = 2$, we have $-D\grad u \vdot \vu n = -2D = -4$, so
-$q \vdot \vu n = -4$. Here is a comparison of the two solutions.
+$\vb q \vdot \vu n = -4$. Here is a comparison of the two solutions.
 
 ````@example diffusion_equations
 using LinearSolve

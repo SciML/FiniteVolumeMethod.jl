@@ -41,10 +41,10 @@ abstract type AbstractFVMTemplate <: AbstractFVMProblem end
 include("diffusion_equation.jl")
 include("linear_reaction_diffusion_equations.jl")
 include("mean_exit_time.jl")
-include("semilinear_equations.jl")
-include("semilinear_systems.jl")
 include("poissons_equation.jl")
 include("laplaces_equation.jl")
+include("semilinear_equations.jl")
+include("semilinear_systems.jl")
 
 export DiffusionEquation
 export LinearReactionDiffusionEquation

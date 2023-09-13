@@ -23,10 +23,10 @@ solve(::FiniteVolumeMethod.AbstractFVMTemplate, args...; kwargs...)
 DiffusionEquation
 MeanExitTimeProblem
 LinearReactionDiffusionEquation
-SemilinearEquation
-SemilinearSystem
 PoissonsEquation
 LaplacesEquation
+SemilinearEquation
+SemilinearSystem
 ```
  
 Now, again, we note that all these problems can already be implemented using the main interface `FVMProblem`. However, the templates we provide are more efficient, and also provide a good starting point for writing your own solver, meaning your own function 

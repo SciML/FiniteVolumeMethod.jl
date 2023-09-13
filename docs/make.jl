@@ -110,10 +110,10 @@ const _PAGES = [
         "Diffusion Equations" => "wyos/diffusion_equations.md",
         "Mean Exit Time Problems" => "wyos/mean_exit_time.md",
         "Linear Reaction-Diffusion Equations" => "wyos/linear_reaction_diffusion_equations.md",
-        "Semilinear Equations" => "wyos/semilinear_equations.md",
-        "Semilinear Systems" => "wyos/semilinear_systems.md",
         "Poisson's Equation" => "wyos/poissons_equation.md",
         "Laplace's Equation" => "wyos/laplaces_equation.md",
+        "Semilinear Equations" => "wyos/semilinear_equations.md",
+        "Semilinear Systems" => "wyos/semilinear_systems.md",
     ],
     "Mathematical and Implementation Details" => "math.md"
 ]
