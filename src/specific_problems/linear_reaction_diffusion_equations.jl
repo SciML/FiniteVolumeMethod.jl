@@ -103,3 +103,12 @@ function LinearReactionDiffusionEquation(mesh::FVMGeometry,
         initial_condition, initial_time, final_time,
         sparse(A), b, Aop, prob)
 end
+
+function linear_source_contributions!(A, mesh, conditions, source_function, source_parameters)
+    for i in each_solid_vertex(mesh.triangulation)
+        if !FVM.has_condition(conditions, i)
+            x, y = get_point(mesh, i)
+            A[i, i] += source_function(x, y, source_parameters)
+        end
+    end
+end

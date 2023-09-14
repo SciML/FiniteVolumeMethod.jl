@@ -260,7 +260,7 @@ Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, 
 @inline has_condition(prob::FVMSystem, node, var) = has_condition(get_equation(prob, var), node)
 @inline has_dirichlet_nodes(prob::FVMSystem) = any(i -> has_dirichlet_nodes(get_equation(prob, i)), 1:_neqs(prob))
 @inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(get_equation(prob, var))
-@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ) = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
+@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ)  = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
 
 function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     N == 0 && error("There must be at least one problem.")

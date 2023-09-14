@@ -285,7 +285,7 @@ struct Conditions{F<:Tuple}
     constrained_edges::Dict{NTuple{2,Int},Int}
     dirichlet_nodes::Dict{Int,Int}
     dudt_nodes::Dict{Int,Int}
-    functions::F 
+    functions::F
     @inline function Conditions(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions::F) where {F}
         return new{F}(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions)
     end
@@ -341,8 +341,11 @@ Evaluate the function that corresponds to the condition at `fidx` at the point `
     return _eval_condition_fnc(x, y, t, u, fidx, conds.functions...)
 end
 @inline function _eval_condition_fnc(x, y, t, u, fidx, f::F, fs...) where {F}
-    fidx == 1 && return f(x, y, t, u)
+    fidx == 1 && return _eval_condition_fnc(x, y, t, u, fidx, f)
     return _eval_condition_fnc(x, y, t, u, fidx - 1, fs...)
+end
+@inline function _eval_condition_fnc(x, y, t, u, fidx, f::F) where {F}
+    return f(x, y, t, u)
 end
 
 """
