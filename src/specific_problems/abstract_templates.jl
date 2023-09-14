@@ -142,22 +142,62 @@ as explained in the docs. Will not update any rows corresponding to
 """
 function boundary_edge_contributions!(A, b, mesh, conditions,
     diffusion_function, diffusion_parameters)
-    for e in keys(get_boundary_edge_map(mesh.triangulation))
+    non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    neumann_boundary_edge_contributions!(b, mesh, conditions, diffusion_function, diffusion_parameters)
+    return nothing
+end
+
+@doc raw"""
+    neumann_boundary_edge_contributions!(b, mesh, conditions, diffusion_function, diffusion_parameters)
+
+Add the contributions from each Neumann boundary edge to the vector `b`, based on the equation
+
+```math 
+\dv{u_i}{t} = \frac{1}{V_i}\sum_{\sigma \in \mathcal E_i} D(\vb x_\sigma)\left[\grad u(\vb x_\sigma) \vdot \vu n\right]L_\sigma + S_i,
+```
+
+as explained in the docs. Will not update any rows corresponding to 
+[`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
+"""
+function neumann_boundary_edge_contributions!(b, mesh, conditions, diffusion_function, diffusion_parameters)
+    for (e, fidx) in get_neumann_edges(conditions)
         i, j = DelaunayTriangulation.edge_indices(e)
-        nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = get_boundary_cv_components(mesh, i, j)
-        ijk = indices(T)
-        s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
+        _, _, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, _, _ = get_boundary_cv_components(mesh, i, j)
         Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
         Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
         i_hascond = has_condition(conditions, i)
         j_hascond = has_condition(conditions, j)
-        if is_neumann_edge(conditions, i, j)
-            fidx = get_neumann_fidx(conditions, i, j)
-            aᵢ = eval_condition_fnc(conditions, fidx, mᵢx, mᵢy, nothing, nothing)
-            aⱼ = eval_condition_fnc(conditions, fidx, mⱼx, mⱼy, nothing, nothing)
-            i_hascond || (b[i] += Dᵢ * aᵢ * ℓ / get_volume(mesh, i))
-            j_hascond || (b[j] += Dⱼ * aⱼ * ℓ / get_volume(mesh, j))
-        else
+        aᵢ = eval_condition_fnc(conditions, fidx, mᵢx, mᵢy, nothing, nothing)
+        aⱼ = eval_condition_fnc(conditions, fidx, mⱼx, mⱼy, nothing, nothing)
+        i_hascond || (b[i] += Dᵢ * aᵢ * ℓ / get_volume(mesh, i))
+        j_hascond || (b[j] += Dⱼ * aⱼ * ℓ / get_volume(mesh, j))
+    end
+    return nothing
+end
+
+@doc raw"""
+    non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+
+Add the contributions from each non-Neumann boundary edge to the matrix `A`, based on the equation
+
+```math
+\dv{u_i}{t} = \frac{1}{V_i}\sum_{\sigma \in \mathcal E_i} D(\vb x_\sigma)\left[\left(s_{k, 11}n_\sigma^x + s_{k, 21}n_\sigma^y\right)u_{k1} + \left(s_{k, 12}n_\sigma^x + s_{k, 22}n_\sigma^y\right)u_{k2} + \left(s_{k, 13}n_\sigma^x + s_{k, 23}n_\sigma^y\right)u_{k3}\right]L_\sigma + S_i, 
+```
+
+as explained in the docs. Will not update any rows corresponding to 
+[`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
+"""
+function non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    for e in keys(get_boundary_edge_map(mesh.triangulation))
+        i, j = DelaunayTriangulation.edge_indices(e)
+        if !is_neumann_edge(conditions, i, j)
+            nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = get_boundary_cv_components(mesh, i, j)
+            ijk = indices(T)
+            s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
+            Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
+            Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
+            i_hascond = has_condition(conditions, i)
+            j_hascond = has_condition(conditions, j)
             aᵢ123 = (Dᵢ * ℓ * (s₁₁ * nx + s₂₁ * ny),
                 Dᵢ * ℓ * (s₁₂ * nx + s₂₂ * ny),
                 Dᵢ * ℓ * (s₁₃ * nx + s₂₃ * ny))
@@ -170,6 +210,7 @@ function boundary_edge_contributions!(A, b, mesh, conditions,
             end
         end
     end
+    return nothing
 end
 
 """

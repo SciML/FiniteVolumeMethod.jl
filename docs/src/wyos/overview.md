@@ -63,9 +63,12 @@ FiniteVolumeMethod.get_dudt_nodes
 FiniteVolumeMethod.has_dudt_nodes
 FiniteVolumeMethod.get_neumann_fidx 
 FiniteVolumeMethod.is_neumann_edge 
+FiniteVolumeMethod.has_neumann_edges
+FiniteVolumeMethod.get_neumann_edges
 FiniteVolumeMethod.get_constrained_fidx 
 FiniteVolumeMethod.is_constrained_edge
 FiniteVolumeMethod.has_constrained_edges
+FiniteVolumeMethod.get_constrained_edges
 FiniteVolumeMethod.eval_condition_fnc
 FiniteVolumeMethod.has_condition 
 FiniteVolumeMethod.get_cv_components 
@@ -77,6 +80,8 @@ FiniteVolumeMethod.triangle_contributions!
 FiniteVolumeMethod.apply_dirichlet_conditions!
 FiniteVolumeMethod.apply_dudt_conditions! 
 FiniteVolumeMethod.boundary_edge_contributions!
+FiniteVolumeMethod.non_neumann_boundary_edge_contributions!
+FiniteVolumeMethod.neumann_boundary_edge_contributions!
 FiniteVolumeMethod.create_rhs_b
 FiniteVolumeMethod.apply_steady_dirichlet_conditions!
 ```

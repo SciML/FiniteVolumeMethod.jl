@@ -332,14 +332,6 @@ Get the index of the function that corresponds to the [`Constrained`](@ref) cond
 
 @inline get_f(conds::Conditions{F}, fidx) where {F} = conds.functions[fidx]
 
-#@inline function eval_condition_fnc(conds::Conditions{F}, fidx, x, y, t, u::U) where {F,U}
-#    f = get_f(conds, fidx)
-#    return _eval_condition_fnc(f, x, y, t, u)
-#end
-#@inline function _eval_condition_fnc(f::F, x, y, t, u::U) where {F,U}
-#    return f(x, y, t, u)
-#end
-
 """
     eval_condition_fnc(conds, fidx, x, y, t, u)
 
@@ -389,6 +381,13 @@ Check if any edge has a [`Constrained`](@ref) condition.
 @inline has_constrained_edges(conds::Conditions) = !isempty(conds.constrained_edges)
 
 """
+    has_neumann_edges(conds)
+
+Check if any edge has a [`Neumann`](@ref) condition.
+"""
+@inline has_neumann_edges(conds::Conditions) = !isempty(conds.neumann_edges)
+
+"""
     has_condition(conds, node)
 
 Check if `node` has any condition.
@@ -423,6 +422,19 @@ Get all nodes that have a [`Dudt`](@ref) condition.
 """
 @inline get_dudt_nodes(conds::Conditions) = conds.dudt_nodes
 
+"""
+    get_neumann_edges(conds)
+
+Get all edges that have a [`Neumann`](@ref) condition.
+"""
+@inline get_neumann_edges(conds::Conditions) = conds.neumann_edges
+
+"""
+    get_constrained_edges(conds)
+
+Get all edges that have a [`Constrained`](@ref) condition.
+"""
+@inline get_constrained_edges(conds::Conditions) = conds.constrained_edges
 
 @inline function prepare_conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions)
     bc_functions = bc.functions

@@ -59,3 +59,59 @@
 # in [the diffusion equation section](diffusion_equations.md). We do need to modify 
 # it slightly so that Neumannn edges are avoided, instead considering them only 
 # in the evaluation of $\vb F$.
+#
+# To start, let's rewrite `FiniteVolumeMethod.boundary_edge_contributions!` to reuse 
+# a smaller function, allowing us to more easily split it into the case of evaluating non-Neumann 
+# edges versus Neumann edges. We have put this into `FiniteVolumeMethod.non_neumann_boundary_edge_contributions!`
+# and `FiniteVolumeMethod.neumann_boundary_edge_contributions!`, which we redefine below for pedagogical purposes.
+using FiniteVolumeMethod, DelaunayTriangulation
+const FVM = FiniteVolumeMethod
+function _boundary_edge_contributions!(A, b, mesh, conditions,
+    diffusion_function, diffusion_parameters)
+    _non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    _neumann_boundary_edge_contributions!(b, mesh, conditions, diffusion_function, diffusion_parameters)
+    return nothing
+end
+function _neumann_boundary_edge_contributions!(b, mesh, conditions, diffusion_function, diffusion_parameters)
+    for (e, fidx) in FVM.get_neumann_edges(conditions)
+        i, j = DelaunayTriangulation.edge_indices(e)
+        _, _, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, _, _ = FVM.get_boundary_cv_components(mesh, i, j)
+        Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
+        Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
+        i_hascond = FVM.has_condition(conditions, i)
+        j_hascond = FVM.has_condition(conditions, j)
+        aᵢ = FVM.eval_condition_fnc(conditions, fidx, mᵢx, mᵢy, nothing, nothing)
+        aⱼ = FVM.eval_condition_fnc(conditions, fidx, mⱼx, mⱼy, nothing, nothing)
+        i_hascond || (b[i] += Dᵢ * aᵢ * ℓ / FVM.get_volume(mesh, i))
+        j_hascond || (b[j] += Dⱼ * aⱼ * ℓ / FVM.get_volume(mesh, j))
+    end
+    return nothing
+end
+function _non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    for e in keys(get_boundary_edge_map(mesh.triangulation))
+        i, j = DelaunayTriangulation.edge_indices(e)
+        if !FVM.is_neumann_edge(conditions, i, j)
+            nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
+            ijk = indices(T)
+            s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
+            Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
+            Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
+            i_hascond = FVM.has_condition(conditions, i)
+            j_hascond = FVM.has_condition(conditions, j)
+            aᵢ123 = (Dᵢ * ℓ * (s₁₁ * nx + s₂₁ * ny),
+                Dᵢ * ℓ * (s₁₂ * nx + s₂₂ * ny),
+                Dᵢ * ℓ * (s₁₃ * nx + s₂₃ * ny))
+            aⱼ123 = (Dⱼ * ℓ * (s₁₁ * nx + s₂₁ * ny),
+                Dⱼ * ℓ * (s₁₂ * nx + s₂₂ * ny),
+                Dⱼ * ℓ * (s₁₃ * nx + s₂₃ * ny))
+            for vert in 1:3
+                i_hascond || (A[i, ijk[vert]] += aᵢ123[vert] / FVM.get_volume(mesh, i))
+                j_hascond || (A[j, ijk[vert]] += aⱼ123[vert] / FVM.get_volume(mesh, i))
+            end
+        end
+    end
+    return nothing
+end
+
+# Of course, in this case, `_neumann_boundary_edge_contributions` is not sufficient - 
+# it needs to depend on `t` and `u`.
