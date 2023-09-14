@@ -172,7 +172,7 @@ end
 # Now we need the function that will evaluate the source term. This function needs to take the form `(du, u, p, t)`,
 # where `du` is the $\vb F$ from above. Here is the definition. 
 function eval_semilinear_source!(du, u, p, t)
-    #fill!(du, zero(eltype(du)))
+    fill!(du, zero(eltype(du)))
     A, mesh, conditions, diffusion_function, diffusion_parameters, source_function, source_parameters = p
     _neumann_boundary_edge_contributions!(du, mesh, conditions, diffusion_function, diffusion_parameters, u, t)
     for i in each_solid_vertex(mesh.triangulation)
@@ -220,9 +220,10 @@ function semilinear_equation(mesh::FVMGeometry,
     A = get_semilinear_matrix(mesh, conditions, diffusion_function, diffusion_parameters)
     A_op = MatrixOperator(A)
     f = SplitFunction(A_op, eval_semilinear_source!)
-    p = (A,mesh, conditions, diffusion_function, diffusion_parameters, source_function, source_parameters)
+    #f = ODEFunction{true}(_semil_f!; jac_prototype=FVM.jacobian_sparsity(mesh.triangulation))
+    p = (A=A,mesh, conditions, diffusion_function, diffusion_parameters, source_function, source_parameters)
     cb = FVM.get_dirichlet_callback(conditions, semilinear_equation_update_dirichlet_nodes!)
-    prob = ODEProblem(_semil_f!, initial_condition, (initial_time, final_time), p, callback=cb)
+    prob = SplitODEProblem(f, initial_condition, (initial_time, final_time), p, callback=cb)
     return prob
 end
 
@@ -257,5 +258,3 @@ prob = semilinear_equation(mesh, BCs;
     final_time=20.0)
 
 #-
-sol = solve(prob, LawsonEuler(krylov=true, m=50), saveat=5.0, dt=0.01)
-

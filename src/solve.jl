@@ -41,12 +41,21 @@ function get_fvm_parameters(prob::Union{FVMProblem,FVMSystem}, parallel::Val{B})
     end
 end
 
-function jacobian_sparsity(prob::FVMProblem)
-    tri = prob.mesh.triangulation
+@doc """
+    jacobian_sparsity(prob)
+
+Returns a prototype for the Jacobian of the given `prob`.
+"""
+jacobian_sparsity
+jacobian_sparsity(prob::FVMProblem) = jacobian_sparsity(prob.mesh.triangulation)
+jacobian_sparsity(prob::FVMSystem{N}) where {N} = jacobian_sparsity(prob.mesh.triangulation, N)
+jacobian_sparsity(prob::SteadyFVMProblem) = jacobian_sparsity(prob.problem)
+
+function jacobian_sparsity(tri)
     I = Int64[]   # row indices 
     J = Int64[]   # col indices 
     V = Float64[] # values (all 1)
-    n = length(prob.initial_condition)
+    n = DelaunayTriangulation.num_solid_vertices(tri)
     sizehint!(I, 6n) # points have, on average, six neighbours in a DelaunayTriangulation
     sizehint!(J, 6n)
     sizehint!(V, 6n)
@@ -81,12 +90,11 @@ end
 # (i, 1), (i, 2), …, (i, N) ↦ (i-1)*N + j for j in 1:N.
 # In the original matrix, a node i being related to a node ℓ
 # means that the ith and ℓ columns are all related to eachother. 
-function jacobian_sparsity(prob::FVMSystem{N}) where {N}
-    tri = prob.mesh.triangulation
+function jacobian_sparsity(tri, N)
     I = Int64[]   # row indices
     J = Int64[]   # col indices
     V = Float64[] # values (all 1)
-    n = DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation_statistics)
+    n = DelaunayTriangulation.num_solid_vertices(tri)
     sizehint!(I, 6n * N) # points have, on average, six neighbours in a DelaunayTriangulation.
     sizehint!(J, 6n * N)
     sizehint!(V, 6n * N)
@@ -117,7 +125,6 @@ function jacobian_sparsity(prob::FVMSystem{N}) where {N}
     end
     return sparse(I, J, V)
 end
-jacobian_sparsity(prob::SteadyFVMProblem) = jacobian_sparsity(prob.problem)
 
 @inline function dirichlet_callback(f::F, has_saveat, has_dir) where {F}
     if has_dir
