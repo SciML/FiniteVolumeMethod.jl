@@ -74,7 +74,7 @@ end
     fltest = get_dudt_val(prob, u, t, i, false)
     @test fl ≈ fltest
     flpar = FVM.fvm_eqs!(zeros(DelaunayTriangulation.num_solid_vertices(tri)), u, (prob=prob, parallel=Val(false)), t)[i]
-    flser = FVM.fvm_eqs!(zeros(DelaunayTriangulation.num_solid_vertices(tri)), u, FVM.get_multithreading_vectors(prob), t)[i]
+    flser = FVM.fvm_eqs!(zeros(DelaunayTriangulation.num_solid_vertices(tri)), u, FVM.get_multithreading_parameters(prob), t)[i]
     @test fl ≈ flpar
     @test fl ≈ flser
 end

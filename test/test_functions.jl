@@ -566,7 +566,7 @@ function test_dudt_val(prob, u, t, is_diff=true)
     dudt = [get_dudt_val(prob, u, t, i, is_diff) for i in each_point_index(prob.mesh.triangulation)]
     dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, (prob=prob, parallel=Val(false)), t)
     @test dudt ≈ dudt_fnc
-    dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, FVM.get_multithreading_vectors(prob), t)
+    dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, FVM.get_multithreading_parameters(prob), t)
     @test dudt ≈ dudt_fnc
 end
 
