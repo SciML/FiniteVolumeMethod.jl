@@ -190,12 +190,14 @@ See also [`FVMProblem`](@ref) and [`SteadyFVMProblem`](@ref).
     [`SteadyFVMProblem`](@ref) to the system rather than first applying it to
     each individual [`FVMProblem`](@ref) in the system.
 """
-struct FVMSystem{N,FG,P,IC,FT} <: AbstractFVMProblem
+struct FVMSystem{N,FG,P,IC,FT,C} <: AbstractFVMProblem
     mesh::FG
     problems::P
     initial_condition::IC
     initial_time::FT
     final_time::FT
+    conditions::C
+    num_fncs::NTuple{N,Int}
 end
 function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::FT, final_time::FT) where {FG<:FVMGeometry,P,IC,FT}
     @assert length(problems) > 0 "There must be at least one problem."
