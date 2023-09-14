@@ -190,24 +190,32 @@ See also [`FVMProblem`](@ref) and [`SteadyFVMProblem`](@ref).
     [`SteadyFVMProblem`](@ref) to the system rather than first applying it to
     each individual [`FVMProblem`](@ref) in the system.
 """
-struct FVMSystem{N,FG,P,IC,FT,C} <: AbstractFVMProblem
+struct FVMSystem{N,FG,P,IC,FT,F} <: AbstractFVMProblem
     mesh::FG
     problems::P
     initial_condition::IC
     initial_time::FT
     final_time::FT
-    conditions::C
-    num_fncs::NTuple{N,Int}
+    conditions::NTuple{N,SimpleConditions}
+    cnum_fncs::NTuple{N,Int} # cumulative numbers. e.g. if num_fncs is the number of functions for each variable, then cnum_fncs[i] = sum(num_fncs[1:i-1]).
+    functions::F
 end
-function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::FT, final_time::FT) where {FG<:FVMGeometry,P,IC,FT}
+function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::FT, final_time::FT, conditions, num_fncs, functions::F) where {FG<:FVMGeometry,P,IC,FT,F}
     @assert length(problems) > 0 "There must be at least one problem."
     @assert all(p -> p.mesh === mesh, problems) "All problems must have the same mesh."
     @assert all(p -> p.initial_time === initial_time, problems) "All problems must have the same initial time."
     @assert all(p -> p.final_time === final_time, problems) "All problems must have the same final time."
     @assert size(initial_condition) == (length(problems), length(problems[1].initial_condition)) "The initial condition must be a matrix with the same number of rows as the number of problems."
-    sys = FVMSystem{length(problems),FG,P,IC,FT}(mesh, problems, initial_condition, initial_time, final_time)
+    sys = FVMSystem{length(problems),FG,P,IC,FT,F}(mesh, problems, initial_condition, initial_time, final_time, conditions, num_fncs, functions)
     _check_fvmsystem_flux_function(sys)
     return sys
+end
+
+struct SimpleConditions # in 2.0, this needs to be part of Conditions
+    neumann_edges::Dict{NTuple{2,Int},Int}
+    constrained_edges::Dict{NTuple{2,Int},Int}
+    dirichlet_nodes::Dict{Int,Int}
+    dudt_nodes::Dict{Int,Int}
 end
 
 const FLUX_ERROR = """
@@ -249,6 +257,14 @@ end
 
 Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, "FVMSystem with $N equations and time span ($(prob.initial_time), $(prob.final_time))")
 
+@inline map_fidx(prob::FVMSystem, fidx, var) = fidx + prob.cnum_fncs[var]
+
+@inline get_dudt_fix(prob::FVMSystem, i, var) = map_fidx(prob, prob.conditions[var].dudt_nodes[i], var)
+@inline get_neumann_fix(prob::FVMSystem, i, j, var) = map_fidx(prob, prob.conditions[var].neumann_edges[(i, j)], var)
+@inline get_dirichlet_fix(prob::FVMSystem, i, var) = map_fidx(prob, prob.conditions[var].dirichlet_nodes[i], var)
+@inline get_constrained_fix(prob::FVMSystem, i, j, var) = map_fidx(prob, prob.conditions[var].constrained_edges[(i, j)], var)
+ 
+
 @inline get_dudt_fidx(prob::FVMSystem, i, var) = get_dudt_fidx(get_equation(prob, var), i)
 @inline get_neumann_fidx(prob::FVMSystem, i, j, var) = get_neumann_fidx(get_equation(prob, var), i, j)
 @inline get_dirichlet_fidx(prob::FVMSystem, i, var) = get_dirichlet_fidx(get_equation(prob, var), i)
@@ -262,7 +278,7 @@ Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, 
 @inline has_condition(prob::FVMSystem, node, var) = has_condition(get_equation(prob, var), node)
 @inline has_dirichlet_nodes(prob::FVMSystem) = any(i -> has_dirichlet_nodes(get_equation(prob, i)), 1:_neqs(prob))
 @inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(get_equation(prob, var))
-@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ)  = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
+@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ) = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
 
 function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     N == 0 && error("There must be at least one problem.")
@@ -274,39 +290,29 @@ function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     for (i, prob) in enumerate(probs)
         initial_condition[i, :] .= prob.initial_condition
     end
-    conditions, num_fncs = merge_problem_conditions(probs)
-    return FVMSystem(mesh, probs, initial_condition, initial_time, final_time, conditions, num_fncs)
+    conditions, num_fncs, fncs = merge_problem_conditions(probs)
+    return FVMSystem(mesh, probs, initial_condition, initial_time, final_time, conditions, num_fncs, fncs)
 end
 
 function merge_problem_conditions(probs::Vararg{FVMProblem,N}) where {N}
     num_fncs = ntuple(N) do i
         length(probs[i].conditions.functions)
     end
-    fncs = ntuple(N) do i 
-        probs[i].conditions.functions 
+    num_fncs_tail = Base.front(num_fncs)
+    cnum_fncs = (0, cumsum(num_fncs_tail)...) # 0 sso that we can do cnum_fncs[i] instead of cnum_fncs[i-1], which makes indexing annoying
+    fncs = ntuple(N) do i
+        probs[i].conditions.functions
     end |> flatten_tuples
-    neumann_edges = Dict{NTuple{2,Int},Int}()
-    constrained_edges = Dict{NTuple{2,Int},Int}()
-    dirichlet_nodes = Dict{Int,Int}()
-    dudt_nodes = Dict{Int,Int}()
-    for (var, prob) in enumerate(probs) 
-        conds = prob.conditions 
-        for ((i, j), fidx) in neumann_edges 
-            neumann_edges
-        end
-        merge!(neumann_edges, conds.neumann_edges)
-        merge!(constrained_edges, conds.constrained_edges)
-        merge!(dirichlet_nodes, conds.dirichlet_nodes)
-        merge!(dudt_nodes, conds.dudt_nodes)
-    end 
-    conditions = Conditions(
-        neumann_edges,
-        constrained_edges,
-        dirichlet_nodes,
-        dudt_nodes,
-        fncs
-    )
-    return conditions, num_fncs
+    conditions = ntuple(N) do i
+        prob = probs[i]
+        conds = prob.conditions
+        neumann_edges = get_neumann_edges(conds)
+        constrained_edges = get_constrained_edges(conds)
+        dirichlet_nodes = get_dirichlet_nodes(conds)
+        dudt_nodes = get_dudt_nodes(conds)
+        return SimpleConditions(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes)
+    end
+    return conditions, cnum_fncs, fncs
 end
 
 function flatten_tuples(f::NTuple{N,Any}) where {N}
