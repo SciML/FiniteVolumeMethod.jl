@@ -4,7 +4,7 @@ using Dates
 using Aqua
 
 ct() = Dates.format(now(), "HH:MM:SS")
-function safe_include(filename, name=filename) # Workaround for not being able to interpolate into SafeTestset test names
+function safe_include(filename; name=filename) # Workaround for not being able to interpolate into SafeTestset test names
     mod = @eval module $(gensym()) end
     @info "[$(ct())] Testing $name"
     @testset "Example: $name" begin
