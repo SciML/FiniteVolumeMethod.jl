@@ -132,11 +132,20 @@ sol = solve(prob, KLUFactorization())
 @test sol.u ≈ fvm_sol.u rtol = 1e-4 #src
 
 # Here is a benchmark comparison of the `PoissonsEquation` approach against the `FVMProblem` approach.
-using BenchmarkTools
-#@benchmark solve($prob, $KLUFactorization())
-
-#-
-#@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+# ```@example
+# #= #hide
+# using BenchmarkTools
+# @benchmark solve($prob, $KLUFactorization())
+# =# #hide
+# Base.Text("BenchmarkTools.Trial: 290 samples with 1 evaluation.\nRange (min … max):  16.017 ms … 74.684 ms  ┊ GC (min … max): 0.00% … 15.69%\nTime  (median):     17.021 ms              ┊ GC (median):    0.00%\n Time  (mean ± σ):   17.231 ms ±  3.421 ms  ┊ GC (mean ± σ):  0.23% ±  0.92%\n\n           ▁  ▁▁▄▂▁▂  ▁▃▂ █▂ ▅▁ ▂ ▁▄▃\n ▄▆▁▃▄▆▄▅▇▄█▆▆███████████▇██▄██▇█████▅▅▅▅▅▅█▅▃▄▁▄▃▃▃▁▄▁▁▁▄▁▄ ▄\n   16 ms           Histogram: frequency by time        18.4 ms <\n\nMemory estimate: 15.21 MiB, allocs estimate: 56.") #raw
+# ```
+#
+# ```@example
+# #= #hide
+# @benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+# =# #hide
+# Base.Text("BenchmarkTools.Trial: 23 samples with 1 evaluation.\nRange (min … max):  197.733 ms … 297.593 ms  ┊ GC (min … max): 0.00% … 24.94%\nTime  (median):     213.042 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   217.573 ms ±  19.728 ms  ┊ GC (mean ± σ):  1.48% ±  5.20%\n\n      █   ▃       ▁\n ▄▁▁▁▇█▁▁▄█▇▁▄▁▁▁▄█▁▁▁▁▁▁▄▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▄ ▁\n   198 ms           Histogram: frequency by time          298 ms <\n\nMemory estimate: 93.63 MiB, allocs estimate: 185755.") #hide
+# ```
 
 # Let's now also solve a generalised Poisson equation. Based 
 # on Section 7 of [this paper](https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf)
@@ -282,13 +291,15 @@ arrow_positions = [Point2f(x, y) for (x, y) in zip(x_vec, y_vec)]
 arrow_directions = [Point2f(e...) for e in E_itp]
 arrows!(ax, arrow_positions, arrow_directions,
     lengthscale=0.3, normalize=true, arrowcolor=E_intensity, linecolor=E_intensity)
-tightlimits!(ax)
+    xlims!(ax,0,10)
+    ylims!(ax,0,10)
 ax = Axis(fig[1, 2], width=600, height=600, titlealign=:left,
     xlabel="x", ylabel="y", title="Electric Field")
 tricontourf!(ax, tri, norm.(E), levels=15, colormap=:ocean)
 arrows!(ax, arrow_positions, arrow_directions,
     lengthscale=0.3, normalize=true, arrowcolor=E_intensity, linecolor=E_intensity)
-tightlimits!(ax)
+xlims!(ax,0,10)
+ylims!(ax,0,10)
 resize_to_layout!(fig)
 fig
 @test_reference joinpath(@__DIR__, "../figures", "poissons_equation_template_2.png") fig by = psnr_equality(20) #src
@@ -306,11 +317,19 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     initial_condition=zeros(num_points(tri)),
     final_time=Inf))
 
-#-
-#@benchmark solve($prob, $KLUFactorization())
-
-#-
-#@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+# ```@example
+# #= #hide
+# @benchmark solve($prob, $KLUFactorization())
+# =# #hide
+# Base.Text("BenchmarkTools.Trial: 463 samples with 1 evaluation.\nRange (min … max):   9.688 ms … 73.832 ms  ┊ GC (min … max): 0.00% … 16.81%\nTime  (median):     10.645 ms              ┊ GC (median):    0.00%\n Time  (mean ± σ):   10.801 ms ±  2.964 ms  ┊ GC (mean ± σ):  0.25% ±  0.78%\n\n              ▁▁▅▂▁▅▃▂▇▅▄▂▁█▁▄▇▃▅▁ ▃▄▂  ▁\n ▃▁▃▃▃▄▅▄▁▃█▅▇████████████████████▇██████▅▅█▇▅▄▅▁▅▅▃▃▁▁▃▃▃▁▃ ▅\n   9.69 ms         Histogram: frequency by time        11.8 ms <\n\nMemory estimate: 10.83 MiB, allocs estimate: 56.") #hide
+# ```
+#
+# ```@example
+# #= #hide
+# #benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+# =# #hide
+# Base.Text("BenchmarkTools.Trial: 14 samples with 1 evaluation.\nRange (min … max):  352.321 ms … 379.143 ms  ┊ GC (min … max): 0.00% … 0.00%\nTime  (median):     360.235 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   363.030 ms ±   7.517 ms  ┊ GC (mean ± σ):  0.00% ± 0.00%\n\n ▁  ▁         ▁█  █▁        ▁ ▁  ▁         ▁    ▁            ▁\n █▁▁█▁▁▁▁▁▁▁▁▁██▁▁██▁▁▁▁▁▁▁▁█▁█▁▁█▁▁▁▁▁▁▁▁▁█▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁█ ▁\n 352 ms           Histogram: frequency by time          379 ms <\n\nMemory estimate: 93.24 MiB, allocs estimate: 200339.") #hide
+# ```
 
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()))) #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-4 #src

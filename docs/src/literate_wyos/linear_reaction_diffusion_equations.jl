@@ -65,7 +65,7 @@ end
 # ```math 
 # \pdv{T}{t} = \div\left[10^{-3}x^2y\grad T\right] + (x-1)(y-1)T, \quad \vb x \in [0,1]^2,
 # ```
-# with $\grad T \vdot\vu n = 1$.
+# with $\grad T \vdot\vu n = 1$ on the boundary.
 using DelaunayTriangulation
 tri = triangulate_rectangle(0, 1, 0, 1, 150, 150, single_boundary=true)
 mesh = FVMGeometry(tri)
@@ -80,7 +80,8 @@ prob = linear_reaction_diffusion_equation(mesh, BCs;
     source_function, initial_condition, final_time)
 
 #-
-sol = solve(prob, Tsit5(); saveat=2)
+using Sundials
+sol = solve(prob, CVODE_BDF(linear_solver=:GMRES); saveat=2)
 
 #-
 using CairoMakie
@@ -114,8 +115,7 @@ fvm_prob = FVMProblem(
     final_time=final_time,
     initial_condition=initial_condition
 )
-using LinearSolve
-fvm_sol = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()), saveat=2.0)
+fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES), saveat=2.0)
 
 for j in eachindex(fvm_sol) #src
     ax = Axis(fig[2, j], width=600, height=600, #src
@@ -133,14 +133,23 @@ using ReferenceTests #src
 prob = LinearReactionDiffusionEquation(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function,  initial_condition, final_time)
-sol = solve(prob, Tsit5(); saveat=2)
+sol = solve(prob, CVODE_BDF(linear_solver=:GMRES); saveat=2)
 
 using Test #src
 @test sol[begin:end-1, 2:end] ≈ fvm_sol[:, 2:end] rtol=1e-1 #src
 
 # Here is a benchmark comparison of `LinearReactionDiffusionEquation` versus `FVMProblem`.
-using BenchmarkTools 
-#@benchmark solve($prob, $Tsit5(); saveat=$2)
-
-#-
-#@benchmark solve($fvm_prob, $TRBDF2(linsolve=$KLUFactorization()); saveat=$2)
+# ```@example
+# #= #hide
+# using BenchmarkTools 
+# @benchmark solve($prob, $CVODE_BDF(linear_solver=:GMRES); saveat=$2)
+# =# #hide
+# Base.Text("BenchmarkTools.Trial: 101 samples with 1 evaluation.\nRange (min … max):  47.967 ms …  52.556 ms  ┊ GC (min … max): 0.00% … 0.00%\nTime  (median):     49.818 ms               ┊ GC (median):    0.00%\n Time  (mean ± σ):   49.799 ms ± 745.705 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%\n\n             ▁▁▁  ▃ ▁▁▃▄ ▆█▄     ▃\n ▄▁▁▄▁▄▁▁▁▄▆▁███▆▁█▄████▇███▇▇▇▄▇█▄▁▄▆▁▇▆▆▁▁▁▁▁▁▄▁▁▁▁▁▁▁▁▁▁▁▄ ▄\n   48 ms           Histogram: frequency by time         52.4 ms <\n\nMemory estimate: 1.58 MiB, allocs estimate: 1087.") #hide
+# ```
+#
+# ```@example
+# #= #hide
+# @benchmark solve($fvm_prob, $CVODE_BDF(linear_solver=:GMRES); saveat=$2)
+# =# #hide
+# Base.Text("BenchmarkTools.Trial: 29 samples with 1 evaluation.\nRange (min … max):  164.562 ms … 212.336 ms  ┊ GC (min … max): 0.00% … 16.83%\nTime  (median):     171.186 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   174.648 ms ±  10.180 ms  ┊ GC (mean ± σ):  1.74% ±  3.89%\n\n ▄   ▁ ▄▁█▁\n █▁▁▆█▆████▆▆▆▆▁▁▁▁▁▁▁▆▆▆▁▁▁▆▆▁▁▁▁▁▁▁▁▆▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▆ ▁\n   165 ms           Histogram: frequency by time          212 ms <\n\nMemory estimate: 90.84 MiB, allocs estimate: 83264.") #hide
+# ```
