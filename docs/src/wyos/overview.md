@@ -22,8 +22,6 @@ for specific types of problems, namely:
 3. `LinearReactionDiffusionEquation`s: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
 4. `PoissonsEquation`: $\div[D(\vb x)\grad u]  f(\vb x)$.
 5. `LaplacesEquation`: $\div[D(\vb x)\grad u] = 0$.
-6. `SemilinearEquation`s: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
-7. `SemilinearSystem`s: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
 
 The docstrings below define the templates for these problems.
 
@@ -35,8 +33,6 @@ MeanExitTimeProblem
 LinearReactionDiffusionEquation
 PoissonsEquation
 LaplacesEquation
-SemilinearEquation
-SemilinearSystem
 ```
  
 Now, again, we note that all these problems can already be implemented using the main interface `FVMProblem`. However, the templates we provide are more efficient, and also provide a good starting point for writing your own solver, meaning your own function 

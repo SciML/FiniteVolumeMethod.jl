@@ -19,14 +19,12 @@ To see the full list of problems, do
 julia> using FiniteVolumeMethod
 
 julia> subtypes(FiniteVolumeMethod.AbstractFVMTemplate)
-7-element Vector{Any}:
+5-element Vector{Any}:
  DiffusionEquation
  LaplacesEquation
  LinearReactionDiffusionEquation
  MeanExitTimeProblem
  PoissonsEquation
- SemilinearEquation
- SemilinearSystem
 ```
 
 The constructor for each problem is defined in its docstring. Note that all the problems above are exported.
@@ -43,14 +41,10 @@ include("linear_reaction_diffusion_equations.jl")
 include("mean_exit_time.jl")
 include("poissons_equation.jl")
 include("laplaces_equation.jl")
-include("semilinear_equations.jl")
-include("semilinear_systems.jl")
 
 export DiffusionEquation
 export LinearReactionDiffusionEquation
 export MeanExitTimeProblem
-export SemilinearEquation
-export SemilinearSystem
 export PoissonsEquation
 export LaplacesEquation
 
