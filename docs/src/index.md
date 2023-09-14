@@ -25,7 +25,5 @@ The [tutorials](tutorials/overview.md) in the sidebar demonstrate the many possi
 3. `LinearReactionDiffusionEquation`s: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
 4. `PoissonsEquation`: $\div[D(\vb x)\grad u]  f(\vb x)$.
 5. `LaplacesEquation`: $\div[D(\vb x)\grad u] = 0$.
-6. `SemilinearEquation`s: $\partial_t u = \div[D(\vb x)\grad u] + f(\vb x, t, u)$.
-7. `SemilinearSystem`s: $\partial_t\vb u = \div[\vb D(\vb x)\grad \vb u] + \vb F(\vb x, t, \vb u)$.
 
 See the [Solvers for Specific Problems, and Writing Your Own](wyos/overview.md) section for more information on these templates.
