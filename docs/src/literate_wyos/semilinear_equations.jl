@@ -56,4 +56,6 @@
 # For the first part of the implementation, we need 
 # the function that computes $\vb A$. We already have the function 
 # that does this for us - it's what we used for building `DiffusionEquation`
-# in [the diffusion equation section](diffusion_equations.md).
+# in [the diffusion equation section](diffusion_equations.md). We do need to modify 
+# it slightly so that Neumannn edges are avoided, instead considering them only 
+# in the evaluation of $\vb F$.

@@ -102,9 +102,7 @@ using Test #src
 # when `FVMProblem`s assume that we are solving $0 = \div[D(\vb x)\grad u] + f(\vb x)$.
 initial_condition = zeros(num_points(tri))
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
-    diffusion_function=let D = dielectric_function
-        (x, y, t, u, p) -> D(x, y, p)
-    end,
+    diffusion_function= (x, y, t, u, p) -> 1.0,
     source_function=let S = source_function
         (x, y, t, u, p) -> -S(x, y, p)
     end,
@@ -126,9 +124,7 @@ fig #src
 # ## Using the Provided Template
 # Let's now use the built-in `PoissonsEquation` which implements the above template 
 # inside FiniteVolumeMethod.jl. The above problem can be constructed as follows:
-prob = PoissonsEquation(mesh, BCs;
-    diffusion_function=diffusion_function,
-    source_function=source_function)
+prob = PoissonsEquation(mesh, BCs; source_function=source_function)
 
 #-
 sol = solve(prob, KLUFactorization())
