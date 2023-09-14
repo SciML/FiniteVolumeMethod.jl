@@ -13,7 +13,6 @@ function safe_include(filename; name=filename) # Workaround for not being able t
 end
 
 @testset verbose = true "FiniteVolumeMethod.jl" begin
-    #=
     @testset "Geometry" begin
         safe_include("geometry.jl")
     end
@@ -70,7 +69,7 @@ end
         safe_include(joinpath(dir, file_names[12]); name=file_names[12]) # reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk
         safe_include(joinpath(dir, file_names[13]); name=file_names[13]) # solving_mazes_with_laplaces_equation
     end
-    =#
+
     @testset verbose = true "Custom Templates" begin
         dir = joinpath(dirname(@__DIR__), "docs", "src", "literate_wyos")
         files = readdir(dir)
