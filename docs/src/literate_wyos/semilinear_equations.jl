@@ -257,9 +257,5 @@ prob = semilinear_equation(mesh, BCs;
     final_time=20.0)
 
 #-
-sol = solve(prob, LawsonEuler(krylov=true, m=50), saveat=5.0, dt=0.01)
+#sol = solve(prob, LawsonEuler(krylov=true, m=50), saveat=5.0, dt=0.01)
 
-using CairoMakie 
-x = LinRange(0,100,120)
-y = LinRange(0,100,120)
-heatmap(x, y, reshape(sol.u[],121,121), colorrange=(0,2))
