@@ -9,6 +9,8 @@ more detail will be offered in the earlier examples. At the end of each tutorial
 
 We list all the examples below, but the tutorials can be accessed in their respective sections of the sidebar.
 
+Note that this tutorial covers problems of the form $\partial u/\partial_t + \div\vb q = S$, and converting problems into this form. For an explanation of how to use the templates we provide for specific problems, e.g. the diffusion equation, see the [Solvers for Specific Problems, and Writing Your Own](../wyos/overview.md) section.
+
 # Diffusion Equation on a Square Plate
 [This tutorial](diffusion_equation_on_a_square_plate.md) considers a diffusion equation problem on a square plate:
 

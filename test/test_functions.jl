@@ -98,7 +98,7 @@ end
 function example_problem(idx=1;
     tri=example_tri_rect(),
     mesh=FVMGeometry(tri),
-    initial_condition=rand(num_points(tri)))
+    initial_condition=rand(DelaunayTriangulation.num_solid_vertices(tri)))
     f1 = (x, y, t, u, p) -> x * y + u - p
     f2 = (x, y, t, u, p) -> u + p - t
     f3 = (x, y, t, u, p) -> x
@@ -186,6 +186,7 @@ function test_bc_conditions!(tri, conds, t,
             x, y, tt, u = rand(4)
             @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) ≈ conds.functions[-w](x, y, tt, u)
             @inferred conds.functions[-w](x, y, tt, u)
+            @inferred FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) 
         elseif bc_type == Dudt
             @test conds.dudt_nodes[u] == -w
             @test conds.dudt_nodes[v] == -w
@@ -199,6 +200,7 @@ function test_bc_conditions!(tri, conds, t,
             x, y, tt, u = rand(4)
             @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) ≈ conds.functions[-w](x, y, tt, u)
             @inferred conds.functions[-w](x, y, tt, u)
+            @inferred FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u)
         elseif bc_type == Neumann
             @test conds.neumann_edges[(u, v)] == -w
             push!(neumann_edges, get_point(tri, u, v)...)
@@ -208,6 +210,7 @@ function test_bc_conditions!(tri, conds, t,
             x, y, tt, u = rand(4)
             @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) ≈ conds.functions[-w](x, y, tt, u)
             @inferred conds.functions[-w](x, y, tt, u)
+            @inferred FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u)
         else
             @test conds.constrained_edges[(u, v)] == -w
             push!(constrained_edges, get_point(tri, u, v)...)
@@ -215,8 +218,9 @@ function test_bc_conditions!(tri, conds, t,
             @test FiniteVolumeMethod.is_constrained_edge(conds, u, v)
             @test FiniteVolumeMethod.get_constrained_fidx(conds, u, v) == -w
             x, y, tt, u = rand(4)
-            @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, t, u) ≈ conds.functions[-w](x, y, tt, u)
+            @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) ≈ conds.functions[-w](x, y, tt, u)
             @inferred conds.functions[-w](x, y, tt, u)
+            @inferred FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u)
         end
     end
     return nothing
@@ -240,6 +244,7 @@ function test_bc_ic_conditions!(tri, conds, t,
             x, y, t, u = rand(4)
             @test FiniteVolumeMethod.eval_condition_fnc(conds, idx, x, y, t, u) ≈ conds.functions[idx](x, y, t, u)
             @inferred conds.functions[idx](x, y, t, u)
+            @inferred FiniteVolumeMethod.eval_condition_fnc(conds, idx, x, y, t, u)
         end
     end
     for (i, idx) in ics.dudt_nodes
@@ -252,6 +257,7 @@ function test_bc_ic_conditions!(tri, conds, t,
             x, y, t, u = rand(4)
             @test FiniteVolumeMethod.eval_condition_fnc(conds, idx, x, y, t, u) ≈ conds.functions[idx](x, y, t, u)
             @inferred conds.functions[idx](x, y, t, u)
+            @inferred FiniteVolumeMethod.eval_condition_fnc(conds, idx, x, y, t, u)
         end
     end
 end
@@ -644,7 +650,7 @@ function test_compute_flux(_prob, steady, system, steady_system)
 end
 
 function test_jacobian_sparsity(prob::FVMProblem)
-    A = zeros(num_points(prob.mesh.triangulation), num_points(prob.mesh.triangulation))
+    A = zeros(DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation), DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation))
     for i in each_solid_vertex(prob.mesh.triangulation)
         A[i, i] = 1.0
         for j in get_neighbours(tri, i)
@@ -657,7 +663,7 @@ end
 
 function test_jacobian_sparsity(prob::FVMSystem{N}) where {N}
     tri = prob.mesh.triangulation
-    n = num_points(tri)
+    n = DelaunayTriangulation.num_solid_vertices(tri)
     A = zeros(n * N, n * N)
     idx_map = Vector{Vector{Int}}(undef, n)
     idx_mat = zeros(N, n)

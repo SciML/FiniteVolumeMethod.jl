@@ -10,7 +10,7 @@
         function_index = get_dudt_fidx(prob, i)
         S = eval_condition_fnc(prob, function_index, x, y, t, u[i]) * one(eltype(T))
     end
-    return S::eltype(T)
+    return S
 end
 
 # get an individual source term for a system for a single variable
@@ -30,7 +30,7 @@ end
 
 # add on the final source term for a single node for a non-system
 @inline function fvm_eqs_single_source_contribution!(du, u::T, prob::AbstractFVMProblem, t, i) where {T}
-    S = get_source_contribution(prob, u, t, i)::eltype(T)
+    S = get_source_contribution(prob, u, t, i)
     if !has_condition(prob, i)
         du[i] = du[i] / get_volume(prob, i) + S
     else
@@ -42,7 +42,7 @@ end
 # add on the final source term for a single node for a system for all variables
 @inline function fvm_eqs_single_source_contribution!(du, u::T, prob::FVMSystem, t, i) where {T}
     for var in 1:_neqs(prob)
-        S = get_source_contribution(prob, u, t, i, var)::eltype(T)
+        S = get_source_contribution(prob, u, t, i, var)
         if !has_condition(prob, i, var)
             du[var, i] = du[var, i] / get_volume(prob, i) + S
         else

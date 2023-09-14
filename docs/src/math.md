@@ -253,7 +253,7 @@ and thus we obtain
 where $u_{ki} = u(\vb x_{ki}, t)$ and $s_{k,ij}$ are the elements of $\vb S_k$. With \eqref{eq:shape} and \eqref{eq:shapecoeffvals}, we can approximate $\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t))$ and thus obtain the approximation
 ```math
 \begin{equation}\label{eq:interiorapproximation}
-\dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\vb q\left(\vb x_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_k\right)\vdot \vu n_\sigma\right]L_\sigma = S_i,
+\dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\vb q\left(\vb x_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_{k(\sigma)}\right)\vdot \vu n_\sigma\right]L_\sigma = S_i,
 \end{equation}
 ```
 where $k(\sigma)$ is the index of the triangle that contains $\vb x_\sigma$. This linear shape function also allows us to compute gradients like $\grad u(\vb x_\sigma, t)$, since $\grad u(\vb x_\sigma, t) = (\alpha_{k(\sigma)}, \beta_{k(\sigma)})^{\mkern-1.5mu\mathsf{T}}$.
@@ -283,7 +283,7 @@ For a time-dependent Dirichlet BC of the form \eqref{eq:dudtdirichlet}, the impl
 Neumann boundary conditions \eqref{eq:neumann} are the most complex out of the three. Let us return to our integral formulation \eqref{eq:intform}. Let $\mathcal E_i^n$ be the set of edges in $\mathcal E_i$ that have a Neumann BC associated with them, and $\mathcal E_i^c = \mathcal E_i \setminus \mathcal E_i^n$. Then, also using \eqref{eq:interiorapproximation}, in the case of \eqref{eq:neumann} we can write
 ```math
 \begin{equation}\label{eq:neumanndecomp}
-\dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in \mathcal E_i^c} \left[\vb q(\vb x_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_k) \vdot \vu n_\sigma\right]L_\sigma + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i^n} \int_{\sigma} a_{\sigma}(\vb x, t, u)\dd{s} = S_i,
+\dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in \mathcal E_i^c} \left[\vb q(\vb x_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_{k(\sigma)}) \vdot \vu n_\sigma\right]L_\sigma + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i^n} \int_{\sigma} a_{\sigma}(\vb x, t, u)\dd{s} = S_i,
 \end{equation}
 ```
 where $a_\sigma$ is the BC function associated with $\sigma$. This integral is then approximated using a midpoint rule as done previously, giving
@@ -292,7 +292,7 @@ where $a_\sigma$ is the BC function associated with $\sigma$. This integral is t
 \dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in \mathcal E_i^c} \left[\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t)) \vdot \vu n_\sigma\right]L_\sigma + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i^n} \left[a_{\sigma}(\vb x_\sigma, t, u(\vb x_\sigma, t))\right]L_\sigma = S_i,
 \end{equation}
 ```
-where $u(\vb x_\sigma, t) = \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_k$.
+where $u(\vb x_\sigma, t) = \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_{k(\sigma)}$.
 
 # Internal Conditions
 

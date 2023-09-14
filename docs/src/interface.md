@@ -83,6 +83,12 @@ Additionally, `FVMProblem` merges the provided boundary conditions and internal 
 Conditions
 ```
 
+Note that the functions in `Conditions` get wrapped into a `ParametrisedFunction` type, which is public API.
+
+```@docs
+ParametrisedFunction
+```
+
 # `SteadyFVMProblem`: Making the problem a steady-state problem
 
 To make an `FVMProblem` a steady-state problem, meaning that you are solving

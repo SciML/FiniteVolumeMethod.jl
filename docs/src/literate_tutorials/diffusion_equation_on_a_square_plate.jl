@@ -56,7 +56,6 @@ using DifferentialEquations
 sol = solve(prob, saveat=0.05)
 
 # To visualise the solution, we can use `tricontourf!` from Makie.jl. 
-using CairoMakie
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
     ax = Axis(fig[1, i], width=600, height=600,

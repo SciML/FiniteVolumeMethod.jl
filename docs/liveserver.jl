@@ -10,10 +10,12 @@ withenv("LIVESERVER_ACTIVE" => "true") do
         include_dirs=[joinpath(repo_root, "src")],
         skip_dirs=[
             joinpath(repo_root, "docs/src/tutorials"),
-            joinpath(repo_root, "docs/src/figures")
+            joinpath(repo_root, "docs/src/figures"),
+            joinpath(repo_root, "docs/src/wyos"),
         ],
-        include_files = [
-            joinpath(repo_root, "docs/src/tutorials/overview.md")
+        include_files=[
+            joinpath(repo_root, "docs/src/tutorials/overview.md"),
+            joinpath(repo_root, "docs/src/wyos/overview.md"),
         ]
     )
 end

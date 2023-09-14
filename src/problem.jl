@@ -11,9 +11,9 @@ abstract type AbstractFVMProblem end
 @inline is_constrained_edge(prob::AbstractFVMProblem, i, j) = is_constrained_edge(prob.conditions, i, j)
 @inline has_condition(prob::AbstractFVMProblem, node) = has_condition(prob.conditions, node)
 @inline has_dirichlet_nodes(prob::AbstractFVMProblem) = has_dirichlet_nodes(prob.conditions)
-@inline get_triangle_props(prob::AbstractFVMProblem, i, j, k) = prob.mesh.triangle_props[(i, j, k)]
-@inline DelaunayTriangulation.get_point(prob::AbstractFVMProblem, i) = get_point(prob.mesh.triangulation, i)
-@inline get_volume(prob::AbstractFVMProblem, i) = prob.mesh.cv_volumes[i]
+@inline get_triangle_props(prob::AbstractFVMProblem, i, j, k) = get_triangle_props(prob.mesh, i, j, k)
+@inline DelaunayTriangulation.get_point(prob::AbstractFVMProblem, i) = get_point(prob.mesh, i)
+@inline get_volume(prob::AbstractFVMProblem, i) = get_volume(prob.mesh, i)
 @inline get_dirichlet_nodes(prob::AbstractFVMProblem) = get_dirichlet_nodes(prob.conditions)
 
 """
@@ -86,7 +86,7 @@ struct FVMProblem{FG,BC,F,FP,R,RP,IC,FT} <: AbstractFVMProblem
     final_time::FT
 end
 function Base.show(io::IO, ::MIME"text/plain", prob::FVMProblem)
-    nv = num_points(prob.mesh.triangulation)
+    nv = DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation)
     t0 = prob.initial_time
     tf = prob.final_time
     print(io, "FVMProblem with $(nv) nodes and time span ($t0, $tf)")
@@ -103,8 +103,24 @@ function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, 
     initial_condition,
     initial_time=0.0,
     final_time)
-    updated_flux_fnc = construct_flux_function(flux_function, diffusion_function, diffusion_parameters)
     conditions = Conditions(mesh, boundary_conditions, internal_conditions)
+    return FVMProblem(mesh, conditions;
+        diffusion_function, diffusion_parameters,
+        source_function, source_parameters,
+        flux_function, flux_parameters,
+        initial_condition, initial_time, final_time)
+end
+function FVMProblem(mesh::FVMGeometry, conditions::Conditions;
+    diffusion_function=nothing,
+    diffusion_parameters=nothing,
+    source_function=(x, y, t, u, p) -> zero(eltype(u)),
+    source_parameters=nothing,
+    flux_function=nothing,
+    flux_parameters=nothing,
+    initial_condition,
+    initial_time=0.0,
+    final_time)
+    updated_flux_fnc = construct_flux_function(flux_function, diffusion_function, diffusion_parameters)
     return FVMProblem(mesh, conditions,
         updated_flux_fnc, flux_parameters,
         source_function, source_parameters,
@@ -129,7 +145,7 @@ function SteadyFVMProblem(prob::P) where {P}
 end
 
 function Base.show(io::IO, ::MIME"text/plain", prob::SteadyFVMProblem)
-    nv = num_points(prob.mesh.triangulation)
+    nv = DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation)
     is_sys = is_system(prob)
     if !is_sys
         print(io, "SteadyFVMProblem with $(nv) nodes")
@@ -244,7 +260,7 @@ Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, 
 @inline has_condition(prob::FVMSystem, node, var) = has_condition(get_equation(prob, var), node)
 @inline has_dirichlet_nodes(prob::FVMSystem) = any(i -> has_dirichlet_nodes(get_equation(prob, i)), 1:_neqs(prob))
 @inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(get_equation(prob, var))
-@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ) = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
+@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ)  = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
 
 function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     N == 0 && error("There must be at least one problem.")
@@ -260,6 +276,7 @@ function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
 end
 
 get_equation(system::FVMSystem, var) = system.problems[var]
+get_conditions(system::FVMSystem, var) = get_equation(system, var).conditions
 
 """
     construct_flux_function(q, D, Dp)
