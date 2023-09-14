@@ -257,5 +257,5 @@ prob = semilinear_equation(mesh, BCs;
     final_time=20.0)
 
 #-
-#sol = solve(prob, LawsonEuler(krylov=true, m=50), saveat=5.0, dt=0.01)
+sol = solve(prob, LawsonEuler(krylov=true, m=50), saveat=5.0, dt=0.01)
 
