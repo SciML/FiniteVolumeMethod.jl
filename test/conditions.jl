@@ -83,4 +83,4 @@ mesh = FVMGeometry(tri)
     initial_condition=Φ₀, final_time=5.0)
 Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function=Ψ_q, source_function=Ψ_S,
     initial_condition=Ψ₀, final_time=5.0)
-system = FVMSystem(Φ_prob, Ψ_prob)
+prob = FVMSystem(Φ_prob, Ψ_prob)

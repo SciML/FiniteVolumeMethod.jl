@@ -38,3 +38,9 @@ function two_point_interpolant(mesh, u::AbstractVector, i, j, mx, my)
     ℓ′ = sqrt((mx - xᵢ)^2 + (my - yᵢ)^2)
     return u[i] + (u[j] - u[i]) * ℓ′ / ℓ
 end
+
+function flatten_tuples(f::NTuple{N,Any}) where {N}
+    tail_f = Base.tail(f)
+    return (f[1]..., flatten_tuples(tail_f)...)
+end
+flatten_tuples(::Tuple{}) = ()

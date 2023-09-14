@@ -274,8 +274,46 @@ function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     for (i, prob) in enumerate(probs)
         initial_condition[i, :] .= prob.initial_condition
     end
-    return FVMSystem(mesh, probs, initial_condition, initial_time, final_time)
+    conditions, num_fncs = merge_problem_conditions(probs)
+    return FVMSystem(mesh, probs, initial_condition, initial_time, final_time, conditions, num_fncs)
 end
+
+function merge_problem_conditions(probs::Vararg{FVMProblem,N}) where {N}
+    num_fncs = ntuple(N) do i
+        length(probs[i].conditions.functions)
+    end
+    fncs = ntuple(N) do i 
+        probs[i].conditions.functions 
+    end |> flatten_tuples
+    neumann_edges = Dict{NTuple{2,Int},Int}()
+    constrained_edges = Dict{NTuple{2,Int},Int}()
+    dirichlet_nodes = Dict{Int,Int}()
+    dudt_nodes = Dict{Int,Int}()
+    for (var, prob) in enumerate(probs) 
+        conds = prob.conditions 
+        for ((i, j), fidx) in neumann_edges 
+            neumann_edges
+        end
+        merge!(neumann_edges, conds.neumann_edges)
+        merge!(constrained_edges, conds.constrained_edges)
+        merge!(dirichlet_nodes, conds.dirichlet_nodes)
+        merge!(dudt_nodes, conds.dudt_nodes)
+    end 
+    conditions = Conditions(
+        neumann_edges,
+        constrained_edges,
+        dirichlet_nodes,
+        dudt_nodes,
+        fncs
+    )
+    return conditions, num_fncs
+end
+
+function flatten_tuples(f::NTuple{N,Any}) where {N}
+    tail_f = Base.tail(f)
+    return (f[1]..., flatten_tuples(tail_f)...)
+end
+flatten_tuples(::Tuple{}) = ()
 
 get_equation(system::FVMSystem, var) = system.problems[var]
 get_conditions(system::FVMSystem, var) = get_equation(system, var).conditions
