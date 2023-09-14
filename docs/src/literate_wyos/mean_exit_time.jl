@@ -196,9 +196,9 @@ fig
 
 # This matches what we have above. To finish, here is a benchmark comparing the approaches. 
 using BenchmarkTools
-@benchmark solve($prob, $KLUFactorization())
+#@benchmark solve($prob, $KLUFactorization())
 
 #-
-@benchmark solve($fvm_prob, $DynamicSS($Rosenbrock23()))
+#@benchmark solve($fvm_prob, $DynamicSS($Rosenbrock23()))
 
 # Very fast!

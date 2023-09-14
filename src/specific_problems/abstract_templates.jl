@@ -157,7 +157,8 @@ Add the contributions from each Neumann boundary edge to the vector `b`, based o
 ```
 
 as explained in the docs. Will not update any rows corresponding to 
-[`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
+[`Dirichlet`](@ref) or [`Dudt`](@ref) nodes. This function will pass `nothing` in place 
+of the arguments `u` and `t` in the boundary condition functions.
 """
 function neumann_boundary_edge_contributions!(b, mesh, conditions, diffusion_function, diffusion_parameters)
     for (e, fidx) in get_neumann_edges(conditions)
@@ -171,6 +172,36 @@ function neumann_boundary_edge_contributions!(b, mesh, conditions, diffusion_fun
         aⱼ = eval_condition_fnc(conditions, fidx, mⱼx, mⱼy, nothing, nothing)
         i_hascond || (b[i] += Dᵢ * aᵢ * ℓ / get_volume(mesh, i))
         j_hascond || (b[j] += Dⱼ * aⱼ * ℓ / get_volume(mesh, j))
+    end
+    return nothing
+end
+
+@doc raw"""
+    neumann_boundary_edge_contributions!(F, mesh, conditions, diffusion_function, diffusion_parameters, u, t)
+
+Add the contributions from each Neumann boundary edge to the vector `F`, based on the equation
+
+```math 
+\dv{u_i}{t} = \frac{1}{V_i}\sum_{\sigma \in \mathcal E_i} D(\vb x_\sigma)\left[\grad u(\vb x_\sigma) \vdot \vu n\right]L_\sigma + S_i,
+```
+
+as explained in the docs. Will not update any rows corresponding to 
+[`Dirichlet`](@ref) or [`Dudt`](@ref) nodes. 
+"""
+function neumann_boundary_edge_contributions!(F, mesh, conditions, diffusion_function, diffusion_parameters, u, t)
+    for (e, fidx) in FVM.get_neumann_edges(conditions)
+        i, j = DelaunayTriangulation.edge_indices(e)
+        _, _, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, _, _ = FVM.get_boundary_cv_components(mesh, i, j)
+        Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
+        Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
+        i_hascond = FVM.has_condition(conditions, i)
+        j_hascond = FVM.has_condition(conditions, j)
+        uᵢ_itp = two_point_interpolant(mesh, u, i, j, mᵢx, mᵢy)
+        uⱼ_itp = two_point_interpolant(mesh, u, i, j, mⱼx, mⱼy)
+        aᵢ = FVM.eval_condition_fnc(conditions, fidx, mᵢx, mᵢy, t, uᵢ_itp)
+        aⱼ = FVM.eval_condition_fnc(conditions, fidx, mⱼx, mⱼy, t, uⱼ_itp)
+        i_hascond || (F[i] += Dᵢ * aᵢ * ℓ / FVM.get_volume(mesh, i))
+        j_hascond || (F[j] += Dⱼ * aⱼ * ℓ / FVM.get_volume(mesh, j))
     end
     return nothing
 end

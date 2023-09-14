@@ -51,7 +51,7 @@
 # For `Dudt` conditions, these also get placed into $\vb F(t, \vb u)$, provided we are careful to 
 # make the corresponding row of $\vb A$ all zero.
 
-# ## Implementation Details 
+# ## Implementation
 # Now that we understand the structure of the problem, let's implement it.
 # For the first part of the implementation, we need 
 # the function that computes $\vb A$. We already have the function 
@@ -113,5 +113,109 @@ function _non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusio
     return nothing
 end
 
-# Of course, in this case, `_neumann_boundary_edge_contributions` is not sufficient - 
-# it needs to depend on `t` and `u`.
+# Of course, in this case, `_neumann_boundary_edge_contributions!` is not sufficient - 
+# it needs to depend on `t` and `u`. Before we add on this dependence, let us think
+# about what values we actually need. For a given Neumann edge $e_{ij}$ with midpoint 
+# \vb x_\sigma$, we evaluate $u$ at $\vb x_{i'} = (\vb x_i+\vb x_\sigma)/2$ 
+# and at $\vb x_{j'} = (\vb x_\sigma + \vb x_j)/2$. In the main finite volume code, 
+# $u$ gets replaced with the linear interpolant $\alpha x + \beta y + \gamma$ inside 
+# the triangle adjoining this boundary edge. When this linear interpolant is evaluated 
+# along the boundary edges, all we need is two-point interpolation. In particular,
+# to evaluate $u$ at a point $\vb x \in e_{ij}$, we can use 
+# ```math 
+# u(\vb x, t) \approx u_i(t) + \frac{u_j(t) - u_i(t)}{\|\vb x_j-\vb x_i\|}\|\vb x - \vb x_i\|,
+# ```
+# To check that this formula is correct, note
+# ```math 
+# \begin{equation*}
+# \begin{aligned}
+# u(\vb x_i, t) &\approx u_i(t) + \frac{u_j(t) - u_i(t)}{\|\vb x_j-\vb x_i\|}\|\vb x_i - \vb x_i\| = u_i(t), \\
+# u(\vb x_j, t) &\approx u_i(t) + \frac{u_j(t) - u_i(t)}{\|\vb x_j-\vb x_i\|}\|\vb x_j - \vb x_i\| \\
+# &= u_i(t) + (u_j(t) - u_i(t)) = u_j(t).
+# \end{aligned}
+# \end{equation*}
+# ```
+# Let's now apply this to write `_neumann_boundary_edge_contributions!` in a way that allows for 
+# `u` and `t` to be used. For this new function, the interpretation of `b` is now in terms of $\vb F$ above.
+function two_point_interpolant(mesh, u::AbstractVector, i, j, mx, my)
+    xᵢ, yᵢ = get_point(mesh, i)
+    xⱼ, yⱼ = get_point(mesh, j)
+    ℓ = sqrt((xⱼ - xᵢ)^2 + (yⱼ - yᵢ)^2)
+    ℓ′ = sqrt((mx - xᵢ)^2 + (my - yᵢ)^2)
+    return u[i] + (u[j] - u[i]) * ℓ′ / ℓ
+end
+function _neumann_boundary_edge_contributions!(F, mesh, conditions, diffusion_function, diffusion_parameters, u, t)
+    for (e, fidx) in FVM.get_neumann_edges(conditions)
+        i, j = DelaunayTriangulation.edge_indices(e)
+        _, _, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, _, _ = FVM.get_boundary_cv_components(mesh, i, j)
+        Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
+        Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
+        i_hascond = FVM.has_condition(conditions, i)
+        j_hascond = FVM.has_condition(conditions, j)
+        uᵢ_itp = two_point_interpolant(mesh, u, i, j, mᵢx, mᵢy)
+        uⱼ_itp = two_point_interpolant(mesh, u, i, j, mⱼx, mⱼy)
+        aᵢ = FVM.eval_condition_fnc(conditions, fidx, mᵢx, mᵢy, t, uᵢ_itp)
+        aⱼ = FVM.eval_condition_fnc(conditions, fidx, mⱼx, mⱼy, t, uⱼ_itp)
+        i_hascond || (F[i] += Dᵢ * aᵢ * ℓ / FVM.get_volume(mesh, i))
+        j_hascond || (F[j] += Dⱼ * aⱼ * ℓ / FVM.get_volume(mesh, j))
+    end
+    return nothing
+end
+
+# Now we can write the function that constructs $\vb A$.
+function get_semilinear_matrix(mesh, conditions, diffusion_function, diffusion_parameters)
+    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    A = zeros(n, n)
+    FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    _non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    return sparse(A)
+end
+
+# Now we need the function that will evaluate the source term. This function needs to take the form `(du, u, p, t)`
+# to be compatible with the `SplitODEProblem` type, where `du` is the `F`. Here is the definition. 
+function eval_semilinear_source!(du, u, p, t)
+    mesh, conditions, diffusion_function, diffusion_parameters, source_function, source_parameters = p
+    _neumann_boundary_edge_contributions!(du, mesh, conditions, diffusion_function, diffusion_parameters, u, t)
+    for i in each_solid_vertex(mesh.triangulation)
+        if !FVM.has_condition(conditions, i)
+            x, y = get_point(mesh, i)
+            du[i] += source_function(x, y, t, u[i], source_parameters)
+        end
+    end
+    FVM.apply_dudt_conditions!(dudt, mesh, conditions)
+    return du
+end
+
+# To finish the problem, we need the Dirichlet callback. The function that 
+# does this for an `FVMProblem` is `update_dirichlet_nodes!`, but we need to make some 
+# changes for this to work, since `update_dirichlet_nodes!` was designed specifically for `AbstractFVMProblem`s.
+# It's easier to just write a new method.
+function semilinear_equation_update_dirichlet_nodes!(integrator)
+    mesh, conditions = integrator.p  
+    for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
+        p = get_point(mesh, i)
+        x, y = getxy(p)
+        integrator.u[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, integrator.t, integrator.u[i])
+    end
+    return nothing
+end
+
+# Now we can actually define the problem.
+function semilinear_equation(mesh::FVMConditions, 
+    BCs::BoundaryConditions,
+    ICs::InternalConditions=InternalConditions();
+    diffusion_function,
+    diffusion_parameters=nothing,
+    source_function,
+    source_parameters=nothing, 
+    initial_condition,
+    initial_time=0.0,
+    final_time)
+    conditions = Conditions(mesh, BCs, ICs)
+    A = get_semilinear_matrix(mesh, conditions, diffusion_function, diffusion_parameters)
+    A_op = MatrixOperator(A)
+    f = SplitFunction(A_op, eval_semilinear_source!)
+    p = (mesh, conditions, diffusion_function, diffusion_parameters, source_function, source_parameters)
+    prob = SplitODEProblem(f, initial_condition, (initial_time, final_time), p; kwargs...)
+    return prob
+end

@@ -182,10 +182,10 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
 
 #-
 using BenchmarkTools
-@benchmark solve($prob, $KLUFactorization())
+#@benchmark solve($prob, $KLUFactorization())
 
 #-
 using SteadyStateDiffEq, OrdinaryDiffEq
-@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+#@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()))) #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-5 #src

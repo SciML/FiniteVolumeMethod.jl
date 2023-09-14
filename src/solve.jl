@@ -1,4 +1,4 @@
-function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem})
+function get_multithreading_parameters(prob::Union{FVMProblem,FVMSystem})
     u = prob.initial_condition
     nt = Threads.nthreads()
     if prob isa FVMProblem
@@ -24,6 +24,21 @@ function get_multithreading_vectors(prob::Union{FVMProblem,FVMSystem})
         parallel=Val(true),
         prob=prob
     )
+end
+
+function get_serial_parameters(prob::Union{FVMProblem,FVMSystem})
+    return (
+        parallel=Val(false),
+        prob=prob
+    )
+end
+
+function get_fvm_parameters(prob::Union{FVMProblem,FVMSystem}, parallel::Val{B}) where {B}
+    if B
+        return get_multithreading_parameters(prob)
+    else
+        return get_serial_parameters(prob)
+    end
 end
 
 function jacobian_sparsity(prob::FVMProblem)
@@ -105,13 +120,31 @@ end
 jacobian_sparsity(prob::SteadyFVMProblem) = jacobian_sparsity(prob.problem)
 
 @inline function dirichlet_callback(has_saveat, has_dir)
-    cb = DiscreteCallback(
-        (u, t, integrator) -> let cb_needed = has_dir
-            cb_needed
-        end,
-        update_dirichlet_nodes!,
-        save_positions=(!has_saveat, !has_saveat),
-    )
+    if has_dir
+        cb = DiscreteCallback(
+            (u, t, integrator) -> true,
+            update_dirichlet_nodes!,
+            save_positions=(!has_saveat, !has_saveat),
+        )
+    else
+        cb = CallbackSet()
+    end
+    return cb
+end
+
+"""
+    get_dirichlet_callback(prob; kwargs...)
+
+Get the callback for updating [`Dirichlet`](@ref) nodes. The `kwargs...` argument is ignored, 
+except to detect if a user has already provided a callback, in which case the 
+callback gets merged into a `CallbackSet` with the [`Dirichlet`](@ref) callback. If the problem 
+`prob` has no [`Dirichlet`](@ref) nodes, the returned callback does nothing and is never 
+called.
+"""
+@inline function get_dirichlet_callback(prob; saveat=(), callback=CallbackSet(), kwargs...)
+    has_dir_nodes = has_dirichlet_nodes(prob)
+    dir_callback = dirichlet_callback(!isempty(saveat), has_dir_nodes)
+    cb = CallbackSet(dir_callback, callback)
     return cb
 end
 
@@ -124,16 +157,10 @@ function SciMLBase.ODEProblem(prob::Union{FVMProblem,FVMSystem};
     final_time = prob.final_time
     time_span = (initial_time, final_time)
     initial_condition = prob.initial_condition
-    has_saveat = haskey(kwargs, :saveat)
-    dirichlet_cb = dirichlet_callback(has_saveat, has_dirichlet_nodes(prob))
-    if haskey(kwargs, :callback)
-        cb = CallbackSet(kwargs[:callback], dirichlet_cb)
-    else
-        cb = CallbackSet(dirichlet_cb)
-    end
-    _f = ODEFunction{true,S}(fvm_eqs!; jac_prototype)
-    p = B ? get_multithreading_vectors(prob) : (prob=prob, parallel=parallel)
-    ode_problem = ODEProblem{true,S}(_f, initial_condition, time_span, p; callback=cb)
+    cb = get_dirichlet_callback(prob; kwargs...)
+    f = ODEFunction{true,S}(fvm_eqs!; jac_prototype)
+    p = get_fvm_parameters(prob, parallel)
+    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb)
     return ode_problem
 end
 
@@ -161,7 +188,7 @@ function CommonSolve.solve(prob::SteadyFVMProblem, args...;
     parallel::Val{B}=Val(true),
     kwargs...) where {S,B}
     nl_prob = SciMLBase.SteadyStateProblem(prob; specialization, jac_prototype, parallel, kwargs...)
-    return CommonSolve.solve(nl_prob, args...;  kwargs...)
+    return CommonSolve.solve(nl_prob, args...; kwargs...)
 end
 
 

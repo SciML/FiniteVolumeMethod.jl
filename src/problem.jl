@@ -276,6 +276,7 @@ function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
 end
 
 get_equation(system::FVMSystem, var) = system.problems[var]
+get_conditions(system::FVMSystem, var) = get_equation(system, var).conditions
 
 """
     construct_flux_function(q, D, Dp)

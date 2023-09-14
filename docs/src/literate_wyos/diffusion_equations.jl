@@ -282,11 +282,11 @@ fvm_prob = FVMProblem(mesh, BCs;
 
 #-
 using BenchmarkTools
-@benchmark solve($diff_eq, $Tsit5(), saveat=$0.05)
+##@benchmark solve($diff_eq, $Tsit5(), saveat=$0.05)
 
 #-
 using LinearSolve
-@benchmark solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$0.05)
+##@benchmark solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$0.05)
 
 # Much better! The `DiffusionEquation` approach is about 10 times faster.
 
@@ -371,10 +371,10 @@ u_fvm = fvm_sol[:, 2:end] #src
 @test u_template ≈ u_fvm rtol = 1e-3 #src
 
 # Here is a benchmark comparison.
-@benchmark solve($prob, $Tsit5(), saveat=$100.0)
+##@benchmark solve($prob, $Tsit5(), saveat=$100.0)
 
 #-
-@benchmark solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$100.0)
+##@benchmark solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$100.0)
 
 # These problems also work with the `pl_interpolate` function:
 q = (30.0, 45.0)

@@ -133,10 +133,10 @@ sol = solve(prob, KLUFactorization())
 
 # Here is a benchmark comparison of the `PoissonsEquation` approach against the `FVMProblem` approach.
 using BenchmarkTools
-@benchmark solve($prob, $KLUFactorization())
+#@benchmark solve($prob, $KLUFactorization())
 
 #-
-@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+#@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 
 # Let's now also solve a generalised Poisson equation. Based 
 # on Section 7 of [this paper](https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf)
@@ -307,10 +307,10 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     final_time=Inf))
 
 #-
-@benchmark solve($prob, $KLUFactorization())
+#@benchmark solve($prob, $KLUFactorization())
 
 #-
-@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+#@benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()))) #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-4 #src
