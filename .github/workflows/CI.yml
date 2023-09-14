@@ -21,7 +21,7 @@ jobs:
           - '1'
           - '1.6'
         os:
-          - ubuntu-20.04
+          - ubuntu-20.04 # https://github.com/actions/runner-images/discussions/7188
         arch:
           - x64
     steps:

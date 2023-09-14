@@ -44,3 +44,14 @@ function flatten_tuples(f::NTuple{N,Any}) where {N}
     return (f[1]..., flatten_tuples(tail_f)...)
 end
 flatten_tuples(::Tuple{}) = ()
+
+@inline function eval_fnc_in_het_tuple(functions::Tuple, fidx, x, y, t, u)
+    return _eval_fnc_in_het_tuple(x, y, t, u, fidx, functions...)
+end
+@inline function _eval_fnc_in_het_tuple(x, y, t, u, fidx, f::F, fs...) where {F}
+    fidx ==1 && return _eval_fnc_in_het_tuple(x, y, t, u, f) 
+    return _eval_fnc_in_het_tuple(x, y, t, u, fidx - 1, fs...)
+end
+@inline function _eval_fnc_in_het_tuple(x, y, t, u, f::F) where {F} 
+    return f(x, y, t, u)
+end

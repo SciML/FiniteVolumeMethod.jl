@@ -190,7 +190,7 @@ See also [`FVMProblem`](@ref) and [`SteadyFVMProblem`](@ref).
     [`SteadyFVMProblem`](@ref) to the system rather than first applying it to
     each individual [`FVMProblem`](@ref) in the system.
 """
-struct FVMSystem{N,FG,P,IC,FT,F} <: AbstractFVMProblem
+struct FVMSystem{N,FG,P,IC,FT,F,S,FF} <: AbstractFVMProblem
     mesh::FG
     problems::P
     initial_condition::IC
@@ -199,6 +199,8 @@ struct FVMSystem{N,FG,P,IC,FT,F} <: AbstractFVMProblem
     conditions::NTuple{N,SimpleConditions}
     cnum_fncs::NTuple{N,Int} # cumulative numbers. e.g. if num_fncs is the number of functions for each variable, then cnum_fncs[i] = sum(num_fncs[1:i-1]).
     functions::F
+    source_functions::S 
+    flux_functions::FF
 end
 function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::FT, final_time::FT, conditions, num_fncs, functions::F) where {FG<:FVMGeometry,P,IC,FT,F}
     @assert length(problems) > 0 "There must be at least one problem."
@@ -209,13 +211,6 @@ function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::F
     sys = FVMSystem{length(problems),FG,P,IC,FT,F}(mesh, problems, initial_condition, initial_time, final_time, conditions, num_fncs, functions)
     _check_fvmsystem_flux_function(sys)
     return sys
-end
-
-struct SimpleConditions # in 2.0, this needs to be part of Conditions
-    neumann_edges::Dict{NTuple{2,Int},Int}
-    constrained_edges::Dict{NTuple{2,Int},Int}
-    dirichlet_nodes::Dict{Int,Int}
-    dudt_nodes::Dict{Int,Int}
 end
 
 const FLUX_ERROR = """
@@ -259,17 +254,14 @@ Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, 
 
 @inline map_fidx(prob::FVMSystem, fidx, var) = fidx + prob.cnum_fncs[var]
 
-@inline get_dudt_fix(prob::FVMSystem, i, var) = map_fidx(prob, prob.conditions[var].dudt_nodes[i], var)
-@inline get_neumann_fix(prob::FVMSystem, i, j, var) = map_fidx(prob, prob.conditions[var].neumann_edges[(i, j)], var)
-@inline get_dirichlet_fix(prob::FVMSystem, i, var) = map_fidx(prob, prob.conditions[var].dirichlet_nodes[i], var)
-@inline get_constrained_fix(prob::FVMSystem, i, j, var) = map_fidx(prob, prob.conditions[var].constrained_edges[(i, j)], var)
- 
+@inline get_dudt_fidx(prob::FVMSystem, i, var) = prob.conditions[var].dudt_nodes[i]
+@inline get_neumann_fidx(prob::FVMSystem, i, j, var) = prob.conditions[var].neumann_edges[(i, j)]
+@inline get_dirichlet_fidx(prob::FVMSystem, i, var) = prob.conditions[var].dirichlet_nodes[i]
+@inline get_constrained_fidx(prob::FVMSystem, i, j, var) = prob.conditions[var].constrained_edges[(i, j)]
+@inline eval_condition_fnc(prob::FVMSystem, fidx, var, x, y, t, u) = eval_fnc_in_het_tuple(prob.functions, map_fidx(prob, fidx, var), x, y, t, u)
+@inline eval_source_fnc(prob::FVMSystem, var, x, y, t, u) = eval_fnc_in_het_tuple(prob.source_functions, var, x, y, t, u)
+@inline is_dudt_node(prob::FVMSystem, node, var) = any()
 
-@inline get_dudt_fidx(prob::FVMSystem, i, var) = get_dudt_fidx(get_equation(prob, var), i)
-@inline get_neumann_fidx(prob::FVMSystem, i, j, var) = get_neumann_fidx(get_equation(prob, var), i, j)
-@inline get_dirichlet_fidx(prob::FVMSystem, i, var) = get_dirichlet_fidx(get_equation(prob, var), i)
-@inline get_constrained_fidx(prob::FVMSystem, i, j, var) = get_constrained_fidx(get_equation(prob, var), i, j)
-@inline eval_condition_fnc(prob::FVMSystem, fidx, var, x, y, t, u) = eval_condition_fnc(get_equation(prob, var), fidx, x, y, t, u)
 @inline eval_source_fnc(prob::FVMSystem, var, x, y, t, u) = eval_source_fnc(get_equation(prob, var), x, y, t, u)
 @inline is_dudt_node(prob::FVMSystem, node, var) = is_dudt_node(get_equation(prob, var), node)
 @inline is_neumann_edge(prob::FVMSystem, i, j, var) = is_neumann_edge(get_equation(prob, var), i, j)
