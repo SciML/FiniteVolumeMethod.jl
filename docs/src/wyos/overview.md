@@ -85,4 +85,5 @@ FiniteVolumeMethod.neumann_boundary_edge_contributions!
 FiniteVolumeMethod.create_rhs_b
 FiniteVolumeMethod.apply_steady_dirichlet_conditions!
 FiniteVolumeMethod.two_point_interpolant
+FiniteVolumeMethod.get_dirichlet_callback
 ```

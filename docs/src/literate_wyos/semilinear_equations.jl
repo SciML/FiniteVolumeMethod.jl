@@ -26,11 +26,8 @@
 # ```math 
 # \dv{\vb u}{t} = \vb A\vb u + \vb F(t, \vb u), \quad \vb F(t, \vb u) = \begin{bmatrix} f(\vb x_1,t,\vb u_1) \\ \vdots \\ f(\vb x_n, t, \vb u_n) \end{bmatrix}.
 # ```
-# While this is no longer a linear problem, we can make use of a `SplitODEProblem` 
-# from DifferentialEquations.jl which will treat the linear and nonlinear components separately.
-# This allows, for example, implicit-explicit integrators to be used which will treat 
-# $\vb A\vb u$ as the stiff component and then $\vb F(t, \vb u)$ as the non-stiff component, 
-# or even algorithms like `LawsonEuler()` which directly exploits the linearity in $\vb A\vb u$.
+# While this is no longer a linear problem, being able to quickly evaluate $\vb A\vb u$ is 
+# extremely useful. In particular, we can represent this problem as a `SplitODEProblem`.
 #
 # Let us now think about the boundary condition details. For the Neumann boundary conditions,
 # we need to think about what happens at a Neumann edge. When we are building $\vb A$ and we encounter 
@@ -163,6 +160,7 @@ function _neumann_boundary_edge_contributions!(F, mesh, conditions, diffusion_fu
 end
 
 # Now we can write the function that constructs $\vb A$.
+using SparseArrays
 function get_semilinear_matrix(mesh, conditions, diffusion_function, diffusion_parameters)
     n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
     A = zeros(n, n)
@@ -171,10 +169,11 @@ function get_semilinear_matrix(mesh, conditions, diffusion_function, diffusion_p
     return sparse(A)
 end
 
-# Now we need the function that will evaluate the source term. This function needs to take the form `(du, u, p, t)`
-# to be compatible with the `SplitODEProblem` type, where `du` is the `F`. Here is the definition. 
+# Now we need the function that will evaluate the source term. This function needs to take the form `(du, u, p, t)`,
+# where `du` is the $\vb F$ from above. Here is the definition. 
 function eval_semilinear_source!(du, u, p, t)
-    mesh, conditions, diffusion_function, diffusion_parameters, source_function, source_parameters = p
+    #fill!(du, zero(eltype(du)))
+    A, mesh, conditions, diffusion_function, diffusion_parameters, source_function, source_parameters = p
     _neumann_boundary_edge_contributions!(du, mesh, conditions, diffusion_function, diffusion_parameters, u, t)
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.has_condition(conditions, i)
@@ -182,7 +181,7 @@ function eval_semilinear_source!(du, u, p, t)
             du[i] += source_function(x, y, t, u[i], source_parameters)
         end
     end
-    FVM.apply_dudt_conditions!(dudt, mesh, conditions)
+    FVM.apply_dudt_conditions!(du, mesh, conditions)
     return du
 end
 
@@ -191,7 +190,7 @@ end
 # changes for this to work, since `update_dirichlet_nodes!` was designed specifically for `AbstractFVMProblem`s.
 # It's easier to just write a new method.
 function semilinear_equation_update_dirichlet_nodes!(integrator)
-    mesh, conditions = integrator.p  
+    mesh, conditions = integrator.p
     for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
         p = get_point(mesh, i)
         x, y = getxy(p)
@@ -200,14 +199,20 @@ function semilinear_equation_update_dirichlet_nodes!(integrator)
     return nothing
 end
 
-# Now we can actually define the problem.
-function semilinear_equation(mesh::FVMConditions, 
+using LinearAlgebra
+function _semil_f!(du, u, p, t)
+    mul!(du, p.A, u)
+    eval_semilinear_source!(du, u, p, t)
+end
+
+# We will use `get_dirichlet_callback` to construct this callback. Now we can actually define the problem.
+function semilinear_equation(mesh::FVMGeometry,
     BCs::BoundaryConditions,
     ICs::InternalConditions=InternalConditions();
     diffusion_function,
     diffusion_parameters=nothing,
     source_function,
-    source_parameters=nothing, 
+    source_parameters=nothing,
     initial_condition,
     initial_time=0.0,
     final_time)
@@ -215,7 +220,46 @@ function semilinear_equation(mesh::FVMConditions,
     A = get_semilinear_matrix(mesh, conditions, diffusion_function, diffusion_parameters)
     A_op = MatrixOperator(A)
     f = SplitFunction(A_op, eval_semilinear_source!)
-    p = (mesh, conditions, diffusion_function, diffusion_parameters, source_function, source_parameters)
-    prob = SplitODEProblem(f, initial_condition, (initial_time, final_time), p; kwargs...)
+    p = (A,mesh, conditions, diffusion_function, diffusion_parameters, source_function, source_parameters)
+    cb = FVM.get_dirichlet_callback(conditions, semilinear_equation_update_dirichlet_nodes!)
+    prob = ODEProblem(_semil_f!, initial_condition, (initial_time, final_time), p, callback=cb)
     return prob
 end
+
+# Now let's test this problem, using:
+# ```math 
+# \begin{equation*}
+# \begin{aligned}
+# \pdv{u}{t} &= \grad^2 u + ru\left(1-\frac{u}{K}), & \vb x \in \Omega, \\
+# \grad u \vdot \vu n &= 1, & \vb x \in \partial\Omega,
+# \end{aligned}
+# \end{equation*}
+# ```
+# where $\Omega = [0, 100]^2$, $r = 1$, and $K=1$. The initial condition will be $u(\vb x, 0) = 0$, except 
+# $u(50, 50, 0) = 1$.
+using OrdinaryDiffEq, LinearSolve
+tri = triangulate_rectangle(0, 100, 0, 100, 121, 121, single_boundary=true)
+mid_idx = findfirst(==((50,50)), each_point(tri))
+mesh = FVMGeometry(tri)
+BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> one(u), Neumann)
+diffusion_function = (x, y, p) -> 1.0
+r = 1.0
+K = 1.0
+source_function = (x, y, t, u, p) -> p.r * u * (1 - u / p.K)
+source_parameters = (r=r, K=K)
+initial_condition = zeros(num_points(tri))
+initial_condition[mid_idx] = 1.0
+prob = semilinear_equation(mesh, BCs;
+    diffusion_function=diffusion_function,
+    source_function=source_function,
+    source_parameters=source_parameters,
+    initial_condition,
+    final_time=20.0)
+
+#-
+sol = solve(prob, LawsonEuler(krylov=true, m=50), saveat=5.0, dt=0.01)
+
+using CairoMakie 
+x = LinRange(0,100,120)
+y = LinRange(0,100,120)
+heatmap(x, y, reshape(sol.u[],121,121), colorrange=(0,2))

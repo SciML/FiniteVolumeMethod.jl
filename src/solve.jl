@@ -119,11 +119,11 @@ function jacobian_sparsity(prob::FVMSystem{N}) where {N}
 end
 jacobian_sparsity(prob::SteadyFVMProblem) = jacobian_sparsity(prob.problem)
 
-@inline function dirichlet_callback(has_saveat, has_dir)
+@inline function dirichlet_callback(f::F, has_saveat, has_dir) where {F}
     if has_dir
         cb = DiscreteCallback(
             (u, t, integrator) -> true,
-            update_dirichlet_nodes!,
+            f,
             save_positions=(!has_saveat, !has_saveat),
         )
     else
@@ -133,17 +133,19 @@ jacobian_sparsity(prob::SteadyFVMProblem) = jacobian_sparsity(prob.problem)
 end
 
 """
-    get_dirichlet_callback(prob; kwargs...)
+    get_dirichlet_callback(prob[, f=update_dirichlet_nodes!]; kwargs...)
 
 Get the callback for updating [`Dirichlet`](@ref) nodes. The `kwargs...` argument is ignored, 
 except to detect if a user has already provided a callback, in which case the 
 callback gets merged into a `CallbackSet` with the [`Dirichlet`](@ref) callback. If the problem 
 `prob` has no [`Dirichlet`](@ref) nodes, the returned callback does nothing and is never 
 called.
+
+You can provide `f` to change the function that updates the [`Dirichlet`](@ref) nodes.
 """
-@inline function get_dirichlet_callback(prob; saveat=(), callback=CallbackSet(), kwargs...)
+@inline function get_dirichlet_callback(prob, f::F=update_dirichlet_nodes!;saveat=(), callback=CallbackSet(), kwargs...) where {F}
     has_dir_nodes = has_dirichlet_nodes(prob)
-    dir_callback = dirichlet_callback(!isempty(saveat), has_dir_nodes)
+    dir_callback = dirichlet_callback(f, !isempty(saveat), has_dir_nodes)
     cb = CallbackSet(dir_callback, callback)
     return cb
 end
