@@ -12,6 +12,7 @@ prob, tri, mesh, BCs, ICs,
 flux_function, flux_parameters,
 source_function, source_parameters,
 initial_condition = example_problem()
+@test sprint(show, MIME"text/plain"(), prob) == "FVMProblem with $(num_points(tri)) nodes and time span ($(prob.initial_time), $(prob.final_time))"
 conds = FVM.Conditions(mesh, BCs, ICs)
 @test prob.mesh == mesh
 @test prob.conditions == conds
@@ -71,12 +72,12 @@ u = α * x + β * y + γ
 qx = -α * u * p[1] + t
 qy = x + t - β * u * p[2]
 steady = SteadyFVMProblem(prob)
+@test sprint(show, MIME"text/plain"(), steady) == "SteadyFVMProblem with $(num_points(tri)) nodes"
 @inferred SteadyFVMProblem(prob)
 @test FVM.eval_flux_function(steady, x, y, t, α, β, γ) == (qx, qy)
 @inferred FVM.eval_flux_function(steady, x, y, t, α, β, γ)
 @test FVM._neqs(steady) == 0
 @test !FVM.is_system(steady)
-
 
 prob1, prob2, prob3, prob4, prob5 = example_problem(1; tri, mesh, initial_condition)[1],
 example_problem(2; tri, mesh, initial_condition)[1],
@@ -84,6 +85,7 @@ example_problem(3; tri, mesh, initial_condition)[1],
 example_problem(4; tri, mesh, initial_condition)[1],
 example_problem(5; tri, mesh, initial_condition)[1]
 system = FVMSystem(prob1, prob2, prob3, prob4, prob5)
+@test sprint(show, MIME"text/plain"(), system) == "FVMSystem with 5 equations and time span ($(system.initial_time), $(system.final_time))"
 @inferred FVMSystem(prob1, prob2, prob3, prob4, prob5)
 _α = ntuple(_ -> α, 5)
 _β = ntuple(_ -> β, 5)
@@ -95,6 +97,11 @@ _γ = ntuple(_ -> γ, 5)
 @test FVM.is_system(system)
 @test system.initial_time == 2.0
 @test system.final_time == 5.0
+@test FVM.get_conditions(system, 1) == system.problems[1].conditions
+@test FVM.get_conditions(system, 2) == system.problems[2].conditions
+@test FVM.get_conditions(system, 3) == system.problems[3].conditions
+@test FVM.get_conditions(system, 4) == system.problems[4].conditions
+@test FVM.get_conditions(system, 5) == system.problems[5].conditions
 
 steady_system = SteadyFVMProblem(system)
 @inferred SteadyFVMProblem(system)

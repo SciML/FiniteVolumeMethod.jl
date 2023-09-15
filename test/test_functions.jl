@@ -128,11 +128,18 @@ function example_problem(idx=1;
     return prob, tri, mesh, BCs, ICs, flux_function, flux_parameters, source_function, source_parameters, initial_condition
 end
 
-function example_bc_ic_setup()
-    f1 = (x, y, t, u, p) -> x * y + u - p
-    f2 = (x, y, t, u, p) -> u + p - t
-    f3 = (x, y, t, u, p) -> x
-    f4 = (x, y, t, u, p) -> y - x
+function example_bc_ic_setup(; nothing_dudt=false)
+    if !nothing_dudt
+        f1 = (x, y, t, u, p) -> x * y + u - p
+        f2 = (x, y, t, u, p) -> u + p - t
+        f3 = (x, y, t, u, p) -> x
+        f4 = (x, y, t, u, p) -> y - x
+    else
+        f1 = (x, y, t, u, p) -> x * y - p
+        f2 = (x, y, t, u, p) -> p
+        f3 = (x, y, t, u, p) -> x
+        f4 = (x, y, t, u, p) -> y - x
+    end
     p1 = 0.5
     p2 = 0.2
     p3 = (0.3, 0.6, -1.0)
@@ -140,11 +147,19 @@ function example_bc_ic_setup()
     f = (f1, f2, f3, f4)
     t = (Dirichlet, Dudt, Neumann, Constrained)
     p = (p1, p2, p3, p4)
-    g1 = (x, y, t, u, p) -> x * y * t * u * p
-    g2 = (x, y, t, u, p) -> x * y * t * u
-    g3 = (x, y, t, u, p) -> x * y * t * u * p[2]
-    g4 = (x, y, t, u, p) -> x * y * t * u * p[4]
-    g5 = (x, y, t, u, p) -> x * y * t * u * p[1]
+    if !nothing_dudt
+        g1 = (x, y, t, u, p) -> x * y * t * u * p
+        g2 = (x, y, t, u, p) -> x * y * t * u
+        g3 = (x, y, t, u, p) -> x * y * t * u * p[2]
+        g4 = (x, y, t, u, p) -> x * y * t * u * p[4]
+        g5 = (x, y, t, u, p) -> x * y * t * u * p[1]
+    else
+        g1 = (x, y, t, u, p) -> x * y * p
+        g2 = (x, y, t, u, p) -> x * y
+        g3 = (x, y, t, u, p) -> x * y * p[2]
+        g4 = (x, y, t, u, p) -> x * y * p[4]
+        g5 = (x, y, t, u, p) -> x * y * p[1]
+    end
     q1 = 0.5
     q2 = nothing
     q3 = (0.3, 0.6, -1.0)
@@ -186,7 +201,7 @@ function test_bc_conditions!(tri, conds, t,
             x, y, tt, u = rand(4)
             @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) ≈ conds.functions[-w](x, y, tt, u)
             @inferred conds.functions[-w](x, y, tt, u)
-            @inferred FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) 
+            @inferred FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u)
         elseif bc_type == Dudt
             @test conds.dudt_nodes[u] == -w
             @test conds.dudt_nodes[v] == -w
@@ -207,6 +222,7 @@ function test_bc_conditions!(tri, conds, t,
             @test (u, v) ∉ keys(conds.constrained_edges)
             @test FiniteVolumeMethod.is_neumann_edge(conds, u, v)
             @test FiniteVolumeMethod.get_neumann_fidx(conds, u, v) == -w
+            @test FiniteVolumeMethod.has_neumann_edges(conds)
             x, y, tt, u = rand(4)
             @test FiniteVolumeMethod.eval_condition_fnc(conds, -w, x, y, tt, u) ≈ conds.functions[-w](x, y, tt, u)
             @inferred conds.functions[-w](x, y, tt, u)

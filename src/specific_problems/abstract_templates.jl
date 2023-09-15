@@ -136,7 +136,7 @@ as explained in the docs. Will not update any rows corresponding to
 """
 function boundary_edge_contributions!(A, b, mesh, conditions,
     diffusion_function, diffusion_parameters)
-    non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters) # this is split to make it easier to, in the future, support semilinear equations where the Neumann contributions do need to go into the nonlinear component
     neumann_boundary_edge_contributions!(b, mesh, conditions, diffusion_function, diffusion_parameters)
     return nothing
 end
