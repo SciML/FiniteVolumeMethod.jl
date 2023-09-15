@@ -78,32 +78,52 @@ end
     end
 end
 
-tri = triangulate_rectangle(0, 1, 0, 1, 10, 10, single_boundary=false)
-mesh = FVMGeometry(tri)
-Φ_bot = (x, y, t, u, p) -> -1 / 4 * exp(-x - t / 2)
-Φ_right = (x, y, t, u, p) -> 1 / 4 * exp(-1 - y - t / 2)
-Φ_top = (x, y, t, u, p) -> exp(-1 - x - t / 2)
-Φ_left = (x, y, t, u, p) -> -1 / 4 * exp(-y - t / 2)
-Φ_bc_fncs = (Φ_bot, Φ_right, Φ_top, Φ_left)
-Φ_bc_types = (Neumann, Neumann, Dirichlet, Neumann)
-Φ_BCs = BoundaryConditions(mesh, Φ_bc_fncs, Φ_bc_types)
-Ψ_bot = (x, y, t, u, p) -> exp(x + t / 2)
-Ψ_right = (x, y, t, u, p) -> -1 / 4 * exp(1 + y + t / 2)
-Ψ_top = (x, y, t, u, p) -> -1 / 4 * exp(1 + x + t / 2)
-Ψ_left = (x, y, t, u, p) -> exp(y + t / 2)
-Ψ_bc_fncs = (Ψ_bot, Ψ_right, Ψ_top, Ψ_left)
-Ψ_bc_types = (Dirichlet, Neumann, Neumann, Dirichlet)
-Ψ_BCs = BoundaryConditions(mesh, Ψ_bc_fncs, Ψ_bc_types)
-Φ_q = (x, y, t, α, β, γ, p) -> (-α[1] / 4, -β[1] / 4)
-Ψ_q = (x, y, t, α, β, γ, p) -> (-α[2] / 4, -β[2] / 4)
-Φ_S = (x, y, t, (Φ, Ψ), p) -> Φ^2 * Ψ - 2Φ
-Ψ_S = (x, y, t, (Φ, Ψ), p) -> -Φ^2 * Ψ + Φ
-Φ_exact = (x, y, t) -> exp(-x - y - t / 2)
-Ψ_exact = (x, y, t) -> exp(x + y + t / 2)
-Φ₀ = [Φ_exact(x, y, 0) for (x, y) in each_point(tri)]
-Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)]
-Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
-    initial_condition=Φ₀, final_time=5.0)
-Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function=Ψ_q, source_function=Ψ_S,
-    initial_condition=Ψ₀, final_time=5.0)
-prob = FVMSystem(Φ_prob, Ψ_prob)
+@testset "Flattening and evaluating heterogeneous tuples" begin
+    @testset "flatten_tuples" begin # used for combining problems
+        tuple1 = Tuple(rand(5))
+        tuple2 = Tuple(rand(3))
+        tuple3 = Tuple(rand(10))
+        tup = (tuple1..., tuple2..., tuple3...)
+        @test FVM.flatten_tuples((tuple1, tuple2, tuple3)) == tup
+        @test FVM.flatten_tuples((tuple1,)) == tuple1
+    end
+
+    @testset "eval_fnc_in_het_tuple" begin
+        f1 = (x, y, t, u) -> x * y
+        f2 = (x, y, t, u) -> t * u
+        f3 = (x, y, t, u) -> 1.0
+        f4 = (x, y, t, u) -> 5x
+        f5 = (x, y, t, u) -> sin(x)
+        f = (f1, f2, f3, f4, f5)
+        x, y, t, u = rand(4)
+        for i in 1:5
+            @test FVM.eval_fnc_in_het_tuple(f, i, x, y, t, u) == f[i](x, y, t, u)
+            @inferred FVM.eval_fnc_in_het_tuple(f, i, x, y, t, u)
+        end
+    end
+
+    @testset "eval_all_fncs_in_tuple" begin
+        f1 = (x, y, t, α, β, γ) -> x * y
+        f2 = (x, y, t, α, β, γ) -> t * α * x + t * β * y + γ
+        f3 = (x, y, t, α, β, γ) -> 1.0
+        f4 = (x, y, t, α, β, γ) -> 5x
+        f5 = (x, y, t, α, β, γ) -> sin(x)
+        f = (f1, f2, f3, f4, f5)
+        x, y, t, α, β, γ = rand(6)
+        vals = FVM.eval_all_fncs_in_tuple(f, x, y, t, α, β, γ)
+        @test vals == ntuple(i -> f[i](x, y, t, α, β, γ), 5)
+        @inferred FVM.eval_all_fncs_in_tuple(f, x, y, t, α, β, γ)
+
+        # functions that return tuples
+        f1 = (x, y, t, α, β, γ) -> (x * y, -x * y)
+        f2 = (x, y, t, α, β, γ) -> (t * α * x + t * β * y + γ, -x)
+        f3 = (x, y, t, α, β, γ) -> (1.0, x)
+        f4 = (x, y, t, α, β, γ) -> (5x, -y)
+        f5 = (x, y, t, α, β, γ) -> (sin(x), cos(x))
+        f = (f1, f2, f3, f4, f5)
+        x, y, t, α, β, γ = rand(6)
+        vals = FVM.eval_all_fncs_in_tuple(f, x, y, t, α, β, γ)
+        @test vals == ntuple(i -> f[i](x, y, t, α, β, γ), 5)
+        @inferred FVM.eval_all_fncs_in_tuple(f, x, y, t, α, β, γ)
+    end
+end

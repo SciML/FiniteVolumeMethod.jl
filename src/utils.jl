@@ -49,10 +49,10 @@ flatten_tuples(::Tuple{}) = ()
     return _eval_fnc_in_het_tuple(x, y, t, u, fidx, functions...)
 end
 @inline function _eval_fnc_in_het_tuple(x, y, t, u, fidx, f::F, fs...) where {F}
-    fidx ==1 && return _eval_fnc_in_het_tuple(x, y, t, u, f) 
+    fidx == 1 && return _eval_fnc_in_het_tuple(x, y, t, u, f)
     return _eval_fnc_in_het_tuple(x, y, t, u, fidx - 1, fs...)
 end
-@inline function _eval_fnc_in_het_tuple(x, y, t, u, f::F) where {F} 
+@inline function _eval_fnc_in_het_tuple(x, y, t, u, f::F) where {F}
     return f(x, y, t, u)
 end
 
@@ -64,5 +64,5 @@ end
     return (f1, _eval_all_fncs_in_tuple(x, y, t, α, β, γ, fs...)...)
 end
 @inline function _eval_all_fncs_in_tuple(x, y, t, α, β, γ, f::F) where {F}
-    return f(x, y, t, α, β, γ)
+    return (f(x, y, t, α, β, γ),)
 end
