@@ -77,3 +77,23 @@ record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachind
 end
 
 # ![Animation of the Gray-Scott model](../figures/gray_scott_patterns.mp4)
+
+using ReferenceTests #src
+fig = Figure(fontsize=66) #src
+times = [0,1000,2000,3000,4000,5000,6000] #src
+t_idx = [findlast(≤(τ), sol.t) for τ in times] #src
+plotij = [(1,1),(1,2),(1,3),(2,1),(2,2),(2,3),(3,1)] #src
+for (i, j) in enumerate(t_idx) #src
+    ax = Axis(fig[plotij[i]...], width=600,height=600, xlabel=L"x", ylabel=L"y", title="t = $(sol.t[j])") #src
+    heatmap!(ax, x, y, reshape(sol.u[j][2,:],200,200), colorrange=(0.0, 0.4)) #src
+    tightlimits!(ax) #src
+end  #src
+plotij = [(4,1),(4,2),(4,3),(5,1),(5,2),(5,3),(6,1)] #src
+for (i, j) in enumerate(t_idx) #src
+    ax = Axis(fig[plotij[i]...], width=600,height=600, xlabel=L"x", ylabel=L"y", title="t = $(sol.t[j])") #src
+    heatmap!(ax, x, y, reshape(sol.u[j][1,:],200,200), colorrange=(0.0, 1)) #src
+    tightlimits!(ax) #src
+end  #src
+resize_to_layout!(fig) #src
+fig #src
+@test_reference joinpath(@__DIR__, "../figures", "gray_scott_patterns.png") fig #src

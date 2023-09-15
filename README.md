@@ -15,7 +15,7 @@ in two dimensions using the finite volume method, with support also provided for
 
 1. `DiffusionEquation`s: $\partial_tu = \boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla u]$.
 2. `MeanExitTimeProblem`s: $\boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla T(\boldsymbol x)] = -1$.
-3. `LinearReactionDiffusionEquation`s: $\partial_tu + \boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla u] + f(\boldsymbol x)u$.
+3. `LinearReactionDiffusionEquation`s: $\partial_tu = \boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla u] + f(\boldsymbol x)u$.
 4. `PoissonsEquation`: $\boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla u] = f(\boldsymbol x)$.
 5. `LaplacesEquation`: $\boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla u] = 0$.
 
