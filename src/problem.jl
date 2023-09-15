@@ -192,7 +192,7 @@ See also [`FVMProblem`](@ref) and [`SteadyFVMProblem`](@ref).
 """
 struct FVMSystem{N,FG,P,IC,FT,F,S,FF} <: AbstractFVMProblem
     mesh::FG
-    # problems::P
+    problems::P
     initial_condition::IC
     initial_time::FT
     final_time::FT
@@ -215,7 +215,7 @@ struct FVMSystem{N,FG,P,IC,FT,F,S,FF} <: AbstractFVMProblem
         @assert all(i -> problems[i].source_parameters === source_functions[i].parameters, 1:length(problems)) "The source parameters must match those from the problems."
         @assert all(i -> problems[i].flux_function === flux_functions[i].fnc, 1:length(problems)) "The flux functions must match those from the problems."
         @assert all(i -> problems[i].flux_parameters === flux_functions[i].parameters, 1:length(problems)) "The flux parameters must match those from the problems."
-        sys = new{length(problems),FG,P,IC,FT,F,S,FF}(mesh, #=problems,=# initial_condition, initial_time, final_time, conditions, num_fncs, functions, source_functions, flux_functions)
+        sys = new{length(problems),FG,P,IC,FT,F,S,FF}(mesh, problems, initial_condition, initial_time, final_time, conditions, num_fncs, functions, source_functions, flux_functions)
         _check_fvmsystem_flux_function(sys)
         return sys
     end
