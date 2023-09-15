@@ -80,7 +80,6 @@ end
     ]
     example_files = vcat(tutorial_files, wyos_files)
     session_tmp = mktempdir()
-    IS_LIVESERVER = get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
 end
 
 Distributed.pmap(1:length(example_files)) do n
@@ -177,6 +176,10 @@ end
 !isempty(missing_set) && error("Missing files: $missing_set")
 
 # Make and deploy
+DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod, Test);
+    recursive=true)
+IS_LIVESERVER = get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
+IS_CI = get(ENV, "CI", "false") == "true"
 makedocs(;
     modules=[FiniteVolumeMethod],
     authors="Daniel VandenHeuvel <danj.vandenheuvel@gmail.com>",
