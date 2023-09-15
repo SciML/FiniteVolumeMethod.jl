@@ -49,10 +49,10 @@ flatten_tuples(::Tuple{}) = ()
     return _eval_fnc_in_het_tuple(x, y, t, u, fidx, functions...)
 end
 @inline function _eval_fnc_in_het_tuple(x, y, t, u, fidx, f::F, fs...) where {F}
-    fidx == 1 && return _eval_fnc_in_het_tuple(x, y, t, u, f)
+    fidx == 1 && return _eval_fnc_in_het_tuple(x, y, t, u, fidx, f)
     return _eval_fnc_in_het_tuple(x, y, t, u, fidx - 1, fs...)
 end
-@inline function _eval_fnc_in_het_tuple(x, y, t, u, f::F) where {F}
+@inline function _eval_fnc_in_het_tuple(x, y, t, u, fidx, f::F) where {F} # need fidx to avoid dispatch report
     return f(x, y, t, u)
 end
 

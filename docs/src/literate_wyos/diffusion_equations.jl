@@ -280,7 +280,7 @@ fvm_prob = FVMProblem(mesh, BCs;
     initial_condition,
     final_time)
 
-using LinearSolve #src
+using LinearSolve
 
 #-
 # ```@example

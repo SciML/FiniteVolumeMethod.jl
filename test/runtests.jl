@@ -45,7 +45,9 @@ end
             "porous_medium_equation.jl",
             "reaction_diffusion_brusselator_system_of_pdes.jl",
             "reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk.jl",
-            "solving_mazes_with_laplaces_equation.jl"
+            "solving_mazes_with_laplaces_equation.jl",
+            "gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.jl",
+            "keller_segel_chemotaxis.jl",
         ] # do it manually just to make it easier for testing individual files rather than in a loop, e.g. one like 
         #=
         for file in files
@@ -68,6 +70,8 @@ end
         safe_include(joinpath(dir, file_names[11]); name=file_names[11]) # reaction_diffusion_brusselator_system_of_pdes
         safe_include(joinpath(dir, file_names[12]); name=file_names[12]) # reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk
         safe_include(joinpath(dir, file_names[13]); name=file_names[13]) # solving_mazes_with_laplaces_equation
+        safe_include(joinpath(dir, file_names[14]); name=file_names[14]) # gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system
+        safe_include(joinpath(dir, file_names[15]); name=file_names[15]) # keller_segel_chemotaxis
     end
 
     @testset verbose = true "Custom Templates" begin
