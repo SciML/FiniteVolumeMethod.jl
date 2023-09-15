@@ -29,3 +29,5 @@ docs/src/wyos/mean_exit_time.md
 docs/src/wyos/linear_reaction_diffusion_equations.md
 docs/src/wyos/poissons_equation.md
 docs/src/wyos/diffusion_equations.md
+docs/src/tutorials/*.png 
+docs/src/wyos/*.png
