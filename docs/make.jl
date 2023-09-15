@@ -149,7 +149,6 @@ end
 makedocs(;
     modules=[FiniteVolumeMethod],
     authors="Daniel VandenHeuvel <danj.vandenheuvel@gmail.com>",
-    repo="https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/{commit}{path}#{line}",
     sitename="FiniteVolumeMethod.jl",
     format=Documenter.HTML(;
         prettyurls=IS_CI,
