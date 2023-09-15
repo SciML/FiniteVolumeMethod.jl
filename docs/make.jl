@@ -58,7 +58,6 @@ end
         "tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.jl",
         "tutorials/mean_exit_time.jl",
         "tutorials/solving_mazes_with_laplaces_equation.jl",
-        "tutorials/keller_segel_chemotaxis.jl",
         "tutorials/porous_medium_equation.jl",
         "tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.jl",
         "tutorials/reaction_diffusion_brusselator_system_of_pdes.jl",
