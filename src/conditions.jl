@@ -15,7 +15,7 @@ struct ParametrisedFunction{F<:Function,P} <: Function
     fnc::F
     parameters::P
 end
-@inline (f::ParametrisedFunction{F,P})(x, y, t, u) where {F,P} = f.fnc(x, y, t, u, f.parameters)
+@inline (f::ParametrisedFunction{F,P})(args...) where {F,P} = f.fnc(args..., f.parameters)
 
 """
     ConditionType 
@@ -292,7 +292,7 @@ struct Conditions{F<:Tuple} <: AbstractConditions
         return new{F}(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions)
     end
 end
-function Base.show(io::IO, ::MIME"text/plain", conds::Conditions)
+function Base.show(io::IO, ::MIME"text/plain", conds::AbstractConditions)
     nn = length(conds.neumann_edges)
     nc = length(conds.constrained_edges)
     nd = length(conds.dirichlet_nodes)

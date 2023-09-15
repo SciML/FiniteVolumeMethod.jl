@@ -59,4 +59,10 @@ end
 @inline function eval_all_fncs_in_tuple(functions::Tuple, x, y, t, α, β, γ)
     return _eval_all_fncs_in_tuple(x, y, t, α, β, γ, functions...)
 end
-@inline 
+@inline function _eval_all_fncs_in_tuple(x, y, t, α, β, γ, f::F, fs...) where {F}
+    f1 = f(x, y, t, α, β, γ)
+    return (f1, _eval_all_fncs_in_tuple(x, y, t, α, β, γ, fs...)...)
+end
+@inline function _eval_all_fncs_in_tuple(x, y, t, α, β, γ, f::F) where {F}
+    return f(x, y, t, α, β, γ)
+end
