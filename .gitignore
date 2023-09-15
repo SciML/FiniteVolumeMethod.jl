@@ -23,7 +23,6 @@ docs/src/tutorials/diffusion_equation_on_a_square_plate.md
 docs/src/tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.md
 docs/src/tutorials/diffusion_equation_in_a_wedge_with_mixed_boundary_conditions.md
 docs/src/tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.md 
-docs/src/tutorials/keller_segel_chemotaxis.md
 docs/src/tutorials/solving_mazes_with_laplaces_equation.md
 docs/src/wyos/laplaces_equation.md
 docs/src/wyos/mean_exit_time.md
