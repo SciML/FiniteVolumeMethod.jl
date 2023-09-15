@@ -3,6 +3,8 @@ using Test
 using LinearAlgebra
 using DelaunayTriangulation
 using StructEquality
+using OrdinaryDiffEq
+using LinearSolve
 const FVM = FiniteVolumeMethod
 const DT = DelaunayTriangulation
 @struct_hash_equal FVM.Conditions
@@ -98,11 +100,36 @@ include("test_functions.jl")
     @test FVM.is_system(system)
     @test system.initial_time == 2.0
     @test system.final_time == 5.0
-    @test FVM.get_conditions(system, 1) == system.problems[1].conditions
-    @test FVM.get_conditions(system, 2) == system.problems[2].conditions
-    @test FVM.get_conditions(system, 3) == system.problems[3].conditions
-    @test FVM.get_conditions(system, 4) == system.problems[4].conditions
-    @test FVM.get_conditions(system, 5) == system.problems[5].conditions
+    @test FVM.get_conditions(system, 1) == system.conditions[1]
+    @test FVM.get_conditions(system, 2) == system.conditions[2]
+    @test FVM.get_conditions(system, 3) == system.conditions[3]
+    @test FVM.get_conditions(system, 4) == system.conditions[4]
+    @test FVM.get_conditions(system, 5) == system.conditions[5]
+    @test system.conditions[1].neumann_edges == prob1.conditions.neumann_edges
+    @test system.conditions[2].neumann_edges == prob2.conditions.neumann_edges
+    @test system.conditions[3].neumann_edges == prob3.conditions.neumann_edges
+    @test system.conditions[4].neumann_edges == prob4.conditions.neumann_edges
+    @test system.conditions[5].neumann_edges == prob5.conditions.neumann_edges
+    @test system.conditions[1].dirichlet_nodes == prob1.conditions.dirichlet_nodes
+    @test system.conditions[2].dirichlet_nodes == prob2.conditions.dirichlet_nodes
+    @test system.conditions[3].dirichlet_nodes == prob3.conditions.dirichlet_nodes
+    @test system.conditions[4].dirichlet_nodes == prob4.conditions.dirichlet_nodes
+    @test system.conditions[5].dirichlet_nodes == prob5.conditions.dirichlet_nodes
+    @test system.conditions[1].constrained_edges == prob1.conditions.constrained_edges
+    @test system.conditions[2].constrained_edges == prob2.conditions.constrained_edges
+    @test system.conditions[3].constrained_edges == prob3.conditions.constrained_edges
+    @test system.conditions[4].constrained_edges == prob4.conditions.constrained_edges
+    @test system.conditions[5].constrained_edges == prob5.conditions.constrained_edges
+    @test system.conditions[1].dudt_nodes == prob1.conditions.dudt_nodes
+    @test system.conditions[2].dudt_nodes == prob2.conditions.dudt_nodes
+    @test system.conditions[3].dudt_nodes == prob3.conditions.dudt_nodes
+    @test system.conditions[4].dudt_nodes == prob4.conditions.dudt_nodes
+    @test system.conditions[5].dudt_nodes == prob5.conditions.dudt_nodes
+    @test system.functions == (prob1.conditions.functions...,
+        prob2.conditions.functions...,
+        prob3.conditions.functions...,
+        prob4.conditions.functions...,
+        prob5.conditions.functions...)
 
     steady_system = SteadyFVMProblem(system)
     @inferred SteadyFVMProblem(system)
@@ -289,3 +316,43 @@ end
     @inferred FVM.eval_flux_function(prob, x, y, t, α, β, γ)
     @test _q == (Φ_q(x, y, t, α, β, γ, nothing), Ψ_q(x, y, t, α, β, γ, nothing))
 end
+
+
+tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=false)
+mesh = FVMGeometry(tri)
+Φ_bot = (x, y, t, u, p) -> -1 / 4 * exp(-x - t / 2)
+Φ_right = (x, y, t, u, p) -> 1 / 4 * exp(-1 - y - t / 2)
+Φ_top = (x, y, t, u, p) -> exp(-1 - x - t / 2)
+Φ_left = (x, y, t, u, p) -> -1 / 4 * exp(-y - t / 2)
+Φ_bc_fncs = (Φ_bot, Φ_right, Φ_top, Φ_left)
+Φ_bc_types = (Neumann, Neumann, Dirichlet, Neumann)
+Φ_BCs = BoundaryConditions(mesh, Φ_bc_fncs, Φ_bc_types)
+Ψ_bot = (x, y, t, u, p) -> exp(x + t / 2)
+Ψ_right = (x, y, t, u, p) -> -1 / 4 * exp(1 + y + t / 2)
+Ψ_top = (x, y, t, u, p) -> -1 / 4 * exp(1 + x + t / 2)
+Ψ_left = (x, y, t, u, p) -> exp(y + t / 2)
+Ψ_bc_fncs = (Ψ_bot, Ψ_right, Ψ_top, Ψ_left)
+Ψ_bc_types = (Dirichlet, Neumann, Neumann, Dirichlet)
+Ψ_BCs = BoundaryConditions(mesh, Ψ_bc_fncs, Ψ_bc_types)
+Φ_q = (x, y, t, α, β, γ, p) -> (-α[1] / 4, -β[1] / 4)
+Ψ_q = (x, y, t, α, β, γ, p) -> (-α[2] / 4, -β[2] / 4)
+Φ_S = (x, y, t, (Φ, Ψ), p) -> Φ^2 * Ψ - 2Φ
+Ψ_S = (x, y, t, (Φ, Ψ), p) -> -Φ^2 * Ψ + Φ
+Φ_exact = (x, y, t) -> exp(-x - y - t / 2)
+Ψ_exact = (x, y, t) -> exp(x + y + t / 2)
+Φ₀ = [Φ_exact(x, y, 0) for (x, y) in each_point(tri)]
+Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)]
+Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
+    initial_condition=Φ₀, final_time=1.0)
+Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function=Ψ_q, source_function=Ψ_S,
+    initial_condition=Ψ₀, final_time=1.0)
+prob = FVMSystem(Φ_prob, Ψ_prob)
+#sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), parallel=Val(false))
+
+u = prob.initial_condition
+du = zero(u)
+t = 0.0
+p = FVM.get_fvm_parameters(prob, Val(false))
+FVM.fvm_eqs!(du,u,p,t)
+
+@benchmark $FVM.fvm_eqs!($du,$u,$p,$t)

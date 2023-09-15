@@ -7,25 +7,25 @@ ct() = Dates.format(now(), "HH:MM:SS")
 function safe_include(filename; name=filename) # Workaround for not being able to interpolate into SafeTestset test names
     mod = @eval module $(gensym()) end
     @info "[$(ct())] Testing $name"
-    @testset "Example: $name" begin
+    @testset verbose = true "Example: $name" begin
         Base.include(mod, filename)
     end
 end
 
 @testset verbose = true "FiniteVolumeMethod.jl" begin
-    @testset "Geometry" begin
+    @testset verbose = true "Geometry" begin
         safe_include("geometry.jl")
     end
-    @testset "Conditions" begin
+    @testset verbose = true "Conditions" begin
         safe_include("conditions.jl")
     end
-    @testset "Problem" begin
+    @testset verbose = true "Problem" begin
         safe_include("problem.jl")
     end
-    @testset "Equations" begin
+    @testset verbose = true "Equations" begin
         safe_include("equations.jl")
     end
-    @testset "README" begin
+    @testset verbose = true "README" begin
         safe_include("README.jl")
     end
 
@@ -88,7 +88,7 @@ end
         safe_include(joinpath(dir, file_names[5]); name=file_names[5]) # laplaces_equation
     end
 
-    @testset "Aqua" begin
+    @testset verbose = true "Aqua" begin
         Aqua.test_all(FiniteVolumeMethod; ambiguities=false, project_extras=false) # don't care about julia < 1.2
         Aqua.test_ambiguities(FiniteVolumeMethod) # don't pick up Base and Core...
     end

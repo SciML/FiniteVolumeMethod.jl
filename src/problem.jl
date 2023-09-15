@@ -328,7 +328,6 @@ function merge_problem_conditions(probs)
     return conditions, cnum_fncs, fncs, wrapped_source_functions, wrapped_flux_functions
 end
 
-get_equation(system::FVMSystem, var) = system.problems[var]
 get_conditions(system::FVMSystem, var) = system.conditions[var]
 
 """
