@@ -13,11 +13,11 @@ $$
 
 in two dimensions using the finite volume method, with support also provided for steady-state problems and for systems of PDEs of the above form. In addition to this generic form above, we also provide support for specific problems that can be solved in a more efficient manner, namely:
 
-1. `DiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u]$.
-2. `MeanExitTimeProblem`s: $\div[D(\vb x)\grad T(\vb x)] = -1$.
-3. `LinearReactionDiffusionEquation`s: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
-4. `PoissonsEquation`: $\div[D(\vb x)\grad u]  f(\vb x)$.
-5. `LaplacesEquation`: $\div[D(\vb x)\grad u] = 0$.
+1. `DiffusionEquation`s: $\partial_tu = \boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla u]$.
+2. `MeanExitTimeProblem`s: $\boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla T(\boldsymbol x)] = -1$.
+3. `LinearReactionDiffusionEquation`s: $\partial_tu + \boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla u] + f(\boldsymbol x)u$.
+4. `PoissonsEquation`: $\boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla u] = f(\boldsymbol x)$.
+5. `LaplacesEquation`: $\boldsymbol\nabla\boldsymbol\cdot[D(\boldsymbol x)\boldsymbol\nabla u] = 0$.
 
 See the documentation for more information.
 
