@@ -260,7 +260,14 @@ Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, 
 @inline get_constrained_fidx(prob::FVMSystem, i, j, var) = prob.conditions[var].constrained_edges[(i, j)]
 @inline eval_condition_fnc(prob::FVMSystem, fidx, var, x, y, t, u) = eval_fnc_in_het_tuple(prob.functions, map_fidx(prob, fidx, var), x, y, t, u)
 @inline eval_source_fnc(prob::FVMSystem, var, x, y, t, u) = eval_fnc_in_het_tuple(prob.source_functions, var, x, y, t, u)
-@inline is_dudt_node(prob::FVMSystem, node, var) = any()
+@inline is_dudt_node(prob::FVMSystem, node, var) = is_dudt_node(prob.conditions[var], node)
+@inline is_neumann_edge(prob::FVMSystem, i, j, var) = is_neumann_edge(prob.conditions[var], i, j)
+@inline is_dirichlet_node(prob::FVMSystem, node, var) = is_dirichlet_node(prob.conditions[var], node)
+@inline is_constrained_edge(prob::FVMSystem, i, j, var) = is_constrained_edge(prob.conditions[var], i, j)
+@inline has_condition(prob::FVMSystem, node, var) = has_condition(prob.conditions[var], node)
+@inline has_dirichlet_nodes(prob::FVMSystem, var) = has_dirichlet_nodes(prob.conditions[var])
+@inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(prob.conditions[var])
+@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ) = eval_all_fncs_in_tuple(prob.flux_functions, x, y, t, α, β, γ)
 
 @inline eval_source_fnc(prob::FVMSystem, var, x, y, t, u) = eval_source_fnc(get_equation(prob, var), x, y, t, u)
 @inline is_dudt_node(prob::FVMSystem, node, var) = is_dudt_node(get_equation(prob, var), node)

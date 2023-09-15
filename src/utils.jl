@@ -55,3 +55,8 @@ end
 @inline function _eval_fnc_in_het_tuple(x, y, t, u, f::F) where {F} 
     return f(x, y, t, u)
 end
+
+@inline function eval_all_fncs_in_tuple(functions::Tuple, x, y, t, α, β, γ)
+    return _eval_all_fncs_in_tuple(x, y, t, α, β, γ, functions...)
+end
+@inline 
