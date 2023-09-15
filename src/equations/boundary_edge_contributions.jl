@@ -17,7 +17,7 @@ end
         _qx, _qy = flux[var]
         qn = (_qx * nx + _qy * ny) * ℓ
     else
-        qn = _neumann_get_flux(prob, x, y, t, u, i, j, var)
+        qn = _neumann_get_flux(prob, x, y, t, u, i, j, var) * ℓ
     end
     return qn
 end
