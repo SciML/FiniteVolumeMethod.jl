@@ -91,7 +91,7 @@ ICs = InternalConditions((x, y, t, u, p) -> zero(u),
 # one suitable guess is $u(x, y) = 100y$ with $u(1/2, y) = 0$ for $0 \leq y \leq 2/5$;
 # in fact, $u(x, y) = 100y$ is the solution of the problem without the internal condition. 
 # Let us now use this to define our initial condition. 
-initial_condition = zeros(num_points(tri))
+initial_condition = zeros(DelaunayTriangulation.num_solid_vertices(tri))
 for i in each_solid_vertex(tri)
     x, y = get_point(tri, i)
     initial_condition[i] = ifelse(x == 1 / 2 && 0 ≤ y ≤ 2 / 5, 0, 100y)

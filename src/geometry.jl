@@ -9,6 +9,13 @@ This is a struct for holding the properties of a control volume's intersection w
 - `cv_edge_midpoints::NTuple{3,NTuple{2,Float64}}`: The midpoints of the control volume edges. If the triangle is `(i, j, k)`, then the edges are given in the order `(i, j)`, `(j, k)`, and `(k, i)`, where 'edge' refers to the edge joining e.g. the midpoint of the edge `(i, j)` to the centroid of the triangle. 
 - `cv_edge_normals::NTuple{3,NTuple{2,Float64}}`: The normal vectors to the control volume edges, in the same order as in `cv_edge_midpoints`.
 - `cv_edge_lengths::NTuple{3,Float64}`: The lengths of the control volume edges, in the same order as in `cv_edge_midpoints`.
+
+!!! notes 
+
+    The shape function coefficients are defined so that, if `s` are the coefficients and the triangle is `T = (i, j, k)`,
+    with function values `u[i]`, `u[j]`, and `u[k]` at the vertices `i`, `j`, and `k`, respectively, 
+    then `αxₙ + βyₙ + γₙ = u[n]` for `n = i, j, k`, where `xₙ` and `yₙ` are the `x`- and `y`-coordinates of the `n`th vertex, respectively, 
+    `α = s₁u₁ + s₂u₂ + s₃u₃`, `β = s₄u₁ + s₅u₂ + s₆u₃`, and `γ = s₇u₁ + s₈u₂ + s₉u₃`.
 """
 struct TriangleProperties
     shape_function_coefficients::NTuple{9,Float64}
@@ -43,6 +50,26 @@ function Base.show(io::IO, ::MIME"text/plain", geo::FVMGeometry)
     ne = DelaunayTriangulation.num_solid_edges(geo.triangulation_statistics)
     print(io, "FVMGeometry with $(nv) control volumes, $(nt) triangles, and $(ne) edges")
 end
+"""
+    get_triangle_props(mesh, i, j, k)
+
+Get the [`TriangleProperties`](@ref) for the triangle `(i, j, k)` in `mesh`.
+"""
+get_triangle_props(mesh::FVMGeometry, i, j, k) = mesh.triangle_props[(i, j, k)]
+
+"""
+    get_volume(mesh, i)
+
+Get the volume of the `i`th control volume in `mesh`.
+"""
+get_volume(mesh::FVMGeometry, i) = mesh.cv_volumes[i]
+
+"""
+    get_point(mesh, i)
+
+Get the `i`th point in `mesh`.
+"""
+DelaunayTriangulation.get_point(mesh::FVMGeometry, i) = DelaunayTriangulation.get_point(mesh.triangulation, i)
 
 function FVMGeometry(tri::Triangulation)
     stats = statistics(tri)

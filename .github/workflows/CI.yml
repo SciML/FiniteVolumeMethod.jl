@@ -14,8 +14,6 @@ jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
-    env:
-      JULIA_NUM_THREADS: ${{ matrix.julia-threads }}
     strategy:
       fail-fast: false
       matrix:
@@ -23,12 +21,20 @@ jobs:
           - '1'
           - '1.6'
         os:
-          - ubuntu-latest
+          - ubuntu-20.04 # https://github.com/actions/runner-images/discussions/7188
         arch:
           - x64
     steps:
+      - name: Increase swapfile
+        run: |
+          sudo swapoff -a
+          sudo fallocate -l 8G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          sudo swapon --show      
       - name: Checkout repository for access
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@v1
@@ -61,7 +67,7 @@ jobs:
       contents: write
       statuses: write
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'

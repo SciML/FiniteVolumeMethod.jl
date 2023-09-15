@@ -11,11 +11,19 @@ $$
 \dfrac{\partial u(\boldsymbol x, t)}{\partial t} + \boldsymbol{\nabla} \boldsymbol{\cdot} \boldsymbol{q}(\boldsymbol x, t, u) = S(\boldsymbol x, t, u), \quad (x, y)^{\mkern-1.5mu\mathsf{T}} \in \Omega \subset \mathbb R^2,t>0,
 $$
 
-in two dimensions using the finite volume method, with support also provided for steady-state problems and for systems of PDEs of the above form. 
+in two dimensions using the finite volume method, with support also provided for steady-state problems and for systems of PDEs of the above form. In addition to this generic form above, we also provide support for specific problems that can be solved in a more efficient manner, namely:
+
+1. `DiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u]$.
+2. `MeanExitTimeProblem`s: $\div[D(\vb x)\grad T(\vb x)] = -1$.
+3. `LinearReactionDiffusionEquation`s: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
+4. `PoissonsEquation`: $\div[D(\vb x)\grad u]  f(\vb x)$.
+5. `LaplacesEquation`: $\div[D(\vb x)\grad u] = 0$.
+
+See the documentation for more information.
 
 If this package doesn't suit what you need, you may like to review some of the other PDE packages shown [here](https://github.com/JuliaPDE/SurveyofPDEPackages).
 
- As a very quick demonstration, here is how we could solve a diffusion equation with Dirichlet boundary conditions on a square domain; please see the docs for more information.
+ As a very quick demonstration, here is how we could solve a diffusion equation with Dirichlet boundary conditions on a square domain using the standard `FVMProblem` formulation; please see the docs for more information.
 
 ```julia
 using FiniteVolumeMethod, DelaunayTriangulation, CairoMakie, DifferentialEquations
@@ -39,4 +47,12 @@ record(fig, "anim.gif", eachindex(sol)) do i
 end
 ```
 
-![Animation of a solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/imp_clean/anim.gif)
+![Animation of a solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/anim.gif)
+
+We could have equivalently used the `DiffusionEquation` template, so that `prob` could have also been defined by 
+
+```julia
+prob = DiffusionEquation(mesh, BCs; diffusion_function=D, initial_condition, final_time)
+```
+
+and be solved much more efficiently. See the documentation for more information.

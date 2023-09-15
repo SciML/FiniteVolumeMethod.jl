@@ -109,11 +109,7 @@ ens_prob = EnsembleProblem(steady_prob,
     prob_func=(prob, i, repeat) -> let T∞_range = T∞_range, h = h, k = k
         _prob =
             @set prob.problem.conditions.functions[3].parameters =
-                (h=h, T∞=T∞_range[i], k=k) 
-        ## This way of accessing the parameters is using some internals (specifically,
-        ## the functions field of conditions is not public API). 
-        ## A better way could be to e.g. make T∞ mutable initially, e.g. Ref(20),
-        ## and then mutate it.
+                (h=h, T∞=T∞_range[i], k=k)
         return _prob
     end,
     safetycopy=false)

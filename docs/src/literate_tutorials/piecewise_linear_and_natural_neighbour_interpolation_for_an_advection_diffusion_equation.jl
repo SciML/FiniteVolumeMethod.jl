@@ -29,7 +29,6 @@ tri = triangulate_rectangle(-L, L, -L, L, 2, 2, single_boundary=true)
 tot_area = get_total_area(tri)
 max_area_function = (A, r) -> 1e-6tot_area * r^2 / A
 area_constraint = (T, p, q, r, A) -> begin
-    p, q, r = get_point(tri, T...)
     c = (p .+ q .+ r) ./ 3
     dist_to_origin = norm(c)
     flag = A ≥ max_area_function(A, dist_to_origin)

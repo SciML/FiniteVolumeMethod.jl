@@ -40,7 +40,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> -one(u), Neumann)
 # So, for this problem, $D = 1$ and $S = u$. 
 diffusion_function = (x, y, t, u, p) -> one(u)
 source_function = (x, y, t, u, p) -> u
-initial_condition = zeros(num_points(tri))
+initial_condition = zeros(DelaunayTriangulation.num_solid_vertices(tri))
 final_time = Inf
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
