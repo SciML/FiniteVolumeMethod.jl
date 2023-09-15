@@ -12,7 +12,7 @@ inside the square $[0, 100]^2$ with homogeneous Neumann boundary conditions. We
 start by defining the problem, remembering that we need one problem for each variable $u$
 and $v$.
 
-```@example
+```@example ex12
 using FiniteVolumeMethod, DelaunayTriangulation
 tri = triangulate_rectangle(0, 100, 0, 100, 250, 250, single_boundary=true)
 mesh = FVMGeometry(tri)
@@ -53,13 +53,13 @@ v_prob = FVMProblem(mesh, BCs_v;
     flux_function=q_v, flux_parameters=q_v_parameters,
     source_function=S_v, source_parameters=S_v_parameters,
     initial_condition=v_initial_condition, final_time=final_time)
-prob = FVMSystem(u_prob, v_prob);
+prob = FVMSystem(u_prob, v_prob)
 ```
 
-Now let's solve and animate the problem.
+# Now let's solve and animate the problem.
 ```julia
-using OrdinaryDiffEq, LinearSolve, CairoMakie
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=1.0) # very slow
+using OrdinaryDiffEq, Sundials, CairoMakie
+sol = solve(prob, CVODE_BDF(linear_solver=:GMRES), saveat=1.0, parallel=Val(false)) 
 fig = Figure(fontsize=44)
 x = LinRange(0, 100, 250)
 y = LinRange(0, 100, 250)
@@ -79,12 +79,11 @@ record(fig, joinpath(@__DIR__, "../figures", "keller_segel_chemotaxis.mp4"), eac
 end;
 ```
 
-![Animation of the Gray-Scott model](../figures/keller_segel_chemotaxis.mp4)
+![Animation of Keller-Segel chemotaxis](../figures/keller_segel_chemotaxis.mp4)
 
 Some pretty amazing patterns!
 
-## Just the code 
-
+## Just the code
 An uncommented version of this example is given below.
 
 ```julia
@@ -130,8 +129,8 @@ v_prob = FVMProblem(mesh, BCs_v;
     initial_condition=v_initial_condition, final_time=final_time)
 prob = FVMSystem(u_prob, v_prob);
 
-using OrdinaryDiffEq, LinearSolve, CairoMakie
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=1.0) # very slow
+using OrdinaryDiffEq, Sundials, CairoMakie
+sol = solve(prob, CVODE_BDF(linear_solver=:GMRES), saveat=1.0, parallel=Val(false)) 
 fig = Figure(fontsize=44)
 x = LinRange(0, 100, 250)
 y = LinRange(0, 100, 250)
@@ -150,3 +149,7 @@ record(fig, joinpath(@__DIR__, "../figures", "keller_segel_chemotaxis.mp4"), eac
     i[] = _i
 end;
 ```
+
+---
+
+*This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*

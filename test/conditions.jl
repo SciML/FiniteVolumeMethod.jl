@@ -81,3 +81,53 @@ end
         end
     end
 end
+
+@testset "Flattening and evaluating heterogeneous tuples" begin
+    @testset "flatten_tuples" begin # used for combining problems
+        tuple1 = Tuple(rand(5))
+        tuple2 = Tuple(rand(3))
+        tuple3 = Tuple(rand(10))
+        tup = (tuple1..., tuple2..., tuple3...)
+        @test FVM.flatten_tuples((tuple1, tuple2, tuple3)) == tup
+        @test FVM.flatten_tuples((tuple1,)) == tuple1
+    end
+
+    @testset "eval_fnc_in_het_tuple" begin
+        f1 = (x, y, t, u) -> x * y
+        f2 = (x, y, t, u) -> t * u
+        f3 = (x, y, t, u) -> 1.0
+        f4 = (x, y, t, u) -> 5x
+        f5 = (x, y, t, u) -> sin(x)
+        f = (f1, f2, f3, f4, f5)
+        x, y, t, u = rand(4)
+        for i in 1:5
+            @test FVM.eval_fnc_in_het_tuple(f, i, x, y, t, u) == f[i](x, y, t, u)
+            @inferred FVM.eval_fnc_in_het_tuple(f, i, x, y, t, u)
+        end
+    end
+
+    @testset "eval_all_fncs_in_tuple" begin
+        f1 = (x, y, t, α, β, γ) -> x * y
+        f2 = (x, y, t, α, β, γ) -> t * α * x + t * β * y + γ
+        f3 = (x, y, t, α, β, γ) -> 1.0
+        f4 = (x, y, t, α, β, γ) -> 5x
+        f5 = (x, y, t, α, β, γ) -> sin(x)
+        f = (f1, f2, f3, f4, f5)
+        x, y, t, α, β, γ = rand(6)
+        vals = FVM.eval_all_fncs_in_tuple(f, x, y, t, α, β, γ)
+        @test vals == ntuple(i -> f[i](x, y, t, α, β, γ), 5)
+        @inferred FVM.eval_all_fncs_in_tuple(f, x, y, t, α, β, γ)
+
+        # functions that return tuples
+        f1 = (x, y, t, α, β, γ) -> (x * y, -x * y)
+        f2 = (x, y, t, α, β, γ) -> (t * α * x + t * β * y + γ, -x)
+        f3 = (x, y, t, α, β, γ) -> (1.0, x)
+        f4 = (x, y, t, α, β, γ) -> (5x, -y)
+        f5 = (x, y, t, α, β, γ) -> (sin(x), cos(x))
+        f = (f1, f2, f3, f4, f5)
+        x, y, t, α, β, γ = rand(6)
+        vals = FVM.eval_all_fncs_in_tuple(f, x, y, t, α, β, γ)
+        @test vals == ntuple(i -> f[i](x, y, t, α, β, γ), 5)
+        @inferred FVM.eval_all_fncs_in_tuple(f, x, y, t, α, β, γ)
+    end
+end

@@ -38,3 +38,31 @@ function two_point_interpolant(mesh, u::AbstractVector, i, j, mx, my)
     ℓ′ = sqrt((mx - xᵢ)^2 + (my - yᵢ)^2)
     return u[i] + (u[j] - u[i]) * ℓ′ / ℓ
 end
+
+function flatten_tuples(f::NTuple{N,Any}) where {N}
+    tail_f = Base.tail(f)
+    return (f[1]..., flatten_tuples(tail_f)...)
+end
+flatten_tuples(::Tuple{}) = ()
+
+@inline function eval_fnc_in_het_tuple(functions::Tuple, fidx, x, y, t, u)
+    return _eval_fnc_in_het_tuple(x, y, t, u, fidx, functions...)
+end
+@inline function _eval_fnc_in_het_tuple(x, y, t, u, fidx, f::F, fs...) where {F}
+    fidx == 1 && return _eval_fnc_in_het_tuple(x, y, t, u, fidx, f)
+    return _eval_fnc_in_het_tuple(x, y, t, u, fidx - 1, fs...)
+end
+@inline function _eval_fnc_in_het_tuple(x, y, t, u, fidx, f::F) where {F} # need fidx to avoid dispatch report
+    return f(x, y, t, u)
+end
+
+@inline function eval_all_fncs_in_tuple(functions::Tuple, x, y, t, α, β, γ)
+    return _eval_all_fncs_in_tuple(x, y, t, α, β, γ, functions...)
+end
+@inline function _eval_all_fncs_in_tuple(x, y, t, α, β, γ, f::F, fs...) where {F}
+    f1 = f(x, y, t, α, β, γ)
+    return (f1, _eval_all_fncs_in_tuple(x, y, t, α, β, γ, fs...)...)
+end
+@inline function _eval_all_fncs_in_tuple(x, y, t, α, β, γ, f::F) where {F}
+    return (f(x, y, t, α, β, γ),)
+end

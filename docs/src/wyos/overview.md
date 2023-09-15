@@ -19,8 +19,8 @@ for specific types of problems, namely:
 
 1. `DiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u]$.
 2. `MeanExitTimeProblem`s: $\div[D(\vb x)\grad T(\vb x)] = -1$.
-3. `LinearReactionDiffusionEquation`s: $\partial_tu + \div[D(\vb x)\grad u] + f(\vb x)u$.
-4. `PoissonsEquation`: $\div[D(\vb x)\grad u]  f(\vb x)$.
+3. `LinearReactionDiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u] + f(\vb x)u$.
+4. `PoissonsEquation`: $\div[D(\vb x)\grad u] = f(\vb x)$.
 5. `LaplacesEquation`: $\div[D(\vb x)\grad u] = 0$.
 
 The docstrings below define the templates for these problems.

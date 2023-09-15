@@ -7,28 +7,35 @@
     else
         _neumann_get_flux(prob, x, y, t, u, i, j)
     end
-    return qn 
+    return qn
 end
 
 # primitive: get flux contribution across a boundary edge (i, j) in a system, taking care for a Neumann boundary condition for a single variable. This is used as a function barrier
-@inline function _get_boundary_flux(prob::FVMSystem, x, y, t, α, β, γ, nx, ny, i, j, u::T, var) where {T}
-    return _get_boundary_flux(get_equation(prob, var), x, y, t, α, β, γ, nx, ny, i, j, u) 
+@inline function _get_boundary_flux(prob::FVMSystem, x, y, t, nx, ny, i, j, ℓ, u::T, var, flux) where {T}
+    ij_is_neumann = is_neumann_edge(prob, i, j, var)
+    if !ij_is_neumann
+        _qx, _qy = flux[var]
+        qn = (_qx * nx + _qy * ny) * ℓ
+    else
+        qn = _neumann_get_flux(prob, x, y, t, u, i, j, var) * ℓ
+    end
+    return qn
 end
 
 # get flux contribution across a boundary edge (i, j), taking care for a Neumann boundary condition for all variables in a system
 @inline function _get_boundary_fluxes(prob::FVMSystem, x, y, t, α, β, γ, nx, ny, i, j, u::T, ℓ) where {T}
-    qn = ntuple(_neqs(prob)) do var
-        _qn = _get_boundary_flux(prob, x, y, t, α, β, γ, nx, ny, i, j, u, var)
-        return _qn * ℓ
-    end 
-    return qn
+    all_flux = eval_flux_function(prob, x, y, t, α, β, γ) # if we use the primitive, then we need to recursively evaluate the flux over and over
+    normal_flux = ntuple(_neqs(prob)) do var
+        _get_boundary_flux(prob, x, y, t, nx, ny, i, j, ℓ, u, var, all_flux)
+    end
+    return normal_flux
 end
 
 # function for getting both fluxes for a non-system problem
 @inline function get_boundary_fluxes(prob::AbstractFVMProblem, α::T, β, γ, i, j, t) where {T}
     nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ = get_boundary_cv_components(prob.mesh, i, j)
     q1 = _get_boundary_flux(prob, mᵢx, mᵢy, t, α, β, γ, nx, ny, i, j, α * mᵢx + β * mᵢy + γ)
-    q2 = _get_boundary_flux(prob, mⱼx, mⱼy, t, α, β, γ, nx, ny, i, j, α * mⱼx + β * mⱼy + γ) 
+    q2 = _get_boundary_flux(prob, mⱼx, mⱼy, t, α, β, γ, nx, ny, i, j, α * mⱼx + β * mⱼy + γ)
     return q1 * ℓ, q2 * ℓ
 end
 
@@ -50,7 +57,7 @@ end
 end
 
 # function for applying both fluxes for a system problem
-@inline function update_du!(du, prob::FVMSystem, i, j, summand₁, summand₂) 
+@inline function update_du!(du, prob::FVMSystem, i, j, summand₁, summand₂)
     for var in 1:_neqs(prob)
         du[var, i] = du[var, i] - summand₁[var]
         du[var, j] = du[var, j] - summand₂[var]

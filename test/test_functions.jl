@@ -625,7 +625,7 @@ function test_compute_flux(_prob, steady, system, steady_system)
             else
                 all_qvs = ntuple(ℓ -> dot(qv[ℓ], (nx, ny)), FVM._neqs(prob))
                 @test collect(_qv) ≈ collect(all_qvs)
-                @test all_qvs[1] ≈ compute_flux(prob.problems[1], _i, _j, @views(u[1, :]), 2.5)
+                @test all_qvs[1] ≈ compute_flux(_prob, _i, _j, @views(u[1, :]), 2.5)
             end
             @inferred compute_flux(prob, _i, _j, u, 2.5)
         end
@@ -657,7 +657,7 @@ function test_compute_flux(_prob, steady, system, steady_system)
                 else
                     all_qvs = ntuple(ℓ -> dot(qv[ℓ], (nx, ny)), FVM._neqs(prob))
                     @test collect(_qv) ≈ collect(all_qvs)
-                    @test all_qvs[1] ≈ compute_flux(prob.problems[1], i, j, @views(u[1, :]), 2.5)
+                    @test all_qvs[1] ≈ compute_flux(_prob, i, j, @views(u[1, :]), 2.5)
                 end
                 @inferred compute_flux(prob, i, j, u, 2.5)
             end
@@ -669,7 +669,7 @@ function test_jacobian_sparsity(prob::FVMProblem)
     A = zeros(DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation), DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation))
     for i in each_solid_vertex(prob.mesh.triangulation)
         A[i, i] = 1.0
-        for j in get_neighbours(tri, i)
+        for j in get_neighbours(prob.mesh.triangulation, i)
             DelaunayTriangulation.is_boundary_index(j) && continue
             A[i, j] = 1.0
         end

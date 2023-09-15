@@ -190,22 +190,35 @@ See also [`FVMProblem`](@ref) and [`SteadyFVMProblem`](@ref).
     [`SteadyFVMProblem`](@ref) to the system rather than first applying it to
     each individual [`FVMProblem`](@ref) in the system.
 """
-struct FVMSystem{N,FG,P,IC,FT} <: AbstractFVMProblem
+struct FVMSystem{N,FG,P,IC,FT,F,S,FF} <: AbstractFVMProblem
     mesh::FG
     problems::P
     initial_condition::IC
     initial_time::FT
     final_time::FT
-end
-function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::FT, final_time::FT) where {FG<:FVMGeometry,P,IC,FT}
-    @assert length(problems) > 0 "There must be at least one problem."
-    @assert all(p -> p.mesh === mesh, problems) "All problems must have the same mesh."
-    @assert all(p -> p.initial_time === initial_time, problems) "All problems must have the same initial time."
-    @assert all(p -> p.final_time === final_time, problems) "All problems must have the same final time."
-    @assert size(initial_condition) == (length(problems), length(problems[1].initial_condition)) "The initial condition must be a matrix with the same number of rows as the number of problems."
-    sys = FVMSystem{length(problems),FG,P,IC,FT}(mesh, problems, initial_condition, initial_time, final_time)
-    _check_fvmsystem_flux_function(sys)
-    return sys
+    conditions::NTuple{N,SimpleConditions}
+    cnum_fncs::NTuple{N,Int} # cumulative numbers. e.g. if num_fncs is the number of functions for each variable, then cnum_fncs[i] = sum(num_fncs[1:i-1]). Can't just use the number of boundary vertices since we might also have internal conditions
+    functions::F
+    source_functions::S 
+    flux_functions::FF
+    function FVMSystem(mesh::FG, problems::P, initial_condition::IC, initial_time::FT, final_time::FT, conditions, num_fncs, functions::F, source_functions::S, flux_functions::FF) where {FG<:FVMGeometry,P,IC,FT,F,S,FF}
+        @assert length(problems) > 0 "There must be at least one problem."
+        @assert all(p -> p.mesh === mesh, problems) "All problems must have the same mesh."
+        @assert all(p -> p.initial_time === initial_time, problems) "All problems must have the same initial time."
+        @assert all(p -> p.final_time === final_time, problems) "All problems must have the same final time."
+        @assert size(initial_condition) == (length(problems), length(problems[1].initial_condition)) "The initial condition must be a matrix with the same number of rows as the number of problems."
+        @assert all(i -> problems[i].conditions.neumann_edges == conditions[i].neumann_edges, 1:length(problems)) "The Neumann edges in the `i`th `SimpleConditions` must match those from the `i`th problem."
+        @assert all(i -> problems[i].conditions.constrained_edges == conditions[i].constrained_edges, 1:length(problems)) "The constrained edges in the `i`th `SimpleConditions` must match those from the `i`th problem."
+        @assert all(i -> problems[i].conditions.dirichlet_nodes == conditions[i].dirichlet_nodes, 1:length(problems)) "The Dirichlet nodes in the `i`th `SimpleConditions` must match those from the `i`th problem."
+        @assert all(i -> problems[i].conditions.dudt_nodes == conditions[i].dudt_nodes, 1:length(problems)) "The dudt nodes in the `i`th `SimpleConditions` must match those from the `i`th problem."
+        @assert all(i -> problems[i].source_function === source_functions[i].fnc, 1:length(problems)) "The source functions must match those from the problems."
+        @assert all(i -> problems[i].source_parameters === source_functions[i].parameters, 1:length(problems)) "The source parameters must match those from the problems."
+        @assert all(i -> problems[i].flux_function === flux_functions[i].fnc, 1:length(problems)) "The flux functions must match those from the problems."
+        @assert all(i -> problems[i].flux_parameters === flux_functions[i].parameters, 1:length(problems)) "The flux parameters must match those from the problems."
+        sys = new{length(problems),FG,P,IC,FT,F,S,FF}(mesh, problems, initial_condition, initial_time, final_time, conditions, num_fncs, functions, source_functions, flux_functions)
+        _check_fvmsystem_flux_function(sys)
+        return sys
+    end
 end
 
 const FLUX_ERROR = """
@@ -247,20 +260,23 @@ end
 
 Base.show(io::IO, ::MIME"text/plain", prob::FVMSystem{N}) where {N} = print(io, "FVMSystem with $N equations and time span ($(prob.initial_time), $(prob.final_time))")
 
-@inline get_dudt_fidx(prob::FVMSystem, i, var) = get_dudt_fidx(get_equation(prob, var), i)
-@inline get_neumann_fidx(prob::FVMSystem, i, j, var) = get_neumann_fidx(get_equation(prob, var), i, j)
-@inline get_dirichlet_fidx(prob::FVMSystem, i, var) = get_dirichlet_fidx(get_equation(prob, var), i)
-@inline get_constrained_fidx(prob::FVMSystem, i, j, var) = get_constrained_fidx(get_equation(prob, var), i, j)
-@inline eval_condition_fnc(prob::FVMSystem, fidx, var, x, y, t, u) = eval_condition_fnc(get_equation(prob, var), fidx, x, y, t, u)
-@inline eval_source_fnc(prob::FVMSystem, var, x, y, t, u) = eval_source_fnc(get_equation(prob, var), x, y, t, u)
-@inline is_dudt_node(prob::FVMSystem, node, var) = is_dudt_node(get_equation(prob, var), node)
-@inline is_neumann_edge(prob::FVMSystem, i, j, var) = is_neumann_edge(get_equation(prob, var), i, j)
-@inline is_dirichlet_node(prob::FVMSystem, node, var) = is_dirichlet_node(get_equation(prob, var), node)
-@inline is_constrained_edge(prob::FVMSystem, i, j, var) = is_constrained_edge(get_equation(prob, var), i, j)
-@inline has_condition(prob::FVMSystem, node, var) = has_condition(get_equation(prob, var), node)
-@inline has_dirichlet_nodes(prob::FVMSystem) = any(i -> has_dirichlet_nodes(get_equation(prob, i)), 1:_neqs(prob))
-@inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(get_equation(prob, var))
-@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ)  = ntuple(i -> eval_flux_function(get_equation(prob, i), x, y, t, α, β, γ), _neqs(prob))
+@inline map_fidx(prob::FVMSystem, fidx, var) = fidx + prob.cnum_fncs[var]
+
+@inline get_dudt_fidx(prob::FVMSystem, i, var) = get_dudt_nodes(get_conditions(prob, var))[i]
+@inline get_neumann_fidx(prob::FVMSystem, i, j, var) = get_neumann_edges(get_conditions(prob, var))[(i, j)]
+@inline get_dirichlet_fidx(prob::FVMSystem, i, var) = get_dirichlet_nodes(get_conditions(prob, var))[i]
+@inline get_constrained_fidx(prob::FVMSystem, i, j, var) = get_constrained_edges(get_conditions(prob, var))[(i, j)]
+@inline eval_condition_fnc(prob::FVMSystem, fidx, var, x, y, t, u) = eval_fnc_in_het_tuple(prob.functions, map_fidx(prob, fidx, var), x, y, t, u)
+@inline eval_source_fnc(prob::FVMSystem, var, x, y, t, u) = eval_fnc_in_het_tuple(prob.source_functions, var, x, y, t, u)
+@inline is_dudt_node(prob::FVMSystem, node, var) = is_dudt_node(get_conditions(prob, var), node)
+@inline is_neumann_edge(prob::FVMSystem, i, j, var) = is_neumann_edge(get_conditions(prob, var), i, j)
+@inline is_dirichlet_node(prob::FVMSystem, node, var) = is_dirichlet_node(get_conditions(prob, var), node)
+@inline is_constrained_edge(prob::FVMSystem, i, j, var) = is_constrained_edge(get_conditions(prob, var), i, j)
+@inline has_condition(prob::FVMSystem, node, var) = has_condition(get_conditions(prob, var), node)
+@inline has_dirichlet_nodes(prob::FVMSystem, var) = has_dirichlet_nodes(get_conditions(prob, var))
+@inline has_dirichlet_nodes(prob::FVMSystem{N}) where {N} = any(i -> has_dirichlet_nodes(prob, i), 1:N)
+@inline get_dirichlet_nodes(prob::FVMSystem, var) = get_dirichlet_nodes(get_conditions(prob, var))
+@inline eval_flux_function(prob::FVMSystem, x, y, t, α, β, γ) = eval_all_fncs_in_tuple(prob.flux_functions, x, y, t, α, β, γ)
 
 function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     N == 0 && error("There must be at least one problem.")
@@ -272,11 +288,47 @@ function FVMSystem(probs::Vararg{FVMProblem,N}) where {N}
     for (i, prob) in enumerate(probs)
         initial_condition[i, :] .= prob.initial_condition
     end
-    return FVMSystem(mesh, probs, initial_condition, initial_time, final_time)
+    conditions, num_fncs, fncs, source_functions, flux_functions = merge_problem_conditions(probs)
+    return FVMSystem(mesh, probs, initial_condition, initial_time, final_time, conditions, num_fncs, fncs, source_functions, flux_functions)
 end
 
-get_equation(system::FVMSystem, var) = system.problems[var]
-get_conditions(system::FVMSystem, var) = get_equation(system, var).conditions
+function merge_problem_conditions(probs)
+    N = length(probs)
+    num_fncs = ntuple(N) do i
+        length(probs[i].conditions.functions)
+    end
+    num_fncs_tail = Base.front(num_fncs)
+    cnum_fncs = (0, cumsum(num_fncs_tail)...) # 0 sso that we can do cnum_fncs[i] instead of cnum_fncs[i-1], which makes indexing annoying
+    fncs = ntuple(N) do i
+        probs[i].conditions.functions
+    end |> flatten_tuples
+    conditions = ntuple(N) do i
+        prob = probs[i]
+        conds = prob.conditions
+        neumann_edges = get_neumann_edges(conds)
+        constrained_edges = get_constrained_edges(conds)
+        dirichlet_nodes = get_dirichlet_nodes(conds)
+        dudt_nodes = get_dudt_nodes(conds)
+        return SimpleConditions(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes)
+    end
+    source_functions = ntuple(N) do i
+        probs[i].source_function
+    end
+    source_parameters = ntuple(N) do i
+        probs[i].source_parameters
+    end
+    flux_functions = ntuple(N) do i
+        probs[i].flux_function
+    end
+    flux_parameters = ntuple(N) do i
+        probs[i].flux_parameters
+    end
+    wrapped_source_functions = wrap_functions(source_functions, source_parameters)
+    wrapped_flux_functions = wrap_functions(flux_functions, flux_parameters)
+    return conditions, cnum_fncs, fncs, wrapped_source_functions, wrapped_flux_functions
+end
+
+get_conditions(system::FVMSystem, var) = system.conditions[var]
 
 """
     construct_flux_function(q, D, Dp)

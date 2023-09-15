@@ -79,7 +79,6 @@ end
     @test fl ≈ flser
 end
 
-
 @testset "Diffusion problem" begin
     prob = example_diffusion_problem()
     u = prob.initial_condition

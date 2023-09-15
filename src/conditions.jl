@@ -15,7 +15,7 @@ struct ParametrisedFunction{F<:Function,P} <: Function
     fnc::F
     parameters::P
 end
-@inline (f::ParametrisedFunction{F,P})(x, y, t, u) where {F,P} = f.fnc(x, y, t, u, f.parameters)
+@inline (f::ParametrisedFunction{F,P})(args...) where {F,P} = f.fnc(args..., f.parameters)
 
 """
     ConditionType 
@@ -248,8 +248,10 @@ end
     return InternalConditions((functions,); dirichlet_nodes, dudt_nodes, parameters=(parameters,))
 end
 
+abstract type AbstractConditions end
+
 """
-    Conditions{F}
+    Conditions{F} <: AbstractConditions
 
 This is a `struct` that holds the boundary and internal conditions for the PDE. The constructor is 
 
@@ -280,7 +282,7 @@ The functions that define the boundary and internal conditions. The `i`th functi
 the `mesh` corresponding to the `i`th boundary index, as defined in DelaunayTriangulation.jl. The `i`th function is stored 
 as a [`ParametrisedFunction`](@ref).
 """
-struct Conditions{F<:Tuple}
+struct Conditions{F<:Tuple} <: AbstractConditions
     neumann_edges::Dict{NTuple{2,Int},Int}
     constrained_edges::Dict{NTuple{2,Int},Int}
     dirichlet_nodes::Dict{Int,Int}
@@ -290,7 +292,7 @@ struct Conditions{F<:Tuple}
         return new{F}(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions)
     end
 end
-function Base.show(io::IO, ::MIME"text/plain", conds::Conditions)
+function Base.show(io::IO, ::MIME"text/plain", conds::AbstractConditions)
     nn = length(conds.neumann_edges)
     nc = length(conds.constrained_edges)
     nd = length(conds.dirichlet_nodes)
@@ -307,28 +309,28 @@ end
 
 Get the index of the function that corresponds to the [`Dudt`](@ref) condition at `node`.
 """
-@inline get_dudt_fidx(conds::Conditions, node) = conds.dudt_nodes[node]
+@inline get_dudt_fidx(conds::AbstractConditions, node) = conds.dudt_nodes[node]
 
 """
     get_neumann_fidx(conds, i, j)
 
 Get the index of the function that corresponds to the [`Neumann`](@ref) condition at the edge `(i, j)`.
 """
-@inline get_neumann_fidx(conds::Conditions, i, j) = conds.neumann_edges[(i, j)]
+@inline get_neumann_fidx(conds::AbstractConditions, i, j) = conds.neumann_edges[(i, j)]
 
 """
     get_dirichlet_fidx(conds, node)
 
 Get the index of the function that corresponds to the [`Dirichlet`](@ref) condition at `node`.
 """
-@inline get_dirichlet_fidx(conds::Conditions, node) = conds.dirichlet_nodes[node]
+@inline get_dirichlet_fidx(conds::AbstractConditions, node) = conds.dirichlet_nodes[node]
 
 """
     get_constrained_fidx(conds, i, j)
 
 Get the index of the function that corresponds to the [`Constrained`](@ref) condition at the edge `(i, j)`.
 """
-@inline get_constrained_fidx(conds::Conditions, i, j) = conds.constrained_edges[(i, j)]
+@inline get_constrained_fidx(conds::AbstractConditions, i, j) = conds.constrained_edges[(i, j)]
 
 @inline get_f(conds::Conditions{F}, fidx) where {F} = conds.functions[fidx]
 
@@ -337,107 +339,97 @@ Get the index of the function that corresponds to the [`Constrained`](@ref) cond
 
 Evaluate the function that corresponds to the condition at `fidx` at the point `(x, y)` at time `t` with solution `u`.
 """
-@inline function eval_condition_fnc(conds::Conditions{F}, fidx, x, y, t, u) where {F}
-    return _eval_condition_fnc(x, y, t, u, fidx, conds.functions...)
-end
-@inline function _eval_condition_fnc(x, y, t, u, fidx, f::F, fs...) where {F}
-    fidx == 1 && return _eval_condition_fnc(x, y, t, u, fidx, f)
-    return _eval_condition_fnc(x, y, t, u, fidx - 1, fs...)
-end
-@inline function _eval_condition_fnc(x, y, t, u, fidx, f::F) where {F}
-    return f(x, y, t, u)
-end
+@inline eval_condition_fnc(conds::Conditions, fidx, x, y, t, u) = eval_fnc_in_het_tuple(conds.functions, fidx, x, y, t, u)
 
 """
     is_dudt_node(conds, node)
 
 Check if `node` has a [`Dudt`](@ref) condition.
 """
-@inline is_dudt_node(conds::Conditions, node) = node ∈ keys(conds.dudt_nodes)
-
+@inline is_dudt_node(conds::AbstractConditions, node) = haskey(conds.dudt_nodes, node)
 """
     is_neumann_edge(conds, i, j)
 
 Check if the edge `(i, j)` has a [`Neumann`](@ref) condition.
 """
-@inline is_neumann_edge(conds::Conditions, i, j) = (i, j) ∈ keys(conds.neumann_edges)
+@inline is_neumann_edge(conds::AbstractConditions, i, j) = haskey(conds.neumann_edges, (i, j))
 
 """
     is_dirichlet_node(conds, node)
 
 Check if `node` has a [`Dirichlet`](@ref) condition.
 """
-@inline is_dirichlet_node(conds::Conditions, node) = node ∈ keys(conds.dirichlet_nodes)
+@inline is_dirichlet_node(conds::AbstractConditions, node) = haskey(conds.dirichlet_nodes, node)
 
 """
     is_constrained_edge(conds, i, j)
 
 Check if the edge `(i, j)` has a [`Constrained`](@ref) condition.
 """
-@inline is_constrained_edge(conds::Conditions, i, j) = (i, j) ∈ keys(conds.constrained_edges)
+@inline is_constrained_edge(conds::AbstractConditions, i, j) =  haskey(conds.constrained_edges, (i, j))
 
 """
     has_constrained_edges(conds)
 
 Check if any edge has a [`Constrained`](@ref) condition.
 """
-@inline has_constrained_edges(conds::Conditions) = !isempty(conds.constrained_edges)
+@inline has_constrained_edges(conds::AbstractConditions) = !isempty(conds.constrained_edges)
 
 """
     has_neumann_edges(conds)
 
 Check if any edge has a [`Neumann`](@ref) condition.
 """
-@inline has_neumann_edges(conds::Conditions) = !isempty(conds.neumann_edges)
+@inline has_neumann_edges(conds::AbstractConditions) = !isempty(conds.neumann_edges)
 
 """
     has_condition(conds, node)
 
 Check if `node` has any condition.
 """
-@inline has_condition(conds::Conditions, node) = is_dudt_node(conds, node) || is_dirichlet_node(conds, node)
+@inline has_condition(conds::AbstractConditions, node) = is_dudt_node(conds, node) || is_dirichlet_node(conds, node)
 
 """
     has_dirichlet_nodes(conds)
 
 Check if any node has a [`Dirichlet`](@ref) condition.
 """
-@inline has_dirichlet_nodes(conds::Conditions) = !isempty(conds.dirichlet_nodes)
+@inline has_dirichlet_nodes(conds::AbstractConditions) = !isempty(conds.dirichlet_nodes)
 
 """
     get_dirichlet_nodes(conds)
 
 Get all nodes that have a [`Dirichlet`](@ref) condition.
 """
-@inline get_dirichlet_nodes(conds::Conditions) = conds.dirichlet_nodes
+@inline get_dirichlet_nodes(conds::AbstractConditions) = conds.dirichlet_nodes
 
 """
     has_dudt_nodes(conds)
 
 Check if any node has a [`Dudt`](@ref) condition.
 """
-@inline has_dudt_nodes(conds::Conditions) = !isempty(conds.dudt_nodes)
+@inline has_dudt_nodes(conds::AbstractConditions) = !isempty(conds.dudt_nodes)
 
 """
     get_dudt_nodes(conds)
 
 Get all nodes that have a [`Dudt`](@ref) condition.
 """
-@inline get_dudt_nodes(conds::Conditions) = conds.dudt_nodes
+@inline get_dudt_nodes(conds::AbstractConditions) = conds.dudt_nodes
 
 """
     get_neumann_edges(conds)
 
 Get all edges that have a [`Neumann`](@ref) condition.
 """
-@inline get_neumann_edges(conds::Conditions) = conds.neumann_edges
+@inline get_neumann_edges(conds::AbstractConditions) = conds.neumann_edges
 
 """
     get_constrained_edges(conds)
 
 Get all edges that have a [`Constrained`](@ref) condition.
 """
-@inline get_constrained_edges(conds::Conditions) = conds.constrained_edges
+@inline get_constrained_edges(conds::AbstractConditions) = conds.constrained_edges
 
 @inline function prepare_conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions)
     bc_functions = bc.functions
@@ -501,3 +493,11 @@ end
     merge_conditions!(conditions, mesh, bc.condition_types, length(ic.functions))
     return conditions
 end
+
+struct SimpleConditions <: AbstractConditions # in 2.0, this needs to be part of Conditions. need this for type stability in FVMSystems
+    neumann_edges::Dict{NTuple{2,Int},Int}
+    constrained_edges::Dict{NTuple{2,Int},Int}
+    dirichlet_nodes::Dict{Int,Int}
+    dudt_nodes::Dict{Int,Int}
+end
+
