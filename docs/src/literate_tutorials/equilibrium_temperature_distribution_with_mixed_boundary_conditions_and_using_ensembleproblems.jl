@@ -111,9 +111,8 @@ ens_prob = EnsembleProblem(steady_prob,
             @set prob.problem.conditions.functions[3].parameters =
                 (h=h, T∞=T∞_range[i], k=k)
         return _prob
-    end,
-    safetycopy=false)
-esol = solve(ens_prob, DynamicSS(Rosenbrock23()); trajectories=length(T∞_range))
+    end)
+esol = solve(ens_prob, DynamicSS(Rosenbrock23()), EnsembleSerial(); trajectories=length(T∞_range))
 
 # From these results, let us now extract the temperature at $(0.03, 0.03)$. We will use 
 # NaturalNeighbours.jl for this.

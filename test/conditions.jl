@@ -58,6 +58,10 @@ end
     @test FVM.has_dirichlet_nodes(conds)
     empty!(conds.dirichlet_nodes)
     @test !FVM.has_dirichlet_nodes(conds)
+    @test FVM.has_neumann_edges(conds)
+    empty!(conds.neumann_edges)
+    @test !FVM.has_neumann_edges(conds)
+    @test FVM.get_constrained_edges(conds) == conds.constrained_edges
 end
 
 @testset "apply_dudt_conditions!" begin
