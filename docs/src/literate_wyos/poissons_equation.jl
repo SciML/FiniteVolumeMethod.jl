@@ -326,7 +326,7 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
 #
 # ```@example
 # #= #hide
-# benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+# @benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
 # =# #hide
 # Base.Text("BenchmarkTools.Trial: 14 samples with 1 evaluation.\nRange (min … max):  352.321 ms … 379.143 ms  ┊ GC (min … max): 0.00% … 0.00%\nTime  (median):     360.235 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   363.030 ms ±   7.517 ms  ┊ GC (mean ± σ):  0.00% ± 0.00%\n\n ▁  ▁         ▁█  █▁        ▁ ▁  ▁         ▁    ▁            ▁\n █▁▁█▁▁▁▁▁▁▁▁▁██▁▁██▁▁▁▁▁▁▁▁█▁█▁▁█▁▁▁▁▁▁▁▁▁█▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁█ ▁\n 352 ms           Histogram: frequency by time          379 ms <\n\nMemory estimate: 93.24 MiB, allocs estimate: 200339.") #hide
 # ```
