@@ -10,5 +10,3 @@ docs/build/
 docs/site/
 docs/Manifest.toml
 .gitignore
-docs/src/tutorials/*.png 
-docs/src/wyos/*.png

@@ -1,5 +1,5 @@
 IS_CI = get(ENV, "CI", "false") == "true"
-RUN_EXAMPLES = false !IS_CI
+RUN_EXAMPLES = !IS_CI
 
 if RUN_EXAMPLES
     using FiniteVolumeMethod
@@ -202,16 +202,3 @@ deploydocs(;
     repo="github.com/DanielVandH/FiniteVolumeMethod.jl",
     devbranch="main",
     push_preview=true)
-
-function clear_tmp()
-    rm(session_tmp, force=true, recursive=true)
-    for folder in ("tutorials", "wyos")
-        dir = joinpath(@__DIR__, "src", folder)
-        files = readdir(dir)
-        filter!(file -> endswith(file, ".png"), files)
-        for file in files
-            rm(joinpath(dir, file))
-        end
-    end
-end
-clear_tmp()

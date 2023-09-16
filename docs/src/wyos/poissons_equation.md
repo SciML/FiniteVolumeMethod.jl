@@ -292,7 +292,7 @@ mesh = FVMGeometry(tri)
 ````
 
 ````
-FVMGeometry with 8075 control volumes, 15828 triangles, and 23902 edges
+FVMGeometry with 8043 control volumes, 15764 triangles, and 23806 edges
 ````
 
 The boundary conditions are given by:
@@ -425,7 +425,7 @@ prob = PoissonsEquation(mesh, BCs, ICs;
 ````
 
 ````
-PoissonsEquation with 8075 nodes
+PoissonsEquation with 8043 nodes
 ````
 
 ````julia
@@ -433,18 +433,18 @@ sol = solve(prob, KLUFactorization())
 ````
 
 ````
-u: 8075-element Vector{Float64}:
+u: 8043-element Vector{Float64}:
      0.0
      0.0
      0.0
      0.0
     -1.0
      ⋮
- 25565.456848804035
- 26187.162200881532
- 38579.80604203159
- 16453.285248085507
- 26910.123178515925
+ 51056.49568160037
+ 38356.53738605582
+ 23776.172046371616
+ 15305.800698280922
+ 36991.813605841366
 ````
 
 With this solution, we can also define the electric field $\vb E$, using $\vb E = -\grad V$.
@@ -457,18 +457,18 @@ E = map(.-, itp.gradient) # E = -∇V
 ````
 
 ````
-8075-element Vector{Tuple{Float64, Float64}}:
- (3.878855721880338, -38951.69286589076)
- (98.99875262531853, -38943.619635365525)
- (72.27603237965398, 39053.95230849769)
- (-17.29657597679164, 39177.43826204136)
- (57306.88625825547, 328.6295472781839)
+8043-element Vector{Tuple{Float64, Float64}}:
+ (-92.16611391825855, -38611.08851918353)
+ (-135.07123950960246, -38712.62388759961)
+ (106.23769658329466, 38570.04241506763)
+ (47.27146740325949, 39027.27922671291)
+ (59246.37075623101, 387.2192495354995)
  ⋮
- (1087.1114527834593, -3546.502143255939)
- (3390.140294730559, 20772.416402902098)
- (2338.6453389643134, -9847.704115711233)
- (-18.24284848581771, -34287.491492728564)
- (9451.679257070626, 37578.64389247262)
+ (15303.599369740816, -12846.469299439254)
+ (2226.185267168199, -10264.496829932992)
+ (-2168.004405683131, 13349.848294884237)
+ (1482.293757452546, -21202.372178727317)
+ (1724.200560200586, -12129.215330819241)
 ````
 
 For plotting the electric field, we will show the electric field intensity $\|\vb E\|$,
@@ -523,7 +523,7 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
 ````
 
 ````
-SteadyFVMProblem with 8075 nodes
+SteadyFVMProblem with 8043 nodes
 ````
 
 ````julia
