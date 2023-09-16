@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Diffusion Equation on an Annulus 
 # In this tutorial, we consider a 
 # diffusion equation on an annulus:
@@ -84,6 +86,7 @@ prob = FVMProblem(mesh, BCs;
 #- 
 using OrdinaryDiffEq, LinearSolve
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.2)
+sol |> tc #hide
 
 #-
 fig = Figure(fontsize=38)
@@ -140,9 +143,11 @@ using NaturalNeighbours
 _x = vec([x for x in x, y in y]) # NaturalNeighbours.jl needs vector data 
 _y = vec([y for x in x, y in y])
 itp = interpolate(tri, u, derivatives=true)
+itp |> tc #hide
 
 #- 
 itp_vals = itp(_x, _y; method=Farin())
+itp_vals |> tc #hide
 
 #-
 fig, ax, sc = contourf(x, y, reshape(itp_vals, length(x), length(y)), colormap=:matter, levels=-10:2:40)
@@ -152,6 +157,7 @@ fig
 # The issue here is that the interpolant is trying to extrapolate inside the hole and 
 # outside of the annulus. To avoid this, you need to pass `project=false`.
 itp_vals = itp(_x, _y; method=Farin(), project=false)
+itp_vals |> tc #hide
 
 #-
 fig, ax, sc = contourf(x, y, reshape(itp_vals, length(x), length(y)), colormap=:matter, levels=-10:2:40)

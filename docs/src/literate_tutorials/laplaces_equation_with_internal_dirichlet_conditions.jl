@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Laplace's Equation with Internal Dirichlet Conditions 
 # In this tutorial, we consider Laplace's equation with some additional complexity 
 # put into the problem via internal Dirichlet conditions:
@@ -112,6 +114,7 @@ steady_prob = SteadyFVMProblem(prob)
 # Now let's solve the problem. 
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
 sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+sol |> tc #hide
 
 #-
 fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 100, 28))

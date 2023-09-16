@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Diffusion Equations 
 # ```@contents 
 # Pages = ["diffusion_equations.md"]
@@ -234,7 +236,9 @@ prob = diffusion_equation(mesh, BCs;
     initial_condition,
     final_time)
 sol = solve(prob, Tsit5(); saveat=0.05)
-# It would be nice to use `LinearExponential()` in the call above, but it just seems to be extremely unstable, so it's unusable.
+sol |> tc #hide
+
+# (It would be nice to use `LinearExponential()` in the call above, but it just seems to be extremely numerically unstable, so it's unusable.)
 # Note also that `sol` contains an extra component: 
 length(sol.u[1])
 
@@ -280,24 +284,26 @@ fvm_prob = FVMProblem(mesh, BCs;
     initial_condition,
     final_time)
 
-using LinearSolve
+using LinearSolve #src
 
-#-
-# ```@example
-# #= #hide 
+# ````julia
 # using BenchmarkTools  
-# @benchmark solve($diff_eq, $Tsit5(), saveat=$0.05)
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 797 samples with 1 evaluation.\n Range (min … max):  5.692 ms …   9.056 ms  ┊ GC (min … max): 0.00% … 0.00%\n Time  (median):     6.173 ms               ┊ GC (median):    0.00%\n  Time  (mean ± σ):   6.267 ms ± 442.741 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%\n\n     ▄▅▆▆█▆█▄▃▆▅▄▁▁ ▁\n  ▃▅██████████████████▄▄▅▄▄▃▃▃▃▃▃▂▂▃▁▃▃▁▂▁▂▂▂▃▁▁▃▁▃▁▁▁▁▁▁▂▃▂▂ ▄\n  5.69 ms         Histogram: frequency by time        8.32 ms <\n\n Memory estimate: 552.42 KiB, allocs estimate: 82.") #hide
-# ```
-#
-# ```@example
-# #= #hide
+# @btime solve($diff_eq, $Tsit5(), saveat=$0.05);
+# ````
+
+# ````
+#   5.736 ms (82 allocations: 552.42 KiB)
+# ````
+
+# ````julia
 # using LinearSolve
-# @benchmark solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$0.05)
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 81 samples with 1 evaluation.\nRange (min … max):  54.891 ms … 111.865 ms  ┊ GC (min … max): 0.00% … 47.30%\nTime  (median):     59.028 ms               ┊ GC (median):    0.00%\n Time  (mean ± σ):   62.364 ms ±  11.187 ms  ┊ GC (mean ± σ):  2.55% ±  7.74%\n\n   ▆█▃  ▃\n ██████▇█▄▃▅▄▄▁▁▃▁▃▁▁▁▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁▃▁▁▁▁▁▃▁▁▁▃ ▁\n   54.9 ms         Histogram: frequency by time          109 ms <\n\nMemory estimate: 32.02 MiB, allocs estimate: 91756.") #hide
-# ```
+# @btime solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$0.05);
+# ````
+
+# ````
+#   49.237 ms (91755 allocations: 32.02 MiB)
+# ````
+
 # Much better! The `DiffusionEquation` approach is about 10 times faster.
 
 sol1 = solve(diff_eq, Tsit5(); saveat=0.05) #src
@@ -336,6 +342,7 @@ prob = DiffusionEquation(mesh, BCs;
 
 # Let's solve and plot.
 sol = solve(prob, Tsit5(); saveat=100.0)
+sol |> tc #hide
 
 #-
 fig = Figure(fontsize=38)
@@ -364,6 +371,7 @@ fvm_prob = FVMProblem(mesh, BCs_prob;
     final_time)
 using Sundials
 fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES); saveat=100.0)
+fvm_sol |> tc #hide
 
 for j in eachindex(fvm_sol)
     ax = Axis(fig[2, j], width=600, height=600,
@@ -382,19 +390,21 @@ u_fvm = fvm_sol[:, 2:end] #src
 @test u_template ≈ u_fvm rtol = 1e-3 #src
 
 # Here is a benchmark comparison.
-# ```@example
-# #= #hide
-# @benchmark solve($prob, $Tsit5(), saveat=$100.0)
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 62 samples with 1 evaluation.\nRange (min … max):  77.666 ms … 88.614 ms  ┊ GC (min … max): 0.00% … 0.00%\nTime  (median):     80.787 ms              ┊ GC (median):    0.00%\n Time  (mean ± σ):   81.136 ms ±  1.780 ms  ┊ GC (mean ± σ):  0.00% ± 0.00%\n\n              ▆ ▄█▂▂   ▂▂\n ▄▁▁▁▁▄▄▁▄▆▄▁▆█▄████▄█▆███▆▄▁▄▁▁▁▁▁▁▆▁▁▁▄▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▄ ▁\n 77.7 ms         Histogram: frequency by time          88 ms <\n\nMemory estimate: 1.76 MiB, allocs estimate: 71.") #hide
-# ```
+# ````julia
+# @btime solve($prob, $Tsit5(), saveat=$100.0);
+# ````
 #
-# ```@example
-# #= #hide
-# @benchmark solve($fvm_prob, $CVODE_BDF(linear_solver=:GMRES), saveat=$100.0)
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 50 samples with 1 evaluation.\nRange (min … max):   93.308 ms … 159.603 ms  ┊ GC (min … max): 0.00% … 26.32%\nTime  (median):      99.674 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   101.765 ms ±   9.844 ms  ┊ GC (mean ± σ):  2.32% ±  5.88%\n\n     ▅▇█▂\n ▅▅▃█████▁▃▁▃▃▃▁▃▁▃▁▁▁▁▁▁▁▁▁▁▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▃ ▁\n   93.3 ms          Histogram: frequency by time          160 ms <\n\nMemory estimate: 56.07 MiB, allocs estimate: 111666.") #hide
-# ```
+# ````
+#   78.761 ms (71 allocations: 1.76 MiB)
+# ````
+#
+# ````julia
+# @btime solve($fvm_prob, $CVODE_BDF(linear_solver=:GMRES), saveat=$100.0);
+# ````
+
+# ````
+#   94.839 ms (111666 allocations: 56.07 MiB)
+# ````
 #
 # These problems also work with the `pl_interpolate` function:
 q = (30.0, 45.0)

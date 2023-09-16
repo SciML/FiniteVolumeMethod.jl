@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Diffusion Equation on a Square Plate
 # This tutorial considers a diffusion equation on a square plate:
 # ```math
@@ -54,6 +56,7 @@ prob.flux_function
 # in the `solve` call below, multithreading is enabled by default.
 using DifferentialEquations
 sol = solve(prob, saveat=0.05)
+sol |> tc #hide
 
 # To visualise the solution, we can use `tricontourf!` from Makie.jl. 
 fig = Figure(fontsize=38)

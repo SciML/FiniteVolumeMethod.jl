@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Laplace's Equation 
 # ```@contents 
 # Pages = ["laplaces_equation.md"]
@@ -90,9 +92,11 @@ BCs = BoundaryConditions(mesh, bc_f, bc_types)
 
 # Now we can define and solve the problem.
 prob = laplaces_equation(mesh, BCs, diffusion_function=(x, y, p) -> 1.0)
+prob |> tc #hide
 
 #-
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 
 #-
 fig = Figure(fontsize=33)
@@ -112,6 +116,7 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
 #-
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
+fvm_sol |> tc #hide
 
 #-
 ax = Axis(fig[1, 2], xlabel="x", ylabel="y", width=600, height=600)
@@ -154,6 +159,7 @@ prob = LaplacesEquation(mesh, BCs; diffusion_function)
 
 #-
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 
 #-
 fig = Figure(fontsize=33)
@@ -180,20 +186,22 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     final_time=Inf,
     initial_condition))
 
-# ```@example
-# #= #hide
+# ````julia
 # using BenchmarkTools
-# @benchmark solve($prob, $KLUFactorization())
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 285 samples with 1 evaluation.\nRange (min … max):  15.597 ms … 43.701 ms  ┊ GC (min … max): 0.00% … 10.41%\nTime  (median):     17.054 ms              ┊ GC (median):    0.00%\nTime  (mean ± σ):   17.542 ms ±  3.172 ms  ┊ GC (mean ± σ):  0.36% ±  1.22%\n\n  ▆██▇▄\n ▄██████▇▆▁▄▁▁▄▁▁▁▁▄▁▁▁▁▁▁▁▄▁▁▁▁▄▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▄ ▆\n   15.6 ms      Histogram: log(frequency) by time      40.2 ms <\n\nMemory estimate: 17.12 MiB, allocs estimate: 56.") #hide
-# ```
+# @btime solve($prob, $KLUFactorization());
+# ````
 #
-# ```@example
-# #= #hide
-# @benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 10 samples with 1 evaluation.\nRange (min … max):  509.084 ms … 587.415 ms  ┊ GC (min … max): 0.72% … 2.12%\nTime  (median):     541.742 ms               ┊ GC (median):    0.50%\nTime  (mean ± σ):   541.772 ms ±  22.829 ms  ┊ GC (mean ± σ):  0.65% ± 0.74%\n\n █     █       █ █       █ █   █ █         █                 █\n █▁▁▁▁▁█▁▁▁▁▁▁▁█▁█▁▁▁▁▁▁▁█▁█▁▁▁█▁█▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█ ▁\n   509 ms           Histogram: frequency by time          587 ms <\n\nMemory estimate: 114.30 MiB, allocs estimate: 223012.") #hide
-# ```
+# ````
+#   15.368 ms (56 allocations: 17.12 MiB)
+# ````
+#
+# ````julia
+# @btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
+# ````
+#
+# ````
+#   495.417 ms (223001 allocations: 114.30 MiB)
+# ````
 
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()))) #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-5 #src

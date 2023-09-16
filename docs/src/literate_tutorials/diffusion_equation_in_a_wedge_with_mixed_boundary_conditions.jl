@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Diffusion Equation in a Wedge with Mixed Boundary Conditions 
 # In this example, we consider a diffusion equation on a wedge 
 # with angle $\alpha$ and mixed boundary conditions:
@@ -87,6 +89,7 @@ flux = (x, y, t, α, β, γ, p) -> (-α, -β)
 # has the best performance for these problems.
 using OrdinaryDiffEq, LinearSolve
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.01, parallel=Val(false))
+sol |> tc #hide
 
 #-
 using CairoMakie

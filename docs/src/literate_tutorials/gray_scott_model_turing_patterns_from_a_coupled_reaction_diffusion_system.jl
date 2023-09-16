@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System
 #
 # In this tutorial, we explore some pattern formation from the
@@ -58,7 +60,8 @@ prob = FVMSystem(u_prob, v_prob)
 
 # Now that we have our system, we can solve.
 using OrdinaryDiffEq, Sundials
-sol = solve(prob, CVODE_BDF(linear_solver=:GMRES), saveat=10.0, parallel=Val(false)) 
+sol = solve(prob, CVODE_BDF(linear_solver=:GMRES), saveat=10.0, parallel=Val(false))
+sol |> tc
 
 # Here is an animation of the solution, looking only at the $v$ variable.
 using CairoMakie

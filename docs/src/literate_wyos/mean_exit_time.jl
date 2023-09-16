@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Mean Exit Time Problems
 # ```@contents
 # Pages = ["mean_exit_time.md"]
@@ -130,13 +132,16 @@ diffusion_function = (x, y, p) -> begin
 end
 diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
 prob = met_problem(mesh, BCs, ICs; diffusion_function, diffusion_parameters)
+prob |> tc #hide
 
 # This problem can now be solved using the `solve` interface from LinearSolve.jl. Note that the matrix 
 # $\vb A$ is very dense, but there is no structure to it:
 prob.A
+prob.A |> DisplayAs.withcontext(:compact => true) #hide
 
 # We will use `KLUFactorization`.
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 
 # We can easily visualise our solution: 
 using CairoMakie
@@ -168,7 +173,9 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
 # Let's compare the two solutions.
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
+fvm_sol |> tc #hide
 
+#-
 ax = Axis(fig[1, 2], width=600, height=600, title="Template")
 tricontourf!(ax, tri, fvm_sol.u, levels=0:1000:15000, extendhigh=:auto)
 resize_to_layout!(fig)
@@ -186,6 +193,7 @@ prob = MeanExitTimeProblem(mesh, BCs, ICs;
     diffusion_function,
     diffusion_parameters)
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 @test sol.u == _u #src
 
 #-
@@ -195,19 +203,21 @@ fig
 @test_reference joinpath(@__DIR__, "../figures", "mean_exit_time_template_2.png") fig #src
 
 # This matches what we have above. To finish, here is a benchmark comparing the approaches. 
-# ```@example
-# #= #hide
+# ````julia
 # using BenchmarkTools
-# @benchmark solve($prob, $KLUFactorization())
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 1616 samples with 1 evaluation.\nRange (min … max):  2.652 ms … 115.897 ms  ┊ GC (min … max): 0.00% … 14.76%\nTime  (median):     2.978 ms               ┊ GC (median):    0.00%\n Time  (mean ± σ):   3.084 ms ±   2.818 ms  ┊ GC (mean ± σ):  0.34% ±  0.37%\n\n         ▁▃▃▆▇▇█▆▆▅▃▁\n           ▃▄▅▅▇▇▆▇██████████████▆▆▄▅▅▅▃▄▃▃▃▃▃▂▂▃▂▂▂▂▂▂▂▂▃▂▁▂▁▂▂▂▁▃▂▂▂ ▄\n 2.65 ms         Histogram: frequency by time        3.95 ms <\n\nMemory estimate: 3.72 MiB, allocs estimate: 56.") #hide
-# ```
+# @btime solve($prob, $KLUFactorization());
+# ````
 #
-# ```@example
-# #= #hide
-# @benchmark solve($fvm_prob, $DynamicSS($KenCarp47(linsolve=KLUFactorization())))
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 20 samples with 1 evaluation.\nRange (min … max):  231.990 ms … 387.095 ms  ┊ GC (min … max): 0.00% … 35.13%\nTime  (median):     255.970 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   259.175 ms ±  32.365 ms  ┊ GC (mean ± σ):  2.62% ±  7.86%\n\n   ▄▁     █ ▁\n ▆▁██▆▁▆▁▆█▆█▆▁▁▆▁▆▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▆ ▁\n   232 ms           Histogram: frequency by time          387 ms <\n\nMemory estimate: 90.23 MiB, allocs estimate: 314442.") #hide
-# ```
+# ````
+#   2.559 ms (56 allocations: 3.72 MiB)
+# ````
+#
+# ````julia
+# @btime solve($fvm_prob, $DynamicSS($KenCarp47(linsolve=KLUFactorization())));
+# ````
+#
+# ````
+#   221.851 ms (314440 allocations: 90.23 MiB)
+# ````
 
 # Very fast!

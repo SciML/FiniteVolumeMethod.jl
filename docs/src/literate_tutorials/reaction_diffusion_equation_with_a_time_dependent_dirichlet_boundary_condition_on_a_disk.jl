@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk 
 # In this tutorial, we consider a reaction-diffusion equation 
 # on a disk with a boundary condition of the form $\mathrm du/\mathrm dt = u$:
@@ -54,6 +56,7 @@ prob = FVMProblem(mesh, BCs;
 using OrdinaryDiffEq, LinearSolve
 alg = FBDF(linsolve=UMFPACKFactorization(), autodiff=false)
 sol = solve(prob, alg, saveat=0.01)
+sol |> tc #hide
 
 #-
 using ReferenceTests #src

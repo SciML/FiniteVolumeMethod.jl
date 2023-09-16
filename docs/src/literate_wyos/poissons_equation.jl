@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Poisson's Equation 
 # ```@contents 
 # Pages = ["poissons_equation.md"]
@@ -84,9 +86,12 @@ mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 source_function = (x, y, p) -> -sin(π * x) * sin(π * y)
 prob = poissons_equation(mesh, BCs;  source_function)
+using DisplayAs #hide 
+prob |> tc #hide
 
 #-
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 
 #-
 using CairoMakie
@@ -112,6 +117,7 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
 #-
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+fvm_sol |> tc #hide
 using ReferenceTests #src
 ax = Axis(fig[1, 2]) #src
 tricontourf!(ax, tri, fvm_sol.u, levels=LinRange(0, 0.05, 10), colormap=:matter, extendhigh=:auto) #src
@@ -128,24 +134,27 @@ prob = PoissonsEquation(mesh, BCs; source_function=source_function)
 
 #-
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 @test sol.u ≈ [1 / (2π^2) * sin(π * x) * sin(π * y) for (x, y) in each_point(tri)] rtol = 1e-4 #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-4 #src
 
 # Here is a benchmark comparison of the `PoissonsEquation` approach against the `FVMProblem` approach.
-# ```@example
-# #= #hide
+# ````julia
 # using BenchmarkTools
-# @benchmark solve($prob, $KLUFactorization())
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 290 samples with 1 evaluation.\nRange (min … max):  16.017 ms … 74.684 ms  ┊ GC (min … max): 0.00% … 15.69%\nTime  (median):     17.021 ms              ┊ GC (median):    0.00%\n Time  (mean ± σ):   17.231 ms ±  3.421 ms  ┊ GC (mean ± σ):  0.23% ±  0.92%\n\n           ▁  ▁▁▄▂▁▂  ▁▃▂ █▂ ▅▁ ▂ ▁▄▃\n ▄▆▁▃▄▆▄▅▇▄█▆▆███████████▇██▄██▇█████▅▅▅▅▅▅█▅▃▄▁▄▃▃▃▁▄▁▁▁▄▁▄ ▄\n   16 ms           Histogram: frequency by time        18.4 ms <\n\nMemory estimate: 15.21 MiB, allocs estimate: 56.") #raw
-# ```
+# @btime solve($prob, $KLUFactorization());
+# ````
 #
-# ```@example
-# #= #hide
-# @benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 23 samples with 1 evaluation.\nRange (min … max):  197.733 ms … 297.593 ms  ┊ GC (min … max): 0.00% … 24.94%\nTime  (median):     213.042 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   217.573 ms ±  19.728 ms  ┊ GC (mean ± σ):  1.48% ±  5.20%\n\n      █   ▃       ▁\n ▄▁▁▁▇█▁▁▄█▇▁▄▁▁▁▄█▁▁▁▁▁▁▄▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▄ ▁\n   198 ms           Histogram: frequency by time          298 ms <\n\nMemory estimate: 93.63 MiB, allocs estimate: 185755.") #hide
-# ```
+# ````
+#   15.442 ms (56 allocations: 15.21 MiB)
+# ````
+#
+# ````julia
+# @btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
+# ````
+#
+# ````
+#   189.406 ms (185761 allocations: 93.63 MiB)
+# ````
 
 # Let's now also solve a generalised Poisson equation. Based 
 # on Section 7 of [this paper](https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf)
@@ -265,12 +274,14 @@ prob = PoissonsEquation(mesh, BCs, ICs;
 
 #-
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 
 # With this solution, we can also define the electric field $\vb E$, using $\vb E = -\grad V$.
 # To compute the gradients, we use NaturalNeighbours.jl. 
 using NaturalNeighbours
 itp = interpolate(tri, sol.u; derivatives=true)
 E = map(.-, itp.gradient) # E = -∇V
+E |> tc #hide
 
 # For plotting the electric field, we will show the electric field intensity $\|\vb E\|$,
 # and we can also show the arrows. Rather than showing all arrows, we will show them at 
@@ -317,19 +328,21 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     initial_condition=zeros(num_points(tri)),
     final_time=Inf))
 
-# ```@example
-# #= #hide
-# @benchmark solve($prob, $KLUFactorization())
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 463 samples with 1 evaluation.\nRange (min … max):   9.688 ms … 73.832 ms  ┊ GC (min … max): 0.00% … 16.81%\nTime  (median):     10.645 ms              ┊ GC (median):    0.00%\n Time  (mean ± σ):   10.801 ms ±  2.964 ms  ┊ GC (mean ± σ):  0.25% ±  0.78%\n\n              ▁▁▅▂▁▅▃▂▇▅▄▂▁█▁▄▇▃▅▁ ▃▄▂  ▁\n ▃▁▃▃▃▄▅▄▁▃█▅▇████████████████████▇██████▅▅█▇▅▄▅▁▅▅▃▃▁▁▃▃▃▁▃ ▅\n   9.69 ms         Histogram: frequency by time        11.8 ms <\n\nMemory estimate: 10.83 MiB, allocs estimate: 56.") #hide
-# ```
+# ````julia
+# @btime solve($prob, $KLUFactorization());
+# ````
+# 
+# ````
+#   9.061 ms (56 allocations: 10.81 MiB)
+# ````
 #
-# ```@example
-# #= #hide
-# @benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 14 samples with 1 evaluation.\nRange (min … max):  352.321 ms … 379.143 ms  ┊ GC (min … max): 0.00% … 0.00%\nTime  (median):     360.235 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   363.030 ms ±   7.517 ms  ┊ GC (mean ± σ):  0.00% ± 0.00%\n\n ▁  ▁         ▁█  █▁        ▁ ▁  ▁         ▁    ▁            ▁\n █▁▁█▁▁▁▁▁▁▁▁▁██▁▁██▁▁▁▁▁▁▁▁█▁█▁▁█▁▁▁▁▁▁▁▁▁█▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁█ ▁\n 352 ms           Histogram: frequency by time          379 ms <\n\nMemory estimate: 93.24 MiB, allocs estimate: 200339.") #hide
-# ```
+# ````julia
+# @btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
+# ````
+#
+# ````
+#   329.327 ms (201134 allocations: 93.70 MiB)
+# ````
 
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()))) #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-4 #src

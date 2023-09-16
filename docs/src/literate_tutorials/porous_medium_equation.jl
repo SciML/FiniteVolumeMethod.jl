@@ -1,3 +1,5 @@
+using DisplayAs #hide 
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Porous-Medium Equation 
 # ## No source 
 # In this tutorial, we consider the porous-medium equation, given by 
@@ -58,6 +60,7 @@ prob = FVMProblem(mesh, BCs;
 ## Step 4: Solve 
 using LinearSolve, OrdinaryDiffEq
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=3.0)
+sol |> tc #hide
 
 #-
 ## Step 5: Visualise 
@@ -163,6 +166,7 @@ prob = FVMProblem(mesh, BCs;
 #-
 ## Step 4: Solve 
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=2.5)
+sol |> tc #hide
 
 #-
 ## Step 5: Visualise 
