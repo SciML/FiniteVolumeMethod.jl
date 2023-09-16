@@ -1,4 +1,4 @@
-using DisplayAs #hide 
+using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk 
 # In this tutorial, we consider a reaction-diffusion equation 

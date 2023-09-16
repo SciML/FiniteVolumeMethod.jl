@@ -1,4 +1,4 @@
-using DisplayAs #hide 
+using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems
 # For this tutorial, we consider the following problem:

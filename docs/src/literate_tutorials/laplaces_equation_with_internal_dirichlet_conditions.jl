@@ -1,4 +1,4 @@
-using DisplayAs #hide 
+using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Laplace's Equation with Internal Dirichlet Conditions 
 # In this tutorial, we consider Laplace's equation with some additional complexity 

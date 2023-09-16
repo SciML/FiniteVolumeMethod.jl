@@ -1,4 +1,4 @@
-using DisplayAs #hide 
+using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Solving Mazes with Laplace's Equation 
 # In this tutorial, we consider solving 

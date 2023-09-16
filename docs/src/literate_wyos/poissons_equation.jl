@@ -1,4 +1,4 @@
-using DisplayAs #hide 
+using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Poisson's Equation 
 # ```@contents 
@@ -86,7 +86,7 @@ mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 source_function = (x, y, p) -> -sin(π * x) * sin(π * y)
 prob = poissons_equation(mesh, BCs;  source_function)
-using DisplayAs #hide 
+using DisplayAs #hide
 prob |> tc #hide
 
 #-

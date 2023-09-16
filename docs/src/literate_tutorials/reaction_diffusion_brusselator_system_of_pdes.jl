@@ -1,4 +1,4 @@
-using DisplayAs #hide 
+using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # A Reaction-Diffusion Brusselator System of PDEs 
 # In this tutorial, we show how we can solve systems of PDEs. 

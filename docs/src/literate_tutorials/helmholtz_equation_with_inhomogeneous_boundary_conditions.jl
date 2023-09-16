@@ -1,4 +1,4 @@
-using DisplayAs #hide 
+using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Helmholtz Equation with Inhomogeneous Boundary Conditions 
 # In this tutorial, we consider the following steady state problem:

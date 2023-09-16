@@ -1,4 +1,4 @@
-using DisplayAs #hide 
+using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Piecewise Linear and Natural Neighbour Inteprolation for an Advection-Diffusion Equation 
 # In this tutorial, we have three aims:

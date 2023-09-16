@@ -1,4 +1,4 @@
-using DisplayAs #hide 
+using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Porous-Fisher Equation and Travelling Waves 
 # This tutorial considers a more involved example, where we discuss 

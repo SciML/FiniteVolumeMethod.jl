@@ -1,4 +1,4 @@
-using DisplayAs #hide 
+using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Diffusion Equation in a Wedge with Mixed Boundary Conditions 
 # In this example, we consider a diffusion equation on a wedge 
