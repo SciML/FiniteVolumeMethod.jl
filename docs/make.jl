@@ -1,5 +1,5 @@
 IS_CI = get(ENV, "CI", "false") == "true"
-RUN_EXAMPLES = !IS_CI
+RUN_EXAMPLES = false # !IS_CI
 
 if RUN_EXAMPLES
     using FiniteVolumeMethod
