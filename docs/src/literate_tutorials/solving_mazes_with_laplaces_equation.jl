@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Solving Mazes with Laplace's Equation 
 # In this tutorial, we consider solving 
 # mazes using Laplace's equation, applying the result of 
@@ -73,6 +75,7 @@ steady_prob = SteadyFVMProblem(prob)
 #-
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
 sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()), abstol=1e-14, reltol=1e-14))
+sol |> tc #hide
 
 # We now have our solution. 
 tricontourf(tri, sol.u, colormap=:matter)

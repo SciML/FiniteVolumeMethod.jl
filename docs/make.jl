@@ -1,67 +1,84 @@
-using FiniteVolumeMethod
-using Documenter
-using Literate
-using Dates
+IS_CI = get(ENV, "CI", "false") == "true"
+RUN_EXAMPLES = true
 
-DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod, Test);
-    recursive=true)
+if RUN_EXAMPLES
+    using FiniteVolumeMethod
+    using Documenter
+    using Literate
+    using Dates
+    ct() = Dates.format(now(), "HH:MM:SS")
+    using CairoMakie
+    CairoMakie.activate!()
 
-const IS_LIVESERVER = get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
-if IS_LIVESERVER
-    using Revise
-    Revise.revise()
-end
-const IS_GITHUB_ACTIONS = get(ENV, "GITHUB_ACTIONS", "false") == "true"
-const IS_CI = get(ENV, "CI", "false") == "true"
-const session_tmp = mktempdir()
-
-# When running docs locally, the EditURL is incorrect. For example, we might get 
-#   ```@meta
-#   EditURL = "<unknown>/docs/src/literate_tutorials/name.jl"
-#   ```
-# We need to replace this EditURL if we are running the docs locally. The last case is more complicated because, 
-# after changing to use temporary directories, it can now look like...
-#   ```@meta
-#   EditURL = "../../../../../../../AppData/Local/Temp/jl_8nsMGu/name_just_the_code.jl"
-#   ```
-function update_edit_url(content, file, folder)
-    content = replace(content, "<unknown>" => "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main")
-    content = replace(content, "temp/" => "") # as of Literate 2.14.1
-    content = replace(content, r"EditURL\s*=\s*\"[^\"]*\"" => "EditURL = \"https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_$(folder)/$file\"")
-    return content
-end
-
-# We can add the code to the end of each file in its uncommented form programatically.
-function add_just_the_code_section(dir, file)
-    file_name, file_ext = splitext(file)
-    file_path = joinpath(dir, file)
-    new_file_path = joinpath(session_tmp, file_name * "_just_the_code" * file_ext)
-    cp(file_path, new_file_path, force=true)
-    folder = splitpath(dir)[end] # literate_tutorials or literate_applications
-    open(new_file_path, "a") do io
-        write(io, "\n")
-        write(io, "# ## Just the code\n")
-        write(io, "# An uncommented version of this example is given below.\n")
-        write(io, "# You can view the source code for this file [here](<unknown>/docs/src/$folder/@__NAME__.jl).\n")
-        write(io, "\n")
-        write(io, "# ```julia\n")
-        write(io, "# @__CODE__\n")
-        write(io, "# ```\n")
+    # When running docs locally, the EditURL is incorrect. For example, we might get 
+    #   ```@meta
+    #   EditURL = "<unknown>/docs/src/literate_tutorials/name.jl"
+    #   ```
+    # We need to replace this EditURL if we are running the docs locally. The last case is more complicated because, 
+    # after changing to use temporary directories, it can now look like...
+    #   ```@meta
+    #   EditURL = "../../../../../../../AppData/Local/Temp/jl_8nsMGu/name_just_the_code.jl"
+    #   ```
+    function update_edit_url(content, file, folder)
+        content = replace(content, "<unknown>" => "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main")
+        content = replace(content, "temp/" => "") # as of Literate 2.14.1
+        content = replace(content, r"EditURL\s*=\s*\"[^\"]*\"" => "EditURL = \"https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_$(folder)/$file\"")
+        return content
     end
-    return new_file_path
-end
-
-# Now process all the literate files
-ct() = Dates.format(now(), "HH:MM:SS")
-for folder in ("tutorials", "wyos")
-    dir = joinpath(@__DIR__, "src", "literate_" * folder)
-    outputdir = joinpath(@__DIR__, "src", folder)
-    !isdir(outputdir) && mkpath(outputdir)
-    files = readdir(dir)
-    filter!(file -> endswith(file, ".jl") && !occursin("just_the_code", file), files)
-    for file in files
-        # See also https://github.com/Ferrite-FEM/Ferrite.jl/blob/d474caf357c696cdb80d7c5e1edcbc7b4c91af6b/docs/generate.jl for some of this
+    # We can add the code to the end of each file in its uncommented form programatically.
+    function add_just_the_code_section(dir, file)
+        file_name, file_ext = splitext(file)
         file_path = joinpath(dir, file)
+        new_file_path = joinpath(session_tmp, file_name * "_just_the_code" * file_ext)
+        cp(file_path, new_file_path, force=true)
+        folder = splitpath(dir)[end] # literate_tutorials or literate_applications
+        open(new_file_path, "a") do io
+            write(io, "\n")
+            write(io, "# ## Just the code\n")
+            write(io, "# An uncommented version of this example is given below.\n")
+            write(io, "# You can view the source code for this file [here](<unknown>/docs/src/$folder/@__NAME__.jl).\n")
+            write(io, "\n")
+            write(io, "# ```julia\n")
+            write(io, "# @__CODE__\n")
+            write(io, "# ```\n")
+        end
+        return new_file_path
+    end
+
+    tutorial_files = [
+        "tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.jl",
+        "tutorials/mean_exit_time.jl",
+        "tutorials/solving_mazes_with_laplaces_equation.jl",
+        "tutorials/porous_medium_equation.jl",
+        "tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.jl",
+        "tutorials/reaction_diffusion_brusselator_system_of_pdes.jl",
+        "tutorials/diffusion_equation_on_a_square_plate.jl",
+        "tutorials/diffusion_equation_in_a_wedge_with_mixed_boundary_conditions.jl",
+        "tutorials/reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk.jl",
+        "tutorials/porous_fisher_equation_and_travelling_waves.jl",
+        "tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.jl",
+        "tutorials/helmholtz_equation_with_inhomogeneous_boundary_conditions.jl",
+        "tutorials/laplaces_equation_with_internal_dirichlet_conditions.jl",
+        "tutorials/diffusion_equation_on_an_annulus.jl",
+    ]
+    wyos_files = [
+        "wyos/diffusion_equations.jl",
+        "wyos/laplaces_equation.jl",
+        "wyos/mean_exit_time.jl",
+        "wyos/poissons_equation.jl",
+        "wyos/linear_reaction_diffusion_equations.jl"
+    ]
+    example_files = vcat(tutorial_files, wyos_files)
+    session_tmp = mktempdir()
+
+
+    map(1:length(example_files)) do n
+        example = example_files[n]
+        folder, file = splitpath(example)
+        dir = joinpath(@__DIR__, "src", "literate_" * folder)
+        outputdir = joinpath(@__DIR__, "src", folder)
+        file_path = joinpath(dir, file)
+        # See also https://github.com/Ferrite-FEM/Ferrite.jl/blob/d474caf357c696cdb80d7c5e1edcbc7b4c91af6b/docs/generate.jl for some of this
         new_file_path = add_just_the_code_section(dir, file)
         script = Literate.script(file_path, session_tmp, name=splitext(file)[1] * "_just_the_code_cleaned")
         code = strip(read(script, String))
@@ -72,19 +89,27 @@ for folder in ("tutorials", "wyos")
         code_clean = strip(code_clean)
         post_strip = content -> replace(content, "@__CODE__" => code_clean)
         editurl_update = content -> update_edit_url(content, file, folder)
+        IS_LIVESERVER = get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
         Literate.markdown(
             new_file_path,
             outputdir;
             documenter=true,
             postprocess=editurl_update ∘ post_strip,
             credit=true,
+            execute=!IS_LIVESERVER,
+            flavor=Literate.DocumenterFlavor(),
             name=splitext(file)[1]
         )
     end
 end
 
+using FiniteVolumeMethod
+using Documenter
+using Literate
+using Dates
+
 # All the pages to be included
-const _PAGES = [
+_PAGES = [
     "Introduction" => "index.md",
     "Interface" => "interface.md",
     "Tutorials" => [
@@ -146,6 +171,10 @@ end
 !isempty(missing_set) && error("Missing files: $missing_set")
 
 # Make and deploy
+DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod, Test);
+    recursive=true)
+IS_LIVESERVER = get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
+IS_CI = get(ENV, "CI", "false") == "true"
 makedocs(;
     modules=[FiniteVolumeMethod],
     authors="Daniel VandenHeuvel <danj.vandenheuvel@gmail.com>",
@@ -165,7 +194,8 @@ makedocs(;
             ),
         ))),
     draft=IS_LIVESERVER,
-    pages=_PAGES
+    pages=_PAGES,
+    warnonly=true
 )
 
 deploydocs(;

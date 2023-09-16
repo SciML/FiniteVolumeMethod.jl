@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Linear Reaction-Diffusion Equations 
 # ```@contents
 # Pages = ["linear_reaction_diffusion_equations.md"]
@@ -78,10 +80,12 @@ final_time = 8.0
 prob = linear_reaction_diffusion_equation(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition, final_time)
+prob |> tc #hide
 
 #-
 using Sundials
 sol = solve(prob, CVODE_BDF(linear_solver=:GMRES); saveat=2)
+sol |> tc #hide
 
 #-
 using CairoMakie
@@ -116,6 +120,7 @@ fvm_prob = FVMProblem(
     initial_condition=initial_condition
 )
 fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES), saveat=2.0)
+fvm_sol |> tc #hide
 
 for j in eachindex(fvm_sol) #src
     ax = Axis(fig[2, j], width=600, height=600, #src
@@ -134,22 +139,25 @@ prob = LinearReactionDiffusionEquation(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function,  initial_condition, final_time)
 sol = solve(prob, CVODE_BDF(linear_solver=:GMRES); saveat=2)
+sol |> tc #hide
 
 using Test #src
 @test sol[begin:end-1, 2:end] ≈ fvm_sol[:, 2:end] rtol=1e-1 #src
 
 # Here is a benchmark comparison of `LinearReactionDiffusionEquation` versus `FVMProblem`.
-# ```@example
-# #= #hide
+# ````julia
 # using BenchmarkTools 
-# @benchmark solve($prob, $CVODE_BDF(linear_solver=:GMRES); saveat=$2)
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 101 samples with 1 evaluation.\nRange (min … max):  47.967 ms …  52.556 ms  ┊ GC (min … max): 0.00% … 0.00%\nTime  (median):     49.818 ms               ┊ GC (median):    0.00%\n Time  (mean ± σ):   49.799 ms ± 745.705 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%\n\n             ▁▁▁  ▃ ▁▁▃▄ ▆█▄     ▃\n ▄▁▁▄▁▄▁▁▁▄▆▁███▆▁█▄████▇███▇▇▇▄▇█▄▁▄▆▁▇▆▆▁▁▁▁▁▁▄▁▁▁▁▁▁▁▁▁▁▁▄ ▄\n   48 ms           Histogram: frequency by time         52.4 ms <\n\nMemory estimate: 1.58 MiB, allocs estimate: 1087.") #hide
-# ```
+# @btime solve($prob, $CVODE_BDF(linear_solver=:GMRES); saveat=$2);
+# ````
 #
-# ```@example
-# #= #hide
-# @benchmark solve($fvm_prob, $CVODE_BDF(linear_solver=:GMRES); saveat=$2)
-# =# #hide
-# Base.Text("BenchmarkTools.Trial: 29 samples with 1 evaluation.\nRange (min … max):  164.562 ms … 212.336 ms  ┊ GC (min … max): 0.00% … 16.83%\nTime  (median):     171.186 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   174.648 ms ±  10.180 ms  ┊ GC (mean ± σ):  1.74% ±  3.89%\n\n ▄   ▁ ▄▁█▁\n █▁▁▆█▆████▆▆▆▆▁▁▁▁▁▁▁▆▆▆▁▁▁▆▆▁▁▁▁▁▁▁▁▆▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▆ ▁\n   165 ms           Histogram: frequency by time          212 ms <\n\nMemory estimate: 90.84 MiB, allocs estimate: 83264.") #hide
-# ```
+# ````
+#   48.360 ms (1087 allocations: 1.58 MiB)
+# ````
+#
+# ````julia
+# @btime solve($fvm_prob, $CVODE_BDF(linear_solver=:GMRES); saveat=$2);
+# ````
+#
+# ````
+#   163.686 ms (83267 allocations: 90.84 MiB)
+# ````

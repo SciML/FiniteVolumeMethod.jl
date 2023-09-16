@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Piecewise Linear and Natural Neighbour Inteprolation for an Advection-Diffusion Equation 
 # In this tutorial, we have three aims:
 #
@@ -92,6 +94,7 @@ prob = FVMProblem(mesh, BCs;
 using OrdinaryDiffEq, LinearSolve
 times = [0, 10, 25, 50, 100, 200, 250]
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=times)
+sol |> tc #hide
 
 #-
 using CairoMakie
@@ -206,6 +209,7 @@ fig
 # the interpolant with the solution at $t = 50$.
 using NaturalNeighbours
 itp = interpolate(tri, sol.u[4], derivatives=true) # sol.t[4] == 50
+sol |> tc #hide
 
 # We need `derivatives = true` so that we can use the higher order interpolants `Sibson(1)`, `Hiyoshi(2)`,
 # and `Farin()` below - if you don't use those, then you shouldn't need this option (unless you 
@@ -216,7 +220,7 @@ itp = interpolate(tri, sol.u[4], derivatives=true) # sol.t[4] == 50
 # over points, since multithreading can be used in this case. Let us 
 # interpolate at the grid from before, which requires us to collect it into a vector:
 _x = [x for x in x, _ in y] |> vec
-_y = [y for _ in x, y in y] |> vec
+_y = [y for _ in x, y in y] |> vec;
 
 # We will look at all the interpolants provided by NaturalNeighbours.jl.[^1]
 
@@ -228,7 +232,7 @@ sibson_1_vals = itp(_x, _y; method=Sibson(1))
 nearest_vals = itp(_x, _y; method=Nearest())
 farin_vals = itp(_x, _y; method=Farin())
 hiyoshi_vals = itp(_x, _y; method=Hiyoshi(2))
-pde_vals = sol.u[4]
+pde_vals = sol.u[4];
 
 # We visualise these results as follows.
 fig = Figure(fontsize=38)

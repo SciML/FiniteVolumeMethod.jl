@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems
 # For this tutorial, we consider the following problem:
 # ```math
@@ -89,6 +91,7 @@ steady_prob = SteadyFVMProblem(prob)
 # Now we can solve. 
 using OrdinaryDiffEq, SteadyStateDiffEq
 sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+sol |> tc #hide
 
 #-
 fig, ax, sc = tricontourf(tri, sol.u, levels=40:70, axis=(xlabel="x", ylabel="y"))
@@ -113,6 +116,7 @@ ens_prob = EnsembleProblem(steady_prob,
         return _prob
     end)
 esol = solve(ens_prob, DynamicSS(Rosenbrock23()), EnsembleSerial(); trajectories=length(T∞_range))
+esol |> tc #hide
 
 # From these results, let us now extract the temperature at $(0.03, 0.03)$. We will use 
 # NaturalNeighbours.jl for this.
