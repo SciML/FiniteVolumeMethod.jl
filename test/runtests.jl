@@ -30,7 +30,7 @@ end
     end
 
     @testset verbose = true "Tutorials" begin
-        dir = joinpath(dirname(@__DIR__), "test", "literate_tutorials")
+        dir = joinpath(dirname(@__DIR__), "docs", "src", "literate_tutorials")
         files = readdir(dir)
         file_names = [
             "diffusion_equation_in_a_wedge_with_mixed_boundary_conditions.jl",
@@ -74,7 +74,7 @@ end
     end
 
     @testset verbose = true "Custom Templates" begin
-        dir = joinpath(dirname(@__DIR__), "test", "literate_wyos")
+        dir = joinpath(dirname(@__DIR__), "docs", "src", "literate_wyos")
         files = readdir(dir)
         file_names = [
             "diffusion_equations.jl",
