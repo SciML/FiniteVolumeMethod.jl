@@ -1,3 +1,6 @@
+IS_CI = get(ENV, "CI", "false") == "true"
+RUN_EXAMPLES = false # !IS_CI
+
 using Distributed # https://github.com/CliMA/Oceananigans.jl/blob/main/docs/make.jl
 Distributed.addprocs(2)
 
@@ -98,7 +101,7 @@ Distributed.pmap(1:length(example_files)) do n
     code_clean = strip(code_clean)
     post_strip = content -> replace(content, "@__CODE__" => code_clean)
     editurl_update = content -> update_edit_url(content, file, folder)
-    IS_LIVESERVER = false # get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
+    IS_LIVESERVER = get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
     Literate.markdown(
         new_file_path,
         outputdir;
@@ -112,6 +115,11 @@ Distributed.pmap(1:length(example_files)) do n
 end
 
 Distributed.rmprocs()
+
+using FiniteVolumeMethod
+using Documenter
+using Literate
+using Dates
 
 # All the pages to be included
 _PAGES = [
@@ -178,7 +186,7 @@ end
 # Make and deploy
 DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod, Test);
     recursive=true)
-IS_LIVESERVER = false # get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
+IS_LIVESERVER = get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
 IS_CI = get(ENV, "CI", "false") == "true"
 makedocs(;
     modules=[FiniteVolumeMethod],
@@ -210,13 +218,10 @@ deploydocs(;
 
 function clear_tmp()
     rm(session_tmp, force=true, recursive=true)
-    protected_tutorials = ["overview.md", "keller_segel_chemotaxis.md", "maze.txt"]
-    protected_wyos = ["overview.md"]
-    protected = Dict("tutorials" => protected_tutorials, "wyos" => protected_wyos)
     for folder in ("tutorials", "wyos")
         dir = joinpath(@__DIR__, "src", folder)
         files = readdir(dir)
-        setdiff!(files, protected[folder])
+        filter!(file -> endswith(file, ".png"), files)
         for file in files
             rm(joinpath(dir, file))
         end
