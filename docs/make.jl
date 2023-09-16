@@ -1,5 +1,5 @@
 IS_CI = get(ENV, "CI", "false") == "true"
-RUN_EXAMPLES = false # !IS_CI
+RUN_EXAMPLES = !IS_CI
 
 using Distributed # https://github.com/CliMA/Oceananigans.jl/blob/main/docs/make.jl
 Distributed.addprocs(2)
