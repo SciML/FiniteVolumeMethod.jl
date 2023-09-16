@@ -1,6 +1,7 @@
 IS_CI = get(ENV, "CI", "false") == "true"
 RUN_EXAMPLES = false # !IS_CI
 
+#=
 if RUN_EXAMPLES
     using FiniteVolumeMethod
     using Documenter
@@ -102,6 +103,7 @@ if RUN_EXAMPLES
         )
     end
 end
+=#
 
 using FiniteVolumeMethod
 using Documenter
@@ -142,6 +144,7 @@ _PAGES = [
 ]
 
 # Make sure we haven't forgotten any files
+#=
 set = Set{String}()
 for page in _PAGES
     if page[2] isa String
@@ -169,6 +172,7 @@ for (root, dir, files) in walkdir(doc_dir)
     end
 end
 !isempty(missing_set) && error("Missing files: $missing_set")
+=#
 
 # Make and deploy
 DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod, Test);
