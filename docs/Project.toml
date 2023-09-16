@@ -3,6 +3,3 @@ CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DelaunayTriangulation = "927a84f5-c5f4-47a5-9785-b46e178433df"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 FiniteVolumeMethod = "d4f04ab7-4f65-4d72-8a28-7087bc7f46f4"
-
-[compat]
-Documenter = "0.27"
