@@ -20,18 +20,10 @@ jobs:
         version:
           - '1'
         os:
-          - ubuntu-20.04 # https://github.com/actions/runner-images/discussions/7188
+          - ubuntu-latest # https://github.com/actions/runner-images/discussions/7188
         arch:
           - x64
-    steps:
-      - name: Increase swapfile
-        run: |
-          sudo swapoff -a
-          sudo fallocate -l 8G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          sudo swapon --show      
+    steps:   
       - name: Checkout repository for access
         uses: actions/checkout@v4
 
@@ -61,19 +53,11 @@ jobs:
           files: lcov.info
   docs:
     name: Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       statuses: write
     steps:
-      - name: Increase swapfile
-        run: |
-          sudo swapoff -a
-          sudo fallocate -l 8G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          sudo swapon --show      
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
         with:
