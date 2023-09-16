@@ -2,11 +2,6 @@
 EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/mean_exit_time.jl"
 ```
 
-````@example mean_exit_time
-using DisplayAs #hide
-tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
-nothing #hide
-````
 
 # Mean Exit Time Problems
 ```@contents
@@ -54,7 +49,7 @@ for nodes with conditions. For this problem, though, we need $a_{ii} = 1$ for
 Dirichlet nodes $i$. So, let's write a function that creates $\vb b$ but also
 enforces Dirichlet constraints.
 
-````@example mean_exit_time
+````julia
 function create_met_b!(A, mesh, conditions)
     b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
@@ -68,10 +63,14 @@ function create_met_b!(A, mesh, conditions)
 end
 ````
 
+````
+create_met_b! (generic function with 1 method)
+````
+
 Let us now define the function which gives us our matrices $\vb A$ and $\vb b$. We will
 return the problem as a `LinearProblem` from LinearSolve.jl.
 
-````@example mean_exit_time
+````julia
 using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
 const FVM = FiniteVolumeMethod
 function met_problem(mesh::FVMGeometry,
@@ -88,11 +87,15 @@ function met_problem(mesh::FVMGeometry,
 end
 ````
 
+````
+met_problem (generic function with 2 methods)
+````
+
 Now let us test this problem. To test, we will consider the last
 problem [here](../tutorials/mean_exit_time.md) which
 includes mixed boundary conditions and also an internal condition.
 
-````@example mean_exit_time
+````julia
 # Define the triangulation
 θ = LinRange(0, 2π, 250)
 R₁, R₂ = 2.0, 3.0
@@ -148,38 +151,91 @@ diffusion_function = (x, y, p) -> begin
 end
 diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
 prob = met_problem(mesh, BCs, ICs; diffusion_function, diffusion_parameters)
-prob |> tc #hide
+````
+
+````
+LinearProblem. In-place: true
+b: 3719-element Vector{Float64}:
+  0.0
+ -1.0
+ -1.0
+ -1.0
+ -1.0
+  ⋮
+ -1.0
+ -1.0
+ -1.0
+ -1.0
+ -1.0
 ````
 
 This problem can now be solved using the `solve` interface from LinearSolve.jl. Note that the matrix
 $\vb A$ is very dense, but there is no structure to it:
 
-````@example mean_exit_time
+````julia
 prob.A
-prob.A |> DisplayAs.withcontext(:compact => true) #hide
+````
+
+````
+3719×3719 SparseMatrixCSC{Float64, Int64} with 22916 stored entries:
+⎡⠻⣦⡀⠀⠀⠀⠀⠀⠀⠐⠀⠀⠀⠀⠀⠀⠀⠀⢸⣾⠶⣳⣲⣿⢹⠶⠄⠄⠀⡊⣁⠂⠂⡤⠑⡐⣖⡆⢤⠀⎤
+⎢⠀⠈⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠁⠈⠉⠀⠉⠉⠀⠀⠀⠀⠀⠉⠀⠁⠁⠈⠁⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠑⣤⡀⠠⠀⠀⠀⠀⠀⠀⠀⠀⢠⣤⣤⣤⣤⣤⣠⢤⡠⡤⣤⣤⣠⡀⣄⠄⣄⡤⡤⣄⡀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⡈⠻⣦⣀⠀⠀⠀⠀⠀⠀⠀⠸⣿⡽⣿⣿⣿⢿⣿⣸⣽⣿⣞⣚⡒⣾⠁⣿⣦⣯⡉⣓⣄⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣾⣵⣶⣤⣄⢤⠀⠀⠀⠀⠀⠘⢿⡿⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⡿⣿⣿⣿⣯⣆⠒⠄⠀⠀⡨⢵⣿⢿⣻⣿⣾⣿⠟⣿⣻⣟⣾⣿⣝⣿⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢱⣿⣿⣯⣵⣿⣿⣿⣿⣿⣷⣶⣦⣭⢞⣆⣻⣿⣟⣽⣽⣿⡟⣿⣿⢿⢾⣿⡿⢿⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣕⢝⣿⣿⣿⡿⣿⣻⣿⣿⣿⣿⣿⣿⣿⣟⣻⣿⣿⣿⣿⣿⣭⣭⎥
+⎢⣲⣶⣠⣥⣂⢶⣶⣶⣶⣦⠀⠓⠫⢿⣿⣿⣿⣿⡕⢍⠉⠕⠛⣿⣯⣫⢿⣼⡯⣿⢿⣯⣮⣿⣹⣿⣿⣗⣿⣧⎥
+⎢⢽⣣⣽⣿⣫⣿⡿⣿⣷⣯⠀⠀⠘⠄⢹⣿⣿⡿⢇⠄⠑⢄⠄⢹⠙⡻⣿⣿⣿⣷⣿⣟⣷⣾⣻⣔⣽⣿⠿⠅⎥
+⎢⣼⣾⢳⢿⢏⠏⣳⣿⣿⣿⠀⠀⠀⠀⡌⣿⣿⣻⣿⣤⣄⣁⡑⢌⠫⣏⠹⡝⠟⡿⠯⣿⣿⡿⣿⣿⣿⣝⣿⠆⎥
+⎢⢳⡖⣟⣧⠟⢾⢩⣞⣿⣿⣶⣄⢆⣎⠺⢵⣿⣿⡯⣻⣷⡠⡯⢦⣵⣿⣶⣲⣼⢜⣻⣭⢟⡭⣿⣻⡓⣟⣛⡃⎥
+⎢⠀⠅⣸⠾⢼⢍⠟⡮⣖⣾⣿⣫⣿⣟⣿⣾⣿⣿⣛⣷⣿⣿⣗⠦⢸⣻⡻⣮⣍⣸⣟⡷⡸⣯⡿⣽⠳⡻⣷⣿⎥
+⎢⡠⠠⢀⠈⡈⡅⢅⣿⣻⢿⣿⣿⣿⣾⣟⣽⣿⣿⣯⣯⢿⣿⣿⡥⣒⢟⣃⣹⢻⣶⣰⡟⡟⢛⣿⡮⢋⣕⣏⡓⎥
+⎢⠡⠘⡄⡩⢄⠅⢰⠺⢺⠸⣿⣿⣾⣿⣷⣿⣿⢿⡿⣷⣿⢿⣯⣧⡟⣾⢿⡽⣴⠾⡿⣯⠺⣖⡮⣗⡫⢺⡏⣼⎥
+⎢⠈⡤⡄⣠⠝⣚⢳⡝⠞⢛⣿⣿⣿⣥⣿⣭⣿⣾⣮⣿⣹⣿⣿⡿⡟⡵⡶⣮⣿⢉⢺⢦⡿⣯⣥⢸⡺⠴⠔⢅⎥
+⎢⢑⠠⣡⠁⣊⠯⠉⡽⠻⣿⣿⣿⣿⢾⣿⣟⣿⣿⣷⣾⢛⢾⣿⣿⣿⣻⣟⣯⡻⡿⢮⢯⣁⣛⢻⣶⢩⢓⡻⣵⎥
+⎢⠸⠽⢁⣮⠧⠀⠈⢯⡏⢻⣿⣿⣾⣿⣾⣷⣿⣿⢿⢿⣷⣿⣟⢿⣽⢬⣽⡢⢏⢴⣫⣊⢚⡎⢧⢒⡿⣯⡵⠓⎥
+⎣⠀⠓⠺⠹⠀⠀⠀⠈⠙⢼⣿⣿⣷⣽⣿⣏⡇⣿⠿⣿⠟⠇⠻⠟⠿⠸⣽⣿⢯⠹⣋⣭⠔⢅⢟⣮⢵⠋⢻⣶⎦
 ````
 
 We will use `KLUFactorization`.
 
-````@example mean_exit_time
+````julia
 sol = solve(prob, KLUFactorization())
-sol |> tc #hide
+````
+
+````
+u: 3719-element Vector{Float64}:
+     0.0
+  3319.147633403591
+  4683.172484676441
+  5660.017028220012
+  6447.763459361518
+     ⋮
+ 11186.370715496145
+  7608.681609929319
+  1945.4699213884896
+ 11437.149025177974
+  9326.319213813575
 ````
 
 We can easily visualise our solution:
 
-````@example mean_exit_time
+````julia
 using CairoMakie
 fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
     axis=(width=600, height=600, title="Template"))
 fig
 ````
+![](mean_exit_time-15.png)
 
 This result is a great match to what we found in the [tutorial](../tutorials/mean_exit_time.md).
 If we wanted to convert this mean exit time problem into the corresponding [`SteadyFVMProblem`](@ref),
 we can do:
 
-````@example mean_exit_time
+````julia
 function T_exact(x, y)
     r = sqrt(x^2 + y^2)
     if r < R₁
@@ -199,38 +255,72 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     initial_condition))
 ````
 
-Let's compare the two solutions.
-
-````@example mean_exit_time
-using SteadyStateDiffEq, OrdinaryDiffEq
-fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
-fvm_sol |> tc #hide
+````
+SteadyFVMProblem with 3719 nodes
 ````
 
-````@example mean_exit_time
+Let's compare the two solutions.
+
+````julia
+using SteadyStateDiffEq, OrdinaryDiffEq
+fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
+````
+
+````
+u: 3719-element Vector{Float64}:
+     0.0
+  3334.126104604181
+  4705.278232490303
+  5687.908513330301
+  6480.8435525479035
+     ⋮
+ 11157.429047825735
+  7646.021016621535
+  1951.7844728494736
+ 11414.764507547903
+  9310.27019433481
+````
+
+````julia
 ax = Axis(fig[1, 2], width=600, height=600, title="Template")
 tricontourf!(ax, tri, fvm_sol.u, levels=0:1000:15000, extendhigh=:auto)
 resize_to_layout!(fig)
 fig
 ````
+![](mean_exit_time-20.png)
 
 ## Using the Provided Template
 Let's now use the built-in `MeanExitTimeProblem` which implements the above template
 inside FiniteVolumeMethod.jl.
 
-````@example mean_exit_time
+````julia
 prob = MeanExitTimeProblem(mesh, BCs, ICs;
     diffusion_function,
     diffusion_parameters)
 sol = solve(prob, KLUFactorization())
-sol |> tc #hide
 ````
 
-````@example mean_exit_time
+````
+u: 3719-element Vector{Float64}:
+     0.0
+  3319.147633403591
+  4683.172484676441
+  5660.017028220012
+  6447.763459361518
+     ⋮
+ 11186.370715496145
+  7608.681609929319
+  1945.4699213884896
+ 11437.149025177974
+  9326.319213813575
+````
+
+````julia
 fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
     axis=(width=600, height=600))
 fig
 ````
+![](mean_exit_time-23.png)
 
 This matches what we have above. To finish, here is a benchmark comparing the approaches.
 ````julia

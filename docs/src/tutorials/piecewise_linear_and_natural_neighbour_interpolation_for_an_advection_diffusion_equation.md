@@ -2,11 +2,6 @@
 EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.jl"
 ```
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
-using DisplayAs #hide
-tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
-nothing #hide
-````
 
 # Piecewise Linear and Natural Neighbour Inteprolation for an Advection-Diffusion Equation
 In this tutorial, we have three aims:
@@ -34,7 +29,7 @@ with \eqref{eq:advdiffeq}. For the mesh, we could use
 `triangulate_rectangle`, but we want to put most of the triangles
 near the origin, so we need to use `refine!` on an initial mesh.
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 using DelaunayTriangulation, FiniteVolumeMethod, LinearAlgebra, CairoMakie
 L = 30
 tri = triangulate_rectangle(-L, L, -L, L, 2, 2, single_boundary=true)
@@ -49,15 +44,24 @@ end
 refine!(tri; min_angle=33.0, max_area=area_constraint)
 triplot(tri)
 ````
+![](piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation-5.png)
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 mesh = FVMGeometry(tri)
+````
+
+````
+FVMGeometry with 7517 control volumes, 14889 triangles, and 22405 edges
 ````
 
 The boundary conditions are homogeneous `Dirichlet` conditions.
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
+````
+
+````
+BoundaryConditions with 1 boundary condition with type Dirichlet
 ````
 
 We now need to define the actual problem. We need to write \eqref{eq:advdiffeq}
@@ -87,7 +91,7 @@ taking $\varepsilon=1/10$. We can now define the problem. Remember that the flux
 takes argument $(\alpha, \beta, \gamma)$ rather than $u$, replacing $u$ with $u(x, y) = \alpha x + \beta y + \gamma$,
 and it returns a `Tuple` representing the vector. We let $D = 0.02$ and $\nu = 0.05$.
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 ε = 1 / 10
 f = (x, y) -> 1 / (ε^2 * π) * exp(-(x^2 + y^2) / ε^2)
 initial_condition = [f(x, y) for (x, y) in each_point(tri)]
@@ -108,16 +112,40 @@ prob = FVMProblem(mesh, BCs;
     final_time)
 ````
 
+````
+FVMProblem with 7517 nodes and time span (0.0, 250.0)
+````
+
 Now we can solve and visualise the solution.
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 using OrdinaryDiffEq, LinearSolve
 times = [0, 10, 25, 50, 100, 200, 250]
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=times)
-sol |> tc #hide
 ````
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````
+retcode: Success
+Interpolation: 1st order linear
+t: 7-element Vector{Float64}:
+   0.0
+  10.0
+  25.0
+  50.0
+ 100.0
+ 200.0
+ 250.0
+u: 7-element Vector{Vector{Float64}}:
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -4.820370409845838e-21, 1.781509091138934e-18, 8.668307885555532e-18, 1.0872246109283898e-19, 8.739792989435581e-38, -1.5386644558925346e-70, 0.0, -8.582427708958973e-70, 0.0, 3.1444874843320617e-71]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -8.705575768268958e-15, 2.5320548931287523e-12, 1.8121347305786222e-11, 6.598086106204419e-13, 2.225368844349885e-27, 6.491324655482258e-52, 0.0, -1.4158529308345883e-51, 0.0, 3.2049415035354516e-54]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -1.2856728329346321e-11, 1.2885778626468056e-9, 3.7963349888690527e-8, 3.3553263399735208e-9, 2.9817554390779693e-21, 1.850695988736534e-40, 0.0, -2.3857764776098803e-40, 0.0, -1.091516431265274e-41]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -3.7403617794408764e-10, 1.5643100090529325e-8, 1.932323164825378e-6, 4.15627183302958e-7, -3.267490197497367e-15, 1.4791054519639965e-30, 0.0, -8.014666816327261e-31, 0.0, -3.103313174242634e-31]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -8.039430996945249e-11, 3.6901707246303116e-9, 1.307733528890288e-6, 5.278857221610239e-7, -1.7926807786961345e-11, 2.777118539299437e-23, 0.0, 4.9952737778161765e-23, 0.0, -3.698620883146577e-23]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -1.2829974697485974e-11, 9.155105934253671e-10, 4.147432423397547e-7, 1.8930716238425514e-7, -5.827492783419948e-11, -4.1442792238834543e-22, 0.0, 4.11810775550092e-21, 0.0, -2.528712685049022e-21]
+````
+
+````julia
 using CairoMakie
 fig = Figure(fontsize=38)
 for i in eachindex(sol)
@@ -132,6 +160,7 @@ end
 resize_to_layout!(fig)
 fig
 ````
+![](piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation-13.png)
 
 ## Piecewise linear interpolation
 As mentioned in [mathematical details section](../math.md), a key part of the finite volume method is the assumption that
@@ -151,7 +180,7 @@ We consider the times $t = 10, 25, 50, 100, 200, 250$. You could also of course
 amend the procedure so that you evaluate the interpolant at each time for a given point first,
 allowing you to avoid storing the triangle since you only consider each point a single time.
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 x = LinRange(-L, L, 250)
 y = LinRange(-L, L, 250)
 triangles = Matrix{NTuple{3,Int}}(undef, length(x), length(y))
@@ -173,7 +202,7 @@ end
 Let's visualise these results to check their accuracy. We compute the triangulation of
 our grid to make the `tricontourf` call faster.
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 _tri = triangulate([[x for x in x, _ in y] |> vec [y for _ in x, y in y] |> vec]')
 fig = Figure(fontsize=38)
 for i in eachindex(sol)
@@ -188,6 +217,7 @@ end
 resize_to_layout!(fig)
 fig
 ````
+![](piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation-17.png)
 
 ## Natural neighbour interpolation
 Since the solution is defined over a triangulation, the most natural form of inteprolation to use,
@@ -199,10 +229,30 @@ NaturalNeighbours.jl also provides the same piecewise linear interpolant above v
 The way to construct a natural neighbour interpolant is as follows, where we provide
 the interpolant with the solution at $t = 50$.
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 using NaturalNeighbours
 itp = interpolate(tri, sol.u[4], derivatives=true) # sol.t[4] == 50
-sol |> tc #hide
+````
+
+````
+retcode: Success
+Interpolation: 1st order linear
+t: 7-element Vector{Float64}:
+   0.0
+  10.0
+  25.0
+  50.0
+ 100.0
+ 200.0
+ 250.0
+u: 7-element Vector{Vector{Float64}}:
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -4.820370409845838e-21, 1.781509091138934e-18, 8.668307885555532e-18, 1.0872246109283898e-19, 8.739792989435581e-38, -1.5386644558925346e-70, 0.0, -8.582427708958973e-70, 0.0, 3.1444874843320617e-71]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -8.705575768268958e-15, 2.5320548931287523e-12, 1.8121347305786222e-11, 6.598086106204419e-13, 2.225368844349885e-27, 6.491324655482258e-52, 0.0, -1.4158529308345883e-51, 0.0, 3.2049415035354516e-54]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -1.2856728329346321e-11, 1.2885778626468056e-9, 3.7963349888690527e-8, 3.3553263399735208e-9, 2.9817554390779693e-21, 1.850695988736534e-40, 0.0, -2.3857764776098803e-40, 0.0, -1.091516431265274e-41]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -3.7403617794408764e-10, 1.5643100090529325e-8, 1.932323164825378e-6, 4.15627183302958e-7, -3.267490197497367e-15, 1.4791054519639965e-30, 0.0, -8.014666816327261e-31, 0.0, -3.103313174242634e-31]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -8.039430996945249e-11, 3.6901707246303116e-9, 1.307733528890288e-6, 5.278857221610239e-7, -1.7926807786961345e-11, 2.777118539299437e-23, 0.0, 4.9952737778161765e-23, 0.0, -3.698620883146577e-23]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -1.2829974697485974e-11, 9.155105934253671e-10, 4.147432423397547e-7, 1.8930716238425514e-7, -5.827492783419948e-11, -4.1442792238834543e-22, 0.0, 4.11810775550092e-21, 0.0, -2.528712685049022e-21]
 ````
 
 We need `derivatives = true` so that we can use the higher order interpolants `Sibson(1)`, `Hiyoshi(2)`,
@@ -214,17 +264,16 @@ way to call it is by providing it with a vector of points, rather than broadcast
 over points, since multithreading can be used in this case. Let us
 interpolate at the grid from before, which requires us to collect it into a vector:
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 _x = [x for x in x, _ in y] |> vec
 _y = [y for _ in x, y in y] |> vec;
-nothing #hide
 ````
 
 We will look at all the interpolants provided by NaturalNeighbours.jl.[^1]
 
 [^1]: This list is available from `?NaturalNeighbours.AbstractInterpolator`. Look at the help page (`?`) for the respective interpolators or NaturalNeighbours.jl's documentation for more information.
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 sibson_vals = itp(_x, _y; method=Sibson())
 triangle_vals = itp(_x, _y; method=Triangle()) # this is the same as pl_interpolate
 laplace_vals = itp(_x, _y; method=Laplace())
@@ -233,12 +282,11 @@ nearest_vals = itp(_x, _y; method=Nearest())
 farin_vals = itp(_x, _y; method=Farin())
 hiyoshi_vals = itp(_x, _y; method=Hiyoshi(2))
 pde_vals = sol.u[4];
-nothing #hide
 ````
 
 We visualise these results as follows.
 
-````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
+````julia
 fig = Figure(fontsize=38)
 all_vals = (sibson_vals, triangle_vals, laplace_vals, sibson_1_vals, nearest_vals, farin_vals, hiyoshi_vals, pde_vals)
 titles = ("(a): Sibson", "(b): Triangle", "(c): Laplace", "(d): Sibson-1", "(e): Nearest", "(f): Farin", "(g): Hiyoshi", "(h): PDE")
@@ -270,6 +318,7 @@ for (i, (vals, title)) in enumerate(zip(all_vals, titles))
 end
 fig
 ````
+![](piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation-27.png)
 
 We note that natural neighbour interpolation is not technically well defined
 for constrained triangulations. In this case it is fine, but for regions

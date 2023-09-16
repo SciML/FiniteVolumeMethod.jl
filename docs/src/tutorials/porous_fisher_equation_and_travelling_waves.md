@@ -2,11 +2,6 @@
 EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_fisher_equation_and_travelling_waves.jl"
 ```
 
-````@example porous_fisher_equation_and_travelling_waves
-using DisplayAs #hide
-tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
-nothing #hide
-````
 
 # Porous-Fisher Equation and Travelling Waves
 This tutorial considers a more involved example, where we discuss
@@ -56,7 +51,7 @@ takes the solution some time to evolve towards the travelling wave solution.
 
 Now with this preamble out of the way, let us solve this problem.
 
-````@example porous_fisher_equation_and_travelling_waves
+````julia
 using DelaunayTriangulation, FiniteVolumeMethod, OrdinaryDiffEq, LinearSolve
 a, b, c, d, nx, ny = 0.0, 3.0, 0.0, 40.0, 60, 80
 tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary=false)
@@ -79,14 +74,42 @@ prob = FVMProblem(mesh, BCs;
     source_function, source_parameters,
     initial_condition, final_time)
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=0.5)
-sol |> tc #hide
+````
+
+````
+retcode: Success
+Interpolation: 1st order linear
+t: 101-element Vector{Float64}:
+  0.0
+  0.5
+  1.0
+  1.5
+  2.0
+  ⋮
+ 48.0
+ 48.5
+ 49.0
+ 49.5
+ 50.0
+u: 101-element Vector{Vector{Float64}}:
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ ⋮
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 ````
 
 Let us now look at the travelling wave behaviour. We will plot the evolution over
 time, and also the travelling wave view of the solution. First,
 let us get these travelling wave values.
 
-````@example porous_fisher_equation_and_travelling_waves
+````julia
 large_time_idx = findfirst(≥(10.0), sol.t)
 c = sqrt(λ / (2D))
 cₘᵢₙ = sqrt(λ * D / 2)
@@ -109,7 +132,7 @@ end
 
 Now we are in a position to plot.
 
-````@example porous_fisher_equation_and_travelling_waves
+````julia
 using CairoMakie
 fig = Figure(resolution=(3200.72f0, 800.64f0), fontsize=38)
 for (i, j) in zip(1:3, (1, 51, 101))
@@ -128,6 +151,7 @@ exact_travelling_wave_values = exact_solution.(exact_z_vals)
 lines!(ax, exact_z_vals, exact_travelling_wave_values, color=:red, linewidth=4, linestyle=:dash)
 fig
 ````
+![](porous_fisher_equation_and_travelling_waves-8.png)
 
 ## Just the code
 An uncommented version of this example is given below.

@@ -83,7 +83,7 @@ steady_prob = SteadyFVMProblem(prob)
 ````
 
 ````
-SteadyFVMProblem with 3684 nodes
+SteadyFVMProblem with 3682 nodes
 ````
 
 ````julia
@@ -92,18 +92,18 @@ sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()), abstol=1
 ````
 
 ````
-u: 3684-element Vector{Float64}:
+u: 3682-element Vector{Float64}:
  0.0
  0.0
- 0.005904793192824944
- 0.012661978782228392
- 0.019821796594646363
+ 0.005903040585387279
+ 0.012619876383910421
+ 0.019816208525348763
  ⋮
- 0.9815275378684285
- 0.8746367320892605
- 0.9815275378606145
- 0.39156713778665453
- 0.3937103433200336
+ 0.9815221174316084
+ 0.8745631517765737
+ 0.9815221174264832
+ 0.39146854425811206
+ 0.39356170317015743
 ````
 
 We now have our solution.
