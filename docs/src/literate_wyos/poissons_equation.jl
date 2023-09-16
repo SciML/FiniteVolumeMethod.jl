@@ -135,16 +135,16 @@ sol = solve(prob, KLUFactorization())
 # ```@example
 # #= #hide
 # using BenchmarkTools
-# @benchmark solve($prob, $KLUFactorization())
+# @btime solve($prob, $KLUFactorization());
 # =# #hide
-# Base.Text("BenchmarkTools.Trial: 290 samples with 1 evaluation.\nRange (min … max):  16.017 ms … 74.684 ms  ┊ GC (min … max): 0.00% … 15.69%\nTime  (median):     17.021 ms              ┊ GC (median):    0.00%\n Time  (mean ± σ):   17.231 ms ±  3.421 ms  ┊ GC (mean ± σ):  0.23% ±  0.92%\n\n           ▁  ▁▁▄▂▁▂  ▁▃▂ █▂ ▅▁ ▂ ▁▄▃\n ▄▆▁▃▄▆▄▅▇▄█▆▆███████████▇██▄██▇█████▅▅▅▅▅▅█▅▃▄▁▄▃▃▃▁▄▁▁▁▄▁▄ ▄\n   16 ms           Histogram: frequency by time        18.4 ms <\n\nMemory estimate: 15.21 MiB, allocs estimate: 56.") #raw
+# Base.Text("   15.711 ms (56 allocations: 15.21 MiB)") #hide
 # ```
 #
 # ```@example
 # #= #hide
-# @benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+# @btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
 # =# #hide
-# Base.Text("BenchmarkTools.Trial: 23 samples with 1 evaluation.\nRange (min … max):  197.733 ms … 297.593 ms  ┊ GC (min … max): 0.00% … 24.94%\nTime  (median):     213.042 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   217.573 ms ±  19.728 ms  ┊ GC (mean ± σ):  1.48% ±  5.20%\n\n      █   ▃       ▁\n ▄▁▁▁▇█▁▁▄█▇▁▄▁▁▁▄█▁▁▁▁▁▁▄▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▄ ▁\n   198 ms           Histogram: frequency by time          298 ms <\n\nMemory estimate: 93.63 MiB, allocs estimate: 185755.") #hide
+# Base.Text("   197.751 ms (185761 allocations: 93.63 MiB)") #hide
 # ```
 
 # Let's now also solve a generalised Poisson equation. Based 
@@ -319,16 +319,16 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
 
 # ```@example
 # #= #hide
-# @benchmark solve($prob, $KLUFactorization())
+# @btime solve($prob, $KLUFactorization());
 # =# #hide
-# Base.Text("BenchmarkTools.Trial: 463 samples with 1 evaluation.\nRange (min … max):   9.688 ms … 73.832 ms  ┊ GC (min … max): 0.00% … 16.81%\nTime  (median):     10.645 ms              ┊ GC (median):    0.00%\n Time  (mean ± σ):   10.801 ms ±  2.964 ms  ┊ GC (mean ± σ):  0.25% ±  0.78%\n\n              ▁▁▅▂▁▅▃▂▇▅▄▂▁█▁▄▇▃▅▁ ▃▄▂  ▁\n ▃▁▃▃▃▄▅▄▁▃█▅▇████████████████████▇██████▅▅█▇▅▄▅▁▅▅▃▃▁▁▃▃▃▁▃ ▅\n   9.69 ms         Histogram: frequency by time        11.8 ms <\n\nMemory estimate: 10.83 MiB, allocs estimate: 56.") #hide
+# Base.Text("   9.327 ms (56 allocations: 10.81 MiB)") #hide
 # ```
 #
 # ```@example
 # #= #hide
-# @benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+# @btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
 # =# #hide
-# Base.Text("BenchmarkTools.Trial: 14 samples with 1 evaluation.\nRange (min … max):  352.321 ms … 379.143 ms  ┊ GC (min … max): 0.00% … 0.00%\nTime  (median):     360.235 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   363.030 ms ±   7.517 ms  ┊ GC (mean ± σ):  0.00% ± 0.00%\n\n ▁  ▁         ▁█  █▁        ▁ ▁  ▁         ▁    ▁            ▁\n █▁▁█▁▁▁▁▁▁▁▁▁██▁▁██▁▁▁▁▁▁▁▁█▁█▁▁█▁▁▁▁▁▁▁▁▁█▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁█ ▁\n 352 ms           Histogram: frequency by time          379 ms <\n\nMemory estimate: 93.24 MiB, allocs estimate: 200339.") #hide
+# Base.Text("   334.187 ms (201149 allocations: 93.65 MiB)") #hide
 # ```
 
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()))) #src

@@ -198,16 +198,16 @@ fig
 # ```@example
 # #= #hide
 # using BenchmarkTools
-# @benchmark solve($prob, $KLUFactorization())
+# @btime solve($prob, $KLUFactorization());
 # =# #hide
-# Base.Text("BenchmarkTools.Trial: 1616 samples with 1 evaluation.\nRange (min … max):  2.652 ms … 115.897 ms  ┊ GC (min … max): 0.00% … 14.76%\nTime  (median):     2.978 ms               ┊ GC (median):    0.00%\n Time  (mean ± σ):   3.084 ms ±   2.818 ms  ┊ GC (mean ± σ):  0.34% ±  0.37%\n\n         ▁▃▃▆▇▇█▆▆▅▃▁\n           ▃▄▅▅▇▇▆▇██████████████▆▆▄▅▅▅▃▄▃▃▃▃▃▂▂▃▂▂▂▂▂▂▂▂▃▂▁▂▁▂▂▂▁▃▂▂▂ ▄\n 2.65 ms         Histogram: frequency by time        3.95 ms <\n\nMemory estimate: 3.72 MiB, allocs estimate: 56.") #hide
+# Base.Text("   2.557 ms (56 allocations: 3.72 MiB)") #hide
 # ```
 #
 # ```@example
 # #= #hide
-# @benchmark solve($fvm_prob, $DynamicSS($KenCarp47(linsolve=KLUFactorization())))
+# @btime solve($fvm_prob, $DynamicSS($KenCarp47(linsolve=KLUFactorization())));
 # =# #hide
-# Base.Text("BenchmarkTools.Trial: 20 samples with 1 evaluation.\nRange (min … max):  231.990 ms … 387.095 ms  ┊ GC (min … max): 0.00% … 35.13%\nTime  (median):     255.970 ms               ┊ GC (median):    0.00%\nTime  (mean ± σ):   259.175 ms ±  32.365 ms  ┊ GC (mean ± σ):  2.62% ±  7.86%\n\n   ▄▁     █ ▁\n ▆▁██▆▁▆▁▆█▆█▆▁▁▆▁▆▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▆ ▁\n   232 ms           Histogram: frequency by time          387 ms <\n\nMemory estimate: 90.23 MiB, allocs estimate: 314442.") #hide
+# Base.Text("   225.446 ms (314442 allocations: 90.23 MiB)") #hide
 # ```
 
 # Very fast!

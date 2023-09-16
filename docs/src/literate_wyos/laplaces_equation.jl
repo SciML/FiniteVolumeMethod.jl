@@ -183,16 +183,16 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
 # ```@example
 # #= #hide
 # using BenchmarkTools
-# @benchmark solve($prob, $KLUFactorization())
+# @btime solve($prob, $KLUFactorization());
 # =# #hide
-# Base.Text("BenchmarkTools.Trial: 285 samples with 1 evaluation.\nRange (min … max):  15.597 ms … 43.701 ms  ┊ GC (min … max): 0.00% … 10.41%\nTime  (median):     17.054 ms              ┊ GC (median):    0.00%\nTime  (mean ± σ):   17.542 ms ±  3.172 ms  ┊ GC (mean ± σ):  0.36% ±  1.22%\n\n  ▆██▇▄\n ▄██████▇▆▁▄▁▁▄▁▁▁▁▄▁▁▁▁▁▁▁▄▁▁▁▁▄▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▄ ▆\n   15.6 ms      Histogram: log(frequency) by time      40.2 ms <\n\nMemory estimate: 17.12 MiB, allocs estimate: 56.") #hide
+# Base.Text("   15.701 ms (56 allocations: 17.12 MiB)") #hide
 # ```
 #
 # ```@example
 # #= #hide
-# @benchmark solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+# @btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));
 # =# #hide
-# Base.Text("BenchmarkTools.Trial: 10 samples with 1 evaluation.\nRange (min … max):  509.084 ms … 587.415 ms  ┊ GC (min … max): 0.72% … 2.12%\nTime  (median):     541.742 ms               ┊ GC (median):    0.50%\nTime  (mean ± σ):   541.772 ms ±  22.829 ms  ┊ GC (mean ± σ):  0.65% ± 0.74%\n\n █     █       █ █       █ █   █ █         █                 █\n █▁▁▁▁▁█▁▁▁▁▁▁▁█▁█▁▁▁▁▁▁▁█▁█▁▁▁█▁█▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█ ▁\n   509 ms           Histogram: frequency by time          587 ms <\n\nMemory estimate: 114.30 MiB, allocs estimate: 223012.") #hide
+# Base.Text("   502.808 ms (223001 allocations: 114.30 MiB)") #hide
 # ```
 
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()))) #src
