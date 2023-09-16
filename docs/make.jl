@@ -1,7 +1,5 @@
 using FiniteVolumeMethod
 using Documenter
-using Literate
-using Dates
 _PAGES = [
     "Introduction" => "index.md",
     "Interface" => "interface.md",
