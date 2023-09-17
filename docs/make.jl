@@ -85,6 +85,7 @@ if RUN_EXAMPLES
         new_file_path = add_just_the_code_section(dir, file)
         script = Literate.script(file_path, session_tmp, name=splitext(file)[1] * "_just_the_code_cleaned")
         code = strip(read(script, String))
+        ct() = Dates.format(now(), "HH:MM:SS")
         @info "[$(ct())] Processing $file: Converting markdown script"
         line_ending_symbol = occursin(code, "\r\n") ? "\r\n" : "\n"
         code_clean = join(filter(x -> !endswith(x, "#hide"), split(code, r"\n|\r\n")), line_ending_symbol)
