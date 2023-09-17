@@ -3,6 +3,8 @@ using Documenter
 using Literate
 using Dates
 
+ENV["JULIA_DEBUG"] = "Documenter"
+
 DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod, Test);
     recursive=true)
 
