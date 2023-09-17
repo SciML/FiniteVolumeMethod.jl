@@ -1,11 +1,18 @@
 IS_CI = get(ENV, "CI", "false") == "true"
 RUN_EXAMPLES = true
 
+using FiniteVolumeMethod
+using Documenter
+using Literate
+using Dates
+
+
 ENV["JULIA_DEBUG"] = "Documenter"
 
 DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod, Test);
     recursive=true)
 
+if RUN_EXAMPLES
     # When running docs locally, the EditURL is incorrect. For example, we might get 
     #   ```@meta
     #   EditURL = "<unknown>/docs/src/literate_tutorials/name.jl"
