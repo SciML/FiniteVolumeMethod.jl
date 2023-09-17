@@ -83,6 +83,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           julia --project=docs -e '
+            using Pkg 
+            Pkg.instantiate()
             using Documenter: DocMeta, doctest
             using FiniteVolumeMethod
             DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod); recursive=true)
