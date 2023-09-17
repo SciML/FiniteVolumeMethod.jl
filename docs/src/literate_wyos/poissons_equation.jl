@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Poisson's Equation 
 # ```@contents 
 # Pages = ["poissons_equation.md"]
@@ -84,9 +86,12 @@ mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 source_function = (x, y, p) -> -sin(π * x) * sin(π * y)
 prob = poissons_equation(mesh, BCs;  source_function)
+using DisplayAs #hide
+prob |> tc #hide
 
 #-
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 
 #-
 using CairoMakie
@@ -112,6 +117,7 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
 #-
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+fvm_sol |> tc #hide
 using ReferenceTests #src
 ax = Axis(fig[1, 2]) #src
 tricontourf!(ax, tri, fvm_sol.u, levels=LinRange(0, 0.05, 10), colormap=:matter, extendhigh=:auto) #src
@@ -128,12 +134,12 @@ prob = PoissonsEquation(mesh, BCs; source_function=source_function)
 
 #-
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 @test sol.u ≈ [1 / (2π^2) * sin(π * x) * sin(π * y) for (x, y) in each_point(tri)] rtol = 1e-4 #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-4 #src
 
 # Here is a benchmark comparison of the `PoissonsEquation` approach against the `FVMProblem` approach.
-# ```@example
-# #= #hide
+# ````julia
 # using BenchmarkTools
 # @btime solve($prob, $KLUFactorization());
 # =# #hide
@@ -265,12 +271,14 @@ prob = PoissonsEquation(mesh, BCs, ICs;
 
 #-
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 
 # With this solution, we can also define the electric field $\vb E$, using $\vb E = -\grad V$.
 # To compute the gradients, we use NaturalNeighbours.jl. 
 using NaturalNeighbours
 itp = interpolate(tri, sol.u; derivatives=true)
 E = map(.-, itp.gradient) # E = -∇V
+E |> tc #hide
 
 # For plotting the electric field, we will show the electric field intensity $\|\vb E\|$,
 # and we can also show the arrows. Rather than showing all arrows, we will show them at 

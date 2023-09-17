@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Laplace's Equation 
 # ```@contents 
 # Pages = ["laplaces_equation.md"]
@@ -90,9 +92,11 @@ BCs = BoundaryConditions(mesh, bc_f, bc_types)
 
 # Now we can define and solve the problem.
 prob = laplaces_equation(mesh, BCs, diffusion_function=(x, y, p) -> 1.0)
+prob |> tc #hide
 
 #-
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 
 #-
 fig = Figure(fontsize=33)
@@ -112,6 +116,7 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
 #-
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
+fvm_sol |> tc #hide
 
 #-
 ax = Axis(fig[1, 2], xlabel="x", ylabel="y", width=600, height=600)
@@ -154,6 +159,7 @@ prob = LaplacesEquation(mesh, BCs; diffusion_function)
 
 #-
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 
 #-
 fig = Figure(fontsize=33)
@@ -180,8 +186,7 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     final_time=Inf,
     initial_condition))
 
-# ```@example
-# #= #hide
+# ````julia
 # using BenchmarkTools
 # @btime solve($prob, $KLUFactorization());
 # =# #hide

@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Mean Exit Time 
 # ```@contents
 # Pages = ["mean_exit_time.md"]
@@ -157,6 +159,7 @@ f = (x, y) -> let r = sqrt(x^2 + y^2)
     return (R₂^2 - r^2) / (4D₂)
 end
 initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition |> tc #hide
 
 # We now define the problem. 
 source_function = (x, y, t, u, p) -> one(u)
@@ -171,6 +174,7 @@ steady_prob = SteadyFVMProblem(prob)
 # We now solve this problem as we've done for any previous problem.
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
 sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+sol |> tc #hide
 
 #-
 fig = Figure(fontsize=33)
@@ -249,6 +253,7 @@ steady_prob = SteadyFVMProblem(prob)
 
 #-
 sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+sol |> tc #hide
 
 #-
 fig = Figure(fontsize=33)

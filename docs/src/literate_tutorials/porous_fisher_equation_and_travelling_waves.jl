@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Porous-Fisher Equation and Travelling Waves 
 # This tutorial considers a more involved example, where we discuss 
 # travelling wave solutions of a Porous-Fisher equation:
@@ -67,6 +69,7 @@ prob = FVMProblem(mesh, BCs;
     source_function, source_parameters,
     initial_condition, final_time)
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=0.5)
+sol |> tc #hide
 
 # Let us now look at the travelling wave behaviour. We will plot the evolution over 
 # time, and also the travelling wave view of the solution. First, 

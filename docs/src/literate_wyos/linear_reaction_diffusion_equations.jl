@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Linear Reaction-Diffusion Equations 
 # ```@contents
 # Pages = ["linear_reaction_diffusion_equations.md"]
@@ -78,10 +80,12 @@ final_time = 8.0
 prob = linear_reaction_diffusion_equation(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition, final_time)
+prob |> tc #hide
 
 #-
 using Sundials
 sol = solve(prob, CVODE_BDF(linear_solver=:GMRES); saveat=2)
+sol |> tc #hide
 
 #-
 using CairoMakie
@@ -116,6 +120,7 @@ fvm_prob = FVMProblem(
     initial_condition=initial_condition
 )
 fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES), saveat=2.0)
+fvm_sol |> tc #hide
 
 for j in eachindex(fvm_sol) #src
     ax = Axis(fig[2, j], width=600, height=600, #src
@@ -134,13 +139,13 @@ prob = LinearReactionDiffusionEquation(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function,  initial_condition, final_time)
 sol = solve(prob, CVODE_BDF(linear_solver=:GMRES); saveat=2)
+sol |> tc #hide
 
 using Test #src
 @test sol[begin:end-1, 2:end] ≈ fvm_sol[:, 2:end] rtol=1e-1 #src
 
 # Here is a benchmark comparison of `LinearReactionDiffusionEquation` versus `FVMProblem`.
-# ```@example
-# #= #hide
+# ````julia
 # using BenchmarkTools 
 # @btime solve($prob, $CVODE_BDF(linear_solver=:GMRES); saveat=$2);
 # =# #hide

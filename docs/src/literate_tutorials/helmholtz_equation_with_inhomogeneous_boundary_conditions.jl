@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Helmholtz Equation with Inhomogeneous Boundary Conditions 
 # In this tutorial, we consider the following steady state problem:
 # ```math
@@ -62,6 +64,7 @@ sol = solve(steady_prob, NewtonRaphson())
 copyto!(prob.initial_condition, sol.u) # this also changes steady_prob's initial condition
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
 sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+sol |> tc #hide
 
 # For this problem, this correction by `DynamicSS` doesn't seem to actually be needed.
 # Now let's visualise.

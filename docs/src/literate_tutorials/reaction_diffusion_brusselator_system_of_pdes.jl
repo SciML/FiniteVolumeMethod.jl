@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # A Reaction-Diffusion Brusselator System of PDEs 
 # In this tutorial, we show how we can solve systems of PDEs. 
 # We consider the reaction-diffusion Brusselator system: 
@@ -123,7 +125,7 @@ mesh = FVMGeometry(tri)
 Φ_exact = (x, y, t) -> exp(-x - y - t / 2)
 Ψ_exact = (x, y, t) -> exp(x + y + t / 2)
 Φ₀ = [Φ_exact(x, y, 0) for (x, y) in each_point(tri)]
-Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)]
+Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)];
 
 # Next, we can define the `FVMProblem`s for each variable. 
 Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
@@ -139,12 +141,15 @@ system = FVMSystem(Φ_prob, Ψ_prob)
 # We can now solve the problem just as we've done previously. 
 using OrdinaryDiffEq, LinearSolve
 sol = solve(system, TRBDF2(linsolve=KLUFactorization()), saveat=1.0)
+sol |> tc #hide
 
 # For this solution, note that the `u` values are matrices. For example: 
 sol.u[3]
+sol.u[3] |> tc #hide
 
 # The `i`th row is the `i`th variable, so 
 sol.u[3][1, :]
+sol.u[3][1, :] |> tc #hide
 
 # are the value of $\Phi$ at the third time, and similarly `sol.u[3][2, :]` 
 # are the values of $\Psi$ at the third time. We can visualise the solutions as follows:

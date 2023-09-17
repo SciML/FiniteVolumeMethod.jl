@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Mean Exit Time Problems
 # ```@contents
 # Pages = ["mean_exit_time.md"]
@@ -130,13 +132,16 @@ diffusion_function = (x, y, p) -> begin
 end
 diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
 prob = met_problem(mesh, BCs, ICs; diffusion_function, diffusion_parameters)
+prob |> tc #hide
 
 # This problem can now be solved using the `solve` interface from LinearSolve.jl. Note that the matrix 
 # $\vb A$ is very dense, but there is no structure to it:
 prob.A
+prob.A |> DisplayAs.withcontext(:compact => true) #hide
 
 # We will use `KLUFactorization`.
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 
 # We can easily visualise our solution: 
 using CairoMakie
@@ -168,7 +173,9 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
 # Let's compare the two solutions.
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
+fvm_sol |> tc #hide
 
+#-
 ax = Axis(fig[1, 2], width=600, height=600, title="Template")
 tricontourf!(ax, tri, fvm_sol.u, levels=0:1000:15000, extendhigh=:auto)
 resize_to_layout!(fig)
@@ -186,6 +193,7 @@ prob = MeanExitTimeProblem(mesh, BCs, ICs;
     diffusion_function,
     diffusion_parameters)
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 @test sol.u == _u #src
 
 #-
@@ -195,8 +203,7 @@ fig
 @test_reference joinpath(@__DIR__, "../figures", "mean_exit_time_template_2.png") fig #src
 
 # This matches what we have above. To finish, here is a benchmark comparing the approaches. 
-# ```@example
-# #= #hide
+# ````julia
 # using BenchmarkTools
 # @btime solve($prob, $KLUFactorization());
 # =# #hide

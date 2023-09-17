@@ -1,3 +1,5 @@
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # # Diffusion Equations 
 # ```@contents 
 # Pages = ["diffusion_equations.md"]
@@ -234,7 +236,9 @@ prob = diffusion_equation(mesh, BCs;
     initial_condition,
     final_time)
 sol = solve(prob, Tsit5(); saveat=0.05)
-# It would be nice to use `LinearExponential()` in the call above, but it just seems to be extremely unstable, so it's unusable.
+sol |> tc #hide
+
+# (It would be nice to use `LinearExponential()` in the call above, but it just seems to be extremely numerically unstable, so it's unusable.)
 # Note also that `sol` contains an extra component: 
 length(sol.u[1])
 
@@ -282,9 +286,7 @@ fvm_prob = FVMProblem(mesh, BCs;
 
 using LinearSolve #src
 
-#-
-# ```@example
-# #= #hide 
+# ````julia
 # using BenchmarkTools  
 # @btime solve($diff_eq, $Tsit5(), saveat=$0.05);
 # =# #hide
@@ -336,6 +338,7 @@ prob = DiffusionEquation(mesh, BCs;
 
 # Let's solve and plot.
 sol = solve(prob, Tsit5(); saveat=100.0)
+sol |> tc #hide
 
 #-
 fig = Figure(fontsize=38)
@@ -364,6 +367,7 @@ fvm_prob = FVMProblem(mesh, BCs_prob;
     final_time)
 using Sundials
 fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES); saveat=100.0)
+fvm_sol |> tc #hide
 
 for j in eachindex(fvm_sol)
     ax = Axis(fig[2, j], width=600, height=600,
