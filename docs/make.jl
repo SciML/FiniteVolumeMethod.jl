@@ -179,6 +179,16 @@ DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMetho
     recursive=true)
 IS_LIVESERVER = get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
 IS_CI = get(ENV, "CI", "false") == "true"
+
+Threads.@spawn begin
+    @info "async SIGUSR1 loop started"
+    while true
+        sleep(5*60) # every 5 minutes, adjust as needed
+        run(`kill -SIGUSR1 $(getpid())`)
+    end
+    @info "async SIGUSR1 loop terminated"
+end
+
 makedocs(;
     modules=[FiniteVolumeMethod],
     authors="Daniel VandenHeuvel <danj.vandenheuvel@gmail.com>",
