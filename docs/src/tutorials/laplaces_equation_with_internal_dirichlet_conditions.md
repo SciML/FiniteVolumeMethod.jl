@@ -94,7 +94,7 @@ We now need to define the internal conditions.
 This is done using `InternalConditions`. First,
 we need to find all the vertices that lie on
 the line $\{x = 1/2, 0 \leq y \leq 2/5\}$. We could
-compute these manually, but let's find them programatically
+compute these manually, but let's find them programmatically
 instead for the sake of demonstration.
 
 ````julia

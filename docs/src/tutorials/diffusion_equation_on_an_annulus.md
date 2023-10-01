@@ -17,7 +17,7 @@ u(\vb x, t) &= u_0(\vb x),
 \end{equation}
 ```
 demonstrating how we can solve PDEs over multiply-connected domains.
-Here, $\mathcal D(0, r)$ is a circle of radius $r$ centred at the origin,
+Here, $\mathcal D(0, r)$ is a circle of radius $r$ centered at the origin,
 $\Omega$ is the annulus between $\mathcal D(0,0.2)$ and
 $\mathcal D(0, 1)$, $c(t) = 50[1-\mathrm{e}^{-t/2}]$, and
 ```math

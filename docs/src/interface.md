@@ -39,7 +39,7 @@ TriangleProperties
 
 Once a mesh is defined, you need to associate each part of the boundary with a set of boundary nodes. Since you have a `Triangulation`, the boundary of the mesh already meets the necessary assumptions made by this package about the boundary; these assumptions are simply that they match the specification of a boundary [here in DelaunayTriangulation.jl's docs](https://danielvandh.github.io/DelaunayTriangulation.jl/dev/boundary_handling/#Boundary-Specification) (for example, the boundary points connect, the boundary is positively oriented, etc.).
 
-You can specify boundary condtiions using `BoundaryConditions`, whose docstring is below; the fields of `BoundaryConditions` are not public API, only this wrapper is.
+You can specify boundary conditions using `BoundaryConditions`, whose docstring is below; the fields of `BoundaryConditions` are not public API, only this wrapper is.
 
 ```@docs
 BoundaryConditions

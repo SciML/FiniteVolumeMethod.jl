@@ -3,7 +3,7 @@ EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/s
 ```
 
 
-# Piecewise Linear and Natural Neighbour Inteprolation for an Advection-Diffusion Equation
+# Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation
 In this tutorial, we have three aims:
 
 1. Demonstrate how to solve an advection-diffusion equation.

@@ -17,8 +17,8 @@ To start, let's give the mathematical details. The problems we will be solving t
 ```
 We want to turn this into an equation of the form $\mathrm d\vb u/\mathrm dt = \vb A\vb u + \vb b$
 as usual. This takes the same form as our [diffusion equation example](diffusion_equations.md),
-except with the extra $f(\vb x)u$ term, which just adds an exta $f(\vb x)$ term
-to the diagonal of $\vb A$. See the previois sections for further mathematical details.
+except with the extra $f(\vb x)u$ term, which just adds an extra $f(\vb x)$ term
+to the diagonal of $\vb A$. See the previous sections for further mathematical details.
 
 ## Implementation
 Let us now implement the solver. For constructing $\vb A$, we can use `FiniteVolumeMethod.triangle_contributions!`
