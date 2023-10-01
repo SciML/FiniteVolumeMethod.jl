@@ -199,7 +199,7 @@ u: 55.00515873347367
 ````
 
 So, it seems like the answer to our question is $-11.8 \leq T_{\infty} \leq 55$.
-Here is an an animation of the temperature distribution as $T_{\infty}$ varies.
+Here is an animation of the temperature distribution as $T_{\infty}$ varies.
 
 ````julia
 fig = Figure(fontsize=33)

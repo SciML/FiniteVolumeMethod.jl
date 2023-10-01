@@ -181,7 +181,7 @@ boundary_edge_contributions! (generic function with 1 method)
 ````
 
 Now that we have the parts for handling the main flux contributions, we need to consider
-the boundary conditions. Note that in the code above we have alredy taken not to update
+the boundary conditions. Note that in the code above we have already taken not to update
 $\vb A$ or $\vb b$ if there a boundary condition at the associated node, so we do not
 need to worry about e.g. zeroing out rows of $\vb A$ for a node with a boundary condition.
 

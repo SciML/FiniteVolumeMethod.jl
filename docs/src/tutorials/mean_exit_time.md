@@ -111,7 +111,7 @@ T(\vb x) &= 0 & \vb x \in \partial \mathcal D(0, R_2).
 \end{aligned}
 \end{equation}
 ```
-Here, $\mathcal D(0,R_2)$ is the circle of radius $R_2$ centred at the origin, and
+Here, $\mathcal D(0,R_2)$ is the circle of radius $R_2$ centered at the origin, and
 ```math
 D(\vb x) = \begin{cases} D_1 & \|\vb x\| < R_1, \\ D_2 & R_1 \leq \|\vb x\| \leq R_2. \end{cases}
 ```

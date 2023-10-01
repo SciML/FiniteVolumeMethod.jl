@@ -41,7 +41,7 @@ u(y, t) = \begin{cases} 1-\mathrm{e}^{c_{\min}z} & z \leq 0, \\ 0 & z > 0, \end{
 \end{equation}
 ```
 where $c_{\min} = \sqrt{\lambda/(2D)}$, $c = \sqrt{D\lambda/2}$, and $z = x-ct$ is the
-travelling wave coordinates. This travelling wave would mathc our problem exactly
+travelling wave coordinates. This travelling wave would match our problem exactly
 if the rectangle were instead $[0, a] \times \mathbb R$, but by choosing $b$ large
 enough we can at least emulate the travelling wave behaviour closely; the
 homogeneous Neumann conditions are to ensure no energy is lost, thus allowing the travelling
