@@ -1,5 +1,5 @@
 IS_CI = get(ENV, "CI", "false") == "true"
-RUN_EXAMPLES = true
+RUN_EXAMPLES = !IS_CI
 
 if RUN_EXAMPLES
     using FiniteVolumeMethod
@@ -180,7 +180,6 @@ makedocs(;
     authors="Daniel VandenHeuvel <danj.vandenheuvel@gmail.com>",
     sitename="FiniteVolumeMethod.jl",
     format=Documenter.HTML(;
-        prettyurls=IS_CI,
         canonical="https://DanielVandH.github.io/FiniteVolumeMethod.jl",
         edit_link="main",
         collapselevel=1,

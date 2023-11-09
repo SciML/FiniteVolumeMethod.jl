@@ -1,7 +1,7 @@
 name = "FiniteVolumeMethod"
 uuid = "d4f04ab7-4f65-4d72-8a28-7087bc7f46f4"
 authors = ["Daniel VandenHeuvel <danj.vandenheuvel@gmail.com>"]
-version = "1.1.1"
+version = "1.1.2"
 
 [deps]
 ChunkSplitters = "ae650224-84b6-46f8-82ea-d812ca08434e"
@@ -19,7 +19,7 @@ CommonSolve = "0.2"
 DelaunayTriangulation = "0.7, 0.8"
 PreallocationTools = "0.4"
 PrecompileTools = "1.2"
-SciMLBase = "1"
+SciMLBase = "1, 2"
 julia = "1"
 
 [extras]
