@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example VII: Diffusion equation on an annulus · FiniteVolumeMethod.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://DanielVandH.github.io/FiniteVolumeMethod.jl/annulus/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">FiniteVolumeMethod.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../interface/">Interface</a></li><li><a class="tocitem" href="../docstrings/">Docstrings</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../example_list/">List of Examples and Setup</a></li><li><a class="tocitem" href="../diffusion_equation/">Example I: Diffusion equation on a square plate</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_wedge/">Example II: Diffusion equation in a wedge with mixed boundary conditions</a></li><li><a class="tocitem" href="../reaction_diffusion/">Example III: Reaction-diffusion equation with a time-dependent Dirichlet boundary condition on a disk</a></li><li><a class="tocitem" href="../porous_medium/">Example IV: Porous-medium equation</a></li><li><a class="tocitem" href="../porous_fisher/">Example V: Porous-Fisher equation and travelling waves</a></li><li><a class="tocitem" href="../interpolants/">Example VI: Using the linear interpolants</a></li><li class="is-active"><a class="tocitem" href>Example VII: Diffusion equation on an annulus</a></li><li><a class="tocitem" href="../laplace/">Example VIII: Laplace&#39;s equation</a></li><li><a class="tocitem" href="../mean_exit_time/">Example IX: Mean exit time problems</a></li></ul></li><li><a class="tocitem" href="../math/">Mathematical Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Example VII: Diffusion equation on an annulus</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example VII: Diffusion equation on an annulus</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/docs/src/annulus.md#" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Example-VII:-Diffusion-equation-on-an-annulus"><a class="docs-heading-anchor" href="#Example-VII:-Diffusion-equation-on-an-annulus">Example VII: Diffusion equation on an annulus</a><a id="Example-VII:-Diffusion-equation-on-an-annulus-1"></a><a class="docs-heading-anchor-permalink" href="#Example-VII:-Diffusion-equation-on-an-annulus" title="Permalink"></a></h1><p>Please ensure you have read the List of Examples section before proceeding.</p><p>We now consider another diffusion problem, except now we demonstrate how we can solve a problem on a multiply-connected domain. The problem we consider comes from <a href="http://onelab.info/wiki/Tutorial/Heat_equation_with_Dirichlet_boundary_control">http://onelab.info/wiki/Tutorial/Heat<em>equation</em>with<em>Dirichlet</em>boundary_control</a>, namely</p><p class="math-container">\[\begin{equation*}
+\begin{array}{rcll}
+\dfrac{\partial u}{\partial t} &amp; = &amp; \boldsymbol{\nabla}^2 u &amp; \boldsymbol{x} \in \Omega, t&gt;0, \\
+\boldsymbol{\nabla} u \boldsymbol{\cdot}  \hat{\boldsymbol n} &amp;=&amp; 0 &amp; \boldsymbol{x} \in \mathcal D(0, 1), t&gt;0, \\
+u(x, y, t) &amp; = &amp; c(t) &amp; \boldsymbol{x} \in \mathcal D(0, 0.2),  t&gt;0, \\
+u(x, y, 0) &amp; = &amp; u_0(x, y) &amp; \boldsymbol{x} \in \Omega,
+\end{array}
+\end{equation*}\]</p><p>where <span>$\mathcal D(0, r)$</span> is a circle of radius <span>$r$</span> centred at the origin, <span>$\Omega$</span> is the annulus bteween <span>$\mathcal D(0, 0.2)$</span> and <span>$\mathcal D(0, 1)$</span>, <span>$c(t) = 50[1-\exp(-0.5t)]$</span>, and </p><p class="math-container">\[u_0(x) =10\mathrm{e}^{-25\left(\left(x + \frac12\right)^2 + \left(y + \frac12\right)^2\right)} - 10\mathrm{e}^{-45\left(\left(x - \frac12\right)^2 + \left(y - \frac12\right)^2\right)} - 5\mathrm{e}^{-50\left(\left(x + \frac{3}{10}\right)^2 + \left(y + \frac12\right)^2\right)}.\]</p><p>To define this problem, we define the problem as we have been doing, but now we take special care to define the multiply-connected domain. In particular, we define the boundary nodes according to the specification in DelaunayTriangulation.jl (see the boundary nodes discussion <a href="https://danielvandh.github.io/DelaunayTriangulation.jl/dev/boundary_handling/">here</a>). The complete code is below, where we generate the mesh, and then visualise the solution.</p><pre><code class="language-julia hljs">## Generate the mesh. 
+# When specifying multiple boundary curves, the outer boundary comes first 
+# and is given in counter-clockwise order. The inner boundaries then follow. 
+R₁ = 0.2
+R₂ = 1.0
+θ = collect(LinRange(0, 2π, 100))
+θ[end] = 0.0 # get the endpoints to match
+x = [
+    [R₂ .* cos.(θ)],
+    [reverse(R₁ .* cos.(θ))]
+]
+y = [
+    [R₂ .* sin.(θ)],
+    [reverse(R₁ .* sin.(θ))]
+]
+boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+tri = triangulate(points; boundary_nodes)
+A = get_total_area(tri)
+refine!(tri;max_area=1e-4A)
+mesh = FVMGeometry(tri)
+
+## Define the boundary conditions 
+outer_bc = (x, y, t, u, p) -&gt; zero(u)
+inner_bc = (x, y, t, u, p) -&gt; 50.0 * (1.0 - exp(-0.5t))
+type = [:N, :D]
+BCs = BoundaryConditions(mesh, [outer_bc, inner_bc], type)
+
+## Define the problem 
+initial_condition_f = (x, y) -&gt; begin
+    10 * exp(-25 * ((x + 0.5) * (x + 0.5) + (y + 0.5) * (y + 0.5))) - 5 * exp(-50 * ((x + 0.3) * (x + 0.3) + (y + 0.5) * (y + 0.5))) - 10 * exp(-45 * ((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)))
+end
+diffusion = (x, y, t, u, p) -&gt; one(u)
+points = get_points(tri)
+u₀ = [initial_condition_f(x, y) for (x, y) in points]
+final_time = 2.0
+prob = FVMProblem(mesh, BCs;
+    diffusion_function=diffusion,
+    final_time=final_time,
+    initial_condition=u₀)
+
+## Solve the problem 
+alg = TRBDF2(linsolve=KLUFactorization())
+sol = solve(prob, alg, parallel=false, saveat=0.2)
+
+## Visualise 
+fig = Figure(resolution=(2068.72f0, 686.64f0), fontsize=38)
+for (i, j) in zip(1:3, (1, 6, 11))
+    ax = Axis(fig[1, i], width=600, height=600)
+    tricontourf!(ax, tri, sol.u[j], levels=-10:2:40, colormap=:viridis)
+    tightlimits!(ax)
+end
+fig</code></pre><figure>
+    <img src='../figures/annulus_test.png', alt='Solution on an annulus'><br>
+</figure></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../interpolants/">« Example VI: Using the linear interpolants</a><a class="docs-footer-nextpage" href="../laplace/">Example VIII: Laplace&#39;s equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Tuesday 8 August 2023 23:08">Tuesday 8 August 2023</span>. Using Julia version 1.9.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
