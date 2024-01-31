@@ -1,5 +1,7 @@
 # FiniteVolumeMethod
 
+> Due to unforeseen circumstances, I will no longer be able to actively maintain this package. If you are willing and able to help maintain it, please contact me at ![email](https://github.com/DanielVandH/FiniteVolumeMethod.jl/assets/95613936/0cceed96-a640-4356-a78a-c5cb95944b6c). I will still be around to view Issues and review / accept (hopefully small) PRs in the interim.
+
 [![DOI](https://zenodo.org/badge/561533716.svg)](https://zenodo.org/badge/latestdoi/561533716)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://DanielVandH.github.io/FiniteVolumeMethod.jl/dev)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://DanielVandH.github.io/FiniteVolumeMethod.jl/stable)
