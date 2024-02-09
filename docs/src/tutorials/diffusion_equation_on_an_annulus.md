@@ -1,5 +1,5 @@
 ```@meta
-EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/diffusion_equation_on_an_annulus.jl"
+EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/diffusion_equation_on_an_annulus.jl"
 ```
 
 
@@ -26,7 +26,7 @@ u_0(x) = 10\mathrm{e}^{-25\left[\left(x+\frac12\right)^2+\left(y+\frac12\right)^
 The complicated task for this problem is the definition
 of the mesh of the annulus. We need to follow the boundary
 specification from DelaunayTriangulation.jl, discussed
-[here](https://danielvandh.github.io/DelaunayTriangulation.jl/dev/boundary_handling/).
+[here](https://SciML.github.io/DelaunayTriangulation.jl/dev/boundary_handling/).
 In particular, the outer boundary must be counter-clockwise,
 the inner boundary be clockwise, and we need to provide
 the nodes as a `Vector{Vector{Vector{Int}}}`.
@@ -273,7 +273,7 @@ fig
 
 ## Just the code
 An uncommented version of this example is given below.
-You can view the source code for this file [here](https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/diffusion_equation_on_an_annulus.jl).
+You can view the source code for this file [here](https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/diffusion_equation_on_an_annulus.jl).
 
 ```julia
 using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie

@@ -20,9 +20,9 @@ if RUN_EXAMPLES
     #   EditURL = "../../../../../../../AppData/Local/Temp/jl_8nsMGu/name_just_the_code.jl"
     #   ```
     function update_edit_url(content, file, folder)
-        content = replace(content, "<unknown>" => "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main")
+        content = replace(content, "<unknown>" => "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main")
         content = replace(content, "temp/" => "") # as of Literate 2.14.1
-        content = replace(content, r"EditURL\s*=\s*\"[^\"]*\"" => "EditURL = \"https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_$(folder)/$file\"")
+        content = replace(content, r"EditURL\s*=\s*\"[^\"]*\"" => "EditURL = \"https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_$(folder)/$file\"")
         return content
     end
     # We can add the code to the end of each file in its uncommented form programatically.
@@ -180,7 +180,7 @@ makedocs(;
     authors="Daniel VandenHeuvel <danj.vandenheuvel@gmail.com>",
     sitename="FiniteVolumeMethod.jl",
     format=Documenter.HTML(;
-        canonical="https://DanielVandH.github.io/FiniteVolumeMethod.jl",
+        canonical="https://SciML.github.io/FiniteVolumeMethod.jl",
         edit_link="main",
         collapselevel=1,
         assets=String[],
@@ -198,6 +198,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/DanielVandH/FiniteVolumeMethod.jl",
+    repo="github.com/SciML/FiniteVolumeMethod.jl",
     devbranch="main",
     push_preview=true)

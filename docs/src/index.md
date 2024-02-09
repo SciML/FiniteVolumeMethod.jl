@@ -4,7 +4,7 @@ CurrentModule = FiniteVolumeMethod
 
 # Introduction 
 
-This is the documentation for FiniteVolumeMethod.jl. [Click here to go back to the GitHub repository](https://github.com/DanielVandH/FiniteVolumeMethod.jl).
+This is the documentation for FiniteVolumeMethod.jl. [Click here to go back to the GitHub repository](https://github.com/SciML/FiniteVolumeMethod.jl).
 
 This is a Julia package for solving partial differential equations (PDEs) of the form
 

@@ -1,5 +1,5 @@
 ```@meta
-EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/diffusion_equations.jl"
+EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/diffusion_equations.jl"
 ```
 
 
@@ -531,7 +531,7 @@ val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])
 
 ## Just the code
 An uncommented version of this example is given below.
-You can view the source code for this file [here](https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/diffusion_equations.jl).
+You can view the source code for this file [here](https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/diffusion_equations.jl).
 
 ```julia
 using FiniteVolumeMethod

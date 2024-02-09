@@ -1,5 +1,5 @@
 ```@meta
-EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/laplaces_equation_with_internal_dirichlet_conditions.jl"
+EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/laplaces_equation_with_internal_dirichlet_conditions.jl"
 ```
 
 
@@ -203,7 +203,7 @@ fig
 
 ## Just the code
 An uncommented version of this example is given below.
-You can view the source code for this file [here](https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/laplaces_equation_with_internal_dirichlet_conditions.jl).
+You can view the source code for this file [here](https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/laplaces_equation_with_internal_dirichlet_conditions.jl).
 
 ```julia
 using DelaunayTriangulation, FiniteVolumeMethod

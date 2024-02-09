@@ -1,5 +1,5 @@
 ```@meta
-EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/mean_exit_time.jl"
+EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/mean_exit_time.jl"
 ```
 
 
@@ -343,7 +343,7 @@ using BenchmarkTools
 Very fast!
 ## Just the code
 An uncommented version of this example is given below.
-You can view the source code for this file [here](https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/mean_exit_time.jl).
+You can view the source code for this file [here](https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/mean_exit_time.jl).
 
 ```julia
 function create_met_b!(A, mesh, conditions)

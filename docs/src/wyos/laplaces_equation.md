@@ -1,5 +1,5 @@
 ```@meta
-EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/laplaces_equation.jl"
+EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/laplaces_equation.jl"
 ```
 
 
@@ -315,7 +315,7 @@ using BenchmarkTools
 
 ## Just the code
 An uncommented version of this example is given below.
-You can view the source code for this file [here](https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/laplaces_equation.jl).
+You can view the source code for this file [here](https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/laplaces_equation.jl).
 
 ```julia
 using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve

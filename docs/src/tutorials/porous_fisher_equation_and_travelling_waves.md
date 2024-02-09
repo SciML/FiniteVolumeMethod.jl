@@ -1,5 +1,5 @@
 ```@meta
-EditURL = "https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_fisher_equation_and_travelling_waves.jl"
+EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_fisher_equation_and_travelling_waves.jl"
 ```
 
 
@@ -155,7 +155,7 @@ fig
 
 ## Just the code
 An uncommented version of this example is given below.
-You can view the source code for this file [here](https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_fisher_equation_and_travelling_waves.jl).
+You can view the source code for this file [here](https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_fisher_equation_and_travelling_waves.jl).
 
 ```julia
 using DelaunayTriangulation, FiniteVolumeMethod, OrdinaryDiffEq, LinearSolve

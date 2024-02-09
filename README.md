@@ -1,9 +1,9 @@
 # FiniteVolumeMethod
 
 [![DOI](https://zenodo.org/badge/561533716.svg)](https://zenodo.org/badge/latestdoi/561533716)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://DanielVandH.github.io/FiniteVolumeMethod.jl/dev)
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://DanielVandH.github.io/FiniteVolumeMethod.jl/stable)
-[![Coverage](https://codecov.io/gh/DanielVandH/FiniteVolumeMethod.jl/branch/main/graph/badge.svg?token=XPM5KN89R6)](https://codecov.io/gh/DanielVandH/FiniteVolumeMethod.jl)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://SciML.github.io/FiniteVolumeMethod.jl/dev)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://SciML.github.io/FiniteVolumeMethod.jl/stable)
+[![Coverage](https://codecov.io/gh/SciML/FiniteVolumeMethod.jl/branch/main/graph/badge.svg?token=XPM5KN89R6)](https://codecov.io/gh/SciML/FiniteVolumeMethod.jl)
 
 This is a Julia package for solving partial differential equations (PDEs) of the form 
 
@@ -47,7 +47,7 @@ record(fig, "anim.gif", eachindex(sol)) do i
 end
 ```
 
-![Animation of a solution](https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/anim.gif)
+![Animation of a solution](https://github.com/SciML/FiniteVolumeMethod.jl/blob/main/anim.gif)
 
 We could have equivalently used the `DiffusionEquation` template, so that `prob` could have also been defined by 
 

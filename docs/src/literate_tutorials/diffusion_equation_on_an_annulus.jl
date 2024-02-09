@@ -23,7 +23,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # The complicated task for this problem is the definition 
 # of the mesh of the annulus. We need to follow the boundary 
 # specification from DelaunayTriangulation.jl, discussed 
-# [here](https://danielvandh.github.io/DelaunayTriangulation.jl/dev/boundary_handling/).
+# [here](https://SciML.github.io/DelaunayTriangulation.jl/dev/boundary_handling/).
 # In particular, the outer boundary must be counter-clockwise, 
 # the inner boundary be clockwise, and we need to provide 
 # the nodes as a `Vector{Vector{Vector{Int}}}`.

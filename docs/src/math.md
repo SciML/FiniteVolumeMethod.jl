@@ -19,7 +19,7 @@ Let us start by discretising \eqref{eq:pde} inside $\Omega$. The first step in t
 ```math
 \Omega = \bigcup_k T_k.
 ```
-This triangulation is typically a _constrained Delaunay triangulation_, denoted $\mathcal T(\Omega)$, with appropriate care taken if $\Omega$ is multiply-connected; these triangulations can be computed using [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl). An example of such a domain $\Omega$ and its triangulation $\mathcal T(\Omega)$ is shown below, where we use a multiply-connected domain to emphasise that these details are not necessarily restricted to simple domains.
+This triangulation is typically a _constrained Delaunay triangulation_, denoted $\mathcal T(\Omega)$, with appropriate care taken if $\Omega$ is multiply-connected; these triangulations can be computed using [DelaunayTriangulation.jl](https://github.com/JuliaGeometry/DelaunayTriangulation.jl). An example of such a domain $\Omega$ and its triangulation $\mathcal T(\Omega)$ is shown below, where we use a multiply-connected domain to emphasise that these details are not necessarily restricted to simple domains.
 
 ```@setup ex_tri
 using DelaunayTriangulation, CairoMakie

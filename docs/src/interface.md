@@ -22,7 +22,7 @@ In this section, we describe the basic interface for defining and solving PDEs u
 
 # `FVMGeometry`: Defining the mesh 
 
-The finite volume method (FVM) requires an underlying triangular mesh, as outlined in the [mathematical details section](math.md). This triangular mesh is to be defined from [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl). The `FVMGeometry` type wraps the resulting `Triangulation` and computes information about the geometry required for solving the PDEs. The docstring for `FVMGeometry` is below; the fields of `FVMGeometry` are public API. 
+The finite volume method (FVM) requires an underlying triangular mesh, as outlined in the [mathematical details section](math.md). This triangular mesh is to be defined from [DelaunayTriangulation.jl](https://github.com/JuliaGeometry/DelaunayTriangulation.jl). The `FVMGeometry` type wraps the resulting `Triangulation` and computes information about the geometry required for solving the PDEs. The docstring for `FVMGeometry` is below; the fields of `FVMGeometry` are public API. 
 
 ```@docs
 FVMGeometry
@@ -37,7 +37,7 @@ TriangleProperties
 
 # `BoundaryConditions`: Defining boundary conditions
 
-Once a mesh is defined, you need to associate each part of the boundary with a set of boundary nodes. Since you have a `Triangulation`, the boundary of the mesh already meets the necessary assumptions made by this package about the boundary; these assumptions are simply that they match the specification of a boundary [here in DelaunayTriangulation.jl's docs](https://danielvandh.github.io/DelaunayTriangulation.jl/dev/boundary_handling/#Boundary-Specification) (for example, the boundary points connect, the boundary is positively oriented, etc.).
+Once a mesh is defined, you need to associate each part of the boundary with a set of boundary nodes. Since you have a `Triangulation`, the boundary of the mesh already meets the necessary assumptions made by this package about the boundary; these assumptions are simply that they match the specification of a boundary [here in DelaunayTriangulation.jl's docs](https://SciML.github.io/DelaunayTriangulation.jl/dev/boundary_handling/#Boundary-Specification) (for example, the boundary points connect, the boundary is positively oriented, etc.).
 
 You can specify boundary conditions using `BoundaryConditions`, whose docstring is below; the fields of `BoundaryConditions` are not public API, only this wrapper is.
 
