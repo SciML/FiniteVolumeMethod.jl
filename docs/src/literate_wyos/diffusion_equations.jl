@@ -309,7 +309,7 @@ using LinearSolve #src
 sol1 = solve(diff_eq, Tsit5(); saveat=0.05) #src
 sol2 = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.05) #src
 using Test #src
-@test sol1[begin:end-1, 2:end] ≈ sol2[:, 2:end] rtol = 1e-3 #src
+@test sol1[begin:end-1, 2:end] ≈ sol2[begin:end, 2:end] rtol = 1e-3 #src
 
 # To finish this example, let's solve a diffusion equation with constant Neumann boundary conditions:
 # ```math 
@@ -386,7 +386,7 @@ resize_to_layout!(fig)
 fig
 @test_reference joinpath(@__DIR__, "../figures", "diffusion_equation_template_1.png") fig #src
 u_template = sol[begin:end-1, 2:end] #src
-u_fvm = fvm_sol[:, 2:end] #src
+u_fvm = fvm_sol[begin:end, 2:end] #src
 @test u_template ≈ u_fvm rtol = 1e-3 #src
 
 # Here is a benchmark comparison.
