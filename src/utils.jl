@@ -1,5 +1,5 @@
 function _safe_get_triangle_props(mesh::FVMGeometry, T)
-    i, j, k = indices(T)
+    i, j, k = triangle_vertices(T)
     props = mesh.triangle_props
     if haskey(props, (i, j, k))
         return (i, j, k), get_triangle_props(mesh, i, j, k)

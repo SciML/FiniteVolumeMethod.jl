@@ -182,7 +182,7 @@ end
 function test_bc_conditions!(tri, conds, t,
     dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges, shift=0)
     for e in keys(get_boundary_edge_map(tri))
-        u, v = DelaunayTriangulation.edge_indices(e)
+        u, v = DelaunayTriangulation.edge_vertices(e)
         w = get_adjacent(tri, v, u)
         bc_type = t[-w]
         w -= shift
@@ -350,7 +350,7 @@ end
 
 function test_shape_function_coefficients(prob, u)
     for T in each_solid_triangle(prob.mesh.triangulation)
-        i, j, k = indices(T)
+        i, j, k = triangle_vertices(T)
         s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = prob.mesh.triangle_props[T].shape_function_coefficients
         ui, uj, uk = u[i], u[j], u[k]
         α = s₁ * ui + s₂ * uj + s₃ * uk

@@ -80,7 +80,7 @@ function FVMGeometry(tri::Triangulation)
     sizehint!(cv_volumes, nn)
     sizehint!(triangle_props, nt)
     for T in each_solid_triangle(tri)
-        i, j, k = indices(T)
+        i, j, k = triangle_vertices(T)
         p, q, r = get_point(tri, i, j, k)
         px, py = getxy(p)
         qx, qy = getxy(q)
@@ -135,7 +135,7 @@ function FVMGeometry(tri::Triangulation)
         n₂x, n₂y = e₂y/ℓ₂, -e₂x/ℓ₂
         n₃x, n₃y = e₃y/ℓ₃, -e₃x/ℓ₃
         ## Now construct the TriangleProperties
-        triangle_props[indices(T)] = TriangleProperties(shape_function_coefficients, ((m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy)), ((n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)), (ℓ₁, ℓ₂, ℓ₃))
+        triangle_props[triangle_vertices(T)] = TriangleProperties(shape_function_coefficients, ((m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy)), ((n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)), (ℓ₁, ℓ₂, ℓ₃))
     end
     return FVMGeometry(tri, stats, cv_volumes, triangle_props)
 end

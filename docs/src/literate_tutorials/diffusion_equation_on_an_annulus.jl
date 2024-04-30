@@ -124,7 +124,7 @@ last_triangle = Ref((1, 1, 1))
 for (j, _y) in enumerate(y)
     for (i, _x) in enumerate(x)
         T = jump_and_march(tri, (_x, _y), try_points=last_triangle[])
-        last_triangle[] = indices(T) # used to accelerate jump_and_march, since the points we're looking for are close to each other
+        last_triangle[] = triangle_vertices(T) # used to accelerate jump_and_march, since the points we're looking for are close to each other
         if DelaunayTriangulation.is_ghost_triangle(T) # don't extrapolate
             interp_vals[i, j] = NaN
         else

@@ -58,7 +58,7 @@ using PrecompileTools
         y = [y₁, y₂, y₃]
         boundary_nodes, points = convert_boundary_points_to_indices(x, y)
         tri = triangulate(points; boundary_nodes)
-        A = get_total_area(tri)
+        A = get_area(tri)
         refine!(tri)
         mesh = FVMGeometry(tri)
         lower_bc = arc_bc = upper_bc = (x, y, t, u, p) -> zero(u)
@@ -66,7 +66,7 @@ using PrecompileTools
         BCs = BoundaryConditions(mesh, (lower_bc, arc_bc, upper_bc), types)
         f = (x, y) -> 1 - sqrt(x^2 + y^2)
         D = (x, y, t, u, p) -> one(u)
-        initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+        initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
         final_time = 0.1
         prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
         ode_prob = ODEProblem(prob)

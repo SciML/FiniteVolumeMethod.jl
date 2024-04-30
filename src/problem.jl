@@ -239,7 +239,7 @@ end
 function _check_fvmsystem_flux_function(prob::FVMSystem)
     t0 = prob.initial_time
     T = first(each_solid_triangle(prob.mesh.triangulation))
-    i, j, k = indices(T)
+    i, j, k = triangle_vertices(T)
     p, q, r = get_point(prob.mesh.triangulation, i, j, k)
     px, py = getxy(p)
     qx, qy = getxy(q)

@@ -114,7 +114,7 @@ using FiniteVolumeMethod
 const FVM = FiniteVolumeMethod
 function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         i, j, k = ijk
         props = FVM.get_triangle_props(mesh, i, j, k)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
@@ -146,9 +146,9 @@ Now we need the function that gets the contributions from the boundary edges.
 function boundary_edge_contributions!(A, b, mesh, conditions,
     diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
-        i, j = DelaunayTriangulation.edge_indices(e)
+        i, j = DelaunayTriangulation.edge_vertices(e)
         nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
         Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
         Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
@@ -538,7 +538,7 @@ using FiniteVolumeMethod
 const FVM = FiniteVolumeMethod
 function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         i, j, k = ijk
         props = FVM.get_triangle_props(mesh, i, j, k)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
@@ -562,9 +562,9 @@ end
 function boundary_edge_contributions!(A, b, mesh, conditions,
     diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
-        i, j = DelaunayTriangulation.edge_indices(e)
+        i, j = DelaunayTriangulation.edge_vertices(e)
         nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
         Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
         Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)

@@ -59,7 +59,7 @@ Key to the FVM are the _control volumes_, which are used to define volumes $\Ome
 centroids = NTuple{2,Float64}[]
 linesegments = NTuple{2,Float64}[]
 for T in each_solid_triangle(tri)
-    i, j, k = indices(T)
+    i, j, k = triangle_vertices(T)
     p, q, r = get_point(tri, i, j, k)
     cent = DelaunayTriangulation.triangle_centroid(p, q, r)
     push!(centroids, cent)
@@ -112,7 +112,7 @@ non_cv_midpoints = collect.([
     (e .+ f) ./ 2
 ])
 for T in each_solid_triangle(tri)
-    i, j, k = indices(T)
+    i, j, k = triangle_vertices(T)
     p, q, r = get_point(tri, i, j, k)
     cent = DelaunayTriangulation.triangle_centroid(p, q, r)
     push!(centroids, cent)

@@ -26,7 +26,7 @@ end
 
 # get the contributions to the dudt system across a single triangle
 @inline function fvm_eqs_single_triangle!(du, u, prob, t, T)
-    i, j, k = indices(T)
+    i, j, k = triangle_vertices(T)
     props = get_triangle_props(prob, i, j, k)
     α, β, γ = get_shape_function_coefficients(props, T, u, prob)
     summand₁, summand₂, summand₃ = get_fluxes(prob, props, α, β, γ, t)
