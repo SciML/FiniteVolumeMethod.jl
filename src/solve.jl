@@ -64,7 +64,7 @@ function jacobian_sparsity(tri)
         push!(J, i)
         push!(V, 1.0)
         for j in get_neighbours(tri, i)
-            DelaunayTriangulation.is_boundary_index(j) && continue
+            DelaunayTriangulation.is_ghost_vertex(j) && continue
             push!(I, i)
             push!(J, j)
             push!(V, 1.0)
