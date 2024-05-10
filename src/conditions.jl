@@ -456,14 +456,15 @@ function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditi
     has_ghost || add_ghost_triangles!(tri)
     hasbnd || lock_convex_hull!(tri)
     bn_map = get_ghost_vertex_map(tri)
-    for (bc_number, (_, segment_index)) in enumerate(bn_map)
+    for (bc_number, segment_index) in bn_map
+        bc_number *= -1
         bn_nodes = get_boundary_nodes(tri, segment_index)
         nedges = num_boundary_edges(bn_nodes)
+        condition = bc_conditions[bc_number]
+        updated_bc_number = bc_number + nif # conditions stores the internal functions first
         for i in 1:nedges
             u = get_boundary_nodes(bn_nodes, i)
             v = get_boundary_nodes(bn_nodes, i + 1)
-            condition = bc_conditions[bc_number]
-            updated_bc_number = bc_number + nif
             if condition == Neumann
                 conditions.neumann_edges[(u, v)] = updated_bc_number
             elseif condition == Constrained

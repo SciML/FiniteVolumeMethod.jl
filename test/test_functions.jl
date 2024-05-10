@@ -6,14 +6,14 @@ function get_control_volume(tri, i)
         k = get_adjacent(tri, i, j)
         p = get_point(tri, i)
         push!(cv, p)
-        while !DelaunayTriangulation.is_boundary_index(k)
+        while !DelaunayTriangulation.is_ghost_vertex(k)
             q, r = get_point(tri, j, k)
             c = (p .+ q .+ r) ./ 3
             m = (p .+ q) ./ 2
             push!(cv, m, c)
             j = k
             k = get_adjacent(tri, i, j)
-            DelaunayTriangulation.is_boundary_index(k) && push!(cv, (p .+ r) ./ 2)
+            DelaunayTriangulation.is_ghost_vertex(k) && push!(cv, (p .+ r) ./ 2)
         end
         push!(cv, p)
     else
@@ -91,7 +91,7 @@ end
 
 function example_tri_rect()
     a, b, c, d, nx, ny = 0.0, 2.0, 0.0, 5.0, 12, 19
-    tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary=false, add_ghost_triangles=true)
+    tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary=false)
     return tri
 end
 
