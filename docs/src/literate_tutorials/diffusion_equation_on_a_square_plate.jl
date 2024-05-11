@@ -62,6 +62,7 @@ sol |> tc #hide
 # To visualise the solution, we can use `tricontourf!` from Makie.jl. 
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
+    local ax
     ax = Axis(fig[1, i], width=600, height=600,
         xlabel="x", ylabel="y",
         title="t = $(sol.t[j])",
@@ -104,6 +105,7 @@ end #src
 x, y, u = compare_solutions(sol, tri) #src
 fig = Figure(fontsize=64) #src
 for i in eachindex(sol) #src
+    local ax
     ax = Axis(fig[1, i], width=600, height=600) #src
     tricontourf!(ax, tri, sol.u[i], levels=0:5:50, colormap=:matter) #src
     ax = Axis(fig[2, i], width=600, height=600) #src

@@ -84,6 +84,7 @@ sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.01, parallel=Val
 ind = findall(DelaunayTriangulation.each_point_index(tri)) do i #hide
     !DelaunayTriangulation.has_vertex(tri, i) #hide
 end #hide
+using Test #hide
 @test sol[ind, :] ≈ reshape(repeat(initial_condition, length(sol)), :, length(sol))[ind, :] # make sure that missing vertices don't change #hide
 sol |> tc #hide
 
@@ -91,6 +92,7 @@ sol |> tc #hide
 using CairoMakie
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
+    local ax
     ax = Axis(fig[1, i], width=600, height=600,
         xlabel="x", ylabel="y",
         title="t = $(sol.t[j])",
@@ -158,6 +160,7 @@ end #src
 x, y, u = compare_solutions(sol, tri, α, f) #src
 fig = Figure(fontsize=64) #src
 for i in eachindex(sol) #src
+    local ax
     ax = Axis(fig[1, i], width=600, height=600) #src
     tricontourf!(ax, tri, sol.u[i], levels=0:0.01:1, colormap=:matter) #src
     ax = Axis(fig[2, i], width=600, height=600) #src

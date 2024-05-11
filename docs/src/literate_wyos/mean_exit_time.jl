@@ -89,7 +89,7 @@ end
 dirichlet = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
 neumann = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(2π + ϵr), R₂ * sin(2π + ϵr)), (0.0, 0.0))
 hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive = false)
-boundary_nodes = [[[dirichlet_circle], [neumann_circle]], [[hole]]]
+boundary_nodes = [[[dirichlet], [neumann]], [[hole]]]
 points = NTuple{2, Float64}[]
 tri = triangulate(points; boundary_nodes)
 θ = LinRange(0, 2π, 250)

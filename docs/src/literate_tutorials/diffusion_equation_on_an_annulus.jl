@@ -77,6 +77,7 @@ sol |> tc #hide
 #-
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
+    local ax
     ax = Axis(fig[1, i], width=600, height=600,
         xlabel="x", ylabel="y",
         title="t = $(sol.t[j])",
