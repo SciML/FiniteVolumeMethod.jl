@@ -28,15 +28,18 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 using DelaunayTriangulation, FiniteVolumeMethod, LinearAlgebra, CairoMakie
 L = 30
 tri = triangulate_rectangle(-L, L, -L, L, 2, 2, single_boundary=true)
-tot_area = get_total_area(tri)
+tot_area = get_area(tri)
 max_area_function = (A, r) -> 1e-6tot_area * r^2 / A
-area_constraint = (T, p, q, r, A) -> begin
+area_constraint = (_tri, T) -> begin
+    u, v, w = triangle_vertices(T)
+    p, q, r = get_point(_tri, u, v, w)
     c = (p .+ q .+ r) ./ 3
     dist_to_origin = norm(c)
+    A = DelaunayTriangulation.triangle_area(p, q, r)
     flag = A ≥ max_area_function(A, dist_to_origin)
     return flag
 end
-refine!(tri; min_angle=33.0, max_area=area_constraint)
+refine!(tri; min_angle=33.0, custom_constraint=area_constraint)
 triplot(tri)
 
 #-
@@ -73,7 +76,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
 # and it returns a `Tuple` representing the vector. We let $D = 0.02$ and $\nu = 0.05$.
 ε = 1 / 10
 f = (x, y) -> 1 / (ε^2 * π) * exp(-(x^2 + y^2) / ε^2)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 flux_function = (x, y, t, α, β, γ, p) -> begin
     ∂x = α
     ∂y = β
@@ -120,8 +123,9 @@ function exact_solution(x, y, t, D, ν) #src
 end #src
 function get_errs(_sol, tri, flux_parameters) #src
     _errs = zeros(length(_sol)) #src
-    _err = zeros(DelaunayTriangulation.num_solid_vertices(tri)) #src
+    _err = zeros(DelaunayTriangulation.num_points(tri)) #src
     for i in eachindex(_sol) #src
+        !DelaunayTriangulation.has_vertex(tri, i) && continue
         i == 1 && continue #src
         m = maximum(_sol.u[i]) #src
         for j in each_solid_vertex(tri) #src
@@ -141,7 +145,7 @@ for (i, j) in enumerate(t_idx) #src
     ax = Axis(fig[1, i], width=400, height=400) #src
     tricontourf!(ax, tri, _sol.u[j], levels=0:0.00001:0.001, extendhigh=:auto, extendlow=:auto, colormap=:matter) #src
     ax = Axis(fig[2, i], width=400, height=400) #src
-    tricontourf!(ax, tri, [exact_solution(x, y, _sol.t[j], flux_parameters.D, flux_parameters.ν) for (x, y) in each_point(tri)], levels=0:0.00001:0.001, extendhigh=:auto, extendlow=:auto, colormap=:matter) #src
+    tricontourf!(ax, tri, [exact_solution(x, y, _sol.t[j], flux_parameters.D, flux_parameters.ν) for (x, y) in DelaunayTriangulation.each_point(tri)], levels=0:0.00001:0.001, extendhigh=:auto, extendlow=:auto, colormap=:matter) #src
 end #src
 resize_to_layout!(fig) #src
 fig #src
@@ -248,13 +252,13 @@ for (i, (vals, title)) in enumerate(zip(all_vals, titles))
     xlims!(ax3d, -4, 6)
     ylims!(ax3d, -4, 4)
     if vals ≠ pde_vals
-        contourf!(ax2d, _x, _y, vals, color=vals, colormap=:matter, levels=0:0.001:0.1, extendlow=:auto, extendhigh=:auto)
+        contourf!(ax2d, _x, _y, vals, colormap=:matter, levels=0:0.001:0.1, extendlow=:auto, extendhigh=:auto)
         vals = copy(vals)
         vals[(_x.<-4).|(_x.>6)] .= NaN
         vals[(_y.<-4).|(_y.>4)] .= NaN # This is the only way to fix the weird issues with Axis3 when changing the (x/y/z)lims...
-        surface!(ax3d, _x, _y, vals, color=vals, colormap=:matter, colorrange=(0, 0.1), extendlow=:auto, extendhigh=:auto)
+        surface!(ax3d, _x, _y, vals, color=vals, colormap=:matter, colorrange=(0, 0.1))
     else
-        tricontourf!(ax2d, tri, vals, color=vals, colormap=:matter, levels=0:0.001:0.1, extendlow=:auto, extendhigh=:auto)
+        tricontourf!(ax2d, tri, vals, colormap=:matter, levels=0:0.001:0.1, extendlow=:auto, extendhigh=:auto)
         triangles = [T[j] for T in each_solid_triangle(tri), j in 1:3]
         x = getx.(get_points(tri))
         y = gety.(get_points(tri))

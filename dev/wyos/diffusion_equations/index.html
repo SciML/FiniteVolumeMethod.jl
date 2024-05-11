@@ -29,7 +29,7 @@ end</code></pre><p>For the boundary and internal conditions, we&#39;ll assume th
 const FVM = FiniteVolumeMethod
 function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         i, j, k = ijk
         props = FVM.get_triangle_props(mesh, i, j, k)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
@@ -48,12 +48,12 @@ function triangle_contributions!(A, mesh, conditions, diffusion_function, diffus
             end
         end
     end
-end</code></pre><pre><code class="nohighlight hljs">triangle_contributions! (generic function with 1 method)</code></pre><p>Now we need the function that gets the contributions from the boundary edges.</p><pre><code class="language-julia hljs">function boundary_edge_contributions!(A, b, mesh, conditions,
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">triangle_contributions! (generic function with 1 method)</code></pre><p>Now we need the function that gets the contributions from the boundary edges.</p><pre><code class="language-julia hljs">function boundary_edge_contributions!(A, b, mesh, conditions,
     diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
-        i, j = DelaunayTriangulation.edge_indices(e)
+        i, j = DelaunayTriangulation.edge_vertices(e)
         nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
         Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
         Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
@@ -78,7 +78,7 @@ end</code></pre><pre><code class="nohighlight hljs">triangle_contributions! (gen
             end
         end
     end
-end</code></pre><pre><code class="nohighlight hljs">boundary_edge_contributions! (generic function with 1 method)</code></pre><p>Now that we have the parts for handling the main flux contributions, we need to consider the boundary conditions. Note that in the code above we have already taken not to update <span>$\vb A$</span> or <span>$\vb b$</span> if there a boundary condition at the associated node, so we do not need to worry about e.g. zeroing out rows of <span>$\vb A$</span> for a node with a boundary condition.</p><pre><code class="language-julia hljs">function apply_dirichlet_conditions!(initial_condition, mesh, conditions)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">boundary_edge_contributions! (generic function with 1 method)</code></pre><p>Now that we have the parts for handling the main flux contributions, we need to consider the boundary conditions. Note that in the code above we have alredy taken not to update <span>$\vb A$</span> or <span>$\vb b$</span> if there a boundary condition at the associated node, so we do not need to worry about e.g. zeroing out rows of <span>$\vb A$</span> for a node with a boundary condition.</p><pre><code class="language-julia hljs">function apply_dirichlet_conditions!(initial_condition, mesh, conditions)
     for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
         x, y = get_point(mesh, i)
         initial_condition[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
@@ -91,7 +91,7 @@ function apply_dudt_conditions!(b, mesh, conditions)
             b[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
         end
     end
-end</code></pre><pre><code class="nohighlight hljs">apply_dudt_conditions! (generic function with 1 method)</code></pre><p>Now let&#39;s define <code>diffusion_equation</code>. For this, we note we want to write the problem in the form</p><p class="math-container">\[\dv{\vb u}{t} = \vb A\vb u\]</p><p>to get the most out of our linearity in OrdinaryDiffEq.jl, whereas we currently have</p><p class="math-container">\[\dv{\vb u}{t} = \vb A\vb u + \vb b.\]</p><p>To get around this, we define</p><p class="math-container">\[\tilde{\vb u} = \begin{bmatrix} \vb u \\ 1 \end{bmatrix}, \quad \tilde{\vb A} = \begin{bmatrix}\vb A &amp; \vb b \\ \vb 0^{\mkern-1.5mu\mathsf{T}} &amp; 0 \end{bmatrix},\]</p><p>so that</p><p class="math-container">\[\dv{\tilde{\vb u}}{t} = \begin{bmatrix} \vb u&#39; \\ 0 \end{bmatrix} = \begin{bmatrix} \vb A\vb u + \vb b \\ 0 \end{bmatrix} = \tilde{\vb A}\tilde{\vb u}.\]</p><p>Note that this also requires that we append a <code>1</code> to the initial condition.</p><pre><code class="language-julia hljs">function diffusion_equation(mesh::FVMGeometry,
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">apply_dudt_conditions! (generic function with 1 method)</code></pre><p>Now let&#39;s define <code>diffusion_equation</code>. For this, we note we want to write the problem in the form</p><p class="math-container">\[\dv{\vb u}{t} = \vb A\vb u\]</p><p>to get the most out of our linearity in OrdinaryDiffEq.jl, whereas we currently have</p><p class="math-container">\[\dv{\vb u}{t} = \vb A\vb u + \vb b.\]</p><p>To get around this, we define</p><p class="math-container">\[\tilde{\vb u} = \begin{bmatrix} \vb u \\ 1 \end{bmatrix}, \quad \tilde{\vb A} = \begin{bmatrix}\vb A &amp; \vb b \\ \vb 0^{\mkern-1.5mu\mathsf{T}} &amp; 0 \end{bmatrix},\]</p><p>so that</p><p class="math-container">\[\dv{\tilde{\vb u}}{t} = \begin{bmatrix} \vb u&#39; \\ 0 \end{bmatrix} = \begin{bmatrix} \vb A\vb u + \vb b \\ 0 \end{bmatrix} = \tilde{\vb A}\tilde{\vb u}.\]</p><p>Note that this also requires that we append a <code>1</code> to the initial condition.</p><pre><code class="language-julia hljs">function diffusion_equation(mesh::FVMGeometry,
     BCs::BoundaryConditions,
     ICs::InternalConditions=InternalConditions();
     diffusion_function,
@@ -112,18 +112,18 @@ end</code></pre><pre><code class="nohighlight hljs">apply_dudt_conditions! (gene
     A_op = MatrixOperator(sparse(Afull))
     prob = ODEProblem(A_op, _ic, (initial_time, final_time))
     return prob
-end</code></pre><pre><code class="nohighlight hljs">diffusion_equation (generic function with 2 methods)</code></pre><p>Let&#39;s now test the function. We use the same problem as in <a href="../../tutorials/diffusion_equation_on_a_square_plate/">this tutorial</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, OrdinaryDiffEq, LinearAlgebra, SparseArrays
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">diffusion_equation (generic function with 2 methods)</code></pre><p>Let&#39;s now test the function. We use the same problem as in <a href="../../tutorials/diffusion_equation_on_a_square_plate/">this tutorial</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, OrdinaryDiffEq, LinearAlgebra, SparseArrays
 tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(x), Dirichlet)
 diffusion_function = (x, y, p) -&gt; 1 / 9
-initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in each_point(tri)]
+initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.5
 prob = diffusion_equation(mesh, BCs;
     diffusion_function,
     initial_condition,
     final_time)
-sol = solve(prob, Tsit5(); saveat=0.05)</code></pre><pre><code class="nohighlight hljs">retcode: Success
+sol = solve(prob, Tsit5(); saveat=0.05)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
 Interpolation: 1st order linear
 t: 11-element Vector{Float64}:
  0.0
@@ -148,7 +148,7 @@ u: 11-element Vector{Vector{Float64}}:
  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]</code></pre><p>(It would be nice to use <code>LinearExponential()</code> in the call above, but it just seems to be extremely numerically unstable, so it&#39;s unusable.) Note also that <code>sol</code> contains an extra component:</p><pre><code class="language-julia hljs">length(sol.u[1])</code></pre><pre><code class="nohighlight hljs">2501</code></pre><pre><code class="language-julia hljs">DelaunayTriangulation.num_solid_vertices(tri)</code></pre><pre><code class="nohighlight hljs">2500</code></pre><p>This is because we needed to add in an extra component to represent the problem as a linear problem. So, the solution is in <code>sol[begin:end-1, :]</code>, and you should ignore <code>sol[end, :]</code>. (The same applies to <code>DiffusionEquation</code> that we introduce later.)</p><p>Let&#39;s now plot.</p><pre><code class="language-julia hljs">using CairoMakie
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]</code></pre><p>(It would be nice to use <code>LinearExponential()</code> in the call above, but it just seems to be extremely numerically unstable, so it&#39;s unusable.) Note also that <code>sol</code> contains an extra component:</p><pre><code class="language-julia hljs">length(sol.u[1])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2501</code></pre><pre><code class="language-julia hljs">DelaunayTriangulation.num_solid_vertices(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2500</code></pre><p>This is because we needed to add in an extra component to represent the problem as a linear problem. So, the solution is in <code>sol[begin:end-1, :]</code>, and you should ignore <code>sol[end, :]</code>. (The same applies to <code>DiffusionEquation</code> that we introduce later.)</p><p>Let&#39;s now plot.</p><pre><code class="language-julia hljs">using CairoMakie
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
     ax = Axis(fig[1, i], width=600, height=600,
@@ -160,15 +160,15 @@ for (i, j) in zip(1:3, (1, 6, 11))
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
-fig</code></pre><p><img src="../diffusion_equations-24.png" alt/></p><p>This is exactly the solution we expect!</p><h2 id="Using-the-Provided-Template"><a class="docs-heading-anchor" href="#Using-the-Provided-Template">Using the Provided Template</a><a id="Using-the-Provided-Template-1"></a><a class="docs-heading-anchor-permalink" href="#Using-the-Provided-Template" title="Permalink"></a></h2><p>Let&#39;s now use the built-in <code>DiffusionEquation()</code> which implements the above template inside FiniteVolumeMethod.jl.</p><pre><code class="language-julia hljs">diff_eq = DiffusionEquation(mesh, BCs;
+fig</code></pre><img src="26669f7c.png" alt="Example block output"/><p>This is exactly the solution we expect!</p><h2 id="Using-the-Provided-Template"><a class="docs-heading-anchor" href="#Using-the-Provided-Template">Using the Provided Template</a><a id="Using-the-Provided-Template-1"></a><a class="docs-heading-anchor-permalink" href="#Using-the-Provided-Template" title="Permalink"></a></h2><p>Let&#39;s now use the built-in <code>DiffusionEquation()</code> which implements the above template inside FiniteVolumeMethod.jl.</p><pre><code class="language-julia hljs">diff_eq = DiffusionEquation(mesh, BCs;
     diffusion_function,
     initial_condition,
-    final_time)</code></pre><pre><code class="nohighlight hljs">DiffusionEquation with 2500 nodes and time span (0.0, 0.5)</code></pre><p>Let&#39;s compare <code>DiffusionEquation</code> to the <code>FVMProblem</code> approach.</p><pre><code class="language-julia hljs">fvm_prob = FVMProblem(mesh, BCs;
+    final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">DiffusionEquation with 2500 nodes and time span (0.0, 0.5)</code></pre><p>Let&#39;s compare <code>DiffusionEquation</code> to the <code>FVMProblem</code> approach.</p><pre><code class="language-julia hljs">fvm_prob = FVMProblem(mesh, BCs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -&gt; D(x, y, p)
     end,
     initial_condition,
-    final_time)</code></pre><pre><code class="nohighlight hljs">FVMProblem with 2500 nodes and time span (0.0, 0.5)</code></pre><pre><code class="language-julia hljs">using BenchmarkTools
+    final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 2500 nodes and time span (0.0, 0.5)</code></pre><pre><code class="language-julia hljs">using BenchmarkTools
 @btime solve($diff_eq, $Tsit5(), saveat=$0.05);</code></pre><pre><code class="nohighlight hljs">  5.736 ms (82 allocations: 552.42 KiB)</code></pre><pre><code class="language-julia hljs">using LinearSolve
 @btime solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$0.05);</code></pre><pre><code class="nohighlight hljs">  49.237 ms (91755 allocations: 32.02 MiB)</code></pre><p>Much better! The <code>DiffusionEquation</code> approach is about 10 times faster.</p><p>To finish this example, let&#39;s solve a diffusion equation with constant Neumann boundary conditions:</p><p class="math-container">\[\begin{equation*}
 \begin{aligned}
@@ -188,11 +188,11 @@ initf = (x, y) -&gt; begin
     end
 end
 final_time = 500.0
-initial_condition = [initf(x, y) for (x, y) in each_point(tri)]
+initial_condition = [initf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = DiffusionEquation(mesh, BCs;
     diffusion_function,
     initial_condition,
-    final_time)</code></pre><pre><code class="nohighlight hljs">DiffusionEquation with 10000 nodes and time span (0.0, 500.0)</code></pre><p>Let&#39;s solve and plot.</p><pre><code class="language-julia hljs">sol = solve(prob, Tsit5(); saveat=100.0)</code></pre><pre><code class="nohighlight hljs">retcode: Success
+    final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">DiffusionEquation with 10000 nodes and time span (0.0, 500.0)</code></pre><p>Let&#39;s solve and plot.</p><pre><code class="language-julia hljs">sol = solve(prob, Tsit5(); saveat=100.0)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
 Interpolation: 1st order linear
 t: 6-element Vector{Float64}:
    0.0
@@ -218,15 +218,15 @@ for j in eachindex(sol)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
-fig</code></pre><p><img src="../diffusion_equations-39.png" alt/></p><p>For the corresponding <code>FVMProblem</code>, note that the Neumann boundary conditions need to be defined in terms of <span>$\vb q = -D(\vb x)\grad u$</span> rather than <span>$\grad u \vdot \vu n$</span>. So, since <span>$\grad u \vdot \vu n = 2$</span>, we have <span>$-D\grad u \vdot \vu n = -2D = -4$</span>, so <span>$\vb q \vdot \vu n = -4$</span>. Here is a comparison of the two solutions.</p><pre><code class="language-julia hljs">BCs_prob = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; -4, Neumann)
+fig</code></pre><img src="1abf5b34.png" alt="Example block output"/><p>For the corresponding <code>FVMProblem</code>, note that the Neumann boundary conditions need to be defined in terms of <span>$\vb q = -D(\vb x)\grad u$</span> rather than <span>$\grad u \vdot \vu n$</span>. So, since <span>$\grad u \vdot \vu n = 2$</span>, we have <span>$-D\grad u \vdot \vu n = -2D = -4$</span>, so <span>$\vb q \vdot \vu n = -4$</span>. Here is a comparison of the two solutions.</p><pre><code class="language- hljs">BCs_prob = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; -4, Neumann)
 fvm_prob = FVMProblem(mesh, BCs_prob;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -&gt; D(x, y, p)
     end,
     initial_condition,
     final_time)
-using Sundials
-fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES); saveat=100.0)
+fvm_sol = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()); saveat=100.0)
+fvm_sol |&gt; tc #hide
 
 for j in eachindex(fvm_sol)
     ax = Axis(fig[2, j], width=600, height=600,
@@ -238,13 +238,14 @@ for j in eachindex(fvm_sol)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
-fig</code></pre><p><img src="../diffusion_equations-41.png" alt/></p><p>Here is a benchmark comparison.</p><pre><code class="language-julia hljs">@btime solve($prob, $Tsit5(), saveat=$100.0);</code></pre><pre><code class="nohighlight hljs">  78.761 ms (71 allocations: 1.76 MiB)</code></pre><pre><code class="language-julia hljs">@btime solve($fvm_prob, $CVODE_BDF(linear_solver=:GMRES), saveat=$100.0);</code></pre><pre><code class="nohighlight hljs">  94.839 ms (111666 allocations: 56.07 MiB)</code></pre><p>These problems also work with the <code>pl_interpolate</code> function:</p><pre><code class="language-julia hljs">q = (30.0, 45.0)
+fig</code></pre><p>Here is a benchmark comparison.</p><pre><code class="language-julia hljs">@btime solve($prob, $Tsit5(), saveat=$100.0);</code></pre><pre><code class="nohighlight hljs">  78.761 ms (71 allocations: 1.76 MiB)</code></pre><pre><code class="language-julia hljs">using Sundials
+@btime solve($fvm_prob, $CVODE_BDF(linear_solver=:GMRES), saveat=$100.0);</code></pre><pre><code class="nohighlight hljs">  94.839 ms (111666 allocations: 56.07 MiB)</code></pre><p>These problems also work with the <code>pl_interpolate</code> function:</p><pre><code class="language-julia hljs">q = (30.0, 45.0)
 T = jump_and_march(tri, q)
-val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])</code></pre><pre><code class="nohighlight hljs">11.090458780694902</code></pre><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/diffusion_equations.jl">here</a>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod
+val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">11.090458780694902</code></pre><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/diffusion_equations.jl">here</a>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod
 const FVM = FiniteVolumeMethod
 function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         i, j, k = ijk
         props = FVM.get_triangle_props(mesh, i, j, k)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
@@ -268,9 +269,9 @@ end
 function boundary_edge_contributions!(A, b, mesh, conditions,
     diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
-        i, j = DelaunayTriangulation.edge_indices(e)
+        i, j = DelaunayTriangulation.edge_vertices(e)
         nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
         Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
         Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
@@ -340,7 +341,7 @@ tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(x), Dirichlet)
 diffusion_function = (x, y, p) -&gt; 1 / 9
-initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in each_point(tri)]
+initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.5
 prob = diffusion_equation(mesh, BCs;
     diffusion_function,
@@ -391,7 +392,7 @@ initf = (x, y) -&gt; begin
     end
 end
 final_time = 500.0
-initial_condition = [initf(x, y) for (x, y) in each_point(tri)]
+initial_condition = [initf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = DiffusionEquation(mesh, BCs;
     diffusion_function,
     initial_condition,
@@ -419,8 +420,7 @@ fvm_prob = FVMProblem(mesh, BCs_prob;
     end,
     initial_condition,
     final_time)
-using Sundials
-fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES); saveat=100.0)
+fvm_sol = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()); saveat=100.0)
 
 for j in eachindex(fvm_sol)
     ax = Axis(fig[2, j], width=600, height=600,
@@ -436,4 +436,4 @@ fig
 
 q = (30.0, 45.0)
 T = jump_and_march(tri, q)
-val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>It would be fine to allow the boundary conditions to depend on <span>$t$</span> - we would still have linearity. The issue would just be that we need to reconstruct the matrix at every time step. So, for simplicity, let&#39;s not allow it so that the template we build is efficient for the most common case (where there is no <span>$t$</span> dependence).</li><li class="footnote" id="footnote-2"><a class="tag is-link" href="#citeref-2">2</a>If the boundary condition was non-autonomous, we could use a mass matrix instead, or build the condition into <span>$\vb A$</span> and <span>$\vb b$</span> directly by using the exact values of <span>$u$</span> where applicable.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../overview/">« Section Overview</a><a class="docs-footer-nextpage" href="../mean_exit_time/">Mean Exit Time Problems »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Thursday 11 April 2024 10:08">Thursday 11 April 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>It would be fine to allow the boundary conditions to depend on <span>$t$</span> - we would still have linearity. The issue would just be that we need to reconstruct the matrix at every time step. So, for simplicity, let&#39;s not allow it so that the template we build is efficient for the most common case (where there is no <span>$t$</span> dependence).</li><li class="footnote" id="footnote-2"><a class="tag is-link" href="#citeref-2">2</a>If the boundary condition was non-autonomous, we could use a mass matrix instead, or build the condition into <span>$\vb A$</span> and <span>$\vb b$</span> directly by using the exact values of <span>$u$</span> where applicable.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../overview/">« Section Overview</a><a class="docs-footer-nextpage" href="../mean_exit_time/">Mean Exit Time Problems »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.4.1 on <span class="colophon-date" title="Saturday 11 May 2024 10:02">Saturday 11 May 2024</span>. Using Julia version 1.10.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -46,8 +46,8 @@ u_Sp = b
 v_Sp = d
 u_icf = (x, y) -> 1 - exp(-80 * (x^2 + y^2))
 v_icf = (x, y) -> exp(-80 * (x^ 2 + y^2))
-u_ic = [u_icf(x, y) for (x, y) in each_point(tri)]
-v_ic = [v_icf(x, y) for (x, y) in each_point(tri)]
+u_ic = [u_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+v_ic = [v_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 u_prob = FVMProblem(mesh, u_BCs;
     flux_function=u_q, flux_parameters=u_qp,
     source_function=u_S, source_parameters=u_Sp,
@@ -59,8 +59,8 @@ v_prob = FVMProblem(mesh, v_BCs;
 prob = FVMSystem(u_prob, v_prob)
 
 # Now that we have our system, we can solve.
-using OrdinaryDiffEq, Sundials
-sol = solve(prob, CVODE_BDF(linear_solver=:GMRES), saveat=10.0, parallel=Val(false))
+using OrdinaryDiffEq, LinearSolve
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=10.0, parallel=Val(false))
 sol |> tc #hide
 
 # Here is an animation of the solution, looking only at the $v$ variable.

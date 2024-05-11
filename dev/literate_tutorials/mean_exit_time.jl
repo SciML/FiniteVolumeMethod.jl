@@ -113,28 +113,25 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # D(\vb x) = \begin{cases} D_1 & \|\vb x\| < R_1, \\ D_2 & R_1 \leq \|\vb x\| \leq R_2. \end{cases}
 # ``` 
 # The mesh is defined as follows. To help the accuracy of the solution, 
-# we add more triangles around the boundary by putting some constrained 
+# we add more triangles around the interior circle by putting some constrained 
 # edges there. 
 using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
-θ = LinRange(0, 2π, 250)
 R₁, R₂ = 2.0, 3.0
-x = @. R₂ * cos(θ)
-y = @. R₂ * sin(θ)
-x[end] = x[begin]
-y[end] = y[begin]
-boundary_nodes, points = convert_boundary_points_to_indices(x, y)
-tri = triangulate(points; boundary_nodes, delete_ghosts=false)
+circle = CircularArc((0.0, R₂), (0.0, R₂), (0.0, 0.0))
+points = NTuple{2,Float64}[]
+tri = triangulate(points; boundary_nodes=[circle])
+θ = LinRange(0, 2π, 250)
 xin = @views @. R₁ * cos(θ)[begin:end-1]
 yin = @views @. R₁ * sin(θ)[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
 end
-n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
-refine!(tri; max_area=1e-3get_total_area(tri))
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 
 #-
@@ -158,7 +155,7 @@ diffusion_parameters = (R₁=R₁, D₁=D₁, D₂=D₂)
 f = (x, y) -> let r = sqrt(x^2 + y^2)
     return (R₂^2 - r^2) / (4D₂)
 end
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 initial_condition |> tc #hide
 
 # We now define the problem. 
@@ -192,7 +189,7 @@ function T_exact(x, y) #src
         return (R₂^2 - r^2) / (4D₂) #src
     end #src
 end #src
-_T_exact = [T_exact(x, y) for (x, y) in each_point(tri)] #src
+_T_exact = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)] #src
 tricontourf!(Axis(fig[1, 2]), tri, _T_exact, levels=0:500:20000, extendhigh=:auto) #src
 @test_reference joinpath(@__DIR__, "../figures", "mean_exit_time_unperturbed_interface_exact_comparison.png") fig #src
 
@@ -202,23 +199,20 @@ tricontourf!(Axis(fig[1, 2]), tri, _T_exact, levels=0:500:20000, extendhigh=:aut
 g = θ -> sin(3θ) + cos(5θ)
 ε = 0.05
 R1_f = θ -> R₁ * (1 + ε * g(θ))
-x = @. R₂ * cos(θ)
-y = @. R₂ * sin(θ)
-x[end] = x[begin]
-y[end] = y[begin]
-boundary_nodes, points = convert_boundary_points_to_indices(x, y)
-tri = triangulate(points; boundary_nodes, delete_ghosts=false)
+points = NTuple{2,Float64}[]
+circle = CircularArc((0.0, R₂), (0.0, R₂), (0.0, 0.0))
+tri = triangulate(points; boundary_nodes=[circle])
 xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
 yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
 end
-n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
-refine!(tri; max_area=1e-3get_total_area(tri))
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 
 #-
@@ -243,7 +237,7 @@ diffusion_function = (x, y, t, u, p) -> let r = sqrt(x^2 + y^2), θ = atan(y, x)
     return ifelse(r < interface_val, p.D₁, p.D₂)
 end
 diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 source_function = (x, y, t, u, p) -> one(u)
 prob = FVMProblem(mesh, BCs;
     diffusion_function, diffusion_parameters,
@@ -275,9 +269,9 @@ fig
 # any nearby particles, i.e. $T(0,0)=0$.
 add_point!(tri, 0.0, 0.0)
 mesh = FVMGeometry(tri)
-ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(DelaunayTriangulation.num_solid_vertices(tri) => 1))
+ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(DelaunayTriangulation.num_points(tri) => 1))
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
@@ -296,32 +290,25 @@ fig
 # we only allow particles to exit through a small part of the boundary, 
 # reflecting off all other parts. For the reflecting boundary condition, 
 # this is enforced by using Neumann boundary conditions. 
-εr = 0.25
-θref = LinRange(εr, 2π - εr, 200)
-θabs = LinRange(2π - εr, 2π + εr, 200)
-xref = @. R₂ * cos(θref)
-yref = @. R₂ * sin(θref)
-xabs = @. R₂ * cos(θabs)
-yabs = @. R₂ * sin(θabs)
-xref[end] = xabs[begin]
-yref[end] = yabs[begin]
-x = [xref, xabs]
-y = [yref, yabs]
-boundary_nodes, points = convert_boundary_points_to_indices(x, y)
-tri = triangulate(points; boundary_nodes, delete_ghosts=false)
+ϵr = 0.25
+dirichlet_circle = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
+neumann_circle = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(ϵr), R₂ * sin(ϵr)), (0.0, 0.0))
+boundary_nodes = [[dirichlet_circle], [neumann_circle]]
+points = NTuple{2,Float64}[]
+tri = triangulate(points; boundary_nodes)
 xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
 yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
 end
-n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
 add_point!(tri, 0.0, 0.0)
-origin_idx = DelaunayTriangulation.num_solid_vertices(tri)
-refine!(tri; max_area=1e-3get_total_area(tri))
+origin_idx = DelaunayTriangulation.num_points(tri)
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 
 #-
@@ -329,7 +316,7 @@ mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, (zero_f, zero_f), (Neumann, Dirichlet))
 ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(origin_idx => 1))
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
@@ -346,40 +333,33 @@ fig
 # Now, as a last constraint, let's add a hole. We'll put hole at the origin,  and we'll 
 # move the point hole to $(-2, 0)$ rather than at the origin, and we'll also put a hole at 
 # $(0, 2.95)$.
-xhole = @. cos(θ)
-yhole = @. sin(θ)
-reverse!(xhole) # clockwise 
-reverse!(yhole)
-xhole[begin] = xhole[end]
-yhole[begin] = yhole[end]
-x = [[xref, xabs], [xhole]]
-y = [[yref, yabs], [yhole]]
-boundary_nodes, points = convert_boundary_points_to_indices(x, y)
-tri = triangulate(points; boundary_nodes, delete_ghosts=false)
+hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive=false)
+boundary_nodes = [[[dirichlet_circle], [neumann_circle]], [[hole]]]
+points = NTuple{2,Float64}[]
+tri = triangulate(points; boundary_nodes)
 xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
 yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
 end
-n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
 add_point!(tri, -2.0, 0.0)
 add_point!(tri, 0.0, 2.95)
-pointhole_idxs = [DelaunayTriangulation.num_solid_vertices(tri), DelaunayTriangulation.num_solid_vertices(tri)-1]
-refine!(tri; max_area=1e-3get_total_area(tri))
+pointhole_idxs = [DelaunayTriangulation.num_points(tri), DelaunayTriangulation.num_points(tri) - 1]
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 
 # The boundary condition we'll use at the new interior hole  
 # will be an absorbing boundary condition. 
 mesh = FVMGeometry(tri)
-ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(origin_idx => 1))
 zero_f = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, (zero_f, zero_f, zero_f), (Neumann, Dirichlet, Dirichlet))
 ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(pointhole_idxs .=> 1))
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,

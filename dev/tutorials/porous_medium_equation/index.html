@@ -11,19 +11,19 @@ final_time = 12.0
 RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
 L = sqrt(RmM) * (D * final_time)^(1 / (2m))
 tri = triangulate_rectangle(-L, L, -L, L, 125, 125, single_boundary=true)
-mesh = FVMGeometry(tri)</code></pre><pre><code class="nohighlight hljs">FVMGeometry with 15625 control volumes, 30752 triangles, and 46376 edges</code></pre><pre><code class="language-julia hljs"># Step 2: Define the boundary conditions
-BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)</code></pre><pre><code class="nohighlight hljs">BoundaryConditions with 1 boundary condition with type Dirichlet</code></pre><pre><code class="language-julia hljs"># Step 3: Define the actual PDE
+mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 15625 control volumes, 30752 triangles, and 46376 edges</code></pre><pre><code class="language-julia hljs"># Step 2: Define the boundary conditions
+BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 1 boundary condition with type Dirichlet</code></pre><pre><code class="language-julia hljs"># Step 3: Define the actual PDE
 f = (x, y) -&gt; M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
 diffusion_function = (x, y, t, u, p) -&gt; p[1] * u^(p[2] - 1)
 diffusion_parameters = (D, m)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     diffusion_parameters,
     initial_condition,
-    final_time)</code></pre><pre><code class="nohighlight hljs">FVMProblem with 15625 nodes and time span (0.0, 12.0)</code></pre><pre><code class="language-julia hljs"># Step 4: Solve
+    final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 15625 nodes and time span (0.0, 12.0)</code></pre><pre><code class="language-julia hljs"># Step 4: Solve
 using LinearSolve, OrdinaryDiffEq
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=3.0)</code></pre><pre><code class="nohighlight hljs">retcode: Success
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=3.0)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
 Interpolation: 1st order linear
 t: 5-element Vector{Float64}:
   0.0
@@ -36,7 +36,7 @@ u: 5-element Vector{Vector{Float64}}:
  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]</code></pre><pre><code class="language-julia hljs"># Step 5: Visualise
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]</code></pre><pre><code class="language- hljs"># Step 5: Visualise
 using CairoMakie
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 3, 5))
@@ -48,7 +48,9 @@ for (i, j) in zip(1:3, (1, 3, 5))
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
-fig</code></pre><p><img src="../porous_medium_equation-8.png" alt/></p><h2 id="Linear-source"><a class="docs-heading-anchor" href="#Linear-source">Linear source</a><a id="Linear-source-1"></a><a class="docs-heading-anchor-permalink" href="#Linear-source" title="Permalink"></a></h2><p>Let us now extend the problem above so that a linear source is now included:</p><p class="math-container">\[\pdv{u}{t} = D\div [u^{m-1}\grad u] + \lambda u, \quad \lambda &gt; 0.\]</p><p>We again let the initial condition be <span>$u(\vb x, 0) = M\delta(\vb x)$</span>. For the domain, we use</p><p class="math-container">\[\Omega = \left[-R_{m, M}^{1/2}\tau(T)^{1/2m}, R_{m,M}^{1/2}\tau(T)^{1/2m}\right]^2,\]</p><p>where</p><p class="math-container">\[\tau(T) = \frac{D}{\lambda(m-1)}\left[\mathrm{e}^{\lambda(m-1)T}-1\right].\]</p><p>The code below solves this problem.</p><pre><code class="language-julia hljs"># Step 0: Define all the parameters
+fig
+
+        !DelaunayTriangulation.has_vertex(tri, i) &amp;&amp; continue</code></pre><h2 id="Linear-source"><a class="docs-heading-anchor" href="#Linear-source">Linear source</a><a id="Linear-source-1"></a><a class="docs-heading-anchor-permalink" href="#Linear-source" title="Permalink"></a></h2><p>Let us now extend the problem above so that a linear source is now included:</p><p class="math-container">\[\pdv{u}{t} = D\div [u^{m-1}\grad u] + \lambda u, \quad \lambda &gt; 0.\]</p><p>We again let the initial condition be <span>$u(\vb x, 0) = M\delta(\vb x)$</span>. For the domain, we use</p><p class="math-container">\[\Omega = \left[-R_{m, M}^{1/2}\tau(T)^{1/2m}, R_{m,M}^{1/2}\tau(T)^{1/2m}\right]^2,\]</p><p>where</p><p class="math-container">\[\tau(T) = \frac{D}{\lambda(m-1)}\left[\mathrm{e}^{\lambda(m-1)T}-1\right].\]</p><p>The code below solves this problem.</p><pre><code class="language-julia hljs"># Step 0: Define all the parameters
 m = 3.4
 M = 2.3
 D = 0.581
@@ -59,24 +61,24 @@ final_time = 10.0
 RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
 L = sqrt(RmM) * (D / (λ * (m - 1)) * (exp(λ * (m - 1) * final_time) - 1))^(1 / (2m))
 tri = triangulate_rectangle(-L, L, -L, L, 125, 125, single_boundary=true)
-mesh = FVMGeometry(tri)</code></pre><pre><code class="nohighlight hljs">FVMGeometry with 15625 control volumes, 30752 triangles, and 46376 edges</code></pre><pre><code class="language-julia hljs"># Step 2: Define the boundary conditions
+mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 15625 control volumes, 30752 triangles, and 46376 edges</code></pre><pre><code class="language-julia hljs"># Step 2: Define the boundary conditions
 bc = (x, y, t, u, p) -&gt; zero(u)
 type = Dirichlet
-BCs = BoundaryConditions(mesh, bc, type)</code></pre><pre><code class="nohighlight hljs">BoundaryConditions with 1 boundary condition with type Dirichlet</code></pre><pre><code class="language-julia hljs"># Step 3: Define the actual PDE
+BCs = BoundaryConditions(mesh, bc, type)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 1 boundary condition with type Dirichlet</code></pre><pre><code class="language-julia hljs"># Step 3: Define the actual PDE
 f = (x, y) -&gt; M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
 diffusion_function = (x, y, t, u, p) -&gt; p.D * abs(u)^(p.m - 1)
 source_function = (x, y, t, u, λ) -&gt; λ * u
 diffusion_parameters = (D=D, m=m)
 source_parameters = λ
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     diffusion_parameters,
     source_function,
     source_parameters,
     initial_condition,
-    final_time)</code></pre><pre><code class="nohighlight hljs">FVMProblem with 15625 nodes and time span (0.0, 10.0)</code></pre><pre><code class="language-julia hljs"># Step 4: Solve
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=2.5)</code></pre><pre><code class="nohighlight hljs">retcode: Success
+    final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 15625 nodes and time span (0.0, 10.0)</code></pre><pre><code class="language-julia hljs"># Step 4: Solve
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=2.5)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
 Interpolation: 1st order linear
 t: 5-element Vector{Float64}:
   0.0
@@ -100,7 +102,7 @@ for (i, j) in zip(1:3, (1, 3, 5))
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
-fig</code></pre><p><img src="../porous_medium_equation-14.png" alt/></p><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_medium_equation.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod
+fig</code></pre><img src="d18dd8fc.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_medium_equation.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod
 
 # Step 0: Define all the parameters
 m = 2
@@ -121,7 +123,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)
 f = (x, y) -&gt; M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
 diffusion_function = (x, y, t, u, p) -&gt; p[1] * u^(p[2] - 1)
 diffusion_parameters = (D, m)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     diffusion_parameters,
@@ -145,6 +147,8 @@ for (i, j) in zip(1:3, (1, 3, 5))
 end
 resize_to_layout!(fig)
 fig
+
+        !DelaunayTriangulation.has_vertex(tri, i) &amp;&amp; continue
 
 # Step 0: Define all the parameters
 m = 3.4
@@ -170,7 +174,7 @@ diffusion_function = (x, y, t, u, p) -&gt; p.D * abs(u)^(p.m - 1)
 source_function = (x, y, t, u, λ) -&gt; λ * u
 diffusion_parameters = (D=D, m=m)
 source_parameters = λ
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     diffusion_parameters,
@@ -193,4 +197,4 @@ for (i, j) in zip(1:3, (1, 3, 5))
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
-fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>This comes from the exact solution that we define in the <a href="../overview/">overview</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">« Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a><a class="docs-footer-nextpage" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Thursday 11 April 2024 10:08">Thursday 11 April 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>This comes from the exact solution that we define in the <a href="../overview/">overview</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">« Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a><a class="docs-footer-nextpage" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.4.1 on <span class="colophon-date" title="Saturday 11 May 2024 10:02">Saturday 11 May 2024</span>. Using Julia version 1.10.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

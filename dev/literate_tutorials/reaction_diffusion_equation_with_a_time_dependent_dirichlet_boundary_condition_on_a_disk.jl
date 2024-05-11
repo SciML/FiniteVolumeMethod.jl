@@ -20,15 +20,12 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # ```
 # As usual, we start by generating the mesh.
 using FiniteVolumeMethod, DelaunayTriangulation, ElasticArrays
-r = fill(1, 100)
-θ = LinRange(0, 2π, 100)
-x = @. r * cos(θ)
-y = @. r * sin(θ)
-x[end] = x[begin]
-y[end] = y[begin] # make sure the curve connects at the endpoints 
-boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
+r = 1.0
+circle = CircularArc((0.0, r), (0.0, r), (0.0, 0.0))
+points = NTuple{2, Float64}[]
+boundary_nodes = [circle]
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 
@@ -44,7 +41,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> u, Dudt)
 f = (x, y) -> sqrt(besseli(0.0, sqrt(2) * sqrt(x^2 + y^2)))
 D = (x, y, t, u, p) -> u
 R = (x, y, t, u, p) -> u * (1 - u)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.10
 prob = FVMProblem(mesh, BCs;
     diffusion_function=D,
@@ -79,11 +76,12 @@ function exact_solution(x, y, t) #src
     return exp(t) * sqrt(besseli(0.0, sqrt(2) * r)) #src
 end #src
 function compare_solutions(sol, tri) #src
-    n = DelaunayTriangulation.num_solid_vertices(tri) #src
+    n = DelaunayTriangulation.num_points(tri) #src
     x = zeros(n, length(sol)) #src
     y = zeros(n, length(sol)) #src
     u = zeros(n, length(sol)) #src
     for i in eachindex(sol) #src
+        !DelaunayTriangulation.has_vertex(tri, i) && continue
         for j in each_solid_vertex(tri) #src
             x[j, i], y[j, i] = get_point(tri, j) #src
             u[j, i] = exact_solution(x[j, i], y[j, i], sol.t[i]) #src

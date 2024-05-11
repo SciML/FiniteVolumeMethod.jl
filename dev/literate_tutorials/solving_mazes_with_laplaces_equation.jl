@@ -43,7 +43,7 @@ y_finish_to_start = y[finish_idx_end:start_idx_init]
 x_bnd = [x_start, x_start_to_finish, x_finish, x_finish_to_start]
 y_bnd = [y_start, y_start_to_finish, y_finish, y_finish_to_start]
 boundary_nodes, points = convert_boundary_points_to_indices(x_bnd, y_bnd)
-tri = triangulate(points; boundary_nodes, recompute_representative_point=false) # takes a while because maze.txt contains so many points
+tri = triangulate(points; boundary_nodes) # takes a while because maze.txt contains so many points
 refine!(tri)
 
 fig, ax, sc, = triplot(tri,
@@ -64,7 +64,7 @@ fncs = (start_bc, start_to_finish_bc, finish_bc, finish_to_start_bc)
 types = (Dirichlet, Neumann, Dirichlet, Neumann)
 BCs = BoundaryConditions(mesh, fncs, types)
 diffusion_function = (x, y, t, u, p) -> one(u)
-initial_condition = 0.05randn(StableRNG(123), DelaunayTriangulation.num_solid_vertices(tri)) # random initial condition - this is the initial guess for the solution
+initial_condition = 0.05randn(StableRNG(123), DelaunayTriangulation.num_points(tri)) # random initial condition - this is the initial guess for the solution
 final_time = Inf
 prob = FVMProblem(mesh, BCs;
     diffusion_function=diffusion_function,

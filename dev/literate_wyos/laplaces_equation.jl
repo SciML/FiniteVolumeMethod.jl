@@ -30,12 +30,13 @@ function laplaces_equation(mesh::FVMGeometry,
     diffusion_function=(x, y, p) -> 1.0,
     diffusion_parameters=nothing)
     conditions = Conditions(mesh, BCs, ICs)
-    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
-    b = zeros(num_points(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     FVM.boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     FVM.apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
     Asp = sparse(A)
     prob = LinearProblem(Asp, b)
     return prob
@@ -75,7 +76,7 @@ boundary_x = [lower_x, outer_arc_x, left_x, inner_arc_x]
 boundary_y = [lower_y, outer_arc_y, left_y, inner_arc_y]
 boundary_nodes, points = convert_boundary_points_to_indices(boundary_x, boundary_y)
 tri = triangulate(points; boundary_nodes)
-refine!(tri; max_area=1e-3get_total_area(tri))
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 
 #-
@@ -106,7 +107,7 @@ resize_to_layout!(fig)
 fig
 
 # We can turn this type of problem into its corresponding `SteadyFVMProblem` as follows:
-initial_condition = zeros(num_points(tri))
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 FVM.apply_dirichlet_conditions!(initial_condition, mesh, Conditions(mesh, BCs, InternalConditions())) # a good initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=(x, y, t, u, p) -> 1.0,
@@ -170,7 +171,7 @@ tricontourf!(ax, tri, sol.u, levels=0:0.25:5, colormap=:jet)
 ax = Axis(fig[1, 2], xlabel="x", ylabel="y",
     width=600, height=600,
     title="Exact", titlealign=:left)
-u_exact = [5log(1 + x) / log(6) for (x, y) in each_point(tri)]
+u_exact = [5log(1 + x) / log(6) for (x, y) in DelaunayTriangulation.each_point(tri)]
 tricontourf!(ax, tri, u_exact, levels=0:0.25:5, colormap=:jet)
 resize_to_layout!(fig)
 fig
@@ -179,7 +180,7 @@ fig
 
 # To finish, here is a benchmark comparing this problem to the corresponding 
 # `SteadyFVMProblem`.
-initial_condition = zeros(num_points(tri))
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 FVM.apply_dirichlet_conditions!(initial_condition, mesh, Conditions(mesh, BCs, InternalConditions())) # a good initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=(x, y, t, u, p) -> (x + 1) * (y + 2),

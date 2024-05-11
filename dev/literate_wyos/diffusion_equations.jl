@@ -109,7 +109,7 @@ using FiniteVolumeMethod
 const FVM = FiniteVolumeMethod
 function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         i, j, k = ijk
         props = FVM.get_triangle_props(mesh, i, j, k)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
@@ -134,9 +134,9 @@ end
 function boundary_edge_contributions!(A, b, mesh, conditions,
     diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
-        i, j = DelaunayTriangulation.edge_indices(e)
+        i, j = DelaunayTriangulation.edge_vertices(e)
         nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
         Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
         Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
@@ -229,7 +229,7 @@ tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 diffusion_function = (x, y, p) -> 1 / 9
-initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in each_point(tri)]
+initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.5
 prob = diffusion_equation(mesh, BCs;
     diffusion_function,
@@ -334,7 +334,7 @@ initf = (x, y) -> begin
     end
 end
 final_time = 500.0
-initial_condition = [initf(x, y) for (x, y) in each_point(tri)]
+initial_condition = [initf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = DiffusionEquation(mesh, BCs;
     diffusion_function,
     initial_condition,
@@ -369,8 +369,7 @@ fvm_prob = FVMProblem(mesh, BCs_prob;
     end,
     initial_condition,
     final_time)
-using Sundials
-fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES); saveat=100.0)
+fvm_sol = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()); saveat=100.0)
 fvm_sol |> tc #hide
 
 for j in eachindex(fvm_sol)
@@ -399,6 +398,7 @@ u_fvm = fvm_sol[begin:end, 2:end] #src
 # ````
 #
 # ````julia
+# using Sundials
 # @btime solve($fvm_prob, $CVODE_BDF(linear_solver=:GMRES), saveat=$100.0);
 # ````
 

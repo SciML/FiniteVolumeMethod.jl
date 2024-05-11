@@ -42,28 +42,28 @@
 \end{aligned}
 \end{equation*}\]</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
 tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=false)
-mesh = FVMGeometry(tri)</code></pre><pre><code class="nohighlight hljs">FVMGeometry with 10000 control volumes, 19602 triangles, and 29601 edges</code></pre><p>Now we define the boundary conditions. When considering a system of PDEs, you need to define the boundary conditions for each variable separately. The signatures are the same, namely <code>(x, y, t, u, p) -&gt; Number</code>, except now <code>u</code> is a vector (or <code>Tuple</code>) of the solution values for each variable instead of just a scalar. This last point is not relevant here, but you do need to know about it for other problems more generally. So, let us now define the boundary conditions. First, for <span>$\Phi$</span>:</p><pre><code class="language-julia hljs">Φ_bot = (x, y, t, u, p) -&gt; -1 / 4 * exp(-x - t / 2)
+mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 10000 control volumes, 19602 triangles, and 29601 edges</code></pre><p>Now we define the boundary conditions. When considering a system of PDEs, you need to define the boundary conditions for each variable separately. The signatures are the same, namely <code>(x, y, t, u, p) -&gt; Number</code>, except now <code>u</code> is a vector (or <code>Tuple</code>) of the solution values for each variable instead of just a scalar. This last point is not relevant here, but you do need to know about it for other problems more generally. So, let us now define the boundary conditions. First, for <span>$\Phi$</span>:</p><pre><code class="language-julia hljs">Φ_bot = (x, y, t, u, p) -&gt; -1 / 4 * exp(-x - t / 2)
 Φ_right = (x, y, t, u, p) -&gt; 1 / 4 * exp(-1 - y - t / 2)
 Φ_top = (x, y, t, u, p) -&gt; exp(-1 - x - t / 2)
 Φ_left = (x, y, t, u, p) -&gt; -1 / 4 * exp(-y - t / 2)
 Φ_bc_fncs = (Φ_bot, Φ_right, Φ_top, Φ_left)
 Φ_bc_types = (Neumann, Neumann, Dirichlet, Neumann)
-Φ_BCs = BoundaryConditions(mesh, Φ_bc_fncs, Φ_bc_types)</code></pre><pre><code class="nohighlight hljs">BoundaryConditions with 4 boundary conditions with types (Neumann, Neumann, Dirichlet, Neumann)</code></pre><p>Now, for <span>$\Psi$</span>:</p><pre><code class="language-julia hljs">Ψ_bot = (x, y, t, u, p) -&gt; exp(x + t / 2)
+Φ_BCs = BoundaryConditions(mesh, Φ_bc_fncs, Φ_bc_types)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 4 boundary conditions with types (Neumann, Neumann, Dirichlet, Neumann)</code></pre><p>Now, for <span>$\Psi$</span>:</p><pre><code class="language-julia hljs">Ψ_bot = (x, y, t, u, p) -&gt; exp(x + t / 2)
 Ψ_right = (x, y, t, u, p) -&gt; -1 / 4 * exp(1 + y + t / 2)
 Ψ_top = (x, y, t, u, p) -&gt; -1 / 4 * exp(1 + x + t / 2)
 Ψ_left = (x, y, t, u, p) -&gt; exp(y + t / 2)
 Ψ_bc_fncs = (Ψ_bot, Ψ_right, Ψ_top, Ψ_left)
 Ψ_bc_types = (Dirichlet, Neumann, Neumann, Dirichlet)
-Ψ_BCs = BoundaryConditions(mesh, Ψ_bc_fncs, Ψ_bc_types)</code></pre><pre><code class="nohighlight hljs">BoundaryConditions with 4 boundary conditions with types (Dirichlet, Neumann, Neumann, Dirichlet)</code></pre><p>Now we need to define the actual problems. Let us first define the flux and source functions, remembering that the variables get replaced with linear approximants. The flux functions also now take <code>Tuple</code>s for <span>$\alpha$</span>, <span>$\beta$</span>, and <span>$\gamma$</span>, where the <span>$i$</span>th element of the <code>Tuple</code> refers to the <span>$i$</span>th variable. Similarly, the source function takes a <code>Tuple</code> of the variables in the <code>u</code> argument.</p><pre><code class="language-julia hljs">Φ_q = (x, y, t, α, β, γ, p) -&gt; (-α[1] / 4, -β[1] / 4)
+Ψ_BCs = BoundaryConditions(mesh, Ψ_bc_fncs, Ψ_bc_types)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 4 boundary conditions with types (Dirichlet, Neumann, Neumann, Dirichlet)</code></pre><p>Now we need to define the actual problems. Let us first define the flux and source functions, remembering that the variables get replaced with linear approximants. The flux functions also now take <code>Tuple</code>s for <span>$\alpha$</span>, <span>$\beta$</span>, and <span>$\gamma$</span>, where the <span>$i$</span>th element of the <code>Tuple</code> refers to the <span>$i$</span>th variable. Similarly, the source function takes a <code>Tuple</code> of the variables in the <code>u</code> argument.</p><pre><code class="language-julia hljs">Φ_q = (x, y, t, α, β, γ, p) -&gt; (-α[1] / 4, -β[1] / 4)
 Ψ_q = (x, y, t, α, β, γ, p) -&gt; (-α[2] / 4, -β[2] / 4)
 Φ_S = (x, y, t, (Φ, Ψ), p) -&gt; Φ^2 * Ψ - 2Φ
-Ψ_S = (x, y, t, (Φ, Ψ), p) -&gt; -Φ^2 * Ψ + Φ</code></pre><pre><code class="nohighlight hljs">#23 (generic function with 1 method)</code></pre><p>Now we define the initial conditions.</p><pre><code class="language-julia hljs">Φ_exact = (x, y, t) -&gt; exp(-x - y - t / 2)
+Ψ_S = (x, y, t, (Φ, Ψ), p) -&gt; -Φ^2 * Ψ + Φ</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">#23 (generic function with 1 method)</code></pre><p>Now we define the initial conditions.</p><pre><code class="language-julia hljs">Φ_exact = (x, y, t) -&gt; exp(-x - y - t / 2)
 Ψ_exact = (x, y, t) -&gt; exp(x + y + t / 2)
-Φ₀ = [Φ_exact(x, y, 0) for (x, y) in each_point(tri)]
-Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)];</code></pre><p>Next, we can define the <code>FVMProblem</code>s for each variable.</p><pre><code class="language-julia hljs">Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
-    initial_condition=Φ₀, final_time=5.0)</code></pre><pre><code class="nohighlight hljs">FVMProblem with 10000 nodes and time span (0.0, 5.0)</code></pre><pre><code class="language-julia hljs">Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function=Ψ_q, source_function=Ψ_S,
-    initial_condition=Ψ₀, final_time=5.0)</code></pre><pre><code class="nohighlight hljs">FVMProblem with 10000 nodes and time span (0.0, 5.0)</code></pre><p>Finally, the <code>FVMSystem</code> is constructed by these two problems:</p><pre><code class="language-julia hljs">system = FVMSystem(Φ_prob, Ψ_prob)</code></pre><pre><code class="nohighlight hljs">FVMSystem with 2 equations and time span (0.0, 5.0)</code></pre><p>We can now solve the problem just as we&#39;ve done previously.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, LinearSolve
-sol = solve(system, TRBDF2(linsolve=KLUFactorization()), saveat=1.0)</code></pre><pre><code class="nohighlight hljs">retcode: Success
+Φ₀ = [Φ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)]
+Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)];</code></pre><p>Next, we can define the <code>FVMProblem</code>s for each variable.</p><pre><code class="language-julia hljs">Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
+    initial_condition=Φ₀, final_time=5.0)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 10000 nodes and time span (0.0, 5.0)</code></pre><pre><code class="language-julia hljs">Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function=Ψ_q, source_function=Ψ_S,
+    initial_condition=Ψ₀, final_time=5.0)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 10000 nodes and time span (0.0, 5.0)</code></pre><p>Finally, the <code>FVMSystem</code> is constructed by these two problems:</p><pre><code class="language-julia hljs">system = FVMSystem(Φ_prob, Ψ_prob)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMSystem with 2 equations and time span (0.0, 5.0)</code></pre><p>We can now solve the problem just as we&#39;ve done previously.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, LinearSolve
+sol = solve(system, TRBDF2(linsolve=KLUFactorization()), saveat=1.0)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
 Interpolation: 1st order linear
 t: 6-element Vector{Float64}:
  0.0
@@ -74,24 +74,24 @@ t: 6-element Vector{Float64}:
  5.0
 u: 6-element Vector{Matrix{Float64}}:
  [1.0 0.9899498337660453 … 0.13670923376163366 0.1353352832366127; 1.0 1.0101521975065353 … 7.314794856824381 7.38905609893065]
- [0.6022790543205313 0.5961843226390967 … 0.0845971605921441 0.08374694506527251; 1.6160026270944226 1.6324086049357651 … 12.033406783540796 12.155740342652036]
- [0.3629229326539094 0.359228363991126 … 0.05278240341668085 0.05225193148811555; 2.5900532168345594 2.616347948644301 … 19.801530402316683 20.003224326522847]
- [0.21894049053879297 0.21669975491945984 … 0.030583471878907444 0.03027610290251295; 4.470036440039307 4.515417132839996 … 32.63018228276749 32.962717682056564]
- [0.13231178296861926 0.13095170953894736 … 0.018819873249713567 0.01863073039505199; 7.264088973804027 7.337835439771132 … 53.79169952043943 54.33995669712674]
- [0.0799187442947166 0.07909453439684679 … 0.011446825720980928 0.011331783219633958; 11.942982019116341 12.064229531391408 … 88.68282927631773 89.58675540921887]</code></pre><p>For this solution, note that the <code>u</code> values are matrices. For example:</p><pre><code class="language-julia hljs">sol.u[3]</code></pre><pre><code class="nohighlight hljs">2×10000 Matrix{Float64}:
+ [0.6022790543205215 0.5961843226391169 … 0.08459716059214409 0.08374694506527247; 1.6160026270944237 1.6324086049357667 … 12.033406783540897 12.155740342651487]
+ [0.3629229326539113 0.35922836399112723 … 0.0527824034166808 0.05225193148811548; 2.5900532168345625 2.616347948644304 … 19.80153040231655 20.003224326523124]
+ [0.21894049053879258 0.21669975491946183 … 0.030583471878907365 0.030276102902512883; 4.470036440039317 4.515417132840007 … 32.63018228276755 32.96271768205629]
+ [0.13231178296862017 0.13095170953894156 … 0.018819873249713483 0.018630730395051913; 7.264088973804057 7.337835439771163 … 53.7916995204388 54.339956697124876]
+ [0.07991874429471661 0.07909453439684679 … 0.011446825720980887 0.011331783219633917; 11.94298201911639 12.064229531391456 … 88.68282927631776 89.5867554092189]</code></pre><p>For this solution, note that the <code>u</code> values are matrices. For example:</p><pre><code class="language-julia hljs">sol.u[3]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2×10000 Matrix{Float64}:
  0.362923  0.359228  0.355571  …   0.0533183   0.0527824   0.0522519
- 2.59005   2.61635   2.64291      19.6018     19.8015     20.0032</code></pre><p>The <code>i</code>th row is the <code>i</code>th variable, so</p><pre><code class="language-julia hljs">sol.u[3][1, :]</code></pre><pre><code class="nohighlight hljs">10000-element Vector{Float64}:
- 0.3629229326539094
- 0.359228363991126
- 0.3555709542537458
- 0.35195131700834903
- 0.34836934196000113
+ 2.59005   2.61635   2.64291      19.6018     19.8015     20.0032</code></pre><p>The <code>i</code>th row is the <code>i</code>th variable, so</p><pre><code class="language-julia hljs">sol.u[3][1, :]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">10000-element Vector{Float64}:
+ 0.3629229326539113
+ 0.35922836399112723
+ 0.35557095425374435
+ 0.3519513170083489
+ 0.3483693419599983
  ⋮
- 0.05440635118902634
- 0.05385955831539371
- 0.05331826080103663
- 0.05278240341668085
- 0.05225193148811555</code></pre><p>are the value of <span>$\Phi$</span> at the third time, and similarly <code>sol.u[3][2, :]</code> are the values of <span>$\Psi$</span> at the third time. We can visualise the solutions as follows:</p><pre><code class="language-julia hljs">using CairoMakie
+ 0.05440635118902629
+ 0.05385955831539364
+ 0.05331826080103656
+ 0.0527824034166808
+ 0.05225193148811548</code></pre><p>are the value of <span>$\Phi$</span> at the third time, and similarly <code>sol.u[3][2, :]</code> are the values of <span>$\Psi$</span> at the third time. We can visualise the solutions as follows:</p><pre><code class="language-julia hljs">using CairoMakie
 fig = Figure(fontsize=38)
 for i in eachindex(sol)
     ax1 = Axis(fig[1, i], xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;,
@@ -104,7 +104,7 @@ for i in eachindex(sol)
     tricontourf!(ax2, tri, sol[i][2, :], levels=1:10:100, colormap=:matter)
 end
 resize_to_layout!(fig)
-fig</code></pre><p><img src="../reaction_diffusion_brusselator_system_of_pdes-25.png" alt/></p><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/reaction_diffusion_brusselator_system_of_pdes.jl">here</a>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
+fig</code></pre><img src="ef0ec9bc.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/reaction_diffusion_brusselator_system_of_pdes.jl">here</a>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
 tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=false)
 mesh = FVMGeometry(tri)
 
@@ -131,8 +131,8 @@ mesh = FVMGeometry(tri)
 
 Φ_exact = (x, y, t) -&gt; exp(-x - y - t / 2)
 Ψ_exact = (x, y, t) -&gt; exp(x + y + t / 2)
-Φ₀ = [Φ_exact(x, y, 0) for (x, y) in each_point(tri)]
-Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)];
+Φ₀ = [Φ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)]
+Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)];
 
 Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
     initial_condition=Φ₀, final_time=5.0)
@@ -162,4 +162,4 @@ for i in eachindex(sol)
     tricontourf!(ax2, tri, sol[i][2, :], levels=1:10:100, colormap=:matter)
 end
 resize_to_layout!(fig)
-fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See <a href="https://doi.org/10.1016/j.apm.2010.03.028">Islam, Ali, and Haq (2010)</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">« Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a><a class="docs-footer-nextpage" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Thursday 11 April 2024 10:08">Thursday 11 April 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See <a href="https://doi.org/10.1016/j.apm.2010.03.028">Islam, Ali, and Haq (2010)</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">« Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a><a class="docs-footer-nextpage" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.4.1 on <span class="colophon-date" title="Saturday 11 May 2024 10:02">Saturday 11 May 2024</span>. Using Julia version 1.10.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

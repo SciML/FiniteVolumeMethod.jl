@@ -6,30 +6,27 @@
 u(r,\theta,0) &amp;= \sqrt{I_0(\sqrt{2}r)} &amp; 0&lt;r&lt;1,\,0&lt;\theta&lt;2\pi,
 \end{aligned}
 \end{equation*}\]</p><p>where <span>$I_0$</span> is the modified Bessel function of the first kind of order zero. For this problem the diffusion function is <span>$D(\vb x, t, u) = u$</span> and the source function is <span>$R(\vb x, t, u) = u(1-u)$</span>, or equivalently the force function is</p><p class="math-container">\[\vb q(\vb x, t, \alpha,\beta,\gamma) = \left(-\alpha(\alpha x + \beta y + \gamma), -\beta(\alpha x + \beta y + \gamma)\right)^{\mkern-1.5mu\mathsf{T}}.\]</p><p>As usual, we start by generating the mesh.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation, ElasticArrays
-r = fill(1, 100)
-θ = LinRange(0, 2π, 100)
-x = @. r * cos(θ)
-y = @. r * sin(θ)
-x[end] = x[begin]
-y[end] = y[begin] # make sure the curve connects at the endpoints
-boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
+r = 1.0
+circle = CircularArc((0.0, r), (0.0, r), (0.0, 0.0))
+points = NTuple{2, Float64}[]
+boundary_nodes = [circle]
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
-mesh = FVMGeometry(tri)</code></pre><pre><code class="nohighlight hljs">FVMGeometry with 8131 control volumes, 15935 triangles, and 24065 edges</code></pre><pre><code class="language-julia hljs">using CairoMakie
-triplot(tri)</code></pre><p><img src="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk-5.png" alt/></p><p>Now we define the boundary conditions and the PDE.</p><pre><code class="language-julia hljs">using Bessels
-BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; u, Dudt)</code></pre><pre><code class="nohighlight hljs">BoundaryConditions with 1 boundary condition with type Dudt</code></pre><pre><code class="language-julia hljs">f = (x, y) -&gt; sqrt(besseli(0.0, sqrt(2) * sqrt(x^2 + y^2)))
+mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 8902 control volumes, 17546 triangles, and 26447 edges</code></pre><pre><code class="language-julia hljs">using CairoMakie
+triplot(tri)</code></pre><img src="25ec3723.png" alt="Example block output"/><p>Now we define the boundary conditions and the PDE.</p><pre><code class="language-julia hljs">using Bessels
+BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; u, Dudt)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 1 boundary condition with type Dudt</code></pre><pre><code class="language-julia hljs">f = (x, y) -&gt; sqrt(besseli(0.0, sqrt(2) * sqrt(x^2 + y^2)))
 D = (x, y, t, u, p) -&gt; u
 R = (x, y, t, u, p) -&gt; u * (1 - u)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.10
 prob = FVMProblem(mesh, BCs;
     diffusion_function=D,
     source_function=R,
     final_time,
-    initial_condition)</code></pre><pre><code class="nohighlight hljs">FVMProblem with 8131 nodes and time span (0.0, 0.1)</code></pre><p>We can now solve.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, LinearSolve
+    initial_condition)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 8902 nodes and time span (0.0, 0.1)</code></pre><p>We can now solve.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, LinearSolve
 alg = FBDF(linsolve=UMFPACKFactorization(), autodiff=false)
-sol = solve(prob, alg, saveat=0.01)</code></pre><pre><code class="nohighlight hljs">retcode: Success
+sol = solve(prob, alg, saveat=0.01)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
 Interpolation: 1st order linear
 t: 11-element Vector{Float64}:
  0.0
@@ -44,17 +41,17 @@ t: 11-element Vector{Float64}:
  0.09
  0.1
 u: 11-element Vector{Vector{Float64}}:
- [1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983  …  1.251242484475135, 1.244356557889924, 1.1227594602529802, 1.2426847902232694, 1.127649110319484, 1.0306976522168672, 1.0646986685836721, 1.0634277772038174, 1.018137465073331, 1.0196316842916342]
- [1.2640099882167484, 1.2640099882167484, 1.2640099882167484, 1.2640099882167484, 1.2640099882167484, 1.2640099882167484, 1.2640099882167484, 1.2640099882167484, 1.2640099882167484, 1.2640099882167484  …  1.2638182131677411, 1.2568431861696767, 1.1340497188550736, 1.2551661005705552, 1.1389953030728508, 1.0410560965153652, 1.0753579269816669, 1.0741072636837359, 1.028376652695774, 1.0298850458119893]
- [1.2767134957477146, 1.2767134957477146, 1.2767134957477146, 1.2767134957477146, 1.2767134957477146, 1.2767134957477146, 1.2767134957477144, 1.2767134957477146, 1.2767134957477146, 1.2767134957477144  …  1.276519793328008, 1.2695020733878981, 1.1454441415237553, 1.267786991906774, 1.1504319631895352, 1.0515209458771977, 1.086211696063382, 1.0849091037995293, 1.0387077645966734, 1.0402302651715705]
- [1.2895474565777711, 1.2895474565777711, 1.2895474565777711, 1.2895474565777711, 1.2895474565777711, 1.2895474565777711, 1.2895474565777711, 1.2895474565777711, 1.2895474565777711, 1.2895474565777711  …  1.2893518069950904, 1.282270795866559, 1.1569586212382985, 1.28051911886875, 1.161987921036346, 1.0620917748400718, 1.097135047511236, 1.095810131361459, 1.04914879495125, 1.0506824404541644]
- [1.302510590685592, 1.302510590685592, 1.302510590685592, 1.302510590685592, 1.302510590685592, 1.302510590685592, 1.3025105906855923, 1.302510590685592, 1.302510590685592, 1.3025105906855923  …  1.3023129743418245, 1.2951652198042705, 1.1685897331878368, 1.2934180738216656, 1.1736853094416915, 1.0727692514085703, 1.1081810604169238, 1.1068373406203582, 1.0596946269449539, 1.0612522969983809]
- [1.315600757436223, 1.315600757436223, 1.315600757436223, 1.315600757436223, 1.315600757436223, 1.315600757436223, 1.3156007574362232, 1.315600757436223, 1.315600757436223, 1.3156007574362232  …  1.315401155057983, 1.308092067930585, 1.180342558960095, 1.306426075513706, 1.1855167040253893, 1.0835575820187158, 1.119216996814358, 1.1179742960046704, 1.0703611452288024, 1.0719394503080968]
- [1.3288200056164565, 1.3288200056164565, 1.3288200056164565, 1.3288200056164565, 1.3288200056164565, 1.3288200056164565, 1.3288200056164567, 1.3288200056164565, 1.3288200056164565, 1.3288200056164567  …  1.3286183976194454, 1.3209759032543351, 1.1922280918235417, 1.3195732959223392, 1.197532345525649, 1.0944621051490282, 1.1301550923331531, 1.1292370540563692, 1.0811658285122876, 1.082772339544216]
- [1.3421713198850864, 1.3421713198850864, 1.3421713198850864, 1.3421713198850864, 1.3421713198850864, 1.3421713198850864, 1.3421713198850869, 1.3421713198850864, 1.3421713198850864, 1.3421713198850869  …  1.3419676862322494, 1.334059041559598, 1.2042258402404082, 1.3328471407461004, 1.2096413889032587, 1.1054708571405683, 1.1412846155856475, 1.1406037483285987, 1.092065587586659, 1.0936976321471237]
- [1.3556576004879892, 1.3556576004879892, 1.3556576004879892, 1.3556576004879892, 1.3556576004879892, 1.3556576004879892, 1.3556576004879897, 1.3556576004879892, 1.3556576004879892, 1.3556576004879897  …  1.355451920702333, 1.3476061798596624, 1.2163128159441927, 1.3462287199681262, 1.2217406682274863, 1.116570579202179, 1.1529205268109424, 1.152048583111077, 1.103012885579139, 1.1046550216111064]
- [1.369280611306188, 1.369280611306188, 1.369280611306188, 1.369280611306188, 1.369280611306188, 1.369280611306188, 1.3692806113061882, 1.369280611306188, 1.369280611306188, 1.3692806113061882  …  1.3690728646431467, 1.3617042649196764, 1.2284821642907642, 1.3597123096423422, 1.2337966275828778, 1.1277578381824789, 1.1651666855371683, 1.1635641886794394, 1.1139928184891434, 1.11562519813006]
- [1.3830373380729708, 1.3830373380729708, 1.3830373380729708, 1.3830373380729708, 1.3830373380729708, 1.3830373380729708, 1.3830373380729704, 1.3830373380729708, 1.3830373380729708, 1.3830373380729704  …  1.3828275042451226, 1.3752288685374692, 1.2408399046596914, 1.3733862817840792, 1.246254246445904, 1.139099037768084, 1.1766885330692445, 1.1752725518719527, 1.1252159145082867, 1.1268715605720998]</code></pre><pre><code class="language-julia hljs">fig = Figure(fontsize=38)
+ [1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.2514323512504983, 1.0, 1.0732643239064652  …  1.1566436909339897, 1.2014405278115534, 1.1870916230780966, 1.1294300337297973, 1.2030191201186122, 1.0349689912480318, 1.0440606829859387, 1.0732376068604061, 1.1806716723293136, 1.1325634250422574]
+ [1.264010067471081, 1.264010067471081, 1.264010067471081, 1.264010067471081, 1.264010067471081, 1.264010067471081, 1.264010067471081, 1.264010067471081, 1.0100529497856383, 1.0840651191624577  …  1.1682903552743313, 1.213532195750249, 1.1990029650393788, 1.1407864149212144, 1.215110438385698, 1.0453771981828823, 1.054554591531211, 1.0840153232080212, 1.1925847527664766, 1.1439419564434778]
+ [1.2767133860706048, 1.2767133860706048, 1.2767133860706048, 1.2767133860706048, 1.2767133860706048, 1.2767133860706048, 1.2767133860706048, 1.2767133860706048, 1.020206127963589, 1.0949446526282811  …  1.1800120530404752, 1.2257171529674782, 1.2110770340420367, 1.1522516630911543, 1.2273288274776228, 1.0558832131037121, 1.0651530752241312, 1.0949229842191515, 1.2045261690880131, 1.1554428170025677]
+ [1.2895471262526785, 1.2895471262526785, 1.2895471262526785, 1.2895471262526785, 1.2895471262526785, 1.2895471262526785, 1.2895471262526785, 1.2895471262526785, 1.0304519123278484, 1.105952910430847  …  1.191870463298799, 1.2380557298793147, 1.223246866894104, 1.163825646816361, 1.2396523604380432, 1.0664770075405334, 1.0758679994963567, 1.1059077633143255, 1.2166427135871496, 1.1670490176299881]
+ [1.3025106935143071, 1.3025106935143071, 1.3025106935143071, 1.3025106935143071, 1.3025106935143071, 1.3025106935143071, 1.3025106935143071, 1.3025106935143071, 1.04082194443609, 1.1170652193717494  …  1.2038510573671186, 1.2504853695241465, 1.235552467788274, 1.1755344960864313, 1.2521282011739199, 1.0772185921496897, 1.0866779148249357, 1.1170479409071035, 1.2288566702465502, 1.1787884919787315]
+ [1.315601418378385, 1.315601418378385, 1.315601418378385, 1.315601418378385, 1.315601418378385, 1.315601418378385, 1.315601418378385, 1.315601418378385, 1.0512940351788895, 1.128329549178043  …  1.2159958969854903, 1.263039560314119, 1.2479657062148715, 1.1873723335044737, 1.264735948990439, 1.088072121105295, 1.0975928742781085, 1.1283034758685118, 1.2412575284368508, 1.1906705692760262]
+ [1.3288190597699554, 1.3288190597699554, 1.3288190597699554, 1.3288190597699554, 1.3288190597699554, 1.3288190597699554, 1.3288190597699554, 1.3288190597699554, 1.0619046240032677, 1.1398749339426881  …  1.2284688061715259, 1.2756878667049263, 1.2604525289206125, 1.1994165878994523, 1.2775535189084515, 1.0991298676610652, 1.108586808306767, 1.13975873142581, 1.254049354759423, 1.202799814370259]
+ [1.342166820228106, 1.342166820228106, 1.342166820228106, 1.342166820228106, 1.342166820228106, 1.342166820228106, 1.342166820228106, 1.342166820228106, 1.072633404294949, 1.1515878156143213  …  1.2411319381968728, 1.288450308904474, 1.2730467979819728, 1.211610048867801, 1.2905272725912966, 1.1103320485296624, 1.119679191638649, 1.1513585524529426, 1.2670532490139275, 1.2150903179677792]
+ [1.3556481563436356, 1.3556481563436356, 1.3556481563436356, 1.3556481563436356, 1.3556481563436356, 1.3556481563436356, 1.3556481563436356, 1.3556481563436356, 1.083444605679708, 1.163307914046501  …  1.253786950217194, 1.3013620050787755, 1.2857935382611418, 1.2238651948448054, 1.303572021064532, 1.1215807570459508, 1.1309006603535803, 1.1630120209355548, 1.280018084710702, 1.2274158752736952]
+ [1.3692665247073412, 1.3692665247073412, 1.3692665247073412, 1.3692665247073412, 1.3692665247073412, 1.3692665247073412, 1.3692665247073412, 1.3692665247073412, 1.0943024577833196, 1.1748749490927854  …  1.266235499388153, 1.3144580733938427, 1.2987377746203088, 1.2360945042657505, 1.3166025753537163, 1.132778086544796, 1.142281850531386, 1.174628218859292, 1.2926927353600852, 1.239650281493116]
+ [1.3830253819100216, 1.3830253819100216, 1.3830253819100216, 1.3830253819100216, 1.3830253819100216, 1.3830253819100216, 1.3830253819100216, 1.3830253819100216, 1.105171190231558, 1.1861286406067337  …  1.2782792428654133, 1.3277736320156885, 1.311924531921664, 1.248210455565922, 1.3295337464844064, 1.143826130361063, 1.1538533982518928, 1.1861162282098001, 1.304826074472415, 1.2516673318311502]</code></pre><pre><code class="language- hljs">fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
     ax = Axis(fig[1, i], width=600, height=600,
         xlabel=&quot;x&quot;, ylabel=&quot;y&quot;,
@@ -64,16 +61,15 @@ for (i, j) in zip(1:3, (1, 6, 11))
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
-fig</code></pre><p><img src="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk-11.png" alt/></p><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk.jl">here</a>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation, ElasticArrays
-r = fill(1, 100)
-θ = LinRange(0, 2π, 100)
-x = @. r * cos(θ)
-y = @. r * sin(θ)
-x[end] = x[begin]
-y[end] = y[begin] # make sure the curve connects at the endpoints
-boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
+fig
+
+        !DelaunayTriangulation.has_vertex(tri, i) &amp;&amp; continue</code></pre><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk.jl">here</a>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation, ElasticArrays
+r = 1.0
+circle = CircularArc((0.0, r), (0.0, r), (0.0, 0.0))
+points = NTuple{2, Float64}[]
+boundary_nodes = [circle]
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 
@@ -86,7 +82,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; u, Dudt)
 f = (x, y) -&gt; sqrt(besseli(0.0, sqrt(2) * sqrt(x^2 + y^2)))
 D = (x, y, t, u, p) -&gt; u
 R = (x, y, t, u, p) -&gt; u * (1 - u)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.10
 prob = FVMProblem(mesh, BCs;
     diffusion_function=D,
@@ -108,4 +104,6 @@ for (i, j) in zip(1:3, (1, 6, 11))
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
-fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">« Diffusion Equation in a Wedge with Mixed Boundary Conditions</a><a class="docs-footer-nextpage" href="../porous_medium_equation/">Porous-Medium Equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Thursday 11 April 2024 10:08">Thursday 11 April 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+fig
+
+        !DelaunayTriangulation.has_vertex(tri, i) &amp;&amp; continue</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">« Diffusion Equation in a Wedge with Mixed Boundary Conditions</a><a class="docs-footer-nextpage" href="../porous_medium_equation/">Porous-Medium Equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.4.1 on <span class="colophon-date" title="Saturday 11 May 2024 10:02">Saturday 11 May 2024</span>. Using Julia version 1.10.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
