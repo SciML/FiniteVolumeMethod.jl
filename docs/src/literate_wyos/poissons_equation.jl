@@ -32,7 +32,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # had a function `create_met_b` that we used for defining $\vb b$. We should generalise
 # that function to now accept a source function:
 function create_rhs_b(mesh, conditions, source_function, source_parameters)
-    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.is_dirichlet_node(conditions, i)
             p = get_point(mesh, i)
@@ -63,12 +63,13 @@ function poissons_equation(mesh::FVMGeometry,
     source_function,
     source_parameters=nothing)
     conditions = Conditions(mesh, BCs, ICs)
-    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
     b = create_rhs_b(mesh, conditions, source_function, source_parameters)
     FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     FVM.boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
     return LinearProblem(sparse(A), b)
 end
 
@@ -99,13 +100,13 @@ fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 0.05, 10), colormap=:ma
 tightlimits!(ax)
 fig
 using Test #src
-@test sol.u ≈ [1 / (2π^2) * sin(π * x) * sin(π * y) for (x, y) in each_point(tri)] rtol = 1e-4 #src
+@test sol.u ≈ [1 / (2π^2) * sin(π * x) * sin(π * y) for (x, y) in DelaunayTriangulation.each_point(tri)] rtol = 1e-4 #src
 
 # If we wanted to turn this into a `SteadyFVMProblem`, we use a similar call to `poissons_equation` 
 # above except with an `initial_condition` for the initial guess. Moreover, we need to 
 # change the sign of the source function, since above we are solving $\div[D(\vb x)\grad u] = f(\vb x)$,
 # when `FVMProblem`s assume that we are solving $0 = \div[D(\vb x)\grad u] + f(\vb x)$.
-initial_condition = zeros(num_points(tri))
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function= (x, y, t, u, p) -> 1.0,
     source_function=let S = source_function
@@ -135,7 +136,7 @@ prob = PoissonsEquation(mesh, BCs; source_function=source_function)
 #-
 sol = solve(prob, KLUFactorization())
 sol |> tc #hide
-@test sol.u ≈ [1 / (2π^2) * sin(π * x) * sin(π * y) for (x, y) in each_point(tri)] rtol = 1e-4 #src
+@test sol.u ≈ [1 / (2π^2) * sin(π * x) * sin(π * y) for (x, y) in DelaunayTriangulation.each_point(tri)] rtol = 1e-4 #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-4 #src
 
 # Here is a benchmark comparison of the `PoissonsEquation` approach against the `FVMProblem` approach.
@@ -188,8 +189,8 @@ g, h = (2.0, 7.0), (8.0, 7.0)
 points = [(a, c), (b, c), (b, d), (a, d), e, f, g, h]
 boundary_nodes = [[1, 2], [2, 3], [3, 4], [4, 1]]
 segments = Set(((5, 6), (7, 8)))
-tri = triangulate(points; boundary_nodes, edges, delete_ghosts=false)
-refine!(tri; max_area=1e-4get_total_area(tri))
+tri = triangulate(points; boundary_nodes, segments, delete_ghosts=false)
+refine!(tri; max_area=1e-4get_area(tri))
 fig, ax, sc = triplot(tri, show_constrained_edges=true, constrained_edge_linewidth=5)
 fig
 
@@ -325,7 +326,7 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     end,
     diffusion_parameters=diffusion_parameters,
     source_parameters=source_parameters,
-    initial_condition=zeros(num_points(tri)),
+    initial_condition=zeros(DelaunayTriangulation.num_points(tri)),
     final_time=Inf))
 
 # ````julia

@@ -48,7 +48,7 @@ y = [
 ]
 boundary_nodes, points = convert_boundary_points_to_indices(x, y)
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
 triplot(tri)
 ````
@@ -101,7 +101,7 @@ initial_condition_f = (x, y) -> begin
     10 * exp(-25 * ((x + 0.5) * (x + 0.5) + (y + 0.5) * (y + 0.5))) - 5 * exp(-50 * ((x + 0.3) * (x + 0.3) + (y + 0.5) * (y + 0.5))) - 10 * exp(-45 * ((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)))
 end
 diffusion_function = (x, y, t, u, p) -> one(u)
-initial_condition = [initial_condition_f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [initial_condition_f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 2.0
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
@@ -291,7 +291,7 @@ y = [
 ]
 boundary_nodes, points = convert_boundary_points_to_indices(x, y)
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
 triplot(tri)
 
@@ -315,7 +315,7 @@ initial_condition_f = (x, y) -> begin
     10 * exp(-25 * ((x + 0.5) * (x + 0.5) + (y + 0.5) * (y + 0.5))) - 5 * exp(-50 * ((x + 0.3) * (x + 0.3) + (y + 0.5) * (y + 0.5))) - 10 * exp(-45 * ((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)))
 end
 diffusion_function = (x, y, t, u, p) -> one(u)
-initial_condition = [initial_condition_f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [initial_condition_f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 2.0
 prob = FVMProblem(mesh, BCs;
     diffusion_function,

@@ -281,7 +281,7 @@ points = [(a, c), (b, c), (b, d), (a, d), e, f, g, h]
 boundary_nodes = [[1, 2], [2, 3], [3, 4], [4, 1]]
 segments = Set(((5, 6), (7, 8)))
 tri = triangulate(points; boundary_nodes, edges, delete_ghosts=false)
-refine!(tri; max_area=1e-4get_total_area(tri))
+refine!(tri; max_area=1e-4get_area(tri))
 fig, ax, sc = triplot(tri, show_constrained_edges=true, constrained_edge_linewidth=5)
 fig
 ````
@@ -622,7 +622,7 @@ points = [(a, c), (b, c), (b, d), (a, d), e, f, g, h]
 boundary_nodes = [[1, 2], [2, 3], [3, 4], [4, 1]]
 segments = Set(((5, 6), (7, 8)))
 tri = triangulate(points; boundary_nodes, edges, delete_ghosts=false)
-refine!(tri; max_area=1e-4get_total_area(tri))
+refine!(tri; max_area=1e-4get_area(tri))
 fig, ax, sc = triplot(tri, show_constrained_edges=true, constrained_edge_linewidth=5)
 fig
 

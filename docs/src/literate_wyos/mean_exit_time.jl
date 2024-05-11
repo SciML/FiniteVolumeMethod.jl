@@ -46,7 +46,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # Dirichlet nodes $i$. So, let's write a function that creates $\vb b$ but also 
 # enforces Dirichlet constraints.
 function create_met_b!(A, mesh, conditions)
-    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.is_dirichlet_node(conditions, i)
             b[i] = -1
@@ -67,10 +67,11 @@ function met_problem(mesh::FVMGeometry,
     diffusion_function,
     diffusion_parameters=nothing)
     conditions = Conditions(mesh, BCs, ICs)
-    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
     FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     b = create_met_b!(A, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
     return LinearProblem(sparse(A), b)
 end
 
@@ -78,46 +79,32 @@ end
 # problem [here](../tutorials/mean_exit_time.md) which 
 # includes mixed boundary conditions and also an internal condition. 
 ## Define the triangulation
-θ = LinRange(0, 2π, 250)
 R₁, R₂ = 2.0, 3.0
-ε = 0.05
+ε = 0.05 
 g = θ -> sin(3θ) + cos(5θ)
 R1_f = let R₁ = R₁, ε = ε, g = g # use let for type stability
     θ -> R₁ * (1.0 + ε * g(θ))
 end
-εr = 0.25
-θref = LinRange(εr, 2π - εr, 200)
-θabs = LinRange(2π - εr, 2π + εr, 200)
-xref = @. R₂ * cos(θref)
-yref = @. R₂ * sin(θref)
-xabs = @. R₂ * cos(θabs)
-yabs = @. R₂ * sin(θabs)
-xref[end] = xabs[begin]
-yref[end] = yabs[begin]
-xhole = @. cos(θ)
-yhole = @. sin(θ)
-reverse!(xhole) # clockwise
-reverse!(yhole)
-xhole[begin] = xhole[end]
-yhole[begin] = yhole[end]
-x = [[xref, xabs], [xhole]]
-y = [[yref, yabs], [yhole]]
-boundary_nodes, points = convert_boundary_points_to_indices(x, y)
-tri = triangulate(points; boundary_nodes, delete_ghosts=false)
+ϵr = 0.25
+dirichlet = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
+neumann = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(2π + ϵr), R₂ * sin(2π + ϵr)), (0.0, 0.0))
+hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive = false)
+boundary_nodes = [[[dirichlet_circle], [neumann_circle]], [[hole]]]
+points = NTuple{2, Float64}[]
+tri = triangulate(points; boundary_nodes)
+θ = LinRange(0, 2π, 250)
 xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
 yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
 end
-n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
-add_point!(tri, -2.0, 0.0)
-add_point!(tri, 0.0, 2.95)
-pointhole_idxs = [DelaunayTriangulation.num_solid_vertices(tri), DelaunayTriangulation.num_solid_vertices(tri) - 1]
-refine!(tri; max_area=1e-3get_total_area(tri));
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+pointhole_idxs = [1, 2]
+refine!(tri; max_area=1e-3get_area(tri));
 ## Define the problem 
 mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> zero(u) # the function doesn't actually matter, but it still needs to be provided
@@ -160,7 +147,7 @@ function T_exact(x, y)
         return (R₂^2 - r^2) / (4D₂)
     end
 end
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)] # an initial guess 
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)] # an initial guess 
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)

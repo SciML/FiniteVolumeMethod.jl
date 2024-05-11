@@ -53,6 +53,7 @@ function linear_reaction_diffusion_equation(mesh::FVMGeometry,
     linear_source_contributions!(A, mesh, conditions, source_function, source_parameters)
     FVM.apply_dudt_conditions!(b, mesh, conditions)
     FVM.apply_dirichlet_conditions!(_ic, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
     Af = sparse(Afull)
     prob = ODEProblem(MatrixOperator(Af), _ic, (initial_time, final_time))
     return prob
@@ -75,7 +76,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> one(x), Neumann)
 diffusion_function = (x, y, p) -> p.D * x^2 * y
 diffusion_parameters = (D=1e-3,)
 source_function = (x, y, p) -> (x - 1) * (y - 1)
-initial_condition = [x^2 + y^2 for (x, y) in each_point(tri)]
+initial_condition = [x^2 + y^2 for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 8.0
 prob = linear_reaction_diffusion_equation(mesh, BCs;
     diffusion_function, diffusion_parameters,
@@ -83,8 +84,7 @@ prob = linear_reaction_diffusion_equation(mesh, BCs;
 prob |> tc #hide
 
 #-
-using Sundials
-sol = solve(prob, CVODE_BDF(linear_solver=:GMRES); saveat=2)
+sol = solve(prob, Tsit5(); saveat=2)
 sol |> tc #hide
 
 #-
@@ -119,7 +119,7 @@ fvm_prob = FVMProblem(
     final_time=final_time,
     initial_condition=initial_condition
 )
-fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES), saveat=2.0)
+fvm_sol = solve(fvm_prob, Tsit5(), saveat=2.0)
 fvm_sol |> tc #hide
 
 for j in eachindex(fvm_sol) #src
@@ -138,7 +138,7 @@ using ReferenceTests #src
 prob = LinearReactionDiffusionEquation(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function,  initial_condition, final_time)
-sol = solve(prob, CVODE_BDF(linear_solver=:GMRES); saveat=2)
+sol = solve(prob, Tsit5(); saveat=2)
 sol |> tc #hide
 
 using Test #src
@@ -147,6 +147,7 @@ using Test #src
 # Here is a benchmark comparison of `LinearReactionDiffusionEquation` versus `FVMProblem`.
 # ````julia
 # using BenchmarkTools 
+# using Sundials
 # @btime solve($prob, $CVODE_BDF(linear_solver=:GMRES); saveat=$2);
 # ````
 #

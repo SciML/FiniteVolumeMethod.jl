@@ -58,10 +58,11 @@ function LaplacesEquation(mesh::FVMGeometry,
     has_dudt_nodes(conditions) && throw(ArgumentError("PoissonsEquation does not support Dudt nodes."))
     n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
     A = zeros(n, n)
-    b = zeros(num_points(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    fix_missing_vertices!(A, b, mesh)
     Asp = sparse(A)
     prob = LinearProblem(Asp, b; kwargs...)
     return LaplacesEquation(mesh, conditions,

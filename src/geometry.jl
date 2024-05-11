@@ -30,7 +30,7 @@ end
 This is a constructor for the [`FVMGeometry`](@ref) struct, which holds the mesh and associated data for the PDE.
 
 !!! note
-    It is assumed that all vertices in `tri` are in the triangulation, meaning `v` is in `tri` for each `v` in `each_point_index(tri)`.
+    It is assumed that all vertices in `tri` are in the triangulation, meaning `v` is in `tri` for each `v` in `DelaunayTriangulation.each_point_index(tri)`.
 
 # Fields 
 - `triangulation`: The underlying `Triangulation` from DelaunayTriangulation.jl.
@@ -71,10 +71,26 @@ Get the `i`th point in `mesh`.
 """
 DelaunayTriangulation.get_point(mesh::FVMGeometry, i) = DelaunayTriangulation.get_point(mesh.triangulation, i)
 
+#=
+function build_vertex_map(tri::Triangulation)
+    vertex_map = Dict{Int,Int}()
+    inverse_vertex_map = Dict{Int,Int}()
+    cur_idx = 1
+    for i in DelaunayTriangulation.each_point_index(tri)
+        if DelaunayTriangulation.has_vertex(tri, i)
+            vertex_map[i] = cur_idx
+            inverse_vertex_map[cur_idx] = i
+            cur_idx += 1
+        end
+    end
+    return vertex_map, inverse_vertex_map
+end
+=#
+
 function FVMGeometry(tri::Triangulation)
     stats = statistics(tri)
-    nn = DelaunayTriangulation.num_solid_vertices(stats)
-    nt = DelaunayTriangulation.num_solid_triangles(stats)
+    nn = DelaunayTriangulation.num_points(tri)
+    nt = num_solid_triangles(stats)
     cv_volumes = zeros(nn)
     triangle_props = Dict{NTuple{3,Int},TriangleProperties}()
     sizehint!(cv_volumes, nn)
@@ -131,9 +147,9 @@ function FVMGeometry(tri::Triangulation)
         ℓ₁ = norm((e₁x, e₁y))
         ℓ₂ = norm((e₂x, e₂y))
         ℓ₃ = norm((e₃x, e₃y))
-        n₁x, n₁y = e₁y/ℓ₁, -e₁x/ℓ₁
-        n₂x, n₂y = e₂y/ℓ₂, -e₂x/ℓ₂
-        n₃x, n₃y = e₃y/ℓ₃, -e₃x/ℓ₃
+        n₁x, n₁y = e₁y / ℓ₁, -e₁x / ℓ₁
+        n₂x, n₂y = e₂y / ℓ₂, -e₂x / ℓ₂
+        n₃x, n₃y = e₃y / ℓ₃, -e₃x / ℓ₃
         ## Now construct the TriangleProperties
         triangle_props[triangle_vertices(T)] = TriangleProperties(shape_function_coefficients, ((m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy)), ((n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)), (ℓ₁, ℓ₂, ℓ₃))
     end

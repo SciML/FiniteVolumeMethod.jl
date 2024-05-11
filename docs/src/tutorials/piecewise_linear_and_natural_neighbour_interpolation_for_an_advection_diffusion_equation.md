@@ -33,7 +33,7 @@ near the origin, so we need to use `refine!` on an initial mesh.
 using DelaunayTriangulation, FiniteVolumeMethod, LinearAlgebra, CairoMakie
 L = 30
 tri = triangulate_rectangle(-L, L, -L, L, 2, 2, single_boundary=true)
-tot_area = get_total_area(tri)
+tot_area = get_area(tri)
 max_area_function = (A, r) -> 1e-6tot_area * r^2 / A
 area_constraint = (T, p, q, r, A) -> begin
     c = (p .+ q .+ r) ./ 3
@@ -94,7 +94,7 @@ and it returns a `Tuple` representing the vector. We let $D = 0.02$ and $\nu = 0
 ````julia
 ε = 1 / 10
 f = (x, y) -> 1 / (ε^2 * π) * exp(-(x^2 + y^2) / ε^2)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 flux_function = (x, y, t, α, β, γ, p) -> begin
     ∂x = α
     ∂y = β
@@ -334,7 +334,7 @@ You can view the source code for this file [here](https://github.com/SciML/Finit
 using DelaunayTriangulation, FiniteVolumeMethod, LinearAlgebra, CairoMakie
 L = 30
 tri = triangulate_rectangle(-L, L, -L, L, 2, 2, single_boundary=true)
-tot_area = get_total_area(tri)
+tot_area = get_area(tri)
 max_area_function = (A, r) -> 1e-6tot_area * r^2 / A
 area_constraint = (T, p, q, r, A) -> begin
     c = (p .+ q .+ r) ./ 3
@@ -351,7 +351,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
 
 ε = 1 / 10
 f = (x, y) -> 1 / (ε^2 * π) * exp(-(x^2 + y^2) / ε^2)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 flux_function = (x, y, t, α, β, γ, p) -> begin
     ∂x = α
     ∂y = β

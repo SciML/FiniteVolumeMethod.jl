@@ -9,7 +9,7 @@ function get_multithreading_parameters(prob::Union{FVMProblem,FVMSystem})
         dirichlet_nodes = ntuple(i -> collect(keys(get_dirichlet_nodes(prob, i))), _neqs(prob))
     end
     solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
-    solid_vertices = collect(each_solid_vertex(prob.mesh.triangulation))
+    solid_vertices = collect(DelaunayTriangulation.each_point_index(prob.mesh.triangulation)) # we check for points in the vertex inside the source contribution codes
     chunked_solid_triangles = chunks(solid_triangles, nt)
     boundary_edges = collect(keys(get_boundary_edge_map(prob.mesh.triangulation)))
     chunked_boundary_edges = chunks(boundary_edges, nt)
@@ -59,10 +59,11 @@ function jacobian_sparsity(tri)
     sizehint!(I, 6n) # points have, on average, six neighbours in a DelaunayTriangulation
     sizehint!(J, 6n)
     sizehint!(V, 6n)
-    for i in each_solid_vertex(tri)
+    for i in DelaunayTriangulation.each_point_index(tri)
         push!(I, i)
         push!(J, i)
         push!(V, 1.0)
+        !DelaunayTriangulation.has_vertex(tri, i) && continue
         for j in get_neighbours(tri, i)
             DelaunayTriangulation.is_ghost_vertex(j) && continue
             push!(I, i)
@@ -98,7 +99,7 @@ function jacobian_sparsity(tri, N)
     sizehint!(I, 6n * N) # points have, on average, six neighbours in a DelaunayTriangulation.
     sizehint!(J, 6n * N)
     sizehint!(V, 6n * N)
-    for i in each_solid_vertex(tri)
+    for i in DelaunayTriangulation.each_point_index(tri)
         # First, i is related to itself, meaning 
         # (i, 1), (i, 2), …, (i, N) are all related. 
         for ℓ in 1:N
@@ -110,6 +111,7 @@ function jacobian_sparsity(tri, N)
                 push!(V, 1.0)
             end
         end
+        !DelaunayTriangulation.has_vertex(tri, i) && continue
         for j in get_neighbours(tri, i)
             DelaunayTriangulation.is_ghost_vertex(j) && continue
             for ℓ in 1:N
@@ -210,6 +212,12 @@ end
 
 
 Solves the given [`FVMProblem`](@ref) or [`FVMSystem`](@ref) `prob` with the algorithm `alg`.
+
+!!! warning "Missing vertices"
+
+    When the underlying triangulation, `tri`, has points in `get_points(tri)` that are not 
+    vertices of the triangulation itself, the associated values of the solution at these points
+    will not be updated by the solver, and will remain at their initial values.
 
 # Arguments 
 - `prob`: The problem to be solved.

@@ -87,7 +87,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> one(x), Neumann)
 diffusion_function = (x, y, p) -> p.D * x^2 * y
 diffusion_parameters = (D=1e-3,)
 source_function = (x, y, p) -> (x - 1) * (y - 1)
-initial_condition = [x^2 + y^2 for (x, y) in each_point(tri)]
+initial_condition = [x^2 + y^2 for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 8.0
 prob = linear_reaction_diffusion_equation(mesh, BCs;
     diffusion_function, diffusion_parameters,
@@ -281,7 +281,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> one(x), Neumann)
 diffusion_function = (x, y, p) -> p.D * x^2 * y
 diffusion_parameters = (D=1e-3,)
 source_function = (x, y, p) -> (x - 1) * (y - 1)
-initial_condition = [x^2 + y^2 for (x, y) in each_point(tri)]
+initial_condition = [x^2 + y^2 for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 8.0
 prob = linear_reaction_diffusion_equation(mesh, BCs;
     diffusion_function, diffusion_parameters,

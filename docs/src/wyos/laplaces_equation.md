@@ -87,7 +87,7 @@ boundary_x = [lower_x, outer_arc_x, left_x, inner_arc_x]
 boundary_y = [lower_y, outer_arc_y, left_y, inner_arc_y]
 boundary_nodes, points = convert_boundary_points_to_indices(boundary_x, boundary_y)
 tri = triangulate(points; boundary_nodes)
-refine!(tri; max_area=1e-3get_total_area(tri))
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 ````
 ![](laplaces_equation-9.png)
@@ -273,7 +273,7 @@ tricontourf!(ax, tri, sol.u, levels=0:0.25:5, colormap=:jet)
 ax = Axis(fig[1, 2], xlabel="x", ylabel="y",
     width=600, height=600,
     title="Exact", titlealign=:left)
-u_exact = [5log(1 + x) / log(6) for (x, y) in each_point(tri)]
+u_exact = [5log(1 + x) / log(6) for (x, y) in DelaunayTriangulation.each_point(tri)]
 tricontourf!(ax, tri, u_exact, levels=0:0.25:5, colormap=:jet)
 resize_to_layout!(fig)
 fig
@@ -353,7 +353,7 @@ boundary_x = [lower_x, outer_arc_x, left_x, inner_arc_x]
 boundary_y = [lower_y, outer_arc_y, left_y, inner_arc_y]
 boundary_nodes, points = convert_boundary_points_to_indices(boundary_x, boundary_y)
 tri = triangulate(points; boundary_nodes)
-refine!(tri; max_area=1e-3get_total_area(tri))
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 
 mesh = FVMGeometry(tri)
@@ -411,7 +411,7 @@ tricontourf!(ax, tri, sol.u, levels=0:0.25:5, colormap=:jet)
 ax = Axis(fig[1, 2], xlabel="x", ylabel="y",
     width=600, height=600,
     title="Exact", titlealign=:left)
-u_exact = [5log(1 + x) / log(6) for (x, y) in each_point(tri)]
+u_exact = [5log(1 + x) / log(6) for (x, y) in DelaunayTriangulation.each_point(tri)]
 tricontourf!(ax, tri, u_exact, levels=0:0.25:5, colormap=:jet)
 resize_to_layout!(fig)
 fig

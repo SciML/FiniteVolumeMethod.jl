@@ -68,7 +68,7 @@ D, λ = 0.9, 0.99
 diffusion_parameters = D
 source_parameters = λ
 final_time = 50.0
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function, source_parameters,
@@ -174,7 +174,7 @@ D, λ = 0.9, 0.99
 diffusion_parameters = D
 source_parameters = λ
 final_time = 50.0
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function, source_parameters,

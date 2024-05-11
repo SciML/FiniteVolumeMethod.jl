@@ -157,8 +157,8 @@ Now we define the initial conditions.
 ````julia
 Φ_exact = (x, y, t) -> exp(-x - y - t / 2)
 Ψ_exact = (x, y, t) -> exp(x + y + t / 2)
-Φ₀ = [Φ_exact(x, y, 0) for (x, y) in each_point(tri)]
-Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)];
+Φ₀ = [Φ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)]
+Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)];
 ````
 
 Next, we can define the `FVMProblem`s for each variable.
@@ -303,8 +303,8 @@ mesh = FVMGeometry(tri)
 
 Φ_exact = (x, y, t) -> exp(-x - y - t / 2)
 Ψ_exact = (x, y, t) -> exp(x + y + t / 2)
-Φ₀ = [Φ_exact(x, y, 0) for (x, y) in each_point(tri)]
-Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)];
+Φ₀ = [Φ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)]
+Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)];
 
 Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
     initial_condition=Φ₀, final_time=5.0)

@@ -20,32 +20,18 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # ```math
 # u_0(x) = 10\mathrm{e}^{-25\left[\left(x+\frac12\right)^2+\left(y+\frac12\right)^2\right]} - 10\mathrm{e}^{-45\left[\left(x-\frac12\right)^2+\left(y-\frac12\right)^2\right]} - 5\mathrm{e}^{-50\left[\left(x+\frac{3}{10}\right)^2+\left(y+\frac12\right)^2\right]}.
 # ```
-# The complicated task for this problem is the definition 
-# of the mesh of the annulus. We need to follow the boundary 
-# specification from DelaunayTriangulation.jl, discussed 
-# [here](https://SciML.github.io/DelaunayTriangulation.jl/dev/boundary_handling/).
-# In particular, the outer boundary must be counter-clockwise, 
-# the inner boundary be clockwise, and we need to provide 
-# the nodes as a `Vector{Vector{Vector{Int}}}`.
-# We define this mesh below. 
+# For the mesh, we use two `CircularArc`s to define the annulus.
 using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
-R₁ = 0.2
-R₂ = 1.0
-θ = collect(LinRange(0, 2π, 100))
-θ[end] = 0.0 # get the endpoints to match
-x = [
-    [R₂ .* cos.(θ)], # outer first
-    [reverse(R₁ .* cos.(θ))] # then inner - reverse to get clockwise orientation
-]
-y = [
-    [R₂ .* sin.(θ)], # 
-    [reverse(R₁ .* sin.(θ))]
-]
-boundary_nodes, points = convert_boundary_points_to_indices(x, y)
+R₁, R₂ = 0.2, 1.0
+inner = CircularArc((R₁, 0.0), (R₁, 0.0), (0.0, 0.0), positive=false)
+outer = CircularArc((R₂, 0.0), (R₂, 0.0), (0.0, 0.0))
+boundary_nodes = [[[outer]], [[inner]]]
+points = NTuple{2,Float64}[]
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
 triplot(tri)
+
 
 #-
 mesh = FVMGeometry(tri)
@@ -76,7 +62,7 @@ initial_condition_f = (x, y) -> begin
     10 * exp(-25 * ((x + 0.5) * (x + 0.5) + (y + 0.5) * (y + 0.5))) - 5 * exp(-50 * ((x + 0.3) * (x + 0.3) + (y + 0.5) * (y + 0.5))) - 10 * exp(-45 * ((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)))
 end
 diffusion_function = (x, y, t, u, p) -> one(u)
-initial_condition = [initial_condition_f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [initial_condition_f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 2.0
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
@@ -114,6 +100,9 @@ using ReferenceTests #src
 # triangles back into `tri` so that we can safely 
 # apply `jump_and_march`. This is done with `add_ghost_triangles!`.
 add_ghost_triangles!(tri)
+
+# (Actually, `tri` already had these ghost triangles,
+# but we are just showing how you would add them back in if needed.)
 
 # Now let's interpolate.
 x = LinRange(-R₂, R₂, 400)
@@ -161,6 +150,6 @@ itp_vals |> tc #hide
 
 #-
 fig, ax, sc = contourf(x, y, reshape(itp_vals, length(x), length(y)), colormap=:matter, levels=-10:2:40)
-fig 
+fig
 tricontourf!(Axis(fig[1, 2]), tri, u, levels=-10:2:40, colormap=:matter) #src
 @test_reference joinpath(@__DIR__, "../figures", "diffusion_equation_on_an_annulus_interpolated_with_naturalneighbours.png") fig #src

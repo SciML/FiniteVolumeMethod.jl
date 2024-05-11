@@ -38,7 +38,7 @@ bn4 = [F, G]
 bn = [bn1, bn2, bn3, bn4]
 boundary_nodes, points = convert_boundary_points_to_indices(bn)
 tri = triangulate(points; boundary_nodes)
-refine!(tri; max_area=1e-4get_total_area(tri))
+refine!(tri; max_area=1e-4get_area(tri))
 triplot(tri)
 ````
 ![](equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems-6.png)
@@ -81,7 +81,7 @@ down to $T=40$ at $y=0$.
 ````julia
 diffusion_function = (x, y, t, T, p) -> one(T)
 f = (x, y) -> 500y + 40
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = Inf
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
@@ -237,7 +237,7 @@ bn4 = [F, G]
 bn = [bn1, bn2, bn3, bn4]
 boundary_nodes, points = convert_boundary_points_to_indices(bn)
 tri = triangulate(points; boundary_nodes)
-refine!(tri; max_area=1e-4get_total_area(tri))
+refine!(tri; max_area=1e-4get_area(tri))
 triplot(tri)
 
 mesh = FVMGeometry(tri)
@@ -256,7 +256,7 @@ BCs = BoundaryConditions(mesh, (bc1, bc2, bc3, bc4),
 
 diffusion_function = (x, y, t, T, p) -> one(T)
 f = (x, y) -> 500y + 40
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = Inf
 prob = FVMProblem(mesh, BCs;
     diffusion_function,

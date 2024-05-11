@@ -135,11 +135,11 @@ add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
     n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    add_segment!(tri, n - 1, n)
 end
 n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
-refine!(tri; max_area=1e-3get_total_area(tri))
+add_segment!(tri, n - 1, n)
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 ````
 ![](mean_exit_time-5.png)
@@ -186,7 +186,7 @@ $(R_2^2 - r^2)/(4D_2)$.
 f = (x, y) -> let r = sqrt(x^2 + y^2)
     return (R₂^2 - r^2) / (4D₂)
 end
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 ````
 
 ````
@@ -276,11 +276,11 @@ add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
     n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    add_segment!(tri, n - 1, n)
 end
 n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
-refine!(tri; max_area=1e-3get_total_area(tri))
+add_segment!(tri, n - 1, n)
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 ````
 ![](mean_exit_time-20.png)
@@ -321,7 +321,7 @@ diffusion_function = (x, y, t, u, p) -> let r = sqrt(x^2 + y^2), θ = atan(y, x)
     return ifelse(r < interface_val, p.D₁, p.D₂)
 end
 diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 source_function = (x, y, t, u, p) -> one(u)
 prob = FVMProblem(mesh, BCs;
     diffusion_function, diffusion_parameters,
@@ -378,7 +378,7 @@ add_point!(tri, 0.0, 0.0)
 mesh = FVMGeometry(tri)
 ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(DelaunayTriangulation.num_solid_vertices(tri) => 1))
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
@@ -419,13 +419,13 @@ add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
     n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    add_segment!(tri, n - 1, n)
 end
 n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
+add_segment!(tri, n - 1, n)
 add_point!(tri, 0.0, 0.0)
 origin_idx = DelaunayTriangulation.num_solid_vertices(tri)
-refine!(tri; max_area=1e-3get_total_area(tri))
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 ````
 ![](mean_exit_time-32.png)
@@ -435,7 +435,7 @@ mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, (zero_f, zero_f), (Neumann, Dirichlet))
 ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(origin_idx => 1))
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
@@ -471,14 +471,14 @@ add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
     n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    add_segment!(tri, n - 1, n)
 end
 n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
+add_segment!(tri, n - 1, n)
 add_point!(tri, -2.0, 0.0)
 add_point!(tri, 0.0, 2.95)
 pointhole_idxs = [DelaunayTriangulation.num_solid_vertices(tri), DelaunayTriangulation.num_solid_vertices(tri)-1]
-refine!(tri; max_area=1e-3get_total_area(tri))
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 ````
 ![](mean_exit_time-35.png)
@@ -492,7 +492,7 @@ ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(origin
 zero_f = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, (zero_f, zero_f, zero_f), (Neumann, Dirichlet, Dirichlet))
 ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(pointhole_idxs .=> 1))
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
@@ -527,11 +527,11 @@ add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
     n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    add_segment!(tri, n - 1, n)
 end
 n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
-refine!(tri; max_area=1e-3get_total_area(tri))
+add_segment!(tri, n - 1, n)
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 
 mesh = FVMGeometry(tri)
@@ -547,7 +547,7 @@ diffusion_parameters = (R₁=R₁, D₁=D₁, D₂=D₂)
 f = (x, y) -> let r = sqrt(x^2 + y^2)
     return (R₂^2 - r^2) / (4D₂)
 end
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 
 source_function = (x, y, t, u, p) -> one(u)
 prob = FVMProblem(mesh, BCs;
@@ -580,11 +580,11 @@ add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
     n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    add_segment!(tri, n - 1, n)
 end
 n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
-refine!(tri; max_area=1e-3get_total_area(tri))
+add_segment!(tri, n - 1, n)
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 
 mesh = FVMGeometry(tri)
@@ -604,7 +604,7 @@ diffusion_function = (x, y, t, u, p) -> let r = sqrt(x^2 + y^2), θ = atan(y, x)
     return ifelse(r < interface_val, p.D₁, p.D₂)
 end
 diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 source_function = (x, y, t, u, p) -> one(u)
 prob = FVMProblem(mesh, BCs;
     diffusion_function, diffusion_parameters,
@@ -624,7 +624,7 @@ add_point!(tri, 0.0, 0.0)
 mesh = FVMGeometry(tri)
 ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(DelaunayTriangulation.num_solid_vertices(tri) => 1))
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
@@ -656,20 +656,20 @@ add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
     n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    add_segment!(tri, n - 1, n)
 end
 n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
+add_segment!(tri, n - 1, n)
 add_point!(tri, 0.0, 0.0)
 origin_idx = DelaunayTriangulation.num_solid_vertices(tri)
-refine!(tri; max_area=1e-3get_total_area(tri))
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 
 mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, (zero_f, zero_f), (Neumann, Dirichlet))
 ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(origin_idx => 1))
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
@@ -698,14 +698,14 @@ add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
     n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    add_segment!(tri, n - 1, n)
 end
 n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
+add_segment!(tri, n - 1, n)
 add_point!(tri, -2.0, 0.0)
 add_point!(tri, 0.0, 2.95)
 pointhole_idxs = [DelaunayTriangulation.num_solid_vertices(tri), DelaunayTriangulation.num_solid_vertices(tri)-1]
-refine!(tri; max_area=1e-3get_total_area(tri))
+refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 
 mesh = FVMGeometry(tri)
@@ -713,7 +713,7 @@ ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(origin
 zero_f = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, (zero_f, zero_f, zero_f), (Neumann, Dirichlet, Dirichlet))
 ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(pointhole_idxs .=> 1))
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)]
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,

@@ -34,7 +34,7 @@ end
     mesh = FVMGeometry(tri)
     f, t, p, g, q, dirichlet_nodes, dudt_nodes = example_bc_ic_setup()
     BCs = BoundaryConditions(mesh, f, t; parameters=p)
-    @test sprint(show, MIME"text/plain"(), BCs) == "BoundaryConditions with $(length(tri.boundary_index_ranges)) boundary conditions with types $(BCs.condition_types)"
+    @test sprint(show, MIME"text/plain"(), BCs) == "BoundaryConditions with $(length(tri.ghost_vertex_ranges)) boundary conditions with types $(BCs.condition_types)"
     ICs = InternalConditions(g; dirichlet_nodes, dudt_nodes, parameters=q)
     @test sprint(show, MIME"text/plain"(), ICs) == "InternalConditions with $(length(ICs.dirichlet_nodes)) Dirichlet nodes and $(length(ICs.dudt_nodes)) Dudt nodes"
     conds = FVM.Conditions(mesh, BCs, ICs)
@@ -71,7 +71,7 @@ end
     BCs = BoundaryConditions(mesh, f, t; parameters=p)
     ICs = InternalConditions(g; dirichlet_nodes, dudt_nodes, parameters=q)
     conds = FVM.Conditions(mesh, BCs, ICs)
-    b = zeros(num_points(tri))
+    b = zeros(DelaunayTriangulation.num_points(tri))
     FVM.apply_dudt_conditions!(b, mesh, conds)
     for (i, fidx) in dudt_nodes
         if i ∈ keys(conds.dirichlet_nodes)

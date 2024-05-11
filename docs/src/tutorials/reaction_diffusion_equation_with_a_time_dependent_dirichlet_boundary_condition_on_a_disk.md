@@ -33,7 +33,7 @@ x[end] = x[begin]
 y[end] = y[begin] # make sure the curve connects at the endpoints
 boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 ````
@@ -63,7 +63,7 @@ BoundaryConditions with 1 boundary condition with type Dudt
 f = (x, y) -> sqrt(besseli(0.0, sqrt(2) * sqrt(x^2 + y^2)))
 D = (x, y, t, u, p) -> u
 R = (x, y, t, u, p) -> u * (1 - u)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.10
 prob = FVMProblem(mesh, BCs;
     diffusion_function=D,
@@ -142,7 +142,7 @@ x[end] = x[begin]
 y[end] = y[begin] # make sure the curve connects at the endpoints
 boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 
@@ -155,7 +155,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> u, Dudt)
 f = (x, y) -> sqrt(besseli(0.0, sqrt(2) * sqrt(x^2 + y^2)))
 D = (x, y, t, u, p) -> u
 R = (x, y, t, u, p) -> u * (1 - u)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.10
 prob = FVMProblem(mesh, BCs;
     diffusion_function=D,

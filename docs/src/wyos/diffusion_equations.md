@@ -262,7 +262,7 @@ tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 diffusion_function = (x, y, p) -> 1 / 9
-initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in each_point(tri)]
+initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.5
 prob = diffusion_equation(mesh, BCs;
     diffusion_function,
@@ -418,7 +418,7 @@ initf = (x, y) -> begin
     end
 end
 final_time = 500.0
-initial_condition = [initf(x, y) for (x, y) in each_point(tri)]
+initial_condition = [initf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = DiffusionEquation(mesh, BCs;
     diffusion_function,
     initial_condition,
@@ -634,7 +634,7 @@ tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 diffusion_function = (x, y, p) -> 1 / 9
-initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in each_point(tri)]
+initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.5
 prob = diffusion_equation(mesh, BCs;
     diffusion_function,
@@ -685,7 +685,7 @@ initf = (x, y) -> begin
     end
 end
 final_time = 500.0
-initial_condition = [initf(x, y) for (x, y) in each_point(tri)]
+initial_condition = [initf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = DiffusionEquation(mesh, BCs;
     diffusion_function,
     initial_condition,

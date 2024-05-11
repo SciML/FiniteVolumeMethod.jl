@@ -51,7 +51,7 @@ bn4 = [F, G]
 bn = [bn1, bn2, bn3, bn4]
 boundary_nodes, points = convert_boundary_points_to_indices(bn)
 tri = triangulate(points; boundary_nodes)
-refine!(tri; max_area=1e-4get_total_area(tri))
+refine!(tri; max_area=1e-4get_area(tri))
 triplot(tri)
 
 #-
@@ -78,7 +78,7 @@ BCs = BoundaryConditions(mesh, (bc1, bc2, bc3, bc4),
 # down to $T=40$ at $y=0$.
 diffusion_function = (x, y, t, T, p) -> one(T)
 f = (x, y) -> 500y + 40
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = Inf
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
@@ -98,70 +98,3 @@ fig, ax, sc = tricontourf(tri, sol.u, levels=40:70, axis=(xlabel="x", ylabel="y"
 fig
 using ReferenceTests #src
 @test_reference joinpath(@__DIR__, "../figures", "equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.png") fig #src
-
-# Let us now suppose we are interested in how the ambient temperature, $T_{\infty}$, 
-# affects the temperature distribution. In particular, let us ask the following question:
-# > What range of $T_{\infty}$ will allow the temperature at $(0.03, 0.03)$ to be between $50$ and $55$?
-# To answer this question, we use an `EnsembleProblem` so that we can solve the problem over many 
-# values of $T_{\infty}$ efficiently. For these new problems, it would be 
-# a good idea to use a new initial condition given by the solution of the previous problem.
-copyto!(prob.initial_condition, sol.u)
-using Accessors
-T∞_range = LinRange(-100, 100, 101)
-ens_prob = EnsembleProblem(steady_prob,
-    prob_func=(prob, i, repeat) -> let T∞_range = T∞_range, h = h, k = k
-        _prob =
-            @set prob.problem.conditions.functions[3].parameters =
-                (h=h, T∞=T∞_range[i], k=k)
-        return _prob
-    end)
-esol = solve(ens_prob, DynamicSS(Rosenbrock23()), EnsembleSerial(); trajectories=length(T∞_range))
-esol |> tc #hide
-
-# From these results, let us now extract the temperature at $(0.03, 0.03)$. We will use 
-# NaturalNeighbours.jl for this.
-using NaturalNeighbours
-itps = [interpolate(tri, esol[i].u) for i in eachindex(esol)];
-itp_vals = [itp(0.03, 0.03; method=Sibson()) for itp in itps]
-## If you want piecewise linear interpolation, use either method=Triangle()
-## or itp_vals = [pl_interpolate(prob, T, sol.u, 0.03, 0.03) for sol in esol], where 
-## T = jump_and_march(tri, (0.03, 0.03)).
-using Test #src
-_T = jump_and_march(tri, (0.03, 0.03)) #src
-_itp_vals = [pl_interpolate(prob, _T, sol.u, 0.03, 0.03) for sol in esol] #src
-@test _itp_vals ≈ itp_vals rtol = 1e-4 #src
-fig = Figure(fontsize=33)
-ax = Axis(fig[1, 1], xlabel=L"T_{\infty}", ylabel=L"T(0.03, 0.03)")
-lines!(ax, T∞_range, itp_vals, linewidth=4)
-fig
-
-# We see that the temperature at this point seems to increase linearly 
-# with $T_{\infty}$. Let us find precisely where this curve 
-# meets $T=50$ and $T=55$.
-using NonlinearSolve, DataInterpolations
-itp = LinearInterpolation(itp_vals, T∞_range)
-rootf = (u, p) -> p.itp(u) - p.τ[]
-Tthresh = Ref(50.0)
-prob = IntervalNonlinearProblem(rootf, (-100.0, 100.0), (itp=itp, τ=Tthresh))
-sol50 = solve(prob, ITP())
-
-#-
-Tthresh[] = 55.0
-sol55 = solve(prob, ITP())
-
-# So, it seems like the answer to our question is $-11.8 \leq T_{\infty} \leq 55$.
-# Here is an an animation of the temperature distribution as $T_{\infty}$ varies.
-fig = Figure(fontsize=33)
-i = Observable(1)
-tt = map(i -> L"T_{\infty} = %$(rpad(round(T∞_range[i], digits=3),5,'0'))", i)
-u = map(i -> esol.u[i], i)
-ax = Axis(fig[1, 1], xlabel=L"x", ylabel=L"y",
-    title=tt, titlealign=:left)
-tricontourf!(ax, tri, u, levels=40:70, extendlow=:auto, extendhigh=:auto)
-tightlimits!(ax)
-record(fig, joinpath(@__DIR__, "../figures", "temperature_animation.mp4"), eachindex(esol);
-    framerate=12) do _i
-    i[] = _i
-end;
-
-# ![Animation of the temperature distribution](../figures/temperature_animation.mp4)

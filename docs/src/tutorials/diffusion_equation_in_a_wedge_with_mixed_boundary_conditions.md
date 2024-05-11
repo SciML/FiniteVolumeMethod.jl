@@ -54,7 +54,7 @@ x = [x₁, x₂, x₃]
 y = [y₁, y₂, y₃]
 boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 ````
@@ -106,7 +106,7 @@ specifying the diffusion function as a constant.
 ````julia
 f = (x, y) -> 1 - sqrt(x^2 + y^2)
 D = (x, y, t, u, p) -> one(u)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.1
 prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
 ````
@@ -206,7 +206,7 @@ x = [x₁, x₂, x₃]
 y = [y₁, y₂, y₃]
 boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 
@@ -222,7 +222,7 @@ BCs = BoundaryConditions(mesh, (lower_bc, arc_bc, upper_bc), types)
 
 f = (x, y) -> 1 - sqrt(x^2 + y^2)
 D = (x, y, t, u, p) -> one(u)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.1
 prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
 

@@ -56,7 +56,7 @@ We can now define the actual PDE. We start by defining the initial condition and
 
 ````julia
 f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 D = (x, y, t, u, p) -> 1 / 9
 ````
 
@@ -164,7 +164,7 @@ bc = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, bc, Dirichlet)
 
 f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 D = (x, y, t, u, p) -> 1 / 9
 
 final_time = 0.5

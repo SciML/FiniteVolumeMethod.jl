@@ -243,12 +243,12 @@ end
 
 Create the vector `b` defined by 
 
-    b = [source_function(x, y, source_parameters) for (x, y) in each_point(mesh.triangulation)],
+    b = [source_function(x, y, source_parameters) for (x, y) in DelaunayTriangulation.each_point(mesh.triangulation)],
 
 and `b[i] = 0` whenever `i` is a Dirichlet node.
 """
 function create_rhs_b(mesh, conditions, source_function, source_parameters)
-    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !is_dirichlet_node(conditions, i)
             p = get_point(mesh, i)
@@ -277,4 +277,20 @@ function apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
         b[i] = eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
         A[i, i] = 1.0
     end
+end
+
+@doc """
+    fix_missing_vertices!(A, b, mesh)
+
+Given a system `(A, b)` and a `mesh`, sets `A[i, i] = 1` and `b[i] = 0` for any vertices `i` 
+that are a point in `mesh`, but not an actual vertex in the `mesh`.
+"""
+function fix_missing_vertices!(A, b, mesh)
+    for i in DelaunayTriangulation.each_point_index(mesh.triangulation)
+        if !DelaunayTriangulation.has_vertex(mesh.triangulation, i)
+            A[i, i] = 1.0
+            b[i] = 0.0
+        end
+    end
+    return nothing
 end

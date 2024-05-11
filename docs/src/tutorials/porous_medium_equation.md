@@ -64,7 +64,7 @@ BoundaryConditions with 1 boundary condition with type Dirichlet
 f = (x, y) -> M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
 diffusion_function = (x, y, t, u, p) -> p[1] * u^(p[2] - 1)
 diffusion_parameters = (D, m)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     diffusion_parameters,
@@ -169,7 +169,7 @@ diffusion_function = (x, y, t, u, p) -> p.D * abs(u)^(p.m - 1)
 source_function = (x, y, t, u, λ) -> λ * u
 diffusion_parameters = (D=D, m=m)
 source_parameters = λ
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     diffusion_parameters,
@@ -247,7 +247,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
 f = (x, y) -> M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
 diffusion_function = (x, y, t, u, p) -> p[1] * u^(p[2] - 1)
 diffusion_parameters = (D, m)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     diffusion_parameters,
@@ -296,7 +296,7 @@ diffusion_function = (x, y, t, u, p) -> p.D * abs(u)^(p.m - 1)
 source_function = (x, y, t, u, λ) -> λ * u
 diffusion_parameters = (D=D, m=m)
 source_parameters = λ
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     diffusion_parameters,

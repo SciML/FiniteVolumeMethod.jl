@@ -36,7 +36,7 @@ BCs = BoundaryConditions(mesh, bc, Dirichlet)
 
 # We can now define the actual PDE. We start by defining the initial condition and the diffusion function. 
 f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 D = (x, y, t, u, p) -> 1 / 9
 
 # We can now define the problem:
@@ -50,12 +50,13 @@ prob.flux_function
 # where $(\alpha, \beta, \gamma)$ defines the approximation to $u$ via $u(x, y) = \alpha x + \beta y + \gamma$ so that 
 # $\grad u(\vb x, t) = (\alpha,\beta)^{\mkern-1.5mu\mathsf{T}}$.
 
-# To now solve the problem, we simply use `solve`. When no algorithm 
-# is provided, as long as DifferentialEquations is loaded (instead of e.g. 
-# OrdinaryDiffEq), the algorithm is chosen automatically. Moreover, note that, 
+# To now solve the problem, we simply use `solve`. Note that, 
 # in the `solve` call below, multithreading is enabled by default.
-using DifferentialEquations
-sol = solve(prob, saveat=0.05)
+# (If you don't know what algorithm to consider, do `using DifferentialEquations` instead 
+# and simply call `solve(prob, saveat=0.05)` so that the algorithm is chosen automatically instead 
+# of using `Tsit5()`.)
+using OrdinaryDiffEq
+sol = solve(prob, Tsit5(), saveat=0.05)
 sol |> tc #hide
 
 # To visualise the solution, we can use `tricontourf!` from Makie.jl. 
@@ -88,7 +89,7 @@ function exact_solution(x, y, t) #src
     end #src
 end #src
 function compare_solutions(sol, tri) #src
-    n = DelaunayTriangulation.num_solid_vertices(tri) #src
+    n = DelaunayTriangulation.num_points(tri) #src
     x = zeros(n, length(sol)) #src
     y = zeros(n, length(sol)) #src
     u = zeros(n, length(sol)) #src

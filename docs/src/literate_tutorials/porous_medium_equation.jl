@@ -49,7 +49,7 @@ BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
 f = (x, y) -> M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
 diffusion_function = (x, y, t, u, p) -> p[1] * u^(p[2] - 1)
 diffusion_parameters = (D, m)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     diffusion_parameters,
@@ -88,11 +88,12 @@ function exact_solution(x, y, t, m, M, D) #src
     return u_exact #src
 end #src
 function compare_solutions(sol, tri, m, M, D) #src
-    n = DelaunayTriangulation.num_solid_vertices(tri) #src
+    n = DelaunayTriangulation.num_points(tri) #src
     x = zeros(n, length(sol)) #src
     y = zeros(n, length(sol)) #src
     u = zeros(n, length(sol)) #src
     for i in eachindex(sol) #src
+        !DelaunayTriangulation.has_vertex(tri, i) && continue
         for j in each_solid_vertex(tri) #src
             x[j, i], y[j, i] = get_point(tri, j) #src
             u[j, i] = exact_solution(x[j, i], y[j, i], sol.t[i], m, M, D) #src
@@ -154,7 +155,7 @@ diffusion_function = (x, y, t, u, p) -> p.D * abs(u)^(p.m - 1)
 source_function = (x, y, t, u, λ) -> λ * u
 diffusion_parameters = (D=D, m=m)
 source_parameters = λ
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     diffusion_parameters,

@@ -129,14 +129,14 @@ add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
     n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    add_segment!(tri, n - 1, n)
 end
 n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
+add_segment!(tri, n - 1, n)
 add_point!(tri, -2.0, 0.0)
 add_point!(tri, 0.0, 2.95)
 pointhole_idxs = [DelaunayTriangulation.num_solid_vertices(tri), DelaunayTriangulation.num_solid_vertices(tri) - 1]
-refine!(tri; max_area=1e-3get_total_area(tri));
+refine!(tri; max_area=1e-3get_area(tri));
 # Define the problem
 mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> zero(u) # the function doesn't actually matter, but it still needs to be provided
@@ -244,7 +244,7 @@ function T_exact(x, y)
         return (R₂^2 - r^2) / (4D₂)
     end
 end
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)] # an initial guess
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)] # an initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
@@ -406,14 +406,14 @@ add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
     n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    add_segment!(tri, n - 1, n)
 end
 n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
+add_segment!(tri, n - 1, n)
 add_point!(tri, -2.0, 0.0)
 add_point!(tri, 0.0, 2.95)
 pointhole_idxs = [DelaunayTriangulation.num_solid_vertices(tri), DelaunayTriangulation.num_solid_vertices(tri) - 1]
-refine!(tri; max_area=1e-3get_total_area(tri));
+refine!(tri; max_area=1e-3get_area(tri));
 # Define the problem
 mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> zero(u) # the function doesn't actually matter, but it still needs to be provided
@@ -446,7 +446,7 @@ function T_exact(x, y)
         return (R₂^2 - r^2) / (4D₂)
     end
 end
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)] # an initial guess
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)] # an initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)

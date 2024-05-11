@@ -30,23 +30,33 @@ end
 
 # add on the final source term for a single node for a non-system
 @inline function fvm_eqs_single_source_contribution!(du, u::T, prob::AbstractFVMProblem, t, i) where {T}
-    S = get_source_contribution(prob, u, t, i)
-    if !has_condition(prob, i)
-        du[i] = du[i] / get_volume(prob, i) + S
+    if !DelaunayTriangulation.has_vertex(prob.mesh.triangulation, i)
+        du[i] = zero(eltype(T))
     else
-        du[i] = S
+        S = get_source_contribution(prob, u, t, i)
+        if !has_condition(prob, i)
+            du[i] = du[i] / get_volume(prob, i) + S
+        else
+            du[i] = S
+        end
     end
     return nothing
 end
 
 # add on the final source term for a single node for a system for all variables
 @inline function fvm_eqs_single_source_contribution!(du, u::T, prob::FVMSystem, t, i) where {T}
-    for var in 1:_neqs(prob)
-        S = get_source_contribution(prob, u, t, i, var)
-        if !has_condition(prob, i, var)
-            du[var, i] = du[var, i] / get_volume(prob, i) + S
-        else
-            du[var, i] = S
+    if !DelaunayTriangulation.has_vertex(prob.mesh.triangulation, i)
+        for var in 1:_neqs(prob)
+            du[var, i] = zero(eltype(T))
+        end
+    else
+        for var in 1:_neqs(prob)
+            S = get_source_contribution(prob, u, t, i, var)
+            if !has_condition(prob, i, var)
+                du[var, i] = du[var, i] / get_volume(prob, i) + S
+            else
+                du[var, i] = S
+            end
         end
     end
     return nothing
@@ -54,7 +64,7 @@ end
 
 # get the contributions to the dudt system across all nodes
 function get_source_contributions!(du, u, prob, t)
-    for i in each_solid_vertex(prob.mesh.triangulation)
+    for i in DelaunayTriangulation.each_point_index(prob.mesh.triangulation)
         fvm_eqs_single_source_contribution!(du, u, prob, t, i)
     end
     return nothing

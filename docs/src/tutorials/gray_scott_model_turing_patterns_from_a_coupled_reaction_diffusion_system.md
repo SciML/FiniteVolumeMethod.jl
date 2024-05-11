@@ -61,8 +61,8 @@ u_Sp = b
 v_Sp = d
 u_icf = (x, y) -> 1 - exp(-80 * (x^2 + y^2))
 v_icf = (x, y) -> exp(-80 * (x^ 2 + y^2))
-u_ic = [u_icf(x, y) for (x, y) in each_point(tri)]
-v_ic = [v_icf(x, y) for (x, y) in each_point(tri)]
+u_ic = [u_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+v_ic = [v_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 u_prob = FVMProblem(mesh, u_BCs;
     flux_function=u_q, flux_parameters=u_qp,
     source_function=u_S, source_parameters=u_Sp,
@@ -166,8 +166,8 @@ u_Sp = b
 v_Sp = d
 u_icf = (x, y) -> 1 - exp(-80 * (x^2 + y^2))
 v_icf = (x, y) -> exp(-80 * (x^ 2 + y^2))
-u_ic = [u_icf(x, y) for (x, y) in each_point(tri)]
-v_ic = [v_icf(x, y) for (x, y) in each_point(tri)]
+u_ic = [u_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+v_ic = [v_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 u_prob = FVMProblem(mesh, u_BCs;
     flux_function=u_q, flux_parameters=u_qp,
     source_function=u_S, source_parameters=u_Sp,

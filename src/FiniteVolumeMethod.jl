@@ -66,7 +66,7 @@ using PrecompileTools
         BCs = BoundaryConditions(mesh, (lower_bc, arc_bc, upper_bc), types)
         f = (x, y) -> 1 - sqrt(x^2 + y^2)
         D = (x, y, t, u, p) -> one(u)
-        initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+        initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.DelaunayTriangulation.each_point(tri)]
         final_time = 0.1
         prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
         ode_prob = ODEProblem(prob)
