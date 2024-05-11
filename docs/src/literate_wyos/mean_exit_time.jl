@@ -170,7 +170,8 @@ fig
 using ReferenceTests #src
 @test_reference joinpath(@__DIR__, "../figures", "mean_exit_time_template_1.png") fig #src
 using Test #src
-@test fvm_sol.u ≈ sol.u rtol = 1e-2 #src
+ind = findall(i -> DelaunayTriangulation.has_vertex(tri, i), DelaunayTriangulation.each_point_index(tri))
+@test fvm_sol.u[ind] ≈ sol.u[ind] rtol = 1e-2 #src
 
 # ## Using the Provided Template 
 # Let's now use the built-in `MeanExitTimeProblem` which implements the above template 
