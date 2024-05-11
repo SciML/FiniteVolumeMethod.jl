@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>A Reaction-Diffusion Brusselator System of PDEs · FiniteVolumeMethod.jl</title><meta name="title" content="A Reaction-Diffusion Brusselator System of PDEs · FiniteVolumeMethod.jl"/><meta property="og:title" content="A Reaction-Diffusion Brusselator System of PDEs · FiniteVolumeMethod.jl"/><meta property="twitter:title" content="A Reaction-Diffusion Brusselator System of PDEs · FiniteVolumeMethod.jl"/><meta name="description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="twitter:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:url" content="https://DanielVandH.github.io/FiniteVolumeMethod.jl/tutorials/reaction_diffusion_brusselator_system_of_pdes/"/><meta property="twitter:url" content="https://DanielVandH.github.io/FiniteVolumeMethod.jl/tutorials/reaction_diffusion_brusselator_system_of_pdes/"/><link rel="canonical" href="https://DanielVandH.github.io/FiniteVolumeMethod.jl/tutorials/reaction_diffusion_brusselator_system_of_pdes/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li class="is-active"><a class="tocitem" href>A Reaction-Diffusion Brusselator System of PDEs</a><ul class="internal"><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../wyos/overview/">Section Overview</a></li><li><a class="tocitem" href="../../wyos/diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../../wyos/linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../../wyos/laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>A Reaction-Diffusion Brusselator System of PDEs</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>A Reaction-Diffusion Brusselator System of PDEs</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/DanielVandH/FiniteVolumeMethod.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/reaction_diffusion_brusselator_system_of_pdes.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="A-Reaction-Diffusion-Brusselator-System-of-PDEs"><a class="docs-heading-anchor" href="#A-Reaction-Diffusion-Brusselator-System-of-PDEs">A Reaction-Diffusion Brusselator System of PDEs</a><a id="A-Reaction-Diffusion-Brusselator-System-of-PDEs-1"></a><a class="docs-heading-anchor-permalink" href="#A-Reaction-Diffusion-Brusselator-System-of-PDEs" title="Permalink"></a></h1><p>In this tutorial, we show how we can solve systems of PDEs. We consider the reaction-diffusion Brusselator system:</p><p class="math-container">\[\begin{equation}\label{eq:brusleeq}
+\begin{aligned}
+\pdv{\Phi}{t} &amp;= \frac14\grad^2 \Phi + \Phi^2\Psi - 2\Phi &amp; \vb x \in [0, 1]^2, \\
+\pdv{\Psi}{t} &amp;= \frac14\grad^2 \Psi - \Phi^2\Psi + \Phi &amp; \vb x \in [0, 1]^2,
+\end{aligned}
+\end{equation}\]</p><p>Since this is a somewhat contrived example, we will be using the exact solution to define sensible initial and boundary conditions:<sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup></p><p class="math-container">\[\begin{equation}\label{eq:brusleexct}
+\begin{aligned}
+\Phi(x, y, t) &amp;=\exp(-x-y-t/2), \\
+\Psi(x, y, t) &amp;= \exp(x+y+t/2).
+\end{aligned}
+\end{equation}\]</p><p>We can use these exact solutions \eqref{eq:brusleexct} to also show how we can mix boundary conditions. We use:</p><p class="math-container">\[\begin{equation*}
+\begin{aligned}
+\Phi(x, y, 0) &amp;= \exp(-x-y), \\
+\Psi(x, y, 0) &amp;= \exp(x + y), \\
+\pdv{\Phi}{y} &amp;= -\exp(-x-t/2) &amp; y = 0, \\[6pt]
+\Psi &amp;= \exp(x + t/2) &amp; y = 0, \\
+\pdv{\Phi}{x} &amp;= -\exp(-1-y-t/2) &amp; x=1, \\[6pt]
+\pdv{\Psi}{x} &amp;= \exp(1 + y+ t/2) &amp; x=1, \\[6pt]
+\Phi &amp;= \exp(-1-x-t/2) &amp; y=1, \\
+\pdv{\Psi}{y} &amp;= \exp(1 + x + t/2) &amp; y=1, \\[6pt]
+\pdv{\Phi}{x} &amp;= -\exp(-y-t/2) &amp; x=0, \\[6pt]
+\Psi &amp;= \exp(y + t/2) &amp; x=0.
+\end{aligned}
+\end{equation*}\]</p><p>For implementing these equations, we need to write the Neumann boundary conditions in the forms <span>$\vb q_1 \vdot \vu n = f(\vb x, t)$</span> and <span>$\vb q_2 \vdot \vu n = f(\vb x, t)$</span>, where <span>$\vb q_1$</span> and <span>$\vb q_2$</span> are the fluxes for <span>$\Phi$</span> and <span>$\Psi$</span>, respectively. So, we need to rewrite \eqref{eq:brusleeq} in the conservation form; previously, we&#39;ve also allowed for reaction-diffusion formulations, but unfortunately we do not allow this specification for systems due to some technical limitations. We can write \eqref{eq:brusleeq} in the conservation form as follows:</p><p class="math-container">\[\begin{equation}
+\begin{aligned}
+\pdv{\Phi}{t} + \div\vb q_1 &amp;= S_1, \\
+\pdv{\Psi}{t} + \div\vb q_2 &amp;= S_2,
+\end{aligned}
+\end{equation}\]</p><p>where <span>$\vb q_1 = -\grad\Phi/4$</span>, <span>$S_1 = \Phi^2\Psi - 2\Phi$</span>, <span>$\vb q_2 = -\grad\Psi/4$</span>, and <span>$S_2 = -\Phi^2\Psi + \Phi$</span>. Now that we have these flux functions, let us rewrite our boundary conditions. Remember that <span>$\vu n$</span> is the outward unit normal, so for example on the bottom boundary we have</p><p class="math-container">\[\vb q_1 \vdot \vu n = -\frac14\grad\Phi \vdot -\vu j = \frac{1}{4}\pdv{\Phi}{y}.\]</p><p>The normal vectors are <span>$-\vu j$</span>, <span>$\vu i$</span>, <span>$\vu j$</span>, and <span>$-\vu i$</span> for the bottom, right, top, and left sides of the square, respectively. So, our boundary become:</p><p class="math-container">\[\begin{equation*}
+\begin{aligned}
+\Phi(x, y, 0) &amp;= \exp(-x-y), \\
+\Psi(x, y, 0) &amp;= \exp(x + y), \\
+\vb q_1 \vdot \vu n &amp;= -\frac{1}{4}\exp(-x-t/2) &amp; y = 0, \\[6pt]
+\Psi &amp;= \exp(x + t/2) &amp; y = 0, \\
+\vb q_1 \vdot \vu n &amp;= \frac{1}{4}\exp(-1-y-t/2)  &amp; x=1, \\[6pt]
+\vb q_2 \vdot \vu n &amp;= -\frac{1}{4}\exp(1 + y+ t/2) &amp; x=1, \\[6pt]
+\Phi &amp;= \exp(-1-x-t/2) &amp; y=1, \\
+\vb q_2 \vdot \vu n &amp;= -\frac14\exp(1 + x + t/2) &amp; y=1, \\[6pt]
+\vb q_1 \vdot \vu n &amp;= -\frac14\exp(-y-t/2) &amp; x=0, \\[6pt]
+\Psi &amp;= \exp(y + t/2) &amp; x=0.
+\end{aligned}
+\end{equation*}\]</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
+tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=false)
+mesh = FVMGeometry(tri)</code></pre><pre><code class="nohighlight hljs">FVMGeometry with 10000 control volumes, 19602 triangles, and 29601 edges</code></pre><p>Now we define the boundary conditions. When considering a system of PDEs, you need to define the boundary conditions for each variable separately. The signatures are the same, namely <code>(x, y, t, u, p) -&gt; Number</code>, except now <code>u</code> is a vector (or <code>Tuple</code>) of the solution values for each variable instead of just a scalar. This last point is not relevant here, but you do need to know about it for other problems more generally. So, let us now define the boundary conditions. First, for <span>$\Phi$</span>:</p><pre><code class="language-julia hljs">Φ_bot = (x, y, t, u, p) -&gt; -1 / 4 * exp(-x - t / 2)
+Φ_right = (x, y, t, u, p) -&gt; 1 / 4 * exp(-1 - y - t / 2)
+Φ_top = (x, y, t, u, p) -&gt; exp(-1 - x - t / 2)
+Φ_left = (x, y, t, u, p) -&gt; -1 / 4 * exp(-y - t / 2)
+Φ_bc_fncs = (Φ_bot, Φ_right, Φ_top, Φ_left)
+Φ_bc_types = (Neumann, Neumann, Dirichlet, Neumann)
+Φ_BCs = BoundaryConditions(mesh, Φ_bc_fncs, Φ_bc_types)</code></pre><pre><code class="nohighlight hljs">BoundaryConditions with 4 boundary conditions with types (Neumann, Neumann, Dirichlet, Neumann)</code></pre><p>Now, for <span>$\Psi$</span>:</p><pre><code class="language-julia hljs">Ψ_bot = (x, y, t, u, p) -&gt; exp(x + t / 2)
+Ψ_right = (x, y, t, u, p) -&gt; -1 / 4 * exp(1 + y + t / 2)
+Ψ_top = (x, y, t, u, p) -&gt; -1 / 4 * exp(1 + x + t / 2)
+Ψ_left = (x, y, t, u, p) -&gt; exp(y + t / 2)
+Ψ_bc_fncs = (Ψ_bot, Ψ_right, Ψ_top, Ψ_left)
+Ψ_bc_types = (Dirichlet, Neumann, Neumann, Dirichlet)
+Ψ_BCs = BoundaryConditions(mesh, Ψ_bc_fncs, Ψ_bc_types)</code></pre><pre><code class="nohighlight hljs">BoundaryConditions with 4 boundary conditions with types (Dirichlet, Neumann, Neumann, Dirichlet)</code></pre><p>Now we need to define the actual problems. Let us first define the flux and source functions, remembering that the variables get replaced with linear approximants. The flux functions also now take <code>Tuple</code>s for <span>$\alpha$</span>, <span>$\beta$</span>, and <span>$\gamma$</span>, where the <span>$i$</span>th element of the <code>Tuple</code> refers to the <span>$i$</span>th variable. Similarly, the source function takes a <code>Tuple</code> of the variables in the <code>u</code> argument.</p><pre><code class="language-julia hljs">Φ_q = (x, y, t, α, β, γ, p) -&gt; (-α[1] / 4, -β[1] / 4)
+Ψ_q = (x, y, t, α, β, γ, p) -&gt; (-α[2] / 4, -β[2] / 4)
+Φ_S = (x, y, t, (Φ, Ψ), p) -&gt; Φ^2 * Ψ - 2Φ
+Ψ_S = (x, y, t, (Φ, Ψ), p) -&gt; -Φ^2 * Ψ + Φ</code></pre><pre><code class="nohighlight hljs">#23 (generic function with 1 method)</code></pre><p>Now we define the initial conditions.</p><pre><code class="language-julia hljs">Φ_exact = (x, y, t) -&gt; exp(-x - y - t / 2)
+Ψ_exact = (x, y, t) -&gt; exp(x + y + t / 2)
+Φ₀ = [Φ_exact(x, y, 0) for (x, y) in each_point(tri)]
+Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)];</code></pre><p>Next, we can define the <code>FVMProblem</code>s for each variable.</p><pre><code class="language-julia hljs">Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
+    initial_condition=Φ₀, final_time=5.0)</code></pre><pre><code class="nohighlight hljs">FVMProblem with 10000 nodes and time span (0.0, 5.0)</code></pre><pre><code class="language-julia hljs">Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function=Ψ_q, source_function=Ψ_S,
+    initial_condition=Ψ₀, final_time=5.0)</code></pre><pre><code class="nohighlight hljs">FVMProblem with 10000 nodes and time span (0.0, 5.0)</code></pre><p>Finally, the <code>FVMSystem</code> is constructed by these two problems:</p><pre><code class="language-julia hljs">system = FVMSystem(Φ_prob, Ψ_prob)</code></pre><pre><code class="nohighlight hljs">FVMSystem with 2 equations and time span (0.0, 5.0)</code></pre><p>We can now solve the problem just as we&#39;ve done previously.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, LinearSolve
+sol = solve(system, TRBDF2(linsolve=KLUFactorization()), saveat=1.0)</code></pre><pre><code class="nohighlight hljs">retcode: Success
+Interpolation: 1st order linear
+t: 6-element Vector{Float64}:
+ 0.0
+ 1.0
+ 2.0
+ 3.0
+ 4.0
+ 5.0
+u: 6-element Vector{Matrix{Float64}}:
+ [1.0 0.9899498337660453 … 0.13670923376163366 0.1353352832366127; 1.0 1.0101521975065353 … 7.314794856824381 7.38905609893065]
+ [0.6022790543205313 0.5961843226390967 … 0.0845971605921441 0.08374694506527251; 1.6160026270944226 1.6324086049357651 … 12.033406783540796 12.155740342652036]
+ [0.3629229326539094 0.359228363991126 … 0.05278240341668085 0.05225193148811555; 2.5900532168345594 2.616347948644301 … 19.801530402316683 20.003224326522847]
+ [0.21894049053879297 0.21669975491945984 … 0.030583471878907444 0.03027610290251295; 4.470036440039307 4.515417132839996 … 32.63018228276749 32.962717682056564]
+ [0.13231178296861926 0.13095170953894736 … 0.018819873249713567 0.01863073039505199; 7.264088973804027 7.337835439771132 … 53.79169952043943 54.33995669712674]
+ [0.0799187442947166 0.07909453439684679 … 0.011446825720980928 0.011331783219633958; 11.942982019116341 12.064229531391408 … 88.68282927631773 89.58675540921887]</code></pre><p>For this solution, note that the <code>u</code> values are matrices. For example:</p><pre><code class="language-julia hljs">sol.u[3]</code></pre><pre><code class="nohighlight hljs">2×10000 Matrix{Float64}:
+ 0.362923  0.359228  0.355571  …   0.0533183   0.0527824   0.0522519
+ 2.59005   2.61635   2.64291      19.6018     19.8015     20.0032</code></pre><p>The <code>i</code>th row is the <code>i</code>th variable, so</p><pre><code class="language-julia hljs">sol.u[3][1, :]</code></pre><pre><code class="nohighlight hljs">10000-element Vector{Float64}:
+ 0.3629229326539094
+ 0.359228363991126
+ 0.3555709542537458
+ 0.35195131700834903
+ 0.34836934196000113
+ ⋮
+ 0.05440635118902634
+ 0.05385955831539371
+ 0.05331826080103663
+ 0.05278240341668085
+ 0.05225193148811555</code></pre><p>are the value of <span>$\Phi$</span> at the third time, and similarly <code>sol.u[3][2, :]</code> are the values of <span>$\Psi$</span> at the third time. We can visualise the solutions as follows:</p><pre><code class="language-julia hljs">using CairoMakie
+fig = Figure(fontsize=38)
+for i in eachindex(sol)
+    ax1 = Axis(fig[1, i], xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;,
+        width=400, height=400,
+        title=L&quot;\Phi: t = %$(sol.t[i])&quot;, titlealign=:left)
+    ax2 = Axis(fig[2, i], xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;,
+        width=400, height=400,
+        title=L&quot;\Psi: t = %$(sol.t[i])&quot;, titlealign=:left)
+    tricontourf!(ax1, tri, sol[i][1, :], levels=0:0.1:1, colormap=:matter)
+    tricontourf!(ax2, tri, sol[i][2, :], levels=1:10:100, colormap=:matter)
+end
+resize_to_layout!(fig)
+fig</code></pre><p><img src="../reaction_diffusion_brusselator_system_of_pdes-25.png" alt/></p><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/reaction_diffusion_brusselator_system_of_pdes.jl">here</a>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
+tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=false)
+mesh = FVMGeometry(tri)
+
+Φ_bot = (x, y, t, u, p) -&gt; -1 / 4 * exp(-x - t / 2)
+Φ_right = (x, y, t, u, p) -&gt; 1 / 4 * exp(-1 - y - t / 2)
+Φ_top = (x, y, t, u, p) -&gt; exp(-1 - x - t / 2)
+Φ_left = (x, y, t, u, p) -&gt; -1 / 4 * exp(-y - t / 2)
+Φ_bc_fncs = (Φ_bot, Φ_right, Φ_top, Φ_left)
+Φ_bc_types = (Neumann, Neumann, Dirichlet, Neumann)
+Φ_BCs = BoundaryConditions(mesh, Φ_bc_fncs, Φ_bc_types)
+
+Ψ_bot = (x, y, t, u, p) -&gt; exp(x + t / 2)
+Ψ_right = (x, y, t, u, p) -&gt; -1 / 4 * exp(1 + y + t / 2)
+Ψ_top = (x, y, t, u, p) -&gt; -1 / 4 * exp(1 + x + t / 2)
+Ψ_left = (x, y, t, u, p) -&gt; exp(y + t / 2)
+Ψ_bc_fncs = (Ψ_bot, Ψ_right, Ψ_top, Ψ_left)
+Ψ_bc_types = (Dirichlet, Neumann, Neumann, Dirichlet)
+Ψ_BCs = BoundaryConditions(mesh, Ψ_bc_fncs, Ψ_bc_types)
+
+Φ_q = (x, y, t, α, β, γ, p) -&gt; (-α[1] / 4, -β[1] / 4)
+Ψ_q = (x, y, t, α, β, γ, p) -&gt; (-α[2] / 4, -β[2] / 4)
+Φ_S = (x, y, t, (Φ, Ψ), p) -&gt; Φ^2 * Ψ - 2Φ
+Ψ_S = (x, y, t, (Φ, Ψ), p) -&gt; -Φ^2 * Ψ + Φ
+
+Φ_exact = (x, y, t) -&gt; exp(-x - y - t / 2)
+Ψ_exact = (x, y, t) -&gt; exp(x + y + t / 2)
+Φ₀ = [Φ_exact(x, y, 0) for (x, y) in each_point(tri)]
+Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)];
+
+Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
+    initial_condition=Φ₀, final_time=5.0)
+
+Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function=Ψ_q, source_function=Ψ_S,
+    initial_condition=Ψ₀, final_time=5.0)
+
+system = FVMSystem(Φ_prob, Ψ_prob)
+
+using OrdinaryDiffEq, LinearSolve
+sol = solve(system, TRBDF2(linsolve=KLUFactorization()), saveat=1.0)
+
+sol.u[3]
+
+sol.u[3][1, :]
+
+using CairoMakie
+fig = Figure(fontsize=38)
+for i in eachindex(sol)
+    ax1 = Axis(fig[1, i], xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;,
+        width=400, height=400,
+        title=L&quot;\Phi: t = %$(sol.t[i])&quot;, titlealign=:left)
+    ax2 = Axis(fig[2, i], xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;,
+        width=400, height=400,
+        title=L&quot;\Psi: t = %$(sol.t[i])&quot;, titlealign=:left)
+    tricontourf!(ax1, tri, sol[i][1, :], levels=0:0.1:1, colormap=:matter)
+    tricontourf!(ax2, tri, sol[i][2, :], levels=1:10:100, colormap=:matter)
+end
+resize_to_layout!(fig)
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See <a href="https://doi.org/10.1016/j.apm.2010.03.028">Islam, Ali, and Haq (2010)</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">« Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a><a class="docs-footer-nextpage" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.1.2 on <span class="colophon-date" title="Monday 13 November 2023 04:23">Monday 13 November 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
