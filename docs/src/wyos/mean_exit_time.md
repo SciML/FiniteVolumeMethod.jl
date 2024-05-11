@@ -2,6 +2,11 @@
 EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/mean_exit_time.jl"
 ```
 
+````@example mean_exit_time
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
+nothing #hide
+````
 
 # Mean Exit Time Problems
 ```@contents
@@ -49,9 +54,9 @@ for nodes with conditions. For this problem, though, we need $a_{ii} = 1$ for
 Dirichlet nodes $i$. So, let's write a function that creates $\vb b$ but also
 enforces Dirichlet constraints.
 
-````julia
+````@example mean_exit_time
 function create_met_b!(A, mesh, conditions)
-    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.is_dirichlet_node(conditions, i)
             b[i] = -1
@@ -63,14 +68,10 @@ function create_met_b!(A, mesh, conditions)
 end
 ````
 
-````
-create_met_b! (generic function with 1 method)
-````
-
 Let us now define the function which gives us our matrices $\vb A$ and $\vb b$. We will
 return the problem as a `LinearProblem` from LinearSolve.jl.
 
-````julia
+````@example mean_exit_time
 using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
 const FVM = FiniteVolumeMethod
 function met_problem(mesh::FVMGeometry,
@@ -79,64 +80,47 @@ function met_problem(mesh::FVMGeometry,
     diffusion_function,
     diffusion_parameters=nothing)
     conditions = Conditions(mesh, BCs, ICs)
-    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
     FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     b = create_met_b!(A, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
     return LinearProblem(sparse(A), b)
 end
-````
-
-````
-met_problem (generic function with 2 methods)
 ````
 
 Now let us test this problem. To test, we will consider the last
 problem [here](../tutorials/mean_exit_time.md) which
 includes mixed boundary conditions and also an internal condition.
 
-````julia
+````@example mean_exit_time
 # Define the triangulation
-θ = LinRange(0, 2π, 250)
 R₁, R₂ = 2.0, 3.0
 ε = 0.05
 g = θ -> sin(3θ) + cos(5θ)
 R1_f = let R₁ = R₁, ε = ε, g = g # use let for type stability
     θ -> R₁ * (1.0 + ε * g(θ))
 end
-εr = 0.25
-θref = LinRange(εr, 2π - εr, 200)
-θabs = LinRange(2π - εr, 2π + εr, 200)
-xref = @. R₂ * cos(θref)
-yref = @. R₂ * sin(θref)
-xabs = @. R₂ * cos(θabs)
-yabs = @. R₂ * sin(θabs)
-xref[end] = xabs[begin]
-yref[end] = yabs[begin]
-xhole = @. cos(θ)
-yhole = @. sin(θ)
-reverse!(xhole) # clockwise
-reverse!(yhole)
-xhole[begin] = xhole[end]
-yhole[begin] = yhole[end]
-x = [[xref, xabs], [xhole]]
-y = [[yref, yabs], [yhole]]
-boundary_nodes, points = convert_boundary_points_to_indices(x, y)
-tri = triangulate(points; boundary_nodes, delete_ghosts=false)
+ϵr = 0.25
+dirichlet = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
+neumann = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(ϵr), R₂ * sin(ϵr)), (0.0, 0.0))
+hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive=false)
+boundary_nodes = [[[dirichlet], [neumann]], [[hole]]]
+points = [(-2.0, 0.0), (0.0, 2.95)]
+tri = triangulate(points; boundary_nodes)
+θ = LinRange(0, 2π, 250)
 xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
 yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
 end
-n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
-add_point!(tri, -2.0, 0.0)
-add_point!(tri, 0.0, 2.95)
-pointhole_idxs = [DelaunayTriangulation.num_solid_vertices(tri), DelaunayTriangulation.num_solid_vertices(tri) - 1]
-refine!(tri; max_area=1e-3get_total_area(tri));
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+pointhole_idxs = [1, 2]
+refine!(tri; max_area=1e-3get_area(tri));
 # Define the problem
 mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> zero(u) # the function doesn't actually matter, but it still needs to be provided
@@ -151,91 +135,38 @@ diffusion_function = (x, y, p) -> begin
 end
 diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
 prob = met_problem(mesh, BCs, ICs; diffusion_function, diffusion_parameters)
-````
-
-````
-LinearProblem. In-place: true
-b: 3719-element Vector{Float64}:
-  0.0
- -1.0
- -1.0
- -1.0
- -1.0
-  ⋮
- -1.0
- -1.0
- -1.0
- -1.0
- -1.0
+prob |> tc #hide
 ````
 
 This problem can now be solved using the `solve` interface from LinearSolve.jl. Note that the matrix
 $\vb A$ is very dense, but there is no structure to it:
 
-````julia
+````@example mean_exit_time
 prob.A
-````
-
-````
-3719×3719 SparseMatrixCSC{Float64, Int64} with 22916 stored entries:
-⎡⠻⣦⡀⠀⠀⠀⠀⠀⠀⠐⠀⠀⠀⠀⠀⠀⠀⠀⢸⣾⠶⣳⣲⣿⢹⠶⠄⠄⠀⡊⣁⠂⠂⡤⠑⡐⣖⡆⢤⠀⎤
-⎢⠀⠈⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠁⠈⠉⠀⠉⠉⠀⠀⠀⠀⠀⠉⠀⠁⠁⠈⠁⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠑⣤⡀⠠⠀⠀⠀⠀⠀⠀⠀⠀⢠⣤⣤⣤⣤⣤⣠⢤⡠⡤⣤⣤⣠⡀⣄⠄⣄⡤⡤⣄⡀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⡈⠻⣦⣀⠀⠀⠀⠀⠀⠀⠀⠸⣿⡽⣿⣿⣿⢿⣿⣸⣽⣿⣞⣚⡒⣾⠁⣿⣦⣯⡉⣓⣄⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣾⣵⣶⣤⣄⢤⠀⠀⠀⠀⠀⠘⢿⡿⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣻⣿⣿⣿⡿⣿⣿⣿⣯⣆⠒⠄⠀⠀⡨⢵⣿⢿⣻⣿⣾⣿⠟⣿⣻⣟⣾⣿⣝⣿⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢱⣿⣿⣯⣵⣿⣿⣿⣿⣿⣷⣶⣦⣭⢞⣆⣻⣿⣟⣽⣽⣿⡟⣿⣿⢿⢾⣿⡿⢿⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣕⢝⣿⣿⣿⡿⣿⣻⣿⣿⣿⣿⣿⣿⣿⣟⣻⣿⣿⣿⣿⣿⣭⣭⎥
-⎢⣲⣶⣠⣥⣂⢶⣶⣶⣶⣦⠀⠓⠫⢿⣿⣿⣿⣿⡕⢍⠉⠕⠛⣿⣯⣫⢿⣼⡯⣿⢿⣯⣮⣿⣹⣿⣿⣗⣿⣧⎥
-⎢⢽⣣⣽⣿⣫⣿⡿⣿⣷⣯⠀⠀⠘⠄⢹⣿⣿⡿⢇⠄⠑⢄⠄⢹⠙⡻⣿⣿⣿⣷⣿⣟⣷⣾⣻⣔⣽⣿⠿⠅⎥
-⎢⣼⣾⢳⢿⢏⠏⣳⣿⣿⣿⠀⠀⠀⠀⡌⣿⣿⣻⣿⣤⣄⣁⡑⢌⠫⣏⠹⡝⠟⡿⠯⣿⣿⡿⣿⣿⣿⣝⣿⠆⎥
-⎢⢳⡖⣟⣧⠟⢾⢩⣞⣿⣿⣶⣄⢆⣎⠺⢵⣿⣿⡯⣻⣷⡠⡯⢦⣵⣿⣶⣲⣼⢜⣻⣭⢟⡭⣿⣻⡓⣟⣛⡃⎥
-⎢⠀⠅⣸⠾⢼⢍⠟⡮⣖⣾⣿⣫⣿⣟⣿⣾⣿⣿⣛⣷⣿⣿⣗⠦⢸⣻⡻⣮⣍⣸⣟⡷⡸⣯⡿⣽⠳⡻⣷⣿⎥
-⎢⡠⠠⢀⠈⡈⡅⢅⣿⣻⢿⣿⣿⣿⣾⣟⣽⣿⣿⣯⣯⢿⣿⣿⡥⣒⢟⣃⣹⢻⣶⣰⡟⡟⢛⣿⡮⢋⣕⣏⡓⎥
-⎢⠡⠘⡄⡩⢄⠅⢰⠺⢺⠸⣿⣿⣾⣿⣷⣿⣿⢿⡿⣷⣿⢿⣯⣧⡟⣾⢿⡽⣴⠾⡿⣯⠺⣖⡮⣗⡫⢺⡏⣼⎥
-⎢⠈⡤⡄⣠⠝⣚⢳⡝⠞⢛⣿⣿⣿⣥⣿⣭⣿⣾⣮⣿⣹⣿⣿⡿⡟⡵⡶⣮⣿⢉⢺⢦⡿⣯⣥⢸⡺⠴⠔⢅⎥
-⎢⢑⠠⣡⠁⣊⠯⠉⡽⠻⣿⣿⣿⣿⢾⣿⣟⣿⣿⣷⣾⢛⢾⣿⣿⣿⣻⣟⣯⡻⡿⢮⢯⣁⣛⢻⣶⢩⢓⡻⣵⎥
-⎢⠸⠽⢁⣮⠧⠀⠈⢯⡏⢻⣿⣿⣾⣿⣾⣷⣿⣿⢿⢿⣷⣿⣟⢿⣽⢬⣽⡢⢏⢴⣫⣊⢚⡎⢧⢒⡿⣯⡵⠓⎥
-⎣⠀⠓⠺⠹⠀⠀⠀⠈⠙⢼⣿⣿⣷⣽⣿⣏⡇⣿⠿⣿⠟⠇⠻⠟⠿⠸⣽⣿⢯⠹⣋⣭⠔⢅⢟⣮⢵⠋⢻⣶⎦
+prob.A |> DisplayAs.withcontext(:compact => true) #hide
 ````
 
 We will use `KLUFactorization`.
 
-````julia
+````@example mean_exit_time
 sol = solve(prob, KLUFactorization())
-````
-
-````
-u: 3719-element Vector{Float64}:
-     0.0
-  3319.147633403591
-  4683.172484676441
-  5660.017028220012
-  6447.763459361518
-     ⋮
- 11186.370715496145
-  7608.681609929319
-  1945.4699213884896
- 11437.149025177974
-  9326.319213813575
+sol |> tc #hide
 ````
 
 We can easily visualise our solution:
 
-````julia
+````@example mean_exit_time
 using CairoMakie
 fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
     axis=(width=600, height=600, title="Template"))
 fig
 ````
-![](mean_exit_time-15.png)
 
 This result is a great match to what we found in the [tutorial](../tutorials/mean_exit_time.md).
 If we wanted to convert this mean exit time problem into the corresponding [`SteadyFVMProblem`](@ref),
 we can do:
 
-````julia
+````@example mean_exit_time
 function T_exact(x, y)
     r = sqrt(x^2 + y^2)
     if r < R₁
@@ -244,7 +175,7 @@ function T_exact(x, y)
         return (R₂^2 - r^2) / (4D₂)
     end
 end
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)] # an initial guess
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)] # an initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
@@ -255,72 +186,39 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     initial_condition))
 ````
 
-````
-SteadyFVMProblem with 3719 nodes
-````
-
 Let's compare the two solutions.
 
-````julia
+````@example mean_exit_time
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
+fvm_sol |> tc #hide
 ````
 
-````
-u: 3719-element Vector{Float64}:
-     0.0
-  3334.126104604181
-  4705.278232490303
-  5687.908513330301
-  6480.8435525479035
-     ⋮
- 11157.429047825735
-  7646.021016621535
-  1951.7844728494736
- 11414.764507547903
-  9310.27019433481
-````
-
-````julia
+````@example mean_exit_time
 ax = Axis(fig[1, 2], width=600, height=600, title="Template")
 tricontourf!(ax, tri, fvm_sol.u, levels=0:1000:15000, extendhigh=:auto)
 resize_to_layout!(fig)
 fig
+ind = findall(i -> DelaunayTriangulation.has_vertex(tri, i), DelaunayTriangulation.each_point_index(tri))
 ````
-![](mean_exit_time-20.png)
 
 ## Using the Provided Template
 Let's now use the built-in `MeanExitTimeProblem` which implements the above template
 inside FiniteVolumeMethod.jl.
 
-````julia
+````@example mean_exit_time
 prob = MeanExitTimeProblem(mesh, BCs, ICs;
     diffusion_function,
     diffusion_parameters)
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 ````
 
-````
-u: 3719-element Vector{Float64}:
-     0.0
-  3319.147633403591
-  4683.172484676441
-  5660.017028220012
-  6447.763459361518
-     ⋮
- 11186.370715496145
-  7608.681609929319
-  1945.4699213884896
- 11437.149025177974
-  9326.319213813575
-````
-
-````julia
+````@example mean_exit_time
 fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
     axis=(width=600, height=600))
 fig
 ````
-![](mean_exit_time-23.png)
 
 This matches what we have above. To finish, here is a benchmark comparing the approaches.
 ````julia
@@ -347,7 +245,7 @@ You can view the source code for this file [here](https://github.com/SciML/Finit
 
 ```julia
 function create_met_b!(A, mesh, conditions)
-    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.is_dirichlet_node(conditions, i)
             b[i] = -1
@@ -366,54 +264,41 @@ function met_problem(mesh::FVMGeometry,
     diffusion_function,
     diffusion_parameters=nothing)
     conditions = Conditions(mesh, BCs, ICs)
-    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
     FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     b = create_met_b!(A, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
     return LinearProblem(sparse(A), b)
 end
 
 # Define the triangulation
-θ = LinRange(0, 2π, 250)
 R₁, R₂ = 2.0, 3.0
 ε = 0.05
 g = θ -> sin(3θ) + cos(5θ)
 R1_f = let R₁ = R₁, ε = ε, g = g # use let for type stability
     θ -> R₁ * (1.0 + ε * g(θ))
 end
-εr = 0.25
-θref = LinRange(εr, 2π - εr, 200)
-θabs = LinRange(2π - εr, 2π + εr, 200)
-xref = @. R₂ * cos(θref)
-yref = @. R₂ * sin(θref)
-xabs = @. R₂ * cos(θabs)
-yabs = @. R₂ * sin(θabs)
-xref[end] = xabs[begin]
-yref[end] = yabs[begin]
-xhole = @. cos(θ)
-yhole = @. sin(θ)
-reverse!(xhole) # clockwise
-reverse!(yhole)
-xhole[begin] = xhole[end]
-yhole[begin] = yhole[end]
-x = [[xref, xabs], [xhole]]
-y = [[yref, yabs], [yhole]]
-boundary_nodes, points = convert_boundary_points_to_indices(x, y)
-tri = triangulate(points; boundary_nodes, delete_ghosts=false)
+ϵr = 0.25
+dirichlet = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
+neumann = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(ϵr), R₂ * sin(ϵr)), (0.0, 0.0))
+hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive=false)
+boundary_nodes = [[[dirichlet], [neumann]], [[hole]]]
+points = [(-2.0, 0.0), (0.0, 2.95)]
+tri = triangulate(points; boundary_nodes)
+θ = LinRange(0, 2π, 250)
 xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
 yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
-    n = DelaunayTriangulation.num_solid_vertices(tri)
-    add_edge!(tri, n - 1, n)
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
 end
-n = DelaunayTriangulation.num_solid_vertices(tri)
-add_edge!(tri, n - 1, n)
-add_point!(tri, -2.0, 0.0)
-add_point!(tri, 0.0, 2.95)
-pointhole_idxs = [DelaunayTriangulation.num_solid_vertices(tri), DelaunayTriangulation.num_solid_vertices(tri) - 1]
-refine!(tri; max_area=1e-3get_total_area(tri));
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+pointhole_idxs = [1, 2]
+refine!(tri; max_area=1e-3get_area(tri));
 # Define the problem
 mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> zero(u) # the function doesn't actually matter, but it still needs to be provided
@@ -446,7 +331,7 @@ function T_exact(x, y)
         return (R₂^2 - r^2) / (4D₂)
     end
 end
-initial_condition = [T_exact(x, y) for (x, y) in each_point(tri)] # an initial guess
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)] # an initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
@@ -463,6 +348,7 @@ ax = Axis(fig[1, 2], width=600, height=600, title="Template")
 tricontourf!(ax, tri, fvm_sol.u, levels=0:1000:15000, extendhigh=:auto)
 resize_to_layout!(fig)
 fig
+ind = findall(i -> DelaunayTriangulation.has_vertex(tri, i), DelaunayTriangulation.each_point_index(tri))
 
 prob = MeanExitTimeProblem(mesh, BCs, ICs;
     diffusion_function,

@@ -85,6 +85,7 @@ function DiffusionEquation(mesh::FVMGeometry,
     boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_dudt_conditions!(b, mesh, conditions)
     apply_dirichlet_conditions!(_ic, mesh, conditions)
+    fix_missing_vertices!(A, b, mesh)
     A_op = MatrixOperator(sparse(Afull))
     prob = ODEProblem(A_op, _ic, (initial_time, final_time); kwargs...)
     return DiffusionEquation(mesh, conditions,

@@ -48,7 +48,7 @@ With these two steps, you should be able to also know how to write your own solv
 For writing these solvers, there are some specific functions that might be of use to you. 
 Here, we provide the docstrings for these functions. These functions are public API.
 
-```@docs
+```@docs 
 FiniteVolumeMethod.get_dirichlet_fidx
 FiniteVolumeMethod.is_dirichlet_node
 FiniteVolumeMethod.get_dirichlet_nodes 
@@ -83,4 +83,5 @@ FiniteVolumeMethod.apply_steady_dirichlet_conditions!
 FiniteVolumeMethod.two_point_interpolant
 FiniteVolumeMethod.get_dirichlet_callback
 FiniteVolumeMethod.jacobian_sparsity
+FiniteVolumeMethod.fix_missing_vertices!
 ```

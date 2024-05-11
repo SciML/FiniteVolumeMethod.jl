@@ -2,6 +2,11 @@
 EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/diffusion_equations.jl"
 ```
 
+````@example diffusion_equations
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
+nothing #hide
+````
 
 # Diffusion Equations
 ```@contents
@@ -109,12 +114,12 @@ terms for $b_i$ and also to put into $\vb A$.
 
 Let us start by writing out the contribution from all the triangles.
 
-````julia
+````@example diffusion_equations
 using FiniteVolumeMethod
 const FVM = FiniteVolumeMethod
 function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         i, j, k = ijk
         props = FVM.get_triangle_props(mesh, i, j, k)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
@@ -136,19 +141,15 @@ function triangle_contributions!(A, mesh, conditions, diffusion_function, diffus
 end
 ````
 
-````
-triangle_contributions! (generic function with 1 method)
-````
-
 Now we need the function that gets the contributions from the boundary edges.
 
-````julia
+````@example diffusion_equations
 function boundary_edge_contributions!(A, b, mesh, conditions,
     diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
-        i, j = DelaunayTriangulation.edge_indices(e)
+        i, j = DelaunayTriangulation.edge_vertices(e)
         nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
         Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
         Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
@@ -176,16 +177,12 @@ function boundary_edge_contributions!(A, b, mesh, conditions,
 end
 ````
 
-````
-boundary_edge_contributions! (generic function with 1 method)
-````
-
 Now that we have the parts for handling the main flux contributions, we need to consider
-the boundary conditions. Note that in the code above we have already taken not to update
+the boundary conditions. Note that in the code above we have alredy taken not to update
 $\vb A$ or $\vb b$ if there a boundary condition at the associated node, so we do not
 need to worry about e.g. zeroing out rows of $\vb A$ for a node with a boundary condition.
 
-````julia
+````@example diffusion_equations
 function apply_dirichlet_conditions!(initial_condition, mesh, conditions)
     for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
         x, y = get_point(mesh, i)
@@ -200,10 +197,6 @@ function apply_dudt_conditions!(b, mesh, conditions)
         end
     end
 end
-````
-
-````
-apply_dudt_conditions! (generic function with 1 method)
 ````
 
 Now let's define `diffusion_equation`. For this, we note we want to write the problem in
@@ -225,7 +218,7 @@ so that
 ```
 Note that this also requires that we append a `1` to the initial condition.
 
-````julia
+````@example diffusion_equations
 function diffusion_equation(mesh::FVMGeometry,
     BCs::BoundaryConditions,
     ICs::InternalConditions=InternalConditions();
@@ -250,73 +243,33 @@ function diffusion_equation(mesh::FVMGeometry,
 end
 ````
 
-````
-diffusion_equation (generic function with 2 methods)
-````
-
 Let's now test the function. We use the same problem as in [this tutorial](../tutorials/diffusion_equation_on_a_square_plate.md).
 
-````julia
+````@example diffusion_equations
 using DelaunayTriangulation, OrdinaryDiffEq, LinearAlgebra, SparseArrays
 tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 diffusion_function = (x, y, p) -> 1 / 9
-initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in each_point(tri)]
+initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.5
 prob = diffusion_equation(mesh, BCs;
     diffusion_function,
     initial_condition,
     final_time)
 sol = solve(prob, Tsit5(); saveat=0.05)
-````
-
-````
-retcode: Success
-Interpolation: 1st order linear
-t: 11-element Vector{Float64}:
- 0.0
- 0.05
- 0.1
- 0.15
- 0.2
- 0.25
- 0.3
- 0.35
- 0.4
- 0.45
- 0.5
-u: 11-element Vector{Vector{Float64}}:
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+sol |> tc #hide
 ````
 
 (It would be nice to use `LinearExponential()` in the call above, but it just seems to be extremely numerically unstable, so it's unusable.)
 Note also that `sol` contains an extra component:
 
-````julia
+````@example diffusion_equations
 length(sol.u[1])
 ````
 
-````
-2501
-````
-
-````julia
+````@example diffusion_equations
 DelaunayTriangulation.num_solid_vertices(tri)
-````
-
-````
-2500
 ````
 
 This is because we needed to add in an extra component to represent the problem as a linear problem.
@@ -325,7 +278,7 @@ So, the solution is in `sol[begin:end-1, :]`, and you should ignore `sol[end, :]
 
 Let's now plot.
 
-````julia
+````@example diffusion_equations
 using CairoMakie
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
@@ -340,37 +293,28 @@ end
 resize_to_layout!(fig)
 fig
 ````
-![](diffusion_equations-24.png)
 
 This is exactly the solution we expect!
 
 ## Using the Provided Template
 Let's now use the built-in `DiffusionEquation()` which implements the above template inside FiniteVolumeMethod.jl.
 
-````julia
+````@example diffusion_equations
 diff_eq = DiffusionEquation(mesh, BCs;
     diffusion_function,
     initial_condition,
     final_time)
 ````
 
-````
-DiffusionEquation with 2500 nodes and time span (0.0, 0.5)
-````
-
 Let's compare `DiffusionEquation` to the `FVMProblem` approach.
 
-````julia
+````@example diffusion_equations
 fvm_prob = FVMProblem(mesh, BCs;
     diffusion_function=let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     initial_condition,
     final_time)
-````
-
-````
-FVMProblem with 2500 nodes and time span (0.0, 0.5)
 ````
 
 ````julia
@@ -404,7 +348,7 @@ To finish this example, let's solve a diffusion equation with constant Neumann b
 ```
 Here, $\Omega = [0, 320]^2$.
 
-````julia
+````@example diffusion_equations
 L = 320.0
 tri = triangulate_rectangle(0, L, 0, L, 100, 100, single_boundary=true)
 mesh = FVMGeometry(tri)
@@ -418,43 +362,21 @@ initf = (x, y) -> begin
     end
 end
 final_time = 500.0
-initial_condition = [initf(x, y) for (x, y) in each_point(tri)]
+initial_condition = [initf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = DiffusionEquation(mesh, BCs;
     diffusion_function,
     initial_condition,
     final_time)
 ````
 
-````
-DiffusionEquation with 10000 nodes and time span (0.0, 500.0)
-````
-
 Let's solve and plot.
 
-````julia
+````@example diffusion_equations
 sol = solve(prob, Tsit5(); saveat=100.0)
+sol |> tc #hide
 ````
 
-````
-retcode: Success
-Interpolation: 1st order linear
-t: 6-element Vector{Float64}:
-   0.0
- 100.0
- 200.0
- 300.0
- 400.0
- 500.0
-u: 6-element Vector{Vector{Float64}}:
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
- [63.69432146948662, 57.91993563851779, 52.468254485047616, 48.07467536264921, 44.32409891376271, 41.312319386306044, 38.87775229689681, 36.98180247606284, 35.51874424288336, 34.42222343912825  …  35.51874424287919, 36.9818024760664, 38.87775229688911, 41.312319386320816, 44.324098913738624, 48.07467536269855, 52.46825448494263, 57.91993563875677, 63.69432146886061, 1.0]
- [91.50473260688723, 83.71760875996453, 78.69493124267801, 73.3849378927463, 69.04806689875537, 65.04397421701678, 61.648665579203154, 58.66588690809526, 56.14262845370988, 53.99225264855068  …  56.142628453714934, 58.66588690808136, 61.64866557922738, 65.04397421697105, 69.04806689884693, 73.38493789256844, 78.69493124304407, 83.71760875913677, 91.5047326090407, 1.0]
- [111.3264796893097, 104.12803651686592, 98.70364195388714, 93.24912184952623, 88.50484048430158, 84.09374545497968, 80.1785823663648, 76.64390606135497, 73.51698409166313, 70.74569558372897  …  73.51698409166475, 76.64390606134724, 80.17858236637763, 84.09374545495513, 88.5048404843528, 93.24912184942808, 98.70364195408713, 104.12803651641441, 111.32647969048199, 1.0]
- [125.84898878011737, 122.18663715509418, 115.25163624904545, 110.28509663472774, 105.01236092340481, 100.49453351161048, 96.1788470217854, 92.33274745412113, 88.7904377122623, 85.61578063131344  …  88.79043771224866, 92.33274745414077, 96.1788470217473, 100.49453351168056, 105.01236092327554, 110.28509663498563, 115.25163624850686, 122.18663715631531, 125.84898877693128, 1.0]
- [141.75921595314702, 136.91169589100613, 130.381410153159, 125.09716189470845, 119.78045994667951, 115.02374593979808, 110.51491577596983, 106.40139024536721, 102.58742470687305, 99.10565520758897  …  102.58742470686482, 106.40139024537704, 110.51491577595006, 115.0237459398341, 119.78045994661478, 125.09716189483846, 130.38141015288542, 136.9116958916271, 141.75921595152502, 1.0]
-````
-
-````julia
+````@example diffusion_equations
 fig = Figure(fontsize=38)
 for j in eachindex(sol)
     ax = Axis(fig[1, j], width=600, height=600,
@@ -468,14 +390,13 @@ end
 resize_to_layout!(fig)
 fig
 ````
-![](diffusion_equations-39.png)
 
 For the corresponding `FVMProblem`, note that the Neumann boundary conditions need to be
 defined in terms of $\vb q = -D(\vb x)\grad u$ rather than $\grad u \vdot \vu n$. So,
 since $\grad u \vdot \vu n = 2$, we have $-D\grad u \vdot \vu n = -2D = -4$, so
 $\vb q \vdot \vu n = -4$. Here is a comparison of the two solutions.
 
-````julia
+````@example diffusion_equations
 BCs_prob = BoundaryConditions(mesh, (x, y, t, u, p) -> -4, Neumann)
 fvm_prob = FVMProblem(mesh, BCs_prob;
     diffusion_function=let D = diffusion_function
@@ -483,8 +404,8 @@ fvm_prob = FVMProblem(mesh, BCs_prob;
     end,
     initial_condition,
     final_time)
-using Sundials
-fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES); saveat=100.0)
+fvm_sol = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()); saveat=100.0)
+fvm_sol |> tc #hide
 
 for j in eachindex(fvm_sol)
     ax = Axis(fig[2, j], width=600, height=600,
@@ -498,7 +419,6 @@ end
 resize_to_layout!(fig)
 fig
 ````
-![](diffusion_equations-41.png)
 
 Here is a benchmark comparison.
 ````julia
@@ -510,6 +430,7 @@ Here is a benchmark comparison.
 ````
 
 ````julia
+using Sundials
 @btime solve($fvm_prob, $CVODE_BDF(linear_solver=:GMRES), saveat=$100.0);
 ````
 
@@ -519,14 +440,10 @@ Here is a benchmark comparison.
 
 These problems also work with the `pl_interpolate` function:
 
-````julia
+````@example diffusion_equations
 q = (30.0, 45.0)
 T = jump_and_march(tri, q)
 val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])
-````
-
-````
-11.090458780694902
 ````
 
 ## Just the code
@@ -538,7 +455,7 @@ using FiniteVolumeMethod
 const FVM = FiniteVolumeMethod
 function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         i, j, k = ijk
         props = FVM.get_triangle_props(mesh, i, j, k)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
@@ -562,9 +479,9 @@ end
 function boundary_edge_contributions!(A, b, mesh, conditions,
     diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
-        i, j = DelaunayTriangulation.edge_indices(e)
+        i, j = DelaunayTriangulation.edge_vertices(e)
         nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
-        ijk = indices(T)
+        ijk = triangle_vertices(T)
         s₁₁, s₁₂, s₁₃, s₂₁, s₂₂, s₂₃, s₃₁, s₃₂, s₃₃ = props.shape_function_coefficients
         Dᵢ = diffusion_function(mᵢx, mᵢy, diffusion_parameters)
         Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
@@ -634,7 +551,7 @@ tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 diffusion_function = (x, y, p) -> 1 / 9
-initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in each_point(tri)]
+initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.5
 prob = diffusion_equation(mesh, BCs;
     diffusion_function,
@@ -685,7 +602,7 @@ initf = (x, y) -> begin
     end
 end
 final_time = 500.0
-initial_condition = [initf(x, y) for (x, y) in each_point(tri)]
+initial_condition = [initf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = DiffusionEquation(mesh, BCs;
     diffusion_function,
     initial_condition,
@@ -713,8 +630,7 @@ fvm_prob = FVMProblem(mesh, BCs_prob;
     end,
     initial_condition,
     final_time)
-using Sundials
-fvm_sol = solve(fvm_prob, CVODE_BDF(linear_solver=:GMRES); saveat=100.0)
+fvm_sol = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()); saveat=100.0)
 
 for j in eachindex(fvm_sol)
     ax = Axis(fig[2, j], width=600, height=600,

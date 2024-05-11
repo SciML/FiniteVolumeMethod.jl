@@ -2,6 +2,11 @@
 EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/diffusion_equation_on_a_square_plate.jl"
 ```
 
+````@example diffusion_equation_on_a_square_plate
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
+nothing #hide
+````
 
 # Diffusion Equation on a Square Plate
 This tutorial considers a diffusion equation on a square plate:
@@ -20,7 +25,7 @@ f(x, y) = \begin{cases} 50 & y \leq 1, \\ 0 & y > 1. \end{cases}
 ```
 To solve this problem, the first step is to define the mesh.
 
-````julia
+````@example diffusion_equation_on_a_square_plate
 using FiniteVolumeMethod, DelaunayTriangulation
 a, b, c, d = 0.0, 2.0, 0.0, 2.0
 nx, ny = 50, 50
@@ -28,111 +33,64 @@ tri = triangulate_rectangle(a, b, c, d, nx, ny, single_boundary=true)
 mesh = FVMGeometry(tri)
 ````
 
-````
-FVMGeometry with 2500 control volumes, 4802 triangles, and 7301 edges
-````
-
 This mesh is shown below.
 
-````julia
+````@example diffusion_equation_on_a_square_plate
 using CairoMakie
 fig, ax, sc = triplot(tri)
 fig
 ````
-![](diffusion_equation_on_a_square_plate-6.png)
 
 We now need to define the boundary conditions. We have a homogeneous Dirichlet condition:
 
-````julia
+````@example diffusion_equation_on_a_square_plate
 bc = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, bc, Dirichlet)
 ````
 
-````
-BoundaryConditions with 1 boundary condition with type Dirichlet
-````
-
 We can now define the actual PDE. We start by defining the initial condition and the diffusion function.
 
-````julia
+````@example diffusion_equation_on_a_square_plate
 f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 D = (x, y, t, u, p) -> 1 / 9
-````
-
-````
-#7 (generic function with 1 method)
 ````
 
 We can now define the problem:
 
-````julia
+````@example diffusion_equation_on_a_square_plate
 final_time = 0.5
 prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
 ````
 
-````
-FVMProblem with 2500 nodes and time span (0.0, 0.5)
-````
-
 Note that in `prob`, it is not a diffusion function that is used but instead it is a flux function:
 
-````julia
+````@example diffusion_equation_on_a_square_plate
 prob.flux_function
-````
-
-````
-#65 (generic function with 1 method)
 ````
 
 When providing `diffusion_function`, the flux is given by $\vb q(\vb x, t, \alpha,\beta,\gamma) = (-\alpha/9, -\beta/9)^{\mkern-1.5mu\mathsf{T}}$,
 where $(\alpha, \beta, \gamma)$ defines the approximation to $u$ via $u(x, y) = \alpha x + \beta y + \gamma$ so that
 $\grad u(\vb x, t) = (\alpha,\beta)^{\mkern-1.5mu\mathsf{T}}$.
 
-To now solve the problem, we simply use `solve`. When no algorithm
-is provided, as long as DifferentialEquations is loaded (instead of e.g.
-OrdinaryDiffEq), the algorithm is chosen automatically. Moreover, note that,
+To now solve the problem, we simply use `solve`. Note that,
 in the `solve` call below, multithreading is enabled by default.
+(If you don't know what algorithm to consider, do `using DifferentialEquations` instead
+and simply call `solve(prob, saveat=0.05)` so that the algorithm is chosen automatically instead
+of using `Tsit5()`.)
 
-````julia
-using DifferentialEquations
-sol = solve(prob, saveat=0.05)
-````
-
-````
-retcode: Success
-Interpolation: 1st order linear
-t: 11-element Vector{Float64}:
- 0.0
- 0.05
- 0.1
- 0.15
- 0.2
- 0.25
- 0.3
- 0.35
- 0.4
- 0.45
- 0.5
-u: 11-element Vector{Vector{Float64}}:
- [50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+````@example diffusion_equation_on_a_square_plate
+using OrdinaryDiffEq
+sol = solve(prob, Tsit5(), saveat=0.05)
+sol |> tc #hide
 ````
 
 To visualise the solution, we can use `tricontourf!` from Makie.jl.
 
-````julia
+````@example diffusion_equation_on_a_square_plate
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
+    local ax
     ax = Axis(fig[1, i], width=600, height=600,
         xlabel="x", ylabel="y",
         title="t = $(sol.t[j])",
@@ -142,8 +100,9 @@ for (i, j) in zip(1:3, (1, 6, 11))
 end
 resize_to_layout!(fig)
 fig
+
+    local ax
 ````
-![](diffusion_equation_on_a_square_plate-19.png)
 
 ## Just the code
 An uncommented version of this example is given below.
@@ -164,7 +123,7 @@ bc = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, bc, Dirichlet)
 
 f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 D = (x, y, t, u, p) -> 1 / 9
 
 final_time = 0.5
@@ -172,11 +131,12 @@ prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time
 
 prob.flux_function
 
-using DifferentialEquations
-sol = solve(prob, saveat=0.05)
+using OrdinaryDiffEq
+sol = solve(prob, Tsit5(), saveat=0.05)
 
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
+    local ax
     ax = Axis(fig[1, i], width=600, height=600,
         xlabel="x", ylabel="y",
         title="t = $(sol.t[j])",
@@ -186,6 +146,8 @@ for (i, j) in zip(1:3, (1, 6, 11))
 end
 resize_to_layout!(fig)
 fig
+
+    local ax
 ```
 
 ---

@@ -18,7 +18,7 @@ end
     end
     @testset verbose = true "Conditions" begin
         safe_include("conditions.jl")
-    end
+    end 
     @testset verbose = true "Problem" begin
         safe_include("problem.jl")
     end

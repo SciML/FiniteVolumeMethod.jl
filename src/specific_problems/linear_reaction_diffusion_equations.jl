@@ -94,6 +94,7 @@ function LinearReactionDiffusionEquation(mesh::FVMGeometry,
     linear_source_contributions!(A, mesh, conditions, source_function, source_parameters)
     apply_dudt_conditions!(b, mesh, conditions)
     apply_dirichlet_conditions!(_ic, mesh, conditions)
+    fix_missing_vertices!(A, b, mesh)
     Af = sparse(Afull)
     Aop = MatrixOperator(Af)
     prob = ODEProblem(Aop, _ic, (initial_time, final_time); kwargs...)

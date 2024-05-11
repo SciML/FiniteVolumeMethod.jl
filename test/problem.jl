@@ -15,7 +15,7 @@ include("test_functions.jl")
     flux_function, flux_parameters,
     source_function, source_parameters,
     initial_condition = example_problem()
-    @test sprint(show, MIME"text/plain"(), prob) == "FVMProblem with $(num_points(tri)) nodes and time span ($(prob.initial_time), $(prob.final_time))"
+    @test sprint(show, MIME"text/plain"(), prob) == "FVMProblem with $(DelaunayTriangulation.num_points(tri)) nodes and time span ($(prob.initial_time), $(prob.final_time))"
     conds = FVM.Conditions(mesh, BCs, ICs)
     @test prob.mesh == mesh
     @test prob.conditions == conds
@@ -49,7 +49,7 @@ include("test_functions.jl")
             @test FVM.is_neumann_edge(prob, e...)
         end
     end
-    for i in each_point_index(prob.mesh.triangulation)
+    for i in DelaunayTriangulation.DelaunayTriangulation.each_point_index(prob.mesh.triangulation)
         if i ∈ keys(prob.conditions.dirichlet_nodes)
             @test FVM.has_condition(prob, i)
             @test FVM.is_dirichlet_node(prob, i)
@@ -75,7 +75,7 @@ include("test_functions.jl")
     qx = -α * u * p[1] + t
     qy = x + t - β * u * p[2]
     steady = SteadyFVMProblem(prob)
-    @test sprint(show, MIME"text/plain"(), steady) == "SteadyFVMProblem with $(num_points(tri)) nodes"
+    @test sprint(show, MIME"text/plain"(), steady) == "SteadyFVMProblem with $(DelaunayTriangulation.num_points(tri)) nodes"
     @inferred SteadyFVMProblem(prob)
     @test FVM.eval_flux_function(steady, x, y, t, α, β, γ) == (qx, qy)
     @inferred FVM.eval_flux_function(steady, x, y, t, α, β, γ)
@@ -179,8 +179,8 @@ end
     Ψ_S = (x, y, t, (Φ, Ψ), p) -> -Φ^2 * Ψ + Φ
     Φ_exact = (x, y, t) -> exp(-x - y - t / 2)
     Ψ_exact = (x, y, t) -> exp(x + y + t / 2)
-    Φ₀ = [Φ_exact(x, y, 0) for (x, y) in each_point(tri)]
-    Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in each_point(tri)]
+    Φ₀ = [Φ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)]
+    Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)]
     Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
         initial_condition=Φ₀, final_time=5.0)
     Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function=Ψ_q, source_function=Ψ_S,
@@ -278,7 +278,7 @@ end
         @test !FVM.is_constrained_edge(prob, i, j, 1)
         @test !FVM.is_constrained_edge(prob, i, j, 2)
     end
-    for i in each_point_index(tri)
+    for i in DelaunayTriangulation.each_point_index(tri)
         if i ∉ keys(cond1.dirichlet_nodes) && i ∉ keys(cond2.dirichlet_nodes)
             @test !FVM.is_dirichlet_node(prob, i, 1)
             @test !FVM.is_dirichlet_node(prob, i, 2)

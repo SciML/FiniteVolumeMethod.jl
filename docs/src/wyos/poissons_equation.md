@@ -2,6 +2,11 @@
 EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/poissons_equation.jl"
 ```
 
+````@example poissons_equation
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
+nothing #hide
+````
 
 # Poisson's Equation
 ```@contents
@@ -35,9 +40,9 @@ Let us now implement our problem. For [mean exit time problems](mean_exit_time.m
 had a function `create_met_b` that we used for defining $\vb b$. We should generalise
 that function to now accept a source function:
 
-````julia
+````@example poissons_equation
 function create_rhs_b(mesh, conditions, source_function, source_parameters)
-    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.is_dirichlet_node(conditions, i)
             p = get_point(mesh, i)
@@ -49,13 +54,9 @@ function create_rhs_b(mesh, conditions, source_function, source_parameters)
 end
 ````
 
-````
-create_rhs_b (generic function with 1 method)
-````
-
 We also need a function that applies the Dirichlet conditions.
 
-````julia
+````@example poissons_equation
 function apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
     for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
         x, y = get_point(mesh, i)
@@ -65,13 +66,9 @@ function apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
 end
 ````
 
-````
-apply_steady_dirichlet_conditions! (generic function with 1 method)
-````
-
 So, our problem can be defined by:
 
-````julia
+````@example poissons_equation
 using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
 const FVM = FiniteVolumeMethod
 function poissons_equation(mesh::FVMGeometry,
@@ -82,18 +79,15 @@ function poissons_equation(mesh::FVMGeometry,
     source_function,
     source_parameters=nothing)
     conditions = Conditions(mesh, BCs, ICs)
-    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
     b = create_rhs_b(mesh, conditions, source_function, source_parameters)
     FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     FVM.boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
     return LinearProblem(sparse(A), b)
 end
-````
-
-````
-poissons_equation (generic function with 2 methods)
 ````
 
 Now let's test this problem. We consider
@@ -106,64 +100,35 @@ u &= 0 & \vb x \in\partial[0,1]^2.
 \end{equation*}
 ```
 
-````julia
+````@example poissons_equation
 tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 source_function = (x, y, p) -> -sin(π * x) * sin(π * y)
 prob = poissons_equation(mesh, BCs;  source_function)
+using DisplayAs #hide
+prob |> tc #hide
 ````
 
-````
-LinearProblem. In-place: true
-b: 10000-element Vector{Float64}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
- ⋮
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
-````
-
-````julia
+````@example poissons_equation
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 ````
 
-````
-u: 10000-element Vector{Float64}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
- ⋮
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
-````
-
-````julia
+````@example poissons_equation
 using CairoMakie
 fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 0.05, 10), colormap=:matter, extendhigh=:auto)
 tightlimits!(ax)
 fig
 ````
-![](poissons_equation-14.png)
 
 If we wanted to turn this into a `SteadyFVMProblem`, we use a similar call to `poissons_equation`
 above except with an `initial_condition` for the initial guess. Moreover, we need to
 change the sign of the source function, since above we are solving $\div[D(\vb x)\grad u] = f(\vb x)$,
 when `FVMProblem`s assume that we are solving $0 = \div[D(\vb x)\grad u] + f(\vb x)$.
 
-````julia
-initial_condition = zeros(num_points(tri))
+````@example poissons_equation
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function= (x, y, t, u, p) -> 1.0,
     source_function=let S = source_function
@@ -173,59 +138,23 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     final_time=Inf))
 ````
 
-````
-SteadyFVMProblem with 10000 nodes
-````
-
-````julia
+````@example poissons_equation
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
-````
-
-````
-u: 10000-element Vector{Float64}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
- ⋮
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
+fvm_sol |> tc #hide
 ````
 
 ## Using the Provided Template
 Let's now use the built-in `PoissonsEquation` which implements the above template
 inside FiniteVolumeMethod.jl. The above problem can be constructed as follows:
 
-````julia
+````@example poissons_equation
 prob = PoissonsEquation(mesh, BCs; source_function=source_function)
 ````
 
-````
-PoissonsEquation with 10000 nodes
-````
-
-````julia
+````@example poissons_equation
 sol = solve(prob, KLUFactorization())
-````
-
-````
-u: 10000-element Vector{Float64}:
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
- ⋮
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
+sol |> tc #hide
 ````
 
 Here is a benchmark comparison of the `PoissonsEquation` approach against the `FVMProblem` approach.
@@ -273,44 +202,35 @@ where, again, $r$ is the distance between $\vb x$ and the parallel plates, and $
 To define this problem, let us first define the mesh. We will need to manually put in the capacitor plates so that
 we can enforce Dirichlet conditions on them.
 
-````julia
+````@example poissons_equation
 a, b, c, d = 0.0, 10.0, 0.0, 10.0
 e, f = (2.0, 3.0), (8.0, 3.0)
 g, h = (2.0, 7.0), (8.0, 7.0)
 points = [(a, c), (b, c), (b, d), (a, d), e, f, g, h]
 boundary_nodes = [[1, 2], [2, 3], [3, 4], [4, 1]]
-edges = Set(((5, 6), (7, 8)))
-tri = triangulate(points; boundary_nodes, edges, delete_ghosts=false)
-refine!(tri; max_area=1e-4get_total_area(tri))
+segments = Set(((5, 6), (7, 8)))
+tri = triangulate(points; boundary_nodes, segments, delete_ghosts=false)
+refine!(tri; max_area=1e-4get_area(tri))
 fig, ax, sc = triplot(tri, show_constrained_edges=true, constrained_edge_linewidth=5)
 fig
 ````
-![](poissons_equation-25.png)
 
-````julia
+````@example poissons_equation
 mesh = FVMGeometry(tri)
-````
-
-````
-FVMGeometry with 8043 control volumes, 15764 triangles, and 23806 edges
 ````
 
 The boundary conditions are given by:
 
-````julia
+````@example poissons_equation
 zero_f = (x, y, t, u, p) -> zero(x)
 bc_f = (zero_f, zero_f, zero_f, zero_f)
 bc_types = (Dirichlet, Neumann, Dirichlet, Neumann) # bot, right, top, left
 BCs = BoundaryConditions(mesh, bc_f, bc_types)
 ````
 
-````
-BoundaryConditions with 4 boundary conditions with types (Dirichlet, Neumann, Dirichlet, Neumann)
-````
-
 To define the internal conditions, we need to get the indices for the plates.
 
-````julia
+````@example poissons_equation
 function find_vertices_on_plates(tri)
     lower_plate = Int[]
     upper_plate = Int[]
@@ -333,14 +253,10 @@ internal_f = ((x, y, t, u, p) -> -one(x), (x, y, t, u, p) -> one(x))
 ICs = InternalConditions(internal_f, dirichlet_nodes=dirichlet_nodes)
 ````
 
-````
-InternalConditions with 98 Dirichlet nodes and 0 Dudt nodes
-````
-
 Next, we define $\epsilon(\vb x)$ and $\rho(\vb x)$. We need a function that computes the distance
 between a point and the plates. For the distance between a point and a line segment, we can use:[^3]
 
-````julia
+````@example poissons_equation
 using LinearAlgebra
 function dist_to_line(p, a, b)
     ℓ² = norm(a .- b)^2
@@ -350,14 +266,10 @@ function dist_to_line(p, a, b)
 end
 ````
 
-````
-dist_to_line (generic function with 1 method)
-````
-
 [^3]: Taken from [here](https://stackoverflow.com/a/1501725).
 Thus, the distance between a point and the two plates is:
 
-````julia
+````@example poissons_equation
 function dist_to_plates(x, y)
     p = (x, y)
     a1, b1 = (2.0, 3.0), (8.0, 3.0)
@@ -368,13 +280,9 @@ function dist_to_plates(x, y)
 end
 ````
 
-````
-dist_to_plates (generic function with 1 method)
-````
-
 So, our function $\epsilon(\vb x)$ is defined by:
 
-````julia
+````@example poissons_equation
 using SpecialFunctions
 function dielectric_function(x, y, p)
     r = dist_to_plates(x, y)
@@ -382,39 +290,27 @@ function dielectric_function(x, y, p)
 end
 ````
 
-````
-dielectric_function (generic function with 1 method)
-````
-
 The charge density is:
 
-````julia
+````@example poissons_equation
 function charge_density(x, y, p)
     r = dist_to_plates(x, y)
     return p.Q / (2π) * exp(-r^2 / 2)
 end
 ````
 
-````
-charge_density (generic function with 1 method)
-````
-
 Using this charge density, our source function is defined by:
 
-````julia
+````@example poissons_equation
 function plate_source_function(x, y, p)
     ρ = charge_density(x, y, p)
     return -ρ / p.ϵ₀
 end
 ````
 
-````
-plate_source_function (generic function with 1 method)
-````
-
 Now we can define our problem.
 
-````julia
+````@example poissons_equation
 diffusion_parameters = (ϵ₀=8.8541878128e-12, Δ=4.0)
 source_parameters = (ϵ₀=8.8541878128e-12, Q=1e-6)
 prob = PoissonsEquation(mesh, BCs, ICs;
@@ -424,59 +320,27 @@ prob = PoissonsEquation(mesh, BCs, ICs;
     source_parameters=source_parameters)
 ````
 
-````
-PoissonsEquation with 8043 nodes
-````
-
-````julia
+````@example poissons_equation
 sol = solve(prob, KLUFactorization())
-````
-
-````
-u: 8043-element Vector{Float64}:
-     0.0
-     0.0
-     0.0
-     0.0
-    -1.0
-     ⋮
- 51056.49568160037
- 38356.53738605582
- 23776.172046371616
- 15305.800698280922
- 36991.813605841366
+sol |> tc #hide
 ````
 
 With this solution, we can also define the electric field $\vb E$, using $\vb E = -\grad V$.
 To compute the gradients, we use NaturalNeighbours.jl.
 
-````julia
+````@example poissons_equation
 using NaturalNeighbours
 itp = interpolate(tri, sol.u; derivatives=true)
 E = map(.-, itp.gradient) # E = -∇V
-````
-
-````
-8043-element Vector{Tuple{Float64, Float64}}:
- (-92.16611391825855, -38611.08851918353)
- (-135.07123950960246, -38712.62388759961)
- (106.23769658329466, 38570.04241506763)
- (47.27146740325949, 39027.27922671291)
- (59246.37075623101, 387.2192495354995)
- ⋮
- (15303.599369740816, -12846.469299439254)
- (2226.185267168199, -10264.496829932992)
- (-2168.004405683131, 13349.848294884237)
- (1482.293757452546, -21202.372178727317)
- (1724.200560200586, -12129.215330819241)
+E |> tc #hide
 ````
 
 For plotting the electric field, we will show the electric field intensity $\|\vb E\|$,
 and we can also show the arrows. Rather than showing all arrows, we will show them at
 a smaller grid of values, which requires differentiating `itp` so that we can get the
-gradients at arbitrary points.
+gradients at arbitary points.
 
-````julia
+````@example poissons_equation
 ∂ = differentiate(itp, 1)
 x = LinRange(0, 10, 25)
 y = LinRange(0, 10, 25)
@@ -504,11 +368,10 @@ ylims!(ax,0,10)
 resize_to_layout!(fig)
 fig
 ````
-![](poissons_equation-47.png)
 
 To finish, let us benchmark the `PoissonsEquation` approach against the `FVMProblem` approach.
 
-````julia
+````@example poissons_equation
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = dielectric_function
         (x, y, t, u, p) -> D(x, y, p)
@@ -518,12 +381,8 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     end,
     diffusion_parameters=diffusion_parameters,
     source_parameters=source_parameters,
-    initial_condition=zeros(num_points(tri)),
+    initial_condition=zeros(DelaunayTriangulation.num_points(tri)),
     final_time=Inf))
-````
-
-````
-SteadyFVMProblem with 8043 nodes
 ````
 
 ````julia
@@ -548,7 +407,7 @@ You can view the source code for this file [here](https://github.com/SciML/Finit
 
 ```julia
 function create_rhs_b(mesh, conditions, source_function, source_parameters)
-    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.is_dirichlet_node(conditions, i)
             p = get_point(mesh, i)
@@ -577,12 +436,13 @@ function poissons_equation(mesh::FVMGeometry,
     source_function,
     source_parameters=nothing)
     conditions = Conditions(mesh, BCs, ICs)
-    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
     b = create_rhs_b(mesh, conditions, source_function, source_parameters)
     FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     FVM.boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
     return LinearProblem(sparse(A), b)
 end
 
@@ -599,7 +459,7 @@ fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 0.05, 10), colormap=:ma
 tightlimits!(ax)
 fig
 
-initial_condition = zeros(num_points(tri))
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function= (x, y, t, u, p) -> 1.0,
     source_function=let S = source_function
@@ -620,9 +480,9 @@ e, f = (2.0, 3.0), (8.0, 3.0)
 g, h = (2.0, 7.0), (8.0, 7.0)
 points = [(a, c), (b, c), (b, d), (a, d), e, f, g, h]
 boundary_nodes = [[1, 2], [2, 3], [3, 4], [4, 1]]
-edges = Set(((5, 6), (7, 8)))
-tri = triangulate(points; boundary_nodes, edges, delete_ghosts=false)
-refine!(tri; max_area=1e-4get_total_area(tri))
+segments = Set(((5, 6), (7, 8)))
+tri = triangulate(points; boundary_nodes, segments, delete_ghosts=false)
+refine!(tri; max_area=1e-4get_area(tri))
 fig, ax, sc = triplot(tri, show_constrained_edges=true, constrained_edge_linewidth=5)
 fig
 
@@ -737,7 +597,7 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     end,
     diffusion_parameters=diffusion_parameters,
     source_parameters=source_parameters,
-    initial_condition=zeros(num_points(tri)),
+    initial_condition=zeros(DelaunayTriangulation.num_points(tri)),
     final_time=Inf))
 ```
 

@@ -63,10 +63,11 @@ function MeanExitTimeProblem(mesh::FVMGeometry,
     conditions = Conditions(mesh, BCs, ICs)
     has_dudt_nodes(conditions) && throw(ArgumentError("MeanExitTimeProblem does not support Dudt nodes."))
     has_constrained_edges(conditions) && throw(ArgumentError("MeanExitTimeProblem does not support Constrained edges."))
-    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     b = create_met_b!(A, mesh, conditions)
+    fix_missing_vertices!(A, b, mesh)
     Asp = sparse(A)
     prob = LinearProblem(Asp, b; kwargs...)
     return MeanExitTimeProblem(mesh, conditions,
@@ -75,7 +76,7 @@ function MeanExitTimeProblem(mesh::FVMGeometry,
 end
 
 function create_met_b!(A, mesh, conditions)
-    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !is_dirichlet_node(conditions, i)
             b[i] = -1

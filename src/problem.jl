@@ -103,6 +103,7 @@ function FVMProblem(mesh::FVMGeometry, boundary_conditions::BoundaryConditions, 
     initial_condition,
     initial_time=0.0,
     final_time)
+    @assert length(initial_condition) == DelaunayTriangulation.num_points(mesh.triangulation) "The initial condition must have the same number of elements as the number of nodes in the mesh (including nodes that aren't vertices in the mesh itself)."
     conditions = Conditions(mesh, boundary_conditions, internal_conditions)
     return FVMProblem(mesh, conditions;
         diffusion_function, diffusion_parameters,
@@ -120,6 +121,7 @@ function FVMProblem(mesh::FVMGeometry, conditions::Conditions;
     initial_condition,
     initial_time=0.0,
     final_time)
+    @assert length(initial_condition) == DelaunayTriangulation.num_points(mesh.triangulation) "The initial condition must have the same number of elements as the number of nodes in the mesh (including nodes that aren't vertices in the mesh itself)."
     updated_flux_fnc = construct_flux_function(flux_function, diffusion_function, diffusion_parameters)
     return FVMProblem(mesh, conditions,
         updated_flux_fnc, flux_parameters,
@@ -239,7 +241,7 @@ end
 function _check_fvmsystem_flux_function(prob::FVMSystem)
     t0 = prob.initial_time
     T = first(each_solid_triangle(prob.mesh.triangulation))
-    i, j, k = indices(T)
+    i, j, k = triangle_vertices(T)
     p, q, r = get_point(prob.mesh.triangulation, i, j, k)
     px, py = getxy(p)
     qx, qy = getxy(q)
@@ -382,7 +384,7 @@ function compute_flux(prob::AbstractFVMProblem, i, j, u, t)
     ℓ = norm((ex, ey))
     nx, ny = ey / ℓ, -ex / ℓ
     k = get_adjacent(tri, j, i) # want the vertex in the direction of the normal
-    if DelaunayTriangulation.is_boundary_index(k)
+    if DelaunayTriangulation.is_ghost_vertex(k)
         k = get_adjacent(tri, i, j)
     else
         i, j = j, i

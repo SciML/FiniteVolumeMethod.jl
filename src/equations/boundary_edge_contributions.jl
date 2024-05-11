@@ -67,7 +67,7 @@ end
 
 # get the contributions to the dudt system across a boundary edge
 @inline function fvm_eqs_single_boundary_edge!(du, u, prob, t, e)
-    i, j = DelaunayTriangulation.edge_indices(e)
+    i, j = DelaunayTriangulation.edge_vertices(e)
     k = get_adjacent(prob.mesh.triangulation, e)
     T = (i, j, k)
     T, props = _safe_get_triangle_props(prob, T)

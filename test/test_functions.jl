@@ -6,14 +6,14 @@ function get_control_volume(tri, i)
         k = get_adjacent(tri, i, j)
         p = get_point(tri, i)
         push!(cv, p)
-        while !DelaunayTriangulation.is_boundary_index(k)
+        while !DelaunayTriangulation.is_ghost_vertex(k)
             q, r = get_point(tri, j, k)
             c = (p .+ q .+ r) ./ 3
             m = (p .+ q) ./ 2
             push!(cv, m, c)
             j = k
             k = get_adjacent(tri, i, j)
-            DelaunayTriangulation.is_boundary_index(k) && push!(cv, (p .+ r) ./ 2)
+            DelaunayTriangulation.is_ghost_vertex(k) && push!(cv, (p .+ r) ./ 2)
         end
         push!(cv, p)
     else
@@ -91,7 +91,7 @@ end
 
 function example_tri_rect()
     a, b, c, d, nx, ny = 0.0, 2.0, 0.0, 5.0, 12, 19
-    tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary=false, add_ghost_triangles=true)
+    tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary=false)
     return tri
 end
 
@@ -182,7 +182,7 @@ end
 function test_bc_conditions!(tri, conds, t,
     dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges, shift=0)
     for e in keys(get_boundary_edge_map(tri))
-        u, v = DelaunayTriangulation.edge_indices(e)
+        u, v = DelaunayTriangulation.edge_vertices(e)
         w = get_adjacent(tri, v, u)
         bc_type = t[-w]
         w -= shift
@@ -286,7 +286,7 @@ function example_diffusion_problem()
     bc = (x, y, t, u, p) -> zero(u)
     BCs = BoundaryConditions(mesh, bc, Dirichlet)
     f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
-    initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+    initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
     D = (x, y, t, u, p) -> 1 / 9
     final_time = 0.5
     prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
@@ -300,7 +300,7 @@ function example_diffusion_problem_system()
     bc = (x, y, t, u, p) -> zero(u[1]) * zero(u[2])
     BCs = BoundaryConditions(mesh, bc, Dirichlet)
     f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
-    initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+    initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
     D = (x, y, t, u, p) -> 1 / 9
     q1 = (x, y, t, α, β, γ, p) -> (-α[1] / 9, -β[1] / 9)
     q2 = (x, y, t, α, β, γ, p) -> (-α[2] / 9, -β[2] / 9)
@@ -339,7 +339,7 @@ function example_heat_convection_problem()
     flux_parameters = (α=α,)
     final_time = 2000.0
     f = (x, y) -> T₀
-    initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+    initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
     prob = FVMProblem(mesh, BCs;
         flux_function,
         flux_parameters,
@@ -350,7 +350,7 @@ end
 
 function test_shape_function_coefficients(prob, u)
     for T in each_solid_triangle(prob.mesh.triangulation)
-        i, j, k = indices(T)
+        i, j, k = triangle_vertices(T)
         s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = prob.mesh.triangle_props[T].shape_function_coefficients
         ui, uj, uk = u[i], u[j], u[k]
         α = s₁ * ui + s₂ * uj + s₃ * uk
@@ -579,7 +579,7 @@ function get_dudt_val(prob, u, t, i, is_diff=true)
 end
 
 function test_dudt_val(prob, u, t, is_diff=true)
-    dudt = [get_dudt_val(prob, u, t, i, is_diff) for i in each_point_index(prob.mesh.triangulation)]
+    dudt = [get_dudt_val(prob, u, t, i, is_diff) for i in DelaunayTriangulation.each_point_index(prob.mesh.triangulation)]
     dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, (prob=prob, parallel=Val(false)), t)
     @test dudt ≈ dudt_fnc
     dudt_fnc = FVM.fvm_eqs!(zero(dudt), u, FVM.get_multithreading_parameters(prob), t)
@@ -670,7 +670,7 @@ function test_jacobian_sparsity(prob::FVMProblem)
     for i in each_solid_vertex(prob.mesh.triangulation)
         A[i, i] = 1.0
         for j in get_neighbours(prob.mesh.triangulation, i)
-            DelaunayTriangulation.is_boundary_index(j) && continue
+            DelaunayTriangulation.is_ghost_vertex(j) && continue
             A[i, j] = 1.0
         end
     end
@@ -696,7 +696,7 @@ function test_jacobian_sparsity(prob::FVMSystem{N}) where {N}
     for i in each_solid_vertex(tri)
         node1 = idx_map[i]
         for j in (i, get_neighbours(tri, i)...)
-            DelaunayTriangulation.is_boundary_index(j) && continue
+            DelaunayTriangulation.is_ghost_vertex(j) && continue
             node2 = idx_map[j]
             for x in node1
                 for y in node2

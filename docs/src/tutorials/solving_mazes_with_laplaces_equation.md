@@ -2,6 +2,11 @@
 EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/solving_mazes_with_laplaces_equation.jl"
 ```
 
+````@example solving_mazes_with_laplaces_equation
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
+nothing #hide
+````
 
 # Solving Mazes with Laplace's Equation
 In this tutorial, we consider solving
@@ -27,7 +32,7 @@ the associated streamlines.
  Here is what the maze
 looks like, where the start is in blue and the end is in red.
 
-````julia
+````@example solving_mazes_with_laplaces_equation
 using DelaunayTriangulation, CairoMakie, DelimitedFiles
 A = readdlm(joinpath(@__DIR__, "../tutorials/maze.txt"))
 A = unique(A, dims=1)
@@ -48,7 +53,7 @@ y_finish_to_start = y[finish_idx_end:start_idx_init]
 x_bnd = [x_start, x_start_to_finish, x_finish, x_finish_to_start]
 y_bnd = [y_start, y_start_to_finish, y_finish, y_finish_to_start]
 boundary_nodes, points = convert_boundary_points_to_indices(x_bnd, y_bnd)
-tri = triangulate(points; boundary_nodes, recompute_representative_point=false) # takes a while because maze.txt contains so many points
+tri = triangulate(points; boundary_nodes) # takes a while because maze.txt contains so many points
 refine!(tri)
 
 fig, ax, sc, = triplot(tri,
@@ -58,11 +63,10 @@ lines!(ax, [get_point(tri, get_boundary_nodes(tri, 1)...)...], color=:blue, line
 lines!(ax, [get_point(tri, get_boundary_nodes(tri, 3)...)...], color=:red, linewidth=6)
 fig
 ````
-![](solving_mazes_with_laplaces_equation-4.png)
 
 Now we can solve the problem.
 
-````julia
+````@example solving_mazes_with_laplaces_equation
 using FiniteVolumeMethod, StableRNGs
 mesh = FVMGeometry(tri)
 start_bc = (x, y, t, u, p) -> zero(u)
@@ -73,7 +77,7 @@ fncs = (start_bc, start_to_finish_bc, finish_bc, finish_to_start_bc)
 types = (Dirichlet, Neumann, Dirichlet, Neumann)
 BCs = BoundaryConditions(mesh, fncs, types)
 diffusion_function = (x, y, t, u, p) -> one(u)
-initial_condition = 0.05randn(StableRNG(123), DelaunayTriangulation.num_solid_vertices(tri)) # random initial condition - this is the initial guess for the solution
+initial_condition = 0.05randn(StableRNG(123), DelaunayTriangulation.num_points(tri)) # random initial condition - this is the initial guess for the solution
 final_time = Inf
 prob = FVMProblem(mesh, BCs;
     diffusion_function=diffusion_function,
@@ -82,49 +86,29 @@ prob = FVMProblem(mesh, BCs;
 steady_prob = SteadyFVMProblem(prob)
 ````
 
-````
-SteadyFVMProblem with 3685 nodes
-````
-
-````julia
+````@example solving_mazes_with_laplaces_equation
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()), abstol=1e-14, reltol=1e-14))
-````
-
-````
-u: 3685-element Vector{Float64}:
- 0.0
- 0.0
- 0.005899369154293697
- 0.012612027376969343
- 0.01980388371698077
- ⋮
- 0.9815336089973459
- 0.874679306209742
- 0.9815336089211552
- 0.3915022921271426
- 0.393644793188029
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization(), autodiff=false)))
+sol |> tc #hide
 ````
 
 We now have our solution.
 
-````julia
+````@example solving_mazes_with_laplaces_equation
 tricontourf(tri, sol.u, colormap=:matter)
 ````
-![](solving_mazes_with_laplaces_equation-9.png)
 
 This is not what we use to compute the solution to the maze,
 instead we need $\grad\phi$. We compute the gradient at each point using
 NaturalNeighbours.jl.
 
-````julia
+````@example solving_mazes_with_laplaces_equation
 using NaturalNeighbours, LinearAlgebra
 itp = interpolate(tri, sol.u; derivatives=true)
 ∇ = NaturalNeighbours.get_gradient(itp)
 ∇norms = norm.(∇)
 tricontourf(tri, ∇norms, colormap=:matter)
 ````
-![](solving_mazes_with_laplaces_equation-11.png)
 
 The solution to the maze is now extremely clear from this plot!
 
@@ -132,7 +116,7 @@ An alternative way to look at this solution is to
 consider the transient problem, where we do not solve the
 steady state problem and instead view the solution over time.
 
-````julia
+````@example solving_mazes_with_laplaces_equation
 using Accessors
 prob = @set prob.final_time = 1e8
 LogRange(a, b, n) = exp10.(LinRange(log10(a), log10(b), n))
@@ -151,14 +135,7 @@ record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(s
     framerate=24) do _i
     i[] = _i
 end;
-````
-
-````
-┌ Warning: Natural neighbour interpolation is only defined over unconstrained triangulations.
-│ You may find unexpected results when interpolating near the boundaries or constrained edges, and especially near non-convex boundaries or outside of the triangulation.
-│ In your later evaluations of this interpolant, consider using project=false.
-└ @ NaturalNeighbours C:\Users\User\.julia\packages\NaturalNeighbours\lWoT4\src\data_structures\interpolant.jl:19
-
+nothing #hide
 ````
 
 ![Animation of the solution of the maze](../figures/maze_solution_1.mp4)
@@ -187,7 +164,7 @@ y_finish_to_start = y[finish_idx_end:start_idx_init]
 x_bnd = [x_start, x_start_to_finish, x_finish, x_finish_to_start]
 y_bnd = [y_start, y_start_to_finish, y_finish, y_finish_to_start]
 boundary_nodes, points = convert_boundary_points_to_indices(x_bnd, y_bnd)
-tri = triangulate(points; boundary_nodes, recompute_representative_point=false) # takes a while because maze.txt contains so many points
+tri = triangulate(points; boundary_nodes) # takes a while because maze.txt contains so many points
 refine!(tri)
 
 fig, ax, sc, = triplot(tri,
@@ -207,7 +184,7 @@ fncs = (start_bc, start_to_finish_bc, finish_bc, finish_to_start_bc)
 types = (Dirichlet, Neumann, Dirichlet, Neumann)
 BCs = BoundaryConditions(mesh, fncs, types)
 diffusion_function = (x, y, t, u, p) -> one(u)
-initial_condition = 0.05randn(StableRNG(123), DelaunayTriangulation.num_solid_vertices(tri)) # random initial condition - this is the initial guess for the solution
+initial_condition = 0.05randn(StableRNG(123), DelaunayTriangulation.num_points(tri)) # random initial condition - this is the initial guess for the solution
 final_time = Inf
 prob = FVMProblem(mesh, BCs;
     diffusion_function=diffusion_function,
@@ -216,7 +193,7 @@ prob = FVMProblem(mesh, BCs;
 steady_prob = SteadyFVMProblem(prob)
 
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()), abstol=1e-14, reltol=1e-14))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization(), autodiff=false)))
 
 tricontourf(tri, sol.u, colormap=:matter)
 

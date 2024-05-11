@@ -438,7 +438,7 @@ Get all edges that have a [`Constrained`](@ref) condition.
     constrained_edges = Dict{NTuple{2,Int},Int}()
     dirichlet_nodes = copy(ic.dirichlet_nodes)
     dudt_nodes = copy(ic.dudt_nodes)
-    ne = DelaunayTriangulation.num_constrained_edges(mesh.triangulation_statistics)
+    ne = DelaunayTriangulation.num_segments(mesh.triangulation_statistics)
     nv = DelaunayTriangulation.num_solid_vertices(mesh.triangulation_statistics)
     sizehint!(neumann_edges, ne)
     sizehint!(constrained_edges, ne)
@@ -455,15 +455,16 @@ function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditi
     hasbnd = DelaunayTriangulation.has_boundary_nodes(tri)
     has_ghost || add_ghost_triangles!(tri)
     hasbnd || lock_convex_hull!(tri)
-    bn_map = get_boundary_map(tri)
-    for (bc_number, (_, segment_index)) in enumerate(bn_map)
+    bn_map = get_ghost_vertex_map(tri)
+    for (bc_number, segment_index) in bn_map
+        bc_number *= -1
         bn_nodes = get_boundary_nodes(tri, segment_index)
         nedges = num_boundary_edges(bn_nodes)
+        condition = bc_conditions[bc_number]
+        updated_bc_number = bc_number + nif # conditions stores the internal functions first
         for i in 1:nedges
             u = get_boundary_nodes(bn_nodes, i)
             v = get_boundary_nodes(bn_nodes, i + 1)
-            condition = bc_conditions[bc_number]
-            updated_bc_number = bc_number + nif
             if condition == Neumann
                 conditions.neumann_edges[(u, v)] = updated_bc_number
             elseif condition == Constrained

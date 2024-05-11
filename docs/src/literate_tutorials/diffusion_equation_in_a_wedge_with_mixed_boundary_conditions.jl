@@ -29,28 +29,20 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # one part for each boundary condition. This is accomplished 
 # by providing a single vector for each part of the boundary as follows
 # (and as described in DelaunayTriangulation.jl's documentation),
-# where we also `refine!` the mesh to get a better mesh. 
+# where we also `refine!` the mesh to get a better mesh. For the arc, 
+# we use the `CircularArc` so that the mesh knows that it is triangulating 
+# a certain arc in that area.
 using DelaunayTriangulation, FiniteVolumeMethod, ElasticArrays
 using ReferenceTests, Bessels, FastGaussQuadrature, Cubature #src
-n = 50
+
 α = π / 4
-## The bottom edge 
-x₁ = [0.0, 1.0]
-y₁ = [0.0, 0.0]
-## The arc 
-r₂ = fill(1, n)
-θ₂ = LinRange(0, α, n)
-x₂ = @. r₂ * cos(θ₂)
-y₂ = @. r₂ * sin(θ₂)
-## The upper edge 
-x₃ = [cos(α), 0.0]
-y₃ = [sin(α), 0.0]
-## Now combine and create the mesh 
-x = [x₁, x₂, x₃]
-y = [y₁, y₂, y₃]
-boundary_nodes, points = convert_boundary_points_to_indices(x, y; existing_points=ElasticMatrix{Float64}(undef, 2, 0))
+points = [(0.0, 0.0), (1.0, 0.0), (cos(α), sin(α))]
+bottom_edge = [1, 2]
+arc = CircularArc((1.0, 0.0), (cos(α), sin(α)), (0.0, 0.0))
+upper_edge = [3, 1]
+boundary_nodes = [bottom_edge, [arc], upper_edge]
 tri = triangulate(points; boundary_nodes)
-A = get_total_area(tri)
+A = get_area(tri)
 refine!(tri; max_area=1e-4A)
 mesh = FVMGeometry(tri)
 
@@ -74,7 +66,7 @@ BCs = BoundaryConditions(mesh, (lower_bc, arc_bc, upper_bc), types)
 # specifying the diffusion function as a constant. 
 f = (x, y) -> 1 - sqrt(x^2 + y^2)
 D = (x, y, t, u, p) -> one(u)
-initial_condition = [f(x, y) for (x, y) in each_point(tri)]
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.1
 prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
 
@@ -89,12 +81,18 @@ flux = (x, y, t, α, β, γ, p) -> (-α, -β)
 # has the best performance for these problems.
 using OrdinaryDiffEq, LinearSolve
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.01, parallel=Val(false))
+ind = findall(DelaunayTriangulation.each_point_index(tri)) do i #hide
+    !DelaunayTriangulation.has_vertex(tri, i) #hide
+end #hide
+using Test #hide
+@test sol[ind, :] ≈ reshape(repeat(initial_condition, length(sol)), :, length(sol))[ind, :] # make sure that missing vertices don't change #hide
 sol |> tc #hide
 
 #-
 using CairoMakie
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 6, 11))
+    local ax
     ax = Axis(fig[1, i], width=600, height=600,
         xlabel="x", ylabel="y",
         title="t = $(sol.t[j])",
@@ -145,7 +143,7 @@ function exact_solution(x, y, t, A, ζ, f, α) #src
     return s #src
 end #src
 function compare_solutions(sol, tri, α, f) #src
-    n = DelaunayTriangulation.num_solid_vertices(tri) #src
+    n = DelaunayTriangulation.num_points(tri) #src
     x = zeros(n, length(sol)) #src
     y = zeros(n, length(sol)) #src
     u = zeros(n, length(sol)) #src
@@ -162,6 +160,7 @@ end #src
 x, y, u = compare_solutions(sol, tri, α, f) #src
 fig = Figure(fontsize=64) #src
 for i in eachindex(sol) #src
+    local ax
     ax = Axis(fig[1, i], width=600, height=600) #src
     tricontourf!(ax, tri, sol.u[i], levels=0:0.01:1, colormap=:matter) #src
     ax = Axis(fig[2, i], width=600, height=600) #src
