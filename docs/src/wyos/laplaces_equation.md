@@ -2,6 +2,11 @@
 EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/laplaces_equation.jl"
 ```
 
+````@example laplaces_equation
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
+nothing #hide
+````
 
 # Laplace's Equation
 ```@contents
@@ -26,7 +31,7 @@ For the implementation, we can reuse a lot of what
 we had for Poisson's equation, except that
 we don't need `create_rhs_b`.
 
-````julia
+````@example laplaces_equation
 using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
 const FVM = FiniteVolumeMethod
 function laplaces_equation(mesh::FVMGeometry,
@@ -35,20 +40,17 @@ function laplaces_equation(mesh::FVMGeometry,
     diffusion_function=(x, y, p) -> 1.0,
     diffusion_parameters=nothing)
     conditions = Conditions(mesh, BCs, ICs)
-    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
-    b = zeros(num_points(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     FVM.boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     FVM.apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
     Asp = sparse(A)
     prob = LinearProblem(Asp, b)
     return prob
 end
-````
-
-````
-laplaces_equation (generic function with 2 methods)
 ````
 
 Now let's test this problem. We consider Laplace's equation on a sector of an annulus,
@@ -70,7 +72,7 @@ u(x, y) &= \left(\frac{\pi}{2} - \arctan\frac{y}{x}\right)\arctan\frac{y}{x} & r
 To start, we define our mesh. We need to define each part of the annulus separately, which
 takes some care.
 
-````julia
+````@example laplaces_equation
 using CairoMakie
 lower_x = [1.0, 2.0]
 lower_y = [0.0, 0.0]
@@ -90,19 +92,14 @@ tri = triangulate(points; boundary_nodes)
 refine!(tri; max_area=1e-3get_area(tri))
 triplot(tri)
 ````
-![](laplaces_equation-9.png)
 
-````julia
+````@example laplaces_equation
 mesh = FVMGeometry(tri)
-````
-
-````
-FVMGeometry with 1202 control volumes, 2167 triangles, and 3368 edges
 ````
 
 The boundary conditions are defined as follows.
 
-````julia
+````@example laplaces_equation
 lower_f = (x, y, t, u, p) -> 0.0
 outer_arc_f = (x, y, t, u, p) -> (π / 2 - atan(y, x)) * atan(y, x)
 left_f = (x, y, t, u, p) -> 2x * y
@@ -112,64 +109,30 @@ bc_types = (Dirichlet, Dirichlet, Dirichlet, Dirichlet)
 BCs = BoundaryConditions(mesh, bc_f, bc_types)
 ````
 
-````
-BoundaryConditions with 4 boundary conditions with types (Dirichlet, Dirichlet, Dirichlet, Dirichlet)
-````
-
 Now we can define and solve the problem.
 
-````julia
+````@example laplaces_equation
 prob = laplaces_equation(mesh, BCs, diffusion_function=(x, y, p) -> 1.0)
+prob |> tc #hide
 ````
 
-````
-LinearProblem. In-place: true
-b: 1202-element Vector{Float64}:
- 0.0
- 0.0
- 0.024671493503386318
- 0.04883948713935658
- 0.0725039809079108
- ⋮
- 0.0
- 0.0
- 0.0
- 0.0
- 0.0
-````
-
-````julia
+````@example laplaces_equation
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 ````
 
-````
-u: 1202-element Vector{Float64}:
- 0.0
- 0.0
- 0.024671493503386318
- 0.04883948713935658
- 0.0725039809079108
- ⋮
- 0.5030487864579902
- 0.49158156832569067
- 0.3844288874106583
- 0.37141517809156177
- 0.6114572482682799
-````
-
-````julia
+````@example laplaces_equation
 fig = Figure(fontsize=33)
 ax = Axis(fig[1, 1], xlabel="x", ylabel="y", width=600, height=600)
 tricontourf!(ax, tri, sol.u, levels=0:0.1:1, colormap=:jet)
 resize_to_layout!(fig)
 fig
 ````
-![](laplaces_equation-16.png)
 
 We can turn this type of problem into its corresponding `SteadyFVMProblem` as follows:
 
-````julia
-initial_condition = zeros(num_points(tri))
+````@example laplaces_equation
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 FVM.apply_dirichlet_conditions!(initial_condition, mesh, Conditions(mesh, BCs, InternalConditions())) # a good initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=(x, y, t, u, p) -> 1.0,
@@ -177,37 +140,18 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     final_time=Inf))
 ````
 
-````
-SteadyFVMProblem with 1202 nodes
-````
-
-````julia
+````@example laplaces_equation
 using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
+fvm_sol |> tc #hide
 ````
 
-````
-u: 1202-element Vector{Float64}:
- 0.0
- 0.0
- 0.024671493503386318
- 0.04883948713935658
- 0.0725039809079108
- ⋮
- 0.5030487974363502
- 0.4915815800848867
- 0.384428896880054
- 0.3714151861326706
- 0.61145725748058
-````
-
-````julia
+````@example laplaces_equation
 ax = Axis(fig[1, 2], xlabel="x", ylabel="y", width=600, height=600)
 tricontourf!(ax, tri, fvm_sol.u, levels=0:0.1:1, colormap=:jet)
 resize_to_layout!(fig)
 fig
 ````
-![](laplaces_equation-20.png)
 
 ## Using the Provided Template
 Let's now use the built-in `LaplacesEquation` which implements the above
@@ -229,7 +173,7 @@ u(5, y) &= 5 & 0 < y < 5, \\
 where $D(\vb x) = (x+1)(y+2)$. The exact solution
 is $u(x, y) = 5\log_6(1+x)$. We define this problem as follows.
 
-````julia
+````@example laplaces_equation
 tri = triangulate_rectangle(0, 5, 0, 5, 100, 100, single_boundary=false)
 mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> 0.0
@@ -241,30 +185,12 @@ diffusion_function = (x, y, p) -> (x + 1) * (y + 2)
 prob = LaplacesEquation(mesh, BCs; diffusion_function)
 ````
 
-````
-LaplacesEquation with 10000 nodes
-````
-
-````julia
+````@example laplaces_equation
 sol = solve(prob, KLUFactorization())
+sol |> tc #hide
 ````
 
-````
-u: 10000-element Vector{Float64}:
- 0.0
- 0.13752412788341345
- 0.2685706875257449
- 0.39373122838568114
- 0.5135147693274462
- ⋮
- 4.904416090048671
- 4.928620646536574
- 4.952617114107139
- 4.976409061067354
- 5.0
-````
-
-````julia
+````@example laplaces_equation
 fig = Figure(fontsize=33)
 ax = Axis(fig[1, 1], xlabel="x", ylabel="y",
     width=600, height=600,
@@ -278,22 +204,17 @@ tricontourf!(ax, tri, u_exact, levels=0:0.25:5, colormap=:jet)
 resize_to_layout!(fig)
 fig
 ````
-![](laplaces_equation-24.png)
 
 To finish, here is a benchmark comparing this problem to the corresponding
 `SteadyFVMProblem`.
 
-````julia
-initial_condition = zeros(num_points(tri))
+````@example laplaces_equation
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 FVM.apply_dirichlet_conditions!(initial_condition, mesh, Conditions(mesh, BCs, InternalConditions())) # a good initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=(x, y, t, u, p) -> (x + 1) * (y + 2),
     final_time=Inf,
     initial_condition))
-````
-
-````
-SteadyFVMProblem with 10000 nodes
 ````
 
 ````julia
@@ -326,12 +247,13 @@ function laplaces_equation(mesh::FVMGeometry,
     diffusion_function=(x, y, p) -> 1.0,
     diffusion_parameters=nothing)
     conditions = Conditions(mesh, BCs, ICs)
-    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
-    b = zeros(num_points(mesh.triangulation))
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     FVM.boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     FVM.apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
     Asp = sparse(A)
     prob = LinearProblem(Asp, b)
     return prob
@@ -376,7 +298,7 @@ tricontourf!(ax, tri, sol.u, levels=0:0.1:1, colormap=:jet)
 resize_to_layout!(fig)
 fig
 
-initial_condition = zeros(num_points(tri))
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 FVM.apply_dirichlet_conditions!(initial_condition, mesh, Conditions(mesh, BCs, InternalConditions())) # a good initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=(x, y, t, u, p) -> 1.0,
@@ -416,7 +338,7 @@ tricontourf!(ax, tri, u_exact, levels=0:0.25:5, colormap=:jet)
 resize_to_layout!(fig)
 fig
 
-initial_condition = zeros(num_points(tri))
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 FVM.apply_dirichlet_conditions!(initial_condition, mesh, Conditions(mesh, BCs, InternalConditions())) # a good initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=(x, y, t, u, p) -> (x + 1) * (y + 2),

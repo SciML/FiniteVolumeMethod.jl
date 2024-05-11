@@ -2,6 +2,11 @@
 EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_medium_equation.jl"
 ```
 
+````@example porous_medium_equation
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
+nothing #hide
+````
 
 # Porous-Medium Equation
 ## No source
@@ -30,7 +35,7 @@ is the time that we solve up. We use a Dirichlet boundary condition on $\partial
 
 Let us now solve this problem, taking $m = 2$, $M = 0.37$, $D = 2.53$, and $T = 12$.
 
-````julia
+````@example porous_medium_equation
 using DelaunayTriangulation, FiniteVolumeMethod
 
 # Step 0: Define all the parameters
@@ -46,20 +51,12 @@ tri = triangulate_rectangle(-L, L, -L, L, 125, 125, single_boundary=true)
 mesh = FVMGeometry(tri)
 ````
 
-````
-FVMGeometry with 15625 control volumes, 30752 triangles, and 46376 edges
-````
-
-````julia
+````@example porous_medium_equation
 # Step 2: Define the boundary conditions
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
 ````
 
-````
-BoundaryConditions with 1 boundary condition with type Dirichlet
-````
-
-````julia
+````@example porous_medium_equation
 # Step 3: Define the actual PDE
 f = (x, y) -> M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
 diffusion_function = (x, y, t, u, p) -> p[1] * u^(p[2] - 1)
@@ -72,34 +69,14 @@ prob = FVMProblem(mesh, BCs;
     final_time)
 ````
 
-````
-FVMProblem with 15625 nodes and time span (0.0, 12.0)
-````
-
-````julia
+````@example porous_medium_equation
 # Step 4: Solve
 using LinearSolve, OrdinaryDiffEq
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=3.0)
+sol |> tc #hide
 ````
 
-````
-retcode: Success
-Interpolation: 1st order linear
-t: 5-element Vector{Float64}:
-  0.0
-  3.0
-  6.0
-  9.0
- 12.0
-u: 5-element Vector{Vector{Float64}}:
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-````
-
-````julia
+````@example porous_medium_equation
 # Step 5: Visualise
 using CairoMakie
 fig = Figure(fontsize=38)
@@ -113,8 +90,9 @@ for (i, j) in zip(1:3, (1, 3, 5))
 end
 resize_to_layout!(fig)
 fig
+
+        !DelaunayTriangulation.has_vertex(tri, i) && continue
 ````
-![](porous_medium_equation-8.png)
 
 ## Linear source
 Let us now extend the problem above so that a linear source is now included:
@@ -132,7 +110,7 @@ where
 ```
 The code below solves this problem.
 
-````julia
+````@example porous_medium_equation
 # Step 0: Define all the parameters
 m = 3.4
 M = 2.3
@@ -147,22 +125,14 @@ tri = triangulate_rectangle(-L, L, -L, L, 125, 125, single_boundary=true)
 mesh = FVMGeometry(tri)
 ````
 
-````
-FVMGeometry with 15625 control volumes, 30752 triangles, and 46376 edges
-````
-
-````julia
+````@example porous_medium_equation
 # Step 2: Define the boundary conditions
 bc = (x, y, t, u, p) -> zero(u)
 type = Dirichlet
 BCs = BoundaryConditions(mesh, bc, type)
 ````
 
-````
-BoundaryConditions with 1 boundary condition with type Dirichlet
-````
-
-````julia
+````@example porous_medium_equation
 # Step 3: Define the actual PDE
 f = (x, y) -> M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
 diffusion_function = (x, y, t, u, p) -> p.D * abs(u)^(p.m - 1)
@@ -179,33 +149,13 @@ prob = FVMProblem(mesh, BCs;
     final_time)
 ````
 
-````
-FVMProblem with 15625 nodes and time span (0.0, 10.0)
-````
-
-````julia
+````@example porous_medium_equation
 # Step 4: Solve
 sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=2.5)
+sol |> tc #hide
 ````
 
-````
-retcode: Success
-Interpolation: 1st order linear
-t: 5-element Vector{Float64}:
-  0.0
-  2.5
-  5.0
-  7.5
- 10.0
-u: 5-element Vector{Vector{Float64}}:
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-````
-
-````julia
+````@example porous_medium_equation
 # Step 5: Visualise
 fig = Figure(fontsize=38)
 for (i, j) in zip(1:3, (1, 3, 5))
@@ -219,7 +169,6 @@ end
 resize_to_layout!(fig)
 fig
 ````
-![](porous_medium_equation-14.png)
 
 ## Just the code
 An uncommented version of this example is given below.
@@ -271,6 +220,8 @@ for (i, j) in zip(1:3, (1, 3, 5))
 end
 resize_to_layout!(fig)
 fig
+
+        !DelaunayTriangulation.has_vertex(tri, i) && continue
 
 # Step 0: Define all the parameters
 m = 3.4

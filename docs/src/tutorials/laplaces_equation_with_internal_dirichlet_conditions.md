@@ -2,6 +2,11 @@
 EditURL = "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/laplaces_equation_with_internal_dirichlet_conditions.jl"
 ```
 
+````@example laplaces_equation_with_internal_dirichlet_conditions
+using DisplayAs #hide
+tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
+nothing #hide
+````
 
 # Laplace's Equation with Internal Dirichlet Conditions
 In this tutorial, we consider Laplace's equation with some additional complexity
@@ -20,18 +25,9 @@ u(1/2, y) &= 0 & 0 \leq y \leq 2/5.
 ```
 To start with solving this problem, let us define an initial mesh.
 
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 using DelaunayTriangulation, FiniteVolumeMethod
 tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary=false)
-````
-
-````
-Delaunay Triangulation.
-    Constrained: true
-    Has ghost triangles: true
-    Number of points: 2500
-    Number of triangles: 4998
-    Number of edges: 7501
 ````
 
 In this mesh, we don't have any points that lie exactly on the
@@ -44,7 +40,7 @@ conditions are enforced only at points.
 
 Let us now add in the points.
 
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 using CairoMakie
 new_points = LinRange(0, 2 / 5, 250)
 for y in new_points
@@ -53,30 +49,24 @@ end
 fig, ax, sc = triplot(tri)
 fig
 ````
-![](laplaces_equation_with_internal_dirichlet_conditions-8.png)
 
 It may also help to refine the mesh slightly.
 
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 refine!(tri, max_area=1e-4)
 fig, ax, sc = triplot(tri)
 fig
 ````
-![](laplaces_equation_with_internal_dirichlet_conditions-10.png)
 
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 mesh = FVMGeometry(tri)
-````
-
-````
-FVMGeometry with 10223 control volumes, 20042 triangles, and 30264 edges
 ````
 
 Now that we have the mesh, we can define the boundary conditions.
 Remember that the order of the boundary indices is the bottom wall,
 right wall, top wall, and then the left wall.
 
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 bc_bot = (x, y, t, u, p) -> zero(u)
 bc_right = (x, y, t, u, p) -> oftype(u, 100y) # helpful to have each bc return the same type
 bc_top = (x, y, t, u, p) -> oftype(u, 100)
@@ -86,18 +76,14 @@ types = (Dirichlet, Dirichlet, Dirichlet, Dirichlet)
 BCs = BoundaryConditions(mesh, bcs, types)
 ````
 
-````
-BoundaryConditions with 4 boundary conditions with types (Dirichlet, Dirichlet, Dirichlet, Dirichlet)
-````
-
 We now need to define the internal conditions.
 This is done using `InternalConditions`. First,
 we need to find all the vertices that lie on
 the line $\{x = 1/2, 0 \leq y \leq 2/5\}$. We could
-compute these manually, but let's find them programmatically
+compute these manually, but let's find them programatically
 instead for the sake of demonstration.
 
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 function find_all_points_on_line(tri)
     vertices = Int[]
     for i in each_solid_vertex(tri)
@@ -114,7 +100,6 @@ points = [get_point(tri, i) for i in vertices]
 scatter!(ax, points, color=:red, markersize=10)
 fig
 ````
-![](laplaces_equation_with_internal_dirichlet_conditions-15.png)
 
 Now that we have the vertices, we can define the internal conditions.
 We need to provide `InternalConditions` with a `Dict` that maps
@@ -122,13 +107,9 @@ each vertex in `vertices` to a function index that corresponds to the
 condition for that vertex. In this case, that function index
 is `1` as we only have a single function.
 
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 ICs = InternalConditions((x, y, t, u, p) -> zero(u),
     dirichlet_nodes=Dict(vertices .=> 1))
-````
-
-````
-InternalConditions with 250 Dirichlet nodes and 0 Dudt nodes
 ````
 
 Now we can define the problem. As discussed in
@@ -140,8 +121,8 @@ one suitable guess is $u(x, y) = 100y$ with $u(1/2, y) = 0$ for $0 \leq y \leq 2
 in fact, $u(x, y) = 100y$ is the solution of the problem without the internal condition.
 Let us now use this to define our initial condition.
 
-````julia
-initial_condition = zeros(DelaunayTriangulation.num_solid_vertices(tri))
+````@example laplaces_equation_with_internal_dirichlet_conditions
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 for i in each_solid_vertex(tri)
     x, y = get_point(tri, i)
     initial_condition[i] = ifelse(x == 1 / 2 && 0 ≤ y ≤ 2 / 5, 0, 100y)
@@ -151,7 +132,7 @@ end
 Now let's define the problem. The internal conditions are
 provided as the third argument of `FVMProblem`.
 
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 diffusion_function = (x, y, t, u, p) -> one(u) # ∇²u = ∇⋅[D∇u], D = 1
 final_time = Inf
 prob = FVMProblem(mesh, BCs, ICs;
@@ -160,46 +141,23 @@ prob = FVMProblem(mesh, BCs, ICs;
     final_time)
 ````
 
-````
-FVMProblem with 10223 nodes and time span (0.0, Inf)
-````
-
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 steady_prob = SteadyFVMProblem(prob)
-````
-
-````
-SteadyFVMProblem with 10223 nodes
 ````
 
 Now let's solve the problem.
 
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
 sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+sol |> tc #hide
 ````
 
-````
-u: 10223-element Vector{Float64}:
-  0.0
-  0.0
-  0.0
-  0.0
-  0.0
-  ⋮
- 52.99056010002759
- 60.20408163265305
- 82.65306122448979
-  0.0
- 64.28571428571428
-````
-
-````julia
+````@example laplaces_equation_with_internal_dirichlet_conditions
 fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 100, 28))
 tightlimits!(ax)
 fig
 ````
-![](laplaces_equation_with_internal_dirichlet_conditions-25.png)
 
 ## Just the code
 An uncommented version of this example is given below.
@@ -250,7 +208,7 @@ fig
 ICs = InternalConditions((x, y, t, u, p) -> zero(u),
     dirichlet_nodes=Dict(vertices .=> 1))
 
-initial_condition = zeros(DelaunayTriangulation.num_solid_vertices(tri))
+initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 for i in each_solid_vertex(tri)
     x, y = get_point(tri, i)
     initial_condition[i] = ifelse(x == 1 / 2 && 0 ≤ y ≤ 2 / 5, 0, 100y)
