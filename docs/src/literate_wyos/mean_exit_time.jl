@@ -80,17 +80,17 @@ end
 # includes mixed boundary conditions and also an internal condition. 
 ## Define the triangulation
 R₁, R₂ = 2.0, 3.0
-ε = 0.05 
+ε = 0.05
 g = θ -> sin(3θ) + cos(5θ)
 R1_f = let R₁ = R₁, ε = ε, g = g # use let for type stability
     θ -> R₁ * (1.0 + ε * g(θ))
 end
 ϵr = 0.25
 dirichlet = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
-neumann = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(2π + ϵr), R₂ * sin(2π + ϵr)), (0.0, 0.0))
-hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive = false)
+neumann = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(ϵr), R₂ * sin(ϵr)), (0.0, 0.0))
+hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive=false)
 boundary_nodes = [[[dirichlet], [neumann]], [[hole]]]
-points = NTuple{2, Float64}[]
+points = [(-2.0, 0.0), (0.0, 2.95)]
 tri = triangulate(points; boundary_nodes)
 θ = LinRange(0, 2π, 250)
 xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
