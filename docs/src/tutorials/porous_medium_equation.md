@@ -90,8 +90,6 @@ for (i, j) in zip(1:3, (1, 3, 5))
 end
 resize_to_layout!(fig)
 fig
-
-        !DelaunayTriangulation.has_vertex(tri, i) && continue
 ````
 
 ## Linear source
@@ -220,8 +218,6 @@ for (i, j) in zip(1:3, (1, 3, 5))
 end
 resize_to_layout!(fig)
 fig
-
-        !DelaunayTriangulation.has_vertex(tri, i) && continue
 
 # Step 0: Define all the parameters
 m = 3.4

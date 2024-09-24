@@ -125,7 +125,7 @@ function get_errs(_sol, tri, flux_parameters) #src
     _errs = zeros(length(_sol)) #src
     _err = zeros(DelaunayTriangulation.num_points(tri)) #src
     for i in eachindex(_sol) #src
-        !DelaunayTriangulation.has_vertex(tri, i) && continue
+        !DelaunayTriangulation.has_vertex(tri, i) && continue #src
         i == 1 && continue #src
         m = maximum(_sol.u[i]) #src
         for j in each_solid_vertex(tri) #src

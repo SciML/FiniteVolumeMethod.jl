@@ -100,8 +100,6 @@ for (i, j) in zip(1:3, (1, 6, 11))
 end
 resize_to_layout!(fig)
 fig
-
-    local ax
 ````
 
 ## Just the code
@@ -146,8 +144,6 @@ for (i, j) in zip(1:3, (1, 6, 11))
 end
 resize_to_layout!(fig)
 fig
-
-    local ax
 ```
 
 ---

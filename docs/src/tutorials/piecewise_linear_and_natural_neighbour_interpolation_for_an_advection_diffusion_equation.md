@@ -134,8 +134,6 @@ for i in eachindex(sol)
 end
 resize_to_layout!(fig)
 fig
-
-        !DelaunayTriangulation.has_vertex(tri, i) && continue
 ````
 
 ## Piecewise linear interpolation
@@ -344,8 +342,6 @@ for i in eachindex(sol)
 end
 resize_to_layout!(fig)
 fig
-
-        !DelaunayTriangulation.has_vertex(tri, i) && continue
 
 x = LinRange(-L, L, 250)
 y = LinRange(-L, L, 250)

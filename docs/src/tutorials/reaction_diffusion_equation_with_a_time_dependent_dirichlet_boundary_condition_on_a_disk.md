@@ -86,8 +86,6 @@ for (i, j) in zip(1:3, (1, 6, 11))
 end
 resize_to_layout!(fig)
 fig
-
-        !DelaunayTriangulation.has_vertex(tri, i) && continue
 ````
 
 ## Just the code
@@ -137,8 +135,6 @@ for (i, j) in zip(1:3, (1, 6, 11))
 end
 resize_to_layout!(fig)
 fig
-
-        !DelaunayTriangulation.has_vertex(tri, i) && continue
 ```
 
 ---
