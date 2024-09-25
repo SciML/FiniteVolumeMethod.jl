@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems · FiniteVolumeMethod.jl</title><meta name="title" content="Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems · FiniteVolumeMethod.jl"/><meta property="og:title" content="Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems · FiniteVolumeMethod.jl"/><meta property="twitter:title" content="Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems · FiniteVolumeMethod.jl"/><meta name="description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="twitter:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/"/><meta property="twitter:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/"/><link rel="canonical" href="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li class="is-active"><a class="tocitem" href>Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a><ul class="internal"><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../wyos/overview/">Section Overview</a></li><li><a class="tocitem" href="../../wyos/diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../../wyos/linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../../wyos/laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Equilibrium-Temperature-Distribution-with-Mixed-Boundary-Conditions-and-using-EnsembleProblems"><a class="docs-heading-anchor" href="#Equilibrium-Temperature-Distribution-with-Mixed-Boundary-Conditions-and-using-EnsembleProblems">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a><a id="Equilibrium-Temperature-Distribution-with-Mixed-Boundary-Conditions-and-using-EnsembleProblems-1"></a><a class="docs-heading-anchor-permalink" href="#Equilibrium-Temperature-Distribution-with-Mixed-Boundary-Conditions-and-using-EnsembleProblems" title="Permalink"></a></h1><p>For this tutorial, we consider the following problem:</p><p class="math-container">\[\begin{equation}
+\begin{aligned}
+\grad^2 T &amp;= 0 &amp; \vb x \in \Omega, \\
+\grad T \vdot \vu n &amp;= 0 &amp; \vb x \in \Gamma_1, \\
+T &amp;= 40 &amp; \vb x \in \Gamma_2, \\
+k\grad T \vdot \vu n &amp;= h(T_{\infty} - T) &amp; \vb x \in \Gamma_3, \\
+T &amp;= 70 &amp; \vb x \in \Gamma_4. \\
+\end{aligned}
+\end{equation}\]</p><p>This domain <span>$\Omega$</span> with boundary <span>$\partial\Omega=\Gamma_1\cup\Gamma_2\cup\Gamma_3\cup\Gamma_4$</span> is shown below.</p><img src="4345a243.png" alt="Example block output"/><p>Let us start by defining the mesh.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
+A, B, C, D, E, F, G = (0.0, 0.0),
+(0.06, 0.0),
+(0.06, 0.03),
+(0.05, 0.03),
+(0.03, 0.05),
+(0.03, 0.06),
+(0.0, 0.06)
+bn1 = [G, A, B]
+bn2 = [B, C]
+bn3 = [C, D, E, F]
+bn4 = [F, G]
+bn = [bn1, bn2, bn3, bn4]
+boundary_nodes, points = convert_boundary_points_to_indices(bn)
+tri = triangulate(points; boundary_nodes)
+refine!(tri; max_area=1e-4get_area(tri))
+triplot(tri)</code></pre><img src="c2315876.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 8160 control volumes, 15990 triangles, and 24149 edges</code></pre><p>For the boundary conditions, the parameters that we use are <span>$k = 3$</span>, <span>$h = 20$</span>, and <span>$T_{\infty} = 20$</span> for thermal conductivity, heat transfer coefficient, and ambient temperature, respectively.</p><pre><code class="language-julia hljs">k = 3.0
+h = 20.0
+T∞ = 20.0
+bc1 = (x, y, t, T, p) -&gt; zero(T) # ∇T⋅n=0
+bc2 = (x, y, t, T, p) -&gt; oftype(T, 40.0) # T=40
+bc3 = (x, y, t, T, p) -&gt; -p.h * (p.T∞- T) / p.k # k∇T⋅n=h(T∞-T). The minus is since q = -∇T
+bc4 = (x, y, t, T, p) -&gt; oftype(T, 70.0) # T=70
+parameters = (nothing, nothing, (h=h, T∞=T∞, k=k), nothing)
+BCs = BoundaryConditions(mesh, (bc1, bc2, bc3, bc4),
+    (Neumann, Dirichlet, Neumann, Dirichlet);
+    parameters)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 4 boundary conditions with types (Neumann, Dirichlet, Neumann, Dirichlet)</code></pre><p>Now we can define the actual problem. For the initial condition, which recall is used as an initial guess for steady state problems, let us use an initial condition which ranges from <span>$T=70$</span> at <span>$y=0.06$</span> down to <span>$T=40$</span> at <span>$y=0$</span>.</p><pre><code class="language-julia hljs">diffusion_function = (x, y, t, T, p) -&gt; one(T)
+f = (x, y) -&gt; 500y + 40
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+final_time = Inf
+prob = FVMProblem(mesh, BCs;
+    diffusion_function,
+    initial_condition,
+    final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 8160 nodes and time span (0.0, Inf)</code></pre><pre><code class="language-julia hljs">steady_prob = SteadyFVMProblem(prob)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 8160 nodes</code></pre><p>Now we can solve.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, SteadyStateDiffEq
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+u: 8298-element Vector{Float64}:
+ 70.0
+ 53.10321550648938
+ 40.0
+ 40.0
+ 44.13396494556966
+  ⋮
+ 65.60739642042194
+ 42.990857540603706
+ 66.53334753207265
+ 44.71982985096343
+ 50.874999641340054</code></pre><pre><code class="language-julia hljs">fig, ax, sc = tricontourf(tri, sol.u, levels=40:70, axis=(xlabel=&quot;x&quot;, ylabel=&quot;y&quot;))
+fig</code></pre><img src="cafa51ad.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
+A, B, C, D, E, F, G = (0.0, 0.0),
+(0.06, 0.0),
+(0.06, 0.03),
+(0.05, 0.03),
+(0.03, 0.05),
+(0.03, 0.06),
+(0.0, 0.06)
+bn1 = [G, A, B]
+bn2 = [B, C]
+bn3 = [C, D, E, F]
+bn4 = [F, G]
+bn = [bn1, bn2, bn3, bn4]
+boundary_nodes, points = convert_boundary_points_to_indices(bn)
+tri = triangulate(points; boundary_nodes)
+refine!(tri; max_area=1e-4get_area(tri))
+triplot(tri)
+
+mesh = FVMGeometry(tri)
+
+k = 3.0
+h = 20.0
+T∞ = 20.0
+bc1 = (x, y, t, T, p) -&gt; zero(T) # ∇T⋅n=0
+bc2 = (x, y, t, T, p) -&gt; oftype(T, 40.0) # T=40
+bc3 = (x, y, t, T, p) -&gt; -p.h * (p.T∞- T) / p.k # k∇T⋅n=h(T∞-T). The minus is since q = -∇T
+bc4 = (x, y, t, T, p) -&gt; oftype(T, 70.0) # T=70
+parameters = (nothing, nothing, (h=h, T∞=T∞, k=k), nothing)
+BCs = BoundaryConditions(mesh, (bc1, bc2, bc3, bc4),
+    (Neumann, Dirichlet, Neumann, Dirichlet);
+    parameters)
+
+diffusion_function = (x, y, t, T, p) -&gt; one(T)
+f = (x, y) -&gt; 500y + 40
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+final_time = Inf
+prob = FVMProblem(mesh, BCs;
+    diffusion_function,
+    initial_condition,
+    final_time)
+
+steady_prob = SteadyFVMProblem(prob)
+
+using OrdinaryDiffEq, SteadyStateDiffEq
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+
+fig, ax, sc = tricontourf(tri, sol.u, levels=40:70, axis=(xlabel=&quot;x&quot;, ylabel=&quot;y&quot;))
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../laplaces_equation_with_internal_dirichlet_conditions/">« Laplace&#39;s Equation with Internal Dirichlet Conditions</a><a class="docs-footer-nextpage" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 25 September 2024 12:55">Wednesday 25 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
