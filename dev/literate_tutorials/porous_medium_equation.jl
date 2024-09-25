@@ -93,7 +93,7 @@ function compare_solutions(sol, tri, m, M, D) #src
     y = zeros(n, length(sol)) #src
     u = zeros(n, length(sol)) #src
     for i in eachindex(sol) #src
-        !DelaunayTriangulation.has_vertex(tri, i) && continue
+        !DelaunayTriangulation.has_vertex(tri, i) && continue #src
         for j in each_solid_vertex(tri) #src
             x[j, i], y[j, i] = get_point(tri, j) #src
             u[j, i] = exact_solution(x[j, i], y[j, i], sol.t[i], m, M, D) #src
