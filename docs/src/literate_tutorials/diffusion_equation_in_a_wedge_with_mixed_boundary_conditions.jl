@@ -160,7 +160,7 @@ end #src
 x, y, u = compare_solutions(sol, tri, α, f) #src
 fig = Figure(fontsize=64) #src
 for i in eachindex(sol) #src
-    local ax
+    local ax #src
     ax = Axis(fig[1, i], width=600, height=600) #src
     tricontourf!(ax, tri, sol.u[i], levels=0:0.01:1, colormap=:matter) #src
     ax = Axis(fig[2, i], width=600, height=600) #src
