@@ -19,8 +19,8 @@ jobs:
       matrix:
         version:
           - '1.11'
-          - 'pre'
-          - 'lts'
+          - pre
+          - lts
         os:
           - ubuntu-20.04 # https://github.com/actions/runner-images/discussions/7188
         arch:
