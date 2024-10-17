@@ -74,24 +74,24 @@ t: 6-element Vector{Float64}:
  5.0
 u: 6-element Vector{Matrix{Float64}}:
  [1.0 0.9899498337660453 … 0.13670923376163366 0.1353352832366127; 1.0 1.0101521975065353 … 7.314794856824381 7.38905609893065]
- [0.6022790543205391 0.5961843226390936 … 0.08459716059214409 0.08374694506527247; 1.6160026270944237 1.6324086049357667 … 12.033406783540801 12.15574034265177]
- [0.36292293265391334 0.35922836399112246 … 0.0527824034166808 0.05225193148811548; 2.5900532168345625 2.616347948644304 … 19.801530402316708 20.003224326522997]
- [0.2189404905387913 0.21669975491946347 … 0.030583471878907365 0.030276102902512883; 4.470036440039317 4.515417132840007 … 32.63018228276755 32.96271768205645]
- [0.1323117829686225 0.13095170953894153 … 0.018819873249713483 0.018630730395051913; 7.264088973804057 7.337835439771163 … 53.79169952043838 54.339956697126084]
- [0.07991874423792766 0.0790945343400615 … 0.011446825720980887 0.011331783219633917; 11.94298201911639 12.064229531391456 … 88.68282927632198 89.58675540922312]</code></pre><p>For this solution, note that the <code>u</code> values are matrices. For example:</p><pre><code class="language-julia hljs">sol.u[3]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2×10000 Matrix{Float64}:
+ [0.6022790549436466 0.5961843232622576 … 0.08459716484830124 0.08374694927865456; 1.6160025457919216 1.632408522807865 … 12.033406786243143 12.155740345354786]
+ [0.3629229320870068 0.3592283634309269 … 0.05278240636217739 0.05225193440400936; 2.590053072297898 2.616347802640275 … 19.80153040426898 20.003224328476843]
+ [0.2189404919521746 0.21669975631687177 … 0.03058347436418037 0.03027610536280847; 4.470036076795405 4.5154167659083715 … 32.630182287796 32.96271768707654]
+ [0.13231178344003314 0.13095171000779202 … 0.01881987544446014 0.018630732567740994; 7.2640881266765085 7.3378345840434065 … 53.79169953734661 54.33995671403822]
+ [0.07991874451067896 0.07909453461306751 … 0.011446827495558214 0.011331784976376456; 11.94298016762127 12.064227661099595 … 88.68282929828709 89.58675543119098]</code></pre><p>For this solution, note that the <code>u</code> values are matrices. For example:</p><pre><code class="language-julia hljs">sol.u[3]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2×10000 Matrix{Float64}:
  0.362923  0.359228  0.355571  …   0.0533183   0.0527824   0.0522519
  2.59005   2.61635   2.64291      19.6018     19.8015     20.0032</code></pre><p>The <code>i</code>th row is the <code>i</code>th variable, so</p><pre><code class="language-julia hljs">sol.u[3][1, :]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">10000-element Vector{Float64}:
- 0.36292293265391334
- 0.35922836399112246
- 0.3555709542537472
- 0.35195131700834686
- 0.348369341960001
+ 0.3629229320870068
+ 0.3592283634309269
+ 0.3555709537004101
+ 0.3519513164619597
+ 0.3483693414206131
  ⋮
- 0.05440635118902629
- 0.05385955831539364
- 0.05331826080103656
- 0.0527824034166808
- 0.05225193148811548</code></pre><p>are the value of <span>$\Phi$</span> at the third time, and similarly <code>sol.u[3][2, :]</code> are the values of <span>$\Psi$</span> at the third time. We can visualise the solutions as follows:</p><pre><code class="language-julia hljs">using CairoMakie
+ 0.0544063542251465
+ 0.05385956132100036
+ 0.053318263776436434
+ 0.05278240636217739
+ 0.05225193440400936</code></pre><p>are the value of <span>$\Phi$</span> at the third time, and similarly <code>sol.u[3][2, :]</code> are the values of <span>$\Psi$</span> at the third time. We can visualise the solutions as follows:</p><pre><code class="language-julia hljs">using CairoMakie
 fig = Figure(fontsize=38)
 for i in eachindex(sol)
     ax1 = Axis(fig[1, i], xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;,
@@ -104,7 +104,7 @@ for i in eachindex(sol)
     tricontourf!(ax2, tri, sol[i][2, :], levels=1:10:100, colormap=:matter)
 end
 resize_to_layout!(fig)
-fig</code></pre><img src="b25712e9.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/reaction_diffusion_brusselator_system_of_pdes.jl">here</a>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
+fig</code></pre><img src="6e5fc5a8.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/reaction_diffusion_brusselator_system_of_pdes.jl">here</a>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
 tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=false)
 mesh = FVMGeometry(tri)
 
@@ -162,4 +162,4 @@ for i in eachindex(sol)
     tricontourf!(ax2, tri, sol[i][2, :], levels=1:10:100, colormap=:matter)
 end
 resize_to_layout!(fig)
-fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See <a href="https://doi.org/10.1016/j.apm.2010.03.028">Islam, Ali, and Haq (2010)</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">« Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a><a class="docs-footer-nextpage" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 25 September 2024 09:34">Wednesday 25 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See <a href="https://doi.org/10.1016/j.apm.2010.03.028">Islam, Ali, and Haq (2010)</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">« Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a><a class="docs-footer-nextpage" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 17 October 2024 08:40">Thursday 17 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
