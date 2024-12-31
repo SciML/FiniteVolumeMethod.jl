@@ -41,9 +41,7 @@ tri = triangulate(points; boundary_nodes, delete_ghosts=false)
 refine!(tri)
 fig, ax, sc = triplot(tri,
     show_convex_hull=false,
-    show_constrained_edges=false,
-    show_all_points=true,
-    point_color=:black)
+    show_constrained_edges=false)
 hidedecorations!(ax)
 ```
 
