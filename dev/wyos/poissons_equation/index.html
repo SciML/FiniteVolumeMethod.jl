@@ -111,7 +111,7 @@ segments = Set(((5, 6), (7, 8)))
 tri = triangulate(points; boundary_nodes, segments, delete_ghosts=false)
 refine!(tri; max_area=1e-4get_area(tri))
 fig, ax, sc = triplot(tri, show_constrained_edges=true, constrained_edge_linewidth=5)
-fig</code></pre><img src="d6b01f8a.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 8025 control volumes, 15782 triangles, and 23806 edges</code></pre><p>The boundary conditions are given by:</p><pre><code class="language-julia hljs">zero_f = (x, y, t, u, p) -&gt; zero(x)
+fig</code></pre><img src="b53f42fa.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 8067 control volumes, 15865 triangles, and 23931 edges</code></pre><p>The boundary conditions are given by:</p><pre><code class="language-julia hljs">zero_f = (x, y, t, u, p) -&gt; zero(x)
 bc_f = (zero_f, zero_f, zero_f, zero_f)
 bc_types = (Dirichlet, Neumann, Dirichlet, Neumann) # bot, right, top, left
 BCs = BoundaryConditions(mesh, bc_f, bc_types)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 4 boundary conditions with types (Dirichlet, Neumann, Dirichlet, Neumann)</code></pre><p>To define the internal conditions, we need to get the indices for the plates.</p><pre><code class="language-julia hljs">function find_vertices_on_plates(tri)
@@ -162,32 +162,32 @@ prob = PoissonsEquation(mesh, BCs, ICs;
     diffusion_function=dielectric_function,
     diffusion_parameters=diffusion_parameters,
     source_function=plate_source_function,
-    source_parameters=source_parameters)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">PoissonsEquation with 8025 nodes</code></pre><pre><code class="language-julia hljs">sol = solve(prob, KLUFactorization())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Default
-u: 8213-element Vector{Float64}:
+    source_parameters=source_parameters)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">PoissonsEquation with 8067 nodes</code></pre><pre><code class="language-julia hljs">sol = solve(prob, KLUFactorization())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Default
+u: 8241-element Vector{Float64}:
      0.0
      0.0
      0.0
      0.0
     -1.0
      ⋮
- 18790.666705748106
- 42590.19893301617
- 32014.313770047294
- 35549.4439548096
- 38946.81835614072</code></pre><p>With this solution, we can also define the electric field <span>$\vb E$</span>, using <span>$\vb E = -\grad V$</span>. To compute the gradients, we use NaturalNeighbours.jl.</p><pre><code class="language-julia hljs">using NaturalNeighbours
+ 58393.393873658555
+  7810.423223870184
+ 55560.68328837663
+ 10346.809073663007
+ 17849.803371162565</code></pre><p>With this solution, we can also define the electric field <span>$\vb E$</span>, using <span>$\vb E = -\grad V$</span>. To compute the gradients, we use NaturalNeighbours.jl.</p><pre><code class="language-julia hljs">using NaturalNeighbours
 itp = interpolate(tri, sol.u; derivatives=true)
-E = map(.-, itp.gradient) # E = -∇V</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">8213-element Vector{Tuple{Float64, Float64}}:
- (231.12337139828952, -38917.15441446731)
- (-37.67610110300846, -38875.15636858977)
- (-138.2639817789863, 38788.28941402816)
- (147.12705192320053, 38801.06615597286)
- (67526.06063852149, -5355.319048579994)
+E = map(.-, itp.gradient) # E = -∇V</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">8241-element Vector{Tuple{Float64, Float64}}:
+ (-15.114710229789731, -38803.580033489816)
+ (-96.00805856230188, -38981.433957146386)
+ (-47.825529809065074, 38733.49729866016)
+ (89.2831849257118, 38961.39376873242)
+ (55337.295421030285, -5514.270099740457)
  ⋮
- (-2552.85331520679, 22469.345150055968)
- (-12467.068161989857, -20338.973278466754)
- (-22994.901338105352, -38261.0018786019)
- (-24458.45659728953, -32535.095318630145)
- (-21378.797553043034, -27998.237871497935)</code></pre><p>For plotting the electric field, we will show the electric field intensity <span>$\|\vb E\|$</span>, and we can also show the arrows. Rather than showing all arrows, we will show them at a smaller grid of values, which requires differentiating <code>itp</code> so that we can get the gradients at arbitary points.</p><pre><code class="language-julia hljs">∂ = differentiate(itp, 1)
+ (-8057.618381140248, -4672.0517219694675)
+ (-227.73663862875563, 36058.07242525541)
+ (8525.478871986847, 5844.207241107663)
+ (-150.66673482657677, 43910.97654424192)
+ (481.7753722298631, 21248.99648694038)</code></pre><p>For plotting the electric field, we will show the electric field intensity <span>$\|\vb E\|$</span>, and we can also show the arrows. Rather than showing all arrows, we will show them at a smaller grid of values, which requires differentiating <code>itp</code> so that we can get the gradients at arbitary points.</p><pre><code class="language-julia hljs">∂ = differentiate(itp, 1)
 x = LinRange(0, 10, 25)
 y = LinRange(0, 10, 25)
 x_vec = [x for x in x, y in y] |&gt; vec
@@ -212,7 +212,7 @@ arrows!(ax, arrow_positions, arrow_directions,
 xlims!(ax,0,10)
 ylims!(ax,0,10)
 resize_to_layout!(fig)
-fig</code></pre><img src="f1c18454.png" alt="Example block output"/><p>To finish, let us benchmark the <code>PoissonsEquation</code> approach against the <code>FVMProblem</code> approach.</p><pre><code class="language-julia hljs">fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
+fig</code></pre><img src="4f847715.png" alt="Example block output"/><p>To finish, let us benchmark the <code>PoissonsEquation</code> approach against the <code>FVMProblem</code> approach.</p><pre><code class="language-julia hljs">fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_function=let D = dielectric_function
         (x, y, t, u, p) -&gt; D(x, y, p)
     end,
@@ -222,7 +222,7 @@ fig</code></pre><img src="f1c18454.png" alt="Example block output"/><p>To finish
     diffusion_parameters=diffusion_parameters,
     source_parameters=source_parameters,
     initial_condition=zeros(DelaunayTriangulation.num_points(tri)),
-    final_time=Inf))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 8025 nodes</code></pre><pre><code class="language-julia hljs">@btime solve($prob, $KLUFactorization());</code></pre><pre><code class="nohighlight hljs">  9.061 ms (56 allocations: 10.81 MiB)</code></pre><pre><code class="language-julia hljs">@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));</code></pre><pre><code class="nohighlight hljs">  329.327 ms (201134 allocations: 93.70 MiB)</code></pre><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/poissons_equation.jl">here</a>.</p><pre><code class="language-julia hljs">function create_rhs_b(mesh, conditions, source_function, source_parameters)
+    final_time=Inf))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 8067 nodes</code></pre><pre><code class="language-julia hljs">@btime solve($prob, $KLUFactorization());</code></pre><pre><code class="nohighlight hljs">  9.061 ms (56 allocations: 10.81 MiB)</code></pre><pre><code class="language-julia hljs">@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));</code></pre><pre><code class="nohighlight hljs">  329.327 ms (201134 allocations: 93.70 MiB)</code></pre><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/poissons_equation.jl">here</a>.</p><pre><code class="language-julia hljs">function create_rhs_b(mesh, conditions, source_function, source_parameters)
     b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     for i in each_solid_vertex(mesh.triangulation)
         if !FVM.is_dirichlet_node(conditions, i)
@@ -414,4 +414,4 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
     diffusion_parameters=diffusion_parameters,
     source_parameters=source_parameters,
     initial_condition=zeros(DelaunayTriangulation.num_points(tri)),
-    final_time=Inf))</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See, for example, <a href="https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf">this paper</a>.</li><li class="footnote" id="footnote-2"><a class="tag is-link" href="#citeref-2">2</a>This form of <span>$\epsilon(\vb x)$</span> is based on <a href="https://doi.org/10.1063/1.4939125">this paper</a> by Fisicaro et al. (2016).</li><li class="footnote" id="footnote-3"><a class="tag is-link" href="#citeref-3">3</a>Taken from <a href="https://stackoverflow.com/a/1501725">here</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../linear_reaction_diffusion_equations/">« Linear Reaction-Diffusion Equations</a><a class="docs-footer-nextpage" href="../laplaces_equation/">Laplace&#39;s Equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 17 October 2024 08:40">Thursday 17 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+    final_time=Inf))</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See, for example, <a href="https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf">this paper</a>.</li><li class="footnote" id="footnote-2"><a class="tag is-link" href="#citeref-2">2</a>This form of <span>$\epsilon(\vb x)$</span> is based on <a href="https://doi.org/10.1063/1.4939125">this paper</a> by Fisicaro et al. (2016).</li><li class="footnote" id="footnote-3"><a class="tag is-link" href="#citeref-3">3</a>Taken from <a href="https://stackoverflow.com/a/1501725">here</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../linear_reaction_diffusion_equations/">« Linear Reaction-Diffusion Equations</a><a class="docs-footer-nextpage" href="../laplaces_equation/">Laplace&#39;s Equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 31 December 2024 19:42">Tuesday 31 December 2024</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

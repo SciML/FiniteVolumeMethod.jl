@@ -42,14 +42,14 @@ boundary_y = [lower_y, outer_arc_y, left_y, inner_arc_y]
 boundary_nodes, points = convert_boundary_points_to_indices(boundary_x, boundary_y)
 tri = triangulate(points; boundary_nodes)
 refine!(tri; max_area=1e-3get_area(tri))
-triplot(tri)</code></pre><img src="2bf25b11.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 1191 control volumes, 2144 triangles, and 3334 edges</code></pre><p>The boundary conditions are defined as follows.</p><pre><code class="language-julia hljs">lower_f = (x, y, t, u, p) -&gt; 0.0
+triplot(tri)</code></pre><img src="6f5fe0f5.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 1205 control volumes, 2172 triangles, and 3376 edges</code></pre><p>The boundary conditions are defined as follows.</p><pre><code class="language-julia hljs">lower_f = (x, y, t, u, p) -&gt; 0.0
 outer_arc_f = (x, y, t, u, p) -&gt; (π / 2 - atan(y, x)) * atan(y, x)
 left_f = (x, y, t, u, p) -&gt; 2x * y
 inner_arc_f = (x, y, t, u, p) -&gt; 2x * y
 bc_f = (lower_f, outer_arc_f, left_f, inner_arc_f)
 bc_types = (Dirichlet, Dirichlet, Dirichlet, Dirichlet)
 BCs = BoundaryConditions(mesh, bc_f, bc_types)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 4 boundary conditions with types (Dirichlet, Dirichlet, Dirichlet, Dirichlet)</code></pre><p>Now we can define and solve the problem.</p><pre><code class="language-julia hljs">prob = laplaces_equation(mesh, BCs, diffusion_function=(x, y, p) -&gt; 1.0)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr38_2" style="color:#56b6c2">LinearProblem</span>. In-place: <span class="sgr38_2" style="color:#56b6c2">true</span>
-b: 1203-element Vector{Float64}:
+b: 1221-element Vector{Float64}:
  0.0
  0.0
  0.024671493503386318
@@ -61,43 +61,43 @@ b: 1203-element Vector{Float64}:
  0.0
  0.0
  0.0</code></pre><pre><code class="language-julia hljs">sol = solve(prob, KLUFactorization())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Default
-u: 1203-element Vector{Float64}:
+u: 1221-element Vector{Float64}:
  0.0
  0.0
  0.024671493503386318
  0.04883948713935658
  0.0725039809079108
  ⋮
- 0.4321330626121115
- 0.6054322697432436
- 0.11915852662416472
- 0.1822327014515077
- 0.182761266243056</code></pre><pre><code class="language-julia hljs">fig = Figure(fontsize=33)
+ 0.5075511377246507
+ 0.5286443315797773
+ 0.19297076134216606
+ 0.3804303776465873
+ 0.58337371767503</code></pre><pre><code class="language-julia hljs">fig = Figure(fontsize=33)
 ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;, width=600, height=600)
 tricontourf!(ax, tri, sol.u, levels=0:0.1:1, colormap=:jet)
 resize_to_layout!(fig)
-fig</code></pre><img src="79c2bd7f.png" alt="Example block output"/><p>We can turn this type of problem into its corresponding <code>SteadyFVMProblem</code> as follows:</p><pre><code class="language-julia hljs">initial_condition = zeros(DelaunayTriangulation.num_points(tri))
+fig</code></pre><img src="3e3f7746.png" alt="Example block output"/><p>We can turn this type of problem into its corresponding <code>SteadyFVMProblem</code> as follows:</p><pre><code class="language-julia hljs">initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 FVM.apply_dirichlet_conditions!(initial_condition, mesh, Conditions(mesh, BCs, InternalConditions())) # a good initial guess
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=(x, y, t, u, p) -&gt; 1.0,
     initial_condition,
-    final_time=Inf))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 1191 nodes</code></pre><pre><code class="language-julia hljs">using SteadyStateDiffEq, OrdinaryDiffEq
+    final_time=Inf))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 1205 nodes</code></pre><pre><code class="language-julia hljs">using SteadyStateDiffEq, OrdinaryDiffEq
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
-u: 1203-element Vector{Float64}:
+u: 1221-element Vector{Float64}:
  0.0
  0.0
  0.024671493503386318
  0.04883948713935658
  0.0725039809079108
  ⋮
- 0.43213307250715405
- 0.6054322799066966
- 0.11915852907526436
- 0.18223270567987687
- 0.18276127002987153</code></pre><pre><code class="language-julia hljs">ax = Axis(fig[1, 2], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;, width=600, height=600)
+ 0.5075511277350064
+ 0.5286443198370117
+ 0.1929707568765437
+ 0.38043037171687266
+ 0.5833737048859297</code></pre><pre><code class="language-julia hljs">ax = Axis(fig[1, 2], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;, width=600, height=600)
 tricontourf!(ax, tri, fvm_sol.u, levels=0:0.1:1, colormap=:jet)
 resize_to_layout!(fig)
-fig</code></pre><img src="f4ab59da.png" alt="Example block output"/><h2 id="Using-the-Provided-Template"><a class="docs-heading-anchor" href="#Using-the-Provided-Template">Using the Provided Template</a><a id="Using-the-Provided-Template-1"></a><a class="docs-heading-anchor-permalink" href="#Using-the-Provided-Template" title="Permalink"></a></h2><p>Let&#39;s now use the built-in <code>LaplacesEquation</code> which implements the above inside FiniteVolumeMethod.jl. We consider the problem<sup class="footnote-reference"><a id="citeref-3" href="#footnote-3">[3]</a></sup></p><p class="math-container">\[\begin{equation*}
+fig</code></pre><img src="3f68c4d7.png" alt="Example block output"/><h2 id="Using-the-Provided-Template"><a class="docs-heading-anchor" href="#Using-the-Provided-Template">Using the Provided Template</a><a id="Using-the-Provided-Template-1"></a><a class="docs-heading-anchor-permalink" href="#Using-the-Provided-Template" title="Permalink"></a></h2><p>Let&#39;s now use the built-in <code>LaplacesEquation</code> which implements the above inside FiniteVolumeMethod.jl. We consider the problem<sup class="footnote-reference"><a id="citeref-3" href="#footnote-3">[3]</a></sup></p><p class="math-container">\[\begin{equation*}
 \begin{aligned}
 \div\left[D(\vb x)\grad u\right] &amp;= 0,\,0 &lt; x &lt; 5,\, 0 &lt; y &lt; 5, \\
 u(0, y) &amp;= 0 &amp; 0 &lt; y &lt; 5, \\
@@ -245,4 +245,4 @@ FVM.apply_dirichlet_conditions!(initial_condition, mesh, Conditions(mesh, BCs, I
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
     diffusion_function=(x, y, t, u, p) -&gt; (x + 1) * (y + 2),
     final_time=Inf,
-    initial_condition))</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See, for example, <a href="https://doi.org/10.1016/0307-904X(87)90036-9">this paper</a> by Rangogni and Occhi (1987).</li><li class="footnote" id="footnote-2"><a class="tag is-link" href="#citeref-2">2</a>This problem comes from <a href="https://sites.millersville.edu/rbuchanan/math467/LaplaceDisk.pdf#Navigation23">here</a>.</li><li class="footnote" id="footnote-3"><a class="tag is-link" href="#citeref-3">3</a>This is the first example from <a href="https://doi.org/10.1016/0307-904X(87)90036-9">this paper</a> by Rangogni and Occhi (1987).</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../poissons_equation/">« Poisson&#39;s Equation</a><a class="docs-footer-nextpage" href="../../math/">Mathematical and Implementation Details »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 17 October 2024 08:40">Thursday 17 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+    initial_condition))</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See, for example, <a href="https://doi.org/10.1016/0307-904X(87)90036-9">this paper</a> by Rangogni and Occhi (1987).</li><li class="footnote" id="footnote-2"><a class="tag is-link" href="#citeref-2">2</a>This problem comes from <a href="https://sites.millersville.edu/rbuchanan/math467/LaplaceDisk.pdf#Navigation23">here</a>.</li><li class="footnote" id="footnote-3"><a class="tag is-link" href="#citeref-3">3</a>This is the first example from <a href="https://doi.org/10.1016/0307-904X(87)90036-9">this paper</a> by Rangogni and Occhi (1987).</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../poissons_equation/">« Poisson&#39;s Equation</a><a class="docs-footer-nextpage" href="../../math/">Mathematical and Implementation Details »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 31 December 2024 19:42">Tuesday 31 December 2024</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

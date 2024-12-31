@@ -105,11 +105,11 @@ u: 1909-element Vector{Float64}:
      0.0
      0.0
      ⋮
- 11337.773501360343
+ 11337.773501360341
   9924.997858851162
  10945.13569370662
  11163.563665480688
-  1790.2014305208857</code></pre><p>We can easily visualise our solution:</p><pre><code class="language-julia hljs">using CairoMakie
+  1790.2014305208863</code></pre><p>We can easily visualise our solution:</p><pre><code class="language-julia hljs">using CairoMakie
 fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
     axis=(width=600, height=600, title=&quot;Template&quot;))
 fig</code></pre><img src="6142b7b3.png" alt="Example block output"/><p>This result is a great match to what we found in the <a href="../../tutorials/mean_exit_time/">tutorial</a>. If we wanted to convert this mean exit time problem into the corresponding <a href="../../interface/#FiniteVolumeMethod.SteadyFVMProblem"><code>SteadyFVMProblem</code></a>, we can do:</p><pre><code class="language-julia hljs">function T_exact(x, y)
@@ -137,11 +137,11 @@ u: 1909-element Vector{Float64}:
      0.0
      0.0
      ⋮
- 11399.83110113516
- 10060.042197923782
- 11013.594481625145
- 11213.69339248913
-  1799.0197449973798</code></pre><pre><code class="language-julia hljs">ax = Axis(fig[1, 2], width=600, height=600, title=&quot;Template&quot;)
+ 11399.831095472377
+ 10060.04218432754
+ 11013.594475205267
+ 11213.693388049178
+  1799.0197441439714</code></pre><pre><code class="language-julia hljs">ax = Axis(fig[1, 2], width=600, height=600, title=&quot;Template&quot;)
 tricontourf!(ax, tri, fvm_sol.u, levels=0:1000:15000, extendhigh=:auto)
 resize_to_layout!(fig)
 fig
@@ -176,11 +176,11 @@ u: 1909-element Vector{Float64}:
      0.0
      0.0
      ⋮
- 11337.773501360343
+ 11337.773501360341
   9924.997858851162
  10945.13569370662
  11163.563665480688
-  1790.2014305208857</code></pre><pre><code class="language-julia hljs">fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
+  1790.2014305208863</code></pre><pre><code class="language-julia hljs">fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
     axis=(width=600, height=600))
 fig</code></pre><img src="fffaecb5.png" alt="Example block output"/><p>This matches what we have above. To finish, here is a benchmark comparing the approaches.</p><pre><code class="language-julia hljs">using BenchmarkTools
 @btime solve($prob, $KLUFactorization());</code></pre><pre><code class="nohighlight hljs">  2.559 ms (56 allocations: 3.72 MiB)</code></pre><pre><code class="language-julia hljs">@btime solve($fvm_prob, $DynamicSS($KenCarp47(linsolve=KLUFactorization())));</code></pre><pre><code class="nohighlight hljs">  221.851 ms (314440 allocations: 90.23 MiB)</code></pre><p>Very fast!</p><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/mean_exit_time.jl">here</a>.</p><pre><code class="language-julia hljs">function create_met_b!(A, mesh, conditions)
@@ -296,4 +296,4 @@ sol = solve(prob, KLUFactorization())
 
 fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
     axis=(width=600, height=600))
-fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../diffusion_equations/">« Diffusion Equations</a><a class="docs-footer-nextpage" href="../linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 17 October 2024 08:40">Thursday 17 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../diffusion_equations/">« Diffusion Equations</a><a class="docs-footer-nextpage" href="../linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 31 December 2024 19:42">Tuesday 31 December 2024</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
