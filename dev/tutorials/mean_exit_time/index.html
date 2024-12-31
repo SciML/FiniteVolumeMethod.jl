@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Mean Exit Time · FiniteVolumeMethod.jl</title><meta name="title" content="Mean Exit Time · FiniteVolumeMethod.jl"/><meta property="og:title" content="Mean Exit Time · FiniteVolumeMethod.jl"/><meta property="twitter:title" content="Mean Exit Time · FiniteVolumeMethod.jl"/><meta name="description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="twitter:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/mean_exit_time/"/><meta property="twitter:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/mean_exit_time/"/><link rel="canonical" href="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/mean_exit_time/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li class="is-active"><a class="tocitem" href>Mean Exit Time</a><ul class="internal"><li><a class="tocitem" href="#Definition-of-the-problem"><span>Definition of the problem</span></a></li><li><a class="tocitem" href="#Unperturbed-interface"><span>Unperturbed interface</span></a></li><li><a class="tocitem" href="#Perturbed-interface"><span>Perturbed interface</span></a></li><li><a class="tocitem" href="#Adding-obstacles"><span>Adding obstacles</span></a></li><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../wyos/overview/">Section Overview</a></li><li><a class="tocitem" href="../../wyos/diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../../wyos/linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../../wyos/laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Mean Exit Time</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Mean Exit Time</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/mean_exit_time.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Mean-Exit-Time"><a class="docs-heading-anchor" href="#Mean-Exit-Time">Mean Exit Time</a><a id="Mean-Exit-Time-1"></a><a class="docs-heading-anchor-permalink" href="#Mean-Exit-Time" title="Permalink"></a></h1><ul><li><a href="#Mean-Exit-Time">Mean Exit Time</a></li><li class="no-marker"><ul><li><a href="#Definition-of-the-problem">Definition of the problem</a></li><li><a href="#Unperturbed-interface">Unperturbed interface</a></li><li><a href="#Perturbed-interface">Perturbed interface</a></li><li><a href="#Adding-obstacles">Adding obstacles</a></li><li><a href="#Just-the-code">Just the code</a></li></ul></li></ul><h2 id="Definition-of-the-problem"><a class="docs-heading-anchor" href="#Definition-of-the-problem">Definition of the problem</a><a id="Definition-of-the-problem-1"></a><a class="docs-heading-anchor-permalink" href="#Definition-of-the-problem" title="Permalink"></a></h2><p>In this tutorial, we consider the problem of mean exit time, based on some of my previous work.<sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup> Typically, mean exit time problems with linear diffusion take the form</p><p class="math-container">\[\begin{equation}\label{eq:met}
+\begin{aligned}
+D\grad^2T(\vb x) &amp;= -1 &amp; \vb x \in \Omega, \\
+T(\vb x) &amp;= 0 &amp; \vb x \in \partial \Omega,
+\end{aligned}
+\end{equation}\]</p><p>for some diffusivity <span>$D$</span>. <span>$T(\vb x)$</span> is the mean exit time at <span>$\vb x$</span>, meaning the average time it would take a particle starting at <span>$\vb x$</span> to exit the domain through <span>$\partial\Omega$</span>. For this interpretation of <span>$T$</span>, we are letting <span>$D = \mathcal P\delta^2/(4\tau)$</span>, where <span>$\delta &gt; 0$</span> is the step length of the particle, <span>$\tau&gt;0$</span> is the duration between steps, and <span>$\mathcal P \in [0, 1]$</span> is the probability that the particle actually moves at a given time step.</p><p>In this previous work, we also use the finite volume method, but the problems are instead formulated  as linear problems, which makes the solution significantly simpler to implement. The approach we give here  is more generally applicable for other nonlinear problems, though.</p><p>A more complicated extension of \eqref{eq:met} is to allow the particle to be moving through a <em>heterogenous</em> media, so that the diffusivity depends on <span>$\vb x$</span>. In particular, let us consider a compound disk <span>$\Omega = \{0 &lt; r &lt; R_1\} \cup \{R_1 &lt; r &lt; R_2\}$</span>, and let <span>$\mathcal P$</span> (the probability of movement) be piecewise constant across <span>$\Omega$</span> (and thus also <span>$D$</span>):</p><p class="math-container">\[P = \begin{cases} P_1 &amp; 0&lt;r&lt;R_1,\\P_2&amp;R_1&lt;r&lt;R_2,\end{cases}\quad D=\begin{cases}D_1&amp;0&lt;r&lt;R_1,\\D_2&amp;R_1&lt;r&lt;R_2,\end{cases}\]</p><p>where <span>$D_1 = P_1\delta^2/(4\tau)$</span> and <span>$D_2=P_2\delta^2/(4\tau)$</span>. The inner region, where <span>$0 &lt; r &lt; R_1$</span>, and the outer region, where <span>$R_1&lt;r&lt;R_2$</span>, are separated by an interface at <span>$r=R_1$</span> and we apply an <em>absorbing boundary condition</em> at <span>$r=R_2$</span>, meaning particles that reach <span>$r=R_2$</span> exit the domain. For this problem, \eqref{eq:met} is instead given by</p><p class="math-container">\[\begin{equation}\label{eq:met2}
+\begin{aligned}
+\frac{D_1}{r}\dv{r}\left(r\dv{T^{(1)}}{r}\right) &amp;= -1 &amp; 0 &lt;r&lt;R_1, \\[6pt]
+\frac{D_2}{r}\dv{r}\left(r\dv{T^{(2)}}{r}\right) &amp;= -1 &amp; R_1&lt;r&lt;R_2,\\[6pt]
+T^{(1)}(R_1) &amp;= T^{(2)}(R_1), \\
+D_1\dv{T^{(1)}}{r}(R_1) &amp;= D_2\dv{T^{(2)}}{r}(R_1), \\[6pt]
+\dv{T^{(1)}}{r}(0) &amp;= 0, \\[6pt]
+T^{(2)}(R_2) &amp;= 0,
+\end{aligned}
+\end{equation}\]</p><p>which we describe using polar coordinates, and we let <span>$T^{(1)}(r)$</span> be the mean exit time for <span>$0 &lt; r &lt; R_1$</span>, and <span>$T^{(2)}(r)$</span> be the mean exit time for <span>$R_1 &lt; r &lt; R_2$</span>. The boundary conditions at the interface are to enforce continuity of <span>$T$</span> and continuity of the flux of <span>$T$</span> across the interface, and the condition <span>$\mathrm dT^{(1)}/\mathrm dr = 0$</span> at <span>$r=0$</span> is to ensure that <span>$T^{(1)}$</span> is finite at <span>$r=0$</span>. This problem actually has an exact solution,</p><p class="math-container">\[\begin{equation}\label{eq:met2exact}
+\begin{aligned}
+T^{(1)}(r) &amp;= \frac{R_1^2-r^2}{4D_1}+\frac{R_2^2-R_1^2}{4D_2}, \\
+T^{(2)}(r) &amp;= \frac{R_2^2-r^2}{4D_2},
+\end{aligned}
+\end{equation}\]</p><p>which will be useful later.</p><p>One other extension we can make is to allow the interface to be more complicated than just a circle. We take a <em>perturbed</em> interface, <span>$\mathcal R_1(\theta)$</span>, so that the inner region is now <span>$0 &lt; r &lt; \mathcal R_1(\theta)$</span> and the outer region is <span>$\mathcal R_1(\theta) &lt; r &lt; R_2$</span>. The function <span>$\mathcal R_1(\theta)$</span> is written in the form <span>$\mathcal R_1(\theta) = R_1(1+\varepsilon g(\theta))$</span>, where <span>$\varepsilon \ll 1$</span> is a perturbation parameter, <span>$R_1$</span> is the radius of the unperturbed interface, and <span>$g(\theta)$</span> is a smooth <span>$\mathcal O(1)$</span> periodic function with period <span>$2\pi$</span>; we let <span>$g(\theta) = \sin(3\theta) + \cos(5\theta)$</span> and <span>$\varepsilon=0.05$</span> for this tutorial. With this setup, \eqref{eq:met2} now becomes</p><p class="math-container">\[\begin{equation}\label{eq:met3}
+\begin{aligned}
+D_1\grad^2 T^{(1)}(\vb x) &amp;= -1 &amp; 0 &lt; r &lt; \mathcal R_1(\theta), \\
+D_2\grad^2 T^{(2)}(\vb x) &amp;= -1 &amp; \mathcal R_1(\theta) &lt; r &lt; R_2, \\
+T^{(1)}(\mathcal R_1(\theta),\theta) &amp;= T^{(2)}(\mathcal R_1(\theta),\theta), \\
+D_1\grad T^{(1)}(\mathcal R_1(\theta), \theta) \vdot \vu n(\theta) &amp;= D_2\grad T^{(2)}(\mathcal R_1(\theta), \theta) \vdot \vu n(\theta), \\
+T^{(2)}(R_2, \theta) &amp;= 0. \\
+\end{aligned}
+\end{equation}\]</p><p>This problem has no exact solution (it has a perturbation solution, though, derived in <a href="https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d">Carr et al. (2022)</a>).</p><p>At the end of this tutorial, we also consider modifying \eqref{eq:met3} even further so that there are holes in the domain, and an internal Dirichlet condition at the origin.</p><h2 id="Unperturbed-interface"><a class="docs-heading-anchor" href="#Unperturbed-interface">Unperturbed interface</a><a id="Unperturbed-interface-1"></a><a class="docs-heading-anchor-permalink" href="#Unperturbed-interface" title="Permalink"></a></h2><p>Let us start by solving the problem on an unperturbed interface. We note that, while \eqref{eq:met2} is defined so that there are two variables <span>$T^{(1)}$</span> and <span>$T^{(2)}$</span>, which therefore requires continuity equations across the interface, numerically we can solve this in terms of a single variable <span>$T$</span> with a space-varying diffusivity. Moreover, the finiteness condition at the origin is not needed. Thus, we can solve</p><p class="math-container">\[\begin{equation}
+\begin{aligned}
+D(\vb x)\grad^2 T(\vb x) &amp;= -1 &amp; \vb x \in \mathcal D(0, R_2), \\
+T(\vb x) &amp;= 0 &amp; \vb x \in \partial \mathcal D(0, R_2).
+\end{aligned}
+\end{equation}\]</p><p>Here, <span>$\mathcal D(0,R_2)$</span> is the circle of radius <span>$R_2$</span> centred at the origin, and</p><p class="math-container">\[D(\vb x) = \begin{cases} D_1 &amp; \|\vb x\| &lt; R_1, \\ D_2 &amp; R_1 \leq \|\vb x\| \leq R_2. \end{cases}\]</p><p>The mesh is defined as follows. To help the accuracy of the solution, we add more triangles around the interior circle by putting some constrained edges there.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
+R₁, R₂ = 2.0, 3.0
+circle = CircularArc((0.0, R₂), (0.0, R₂), (0.0, 0.0))
+points = NTuple{2,Float64}[]
+tri = triangulate(points; boundary_nodes=[circle])
+θ = LinRange(0, 2π, 250)
+xin = @views @. R₁ * cos(θ)[begin:end-1]
+yin = @views @. R₁ * sin(θ)[begin:end-1]
+add_point!(tri, xin[1], yin[1])
+for i in 2:length(xin)
+    add_point!(tri, xin[i], yin[i])
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
+end
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+refine!(tri; max_area=1e-3get_area(tri))
+triplot(tri)</code></pre><img src="e2c9635f.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 2035 control volumes, 3978 triangles, and 6012 edges</code></pre><p>The boundary conditions are simple absorbing conditions.</p><pre><code class="language-julia hljs">BCs = BoundaryConditions(mesh, ((x, y, t, u, p) -&gt; zero(u),), (Dirichlet,))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 1 boundary condition with type Dirichlet</code></pre><p>For the problem, let us first define the diffusivity.</p><pre><code class="language-julia hljs">D₁, D₂ = 6.25e-4, 6.25e-5
+diffusion_function = (x, y, t, u, p) -&gt; let r = sqrt(x^2 + y^2)
+    return ifelse(r &lt; p.R₁, p.D₁, p.D₂)
+end
+diffusion_parameters = (R₁=R₁, D₁=D₁, D₂=D₂)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(R₁ = 2.0, D₁ = 0.000625, D₂ = 6.25e-5)</code></pre><p>For the initial condition, which recall is the initial guess for the steady problem, let us use the exact solution for the mean exit time problem on a disk with a uniform diffusivity, which is given by <span>$(R_2^2 - r^2)/(4D_2)$</span>.</p><pre><code class="language-julia hljs">f = (x, y) -&gt; let r = sqrt(x^2 + y^2)
+    return (R₂^2 - r^2) / (4D₂)
+end
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2058-element Vector{Float64}:
+     0.0
+     0.0
+     0.0
+     0.0
+     0.0
+     ⋮
+ 34297.81112014863
+  7646.930366955001
+ 28934.125856402658
+ 35893.548456787306
+ 35892.78199272596</code></pre><p>We now define the problem.</p><pre><code class="language-julia hljs">source_function = (x, y, t, u, p) -&gt; one(u)
+prob = FVMProblem(mesh, BCs;
+    diffusion_function, diffusion_parameters,
+    source_function, initial_condition,
+    final_time=Inf)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 2035 nodes and time span (0.0, Inf)</code></pre><pre><code class="language-julia hljs">steady_prob = SteadyFVMProblem(prob)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 2035 nodes</code></pre><p>We now solve this problem as we&#39;ve done for any previous problem.</p><pre><code class="language-julia hljs">using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+u: 2058-element Vector{Float64}:
+     0.0
+     0.0
+     0.0
+     0.0
+     0.0
+     ⋮
+ 21768.966559572287
+  7747.428675334945
+ 21221.18549766961
+ 21929.248328733334
+ 21928.45106562708</code></pre><pre><code class="language-julia hljs">fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)
+tricontourf!(ax, tri, sol.u, levels=0:500:20000, extendhigh=:auto)
+fig</code></pre><img src="801bc748.png" alt="Example block output"/><h2 id="Perturbed-interface"><a class="docs-heading-anchor" href="#Perturbed-interface">Perturbed interface</a><a id="Perturbed-interface-1"></a><a class="docs-heading-anchor-permalink" href="#Perturbed-interface" title="Permalink"></a></h2><p>Let us now solve the problem with a perturbed interface. The mesh is defined as follows.</p><pre><code class="language-julia hljs">g = θ -&gt; sin(3θ) + cos(5θ)
+ε = 0.05
+R1_f = θ -&gt; R₁ * (1 + ε * g(θ))
+points = NTuple{2,Float64}[]
+circle = CircularArc((0.0, R₂), (0.0, R₂), (0.0, 0.0))
+tri = triangulate(points; boundary_nodes=[circle])
+xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+add_point!(tri, xin[1], yin[1])
+for i in 2:length(xin)
+    add_point!(tri, xin[i], yin[i])
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
+end
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+refine!(tri; max_area=1e-3get_area(tri))
+triplot(tri)</code></pre><img src="03e8b026.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 1863 control volumes, 3621 triangles, and 5483 edges</code></pre><p>The boundary conditions are simple absorbing conditions.</p><pre><code class="language-julia hljs">BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 1 boundary condition with type Dirichlet</code></pre><p>Now we define the problem. For the initial condition that we use, we will use the exact solution for the problem with an unperturbed interface.</p><pre><code class="language-julia hljs">function T_exact(x, y)
+    r = sqrt(x^2 + y^2)
+    if r &lt; R₁
+        return (R₁^2 - r^2) / (4D₁) + (R₂^2 - R₁^2) / (4D₂)
+    else
+        return (R₂^2 - r^2) / (4D₂)
+    end
+end
+diffusion_function = (x, y, t, u, p) -&gt; let r = sqrt(x^2 + y^2), θ = atan(y, x)
+    interface_val = p.R1_f(θ)
+    return ifelse(r &lt; interface_val, p.D₁, p.D₂)
+end
+diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+source_function = (x, y, t, u, p) -&gt; one(u)
+prob = FVMProblem(mesh, BCs;
+    diffusion_function, diffusion_parameters,
+    source_function, initial_condition,
+    final_time=Inf)
+steady_prob = SteadyFVMProblem(prob)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 1863 nodes</code></pre><pre><code class="language-julia hljs">sol = solve(steady_prob, DynamicSS(Rosenbrock23()))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+u: 1897-element Vector{Float64}:
+    0.0
+    0.0
+    0.0
+    0.0
+    0.0
+    ⋮
+ 8243.085501772419
+ 6820.944886721301
+ 3384.6363954356802
+ 3707.2375926428317
+ 3466.633664162991</code></pre><pre><code class="language-julia hljs">fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)
+tricontourf!(ax, tri, sol.u, levels=0:500:20000, extendhigh=:auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig</code></pre><img src="8c522193.png" alt="Example block output"/><h2 id="Adding-obstacles"><a class="docs-heading-anchor" href="#Adding-obstacles">Adding obstacles</a><a id="Adding-obstacles-1"></a><a class="docs-heading-anchor-permalink" href="#Adding-obstacles" title="Permalink"></a></h2><p>Let us now add some obstacles into the problem. We add in components one at a time, exploring the impact of each component individually. When we update the triangulation, we do need to update the <code>mesh</code> since it is constructed from the initial <code>tri</code>.</p><p>The first obstacle we consider adding is a single hole at the origin, which we accomplish by adding a point at the origin and then using <code>InternalConditions</code>. This point will be used to absorb any nearby particles, i.e. <span>$T(0,0)=0$</span>.</p><pre><code class="language-julia hljs">add_point!(tri, 0.0, 0.0)
+mesh = FVMGeometry(tri)
+ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u), dirichlet_nodes=Dict(DelaunayTriangulation.num_points(tri) =&gt; 1))
+BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs, ICs;
+    diffusion_function, diffusion_parameters,
+    source_function, initial_condition,
+    final_time=Inf)
+steady_prob = SteadyFVMProblem(prob)
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)
+tricontourf!(ax, tri, sol.u, levels=0:500:10000, extendhigh=:auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig</code></pre><img src="9dc0ed3e.png" alt="Example block output"/><p>We see that the hole has changed the interior significantly. For the next constraint, let us change the boundary so that we only allow particles to exit through a small part of the boundary, reflecting off all other parts. For the reflecting boundary condition, this is enforced by using Neumann boundary conditions.</p><pre><code class="language-julia hljs">ϵr = 0.25
+dirichlet_circle = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
+neumann_circle = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(ϵr), R₂ * sin(ϵr)), (0.0, 0.0))
+boundary_nodes = [[dirichlet_circle], [neumann_circle]]
+points = NTuple{2,Float64}[]
+tri = triangulate(points; boundary_nodes)
+xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+add_point!(tri, xin[1], yin[1])
+for i in 2:length(xin)
+    add_point!(tri, xin[i], yin[i])
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
+end
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+add_point!(tri, 0.0, 0.0)
+origin_idx = DelaunayTriangulation.num_points(tri)
+refine!(tri; max_area=1e-3get_area(tri))
+triplot(tri)</code></pre><img src="ee75b121.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)
+zero_f = (x, y, t, u, p) -&gt; zero(u)
+BCs = BoundaryConditions(mesh, (zero_f, zero_f), (Neumann, Dirichlet))
+ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u), dirichlet_nodes=Dict(origin_idx =&gt; 1))
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs, ICs;
+    diffusion_function, diffusion_parameters,
+    source_function, initial_condition,
+    final_time=Inf)
+steady_prob = SteadyFVMProblem(prob)
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)
+tricontourf!(ax, tri, sol.u, levels=0:2500:35000, extendhigh=:auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig</code></pre><img src="888d99bb.png" alt="Example block output"/><p>Now, as a last constraint, let&#39;s add a hole. We&#39;ll put hole at the origin,  and we&#39;ll move the point hole to <span>$(-2, 0)$</span> rather than at the origin, and we&#39;ll also put a hole at <span>$(0, 2.95)$</span>.</p><pre><code class="language-julia hljs">hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive=false)
+boundary_nodes = [[[dirichlet_circle], [neumann_circle]], [[hole]]]
+points = NTuple{2,Float64}[]
+tri = triangulate(points; boundary_nodes)
+xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+add_point!(tri, xin[1], yin[1])
+for i in 2:length(xin)
+    add_point!(tri, xin[i], yin[i])
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
+end
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+add_point!(tri, -2.0, 0.0)
+add_point!(tri, 0.0, 2.95)
+pointhole_idxs = [DelaunayTriangulation.num_points(tri), DelaunayTriangulation.num_points(tri) - 1]
+refine!(tri; max_area=1e-3get_area(tri))
+triplot(tri)</code></pre><img src="38d3e7d0.png" alt="Example block output"/><p>The boundary condition we&#39;ll use at the new interior hole will be an absorbing boundary condition.</p><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)
+zero_f = (x, y, t, u, p) -&gt; zero(u)
+BCs = BoundaryConditions(mesh, (zero_f, zero_f, zero_f), (Neumann, Dirichlet, Dirichlet))
+ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u), dirichlet_nodes=Dict(pointhole_idxs .=&gt; 1))
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs, ICs;
+    diffusion_function, diffusion_parameters,
+    source_function, initial_condition,
+    final_time=Inf)
+steady_prob = SteadyFVMProblem(prob)
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)
+tricontourf!(ax, tri, sol.u, levels=0:1000:15000, extendhigh=:auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig</code></pre><img src="5f8782ad.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/mean_exit_time.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
+R₁, R₂ = 2.0, 3.0
+circle = CircularArc((0.0, R₂), (0.0, R₂), (0.0, 0.0))
+points = NTuple{2,Float64}[]
+tri = triangulate(points; boundary_nodes=[circle])
+θ = LinRange(0, 2π, 250)
+xin = @views @. R₁ * cos(θ)[begin:end-1]
+yin = @views @. R₁ * sin(θ)[begin:end-1]
+add_point!(tri, xin[1], yin[1])
+for i in 2:length(xin)
+    add_point!(tri, xin[i], yin[i])
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
+end
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+refine!(tri; max_area=1e-3get_area(tri))
+triplot(tri)
+
+mesh = FVMGeometry(tri)
+
+BCs = BoundaryConditions(mesh, ((x, y, t, u, p) -&gt; zero(u),), (Dirichlet,))
+
+D₁, D₂ = 6.25e-4, 6.25e-5
+diffusion_function = (x, y, t, u, p) -&gt; let r = sqrt(x^2 + y^2)
+    return ifelse(r &lt; p.R₁, p.D₁, p.D₂)
+end
+diffusion_parameters = (R₁=R₁, D₁=D₁, D₂=D₂)
+
+f = (x, y) -&gt; let r = sqrt(x^2 + y^2)
+    return (R₂^2 - r^2) / (4D₂)
+end
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+
+source_function = (x, y, t, u, p) -&gt; one(u)
+prob = FVMProblem(mesh, BCs;
+    diffusion_function, diffusion_parameters,
+    source_function, initial_condition,
+    final_time=Inf)
+
+steady_prob = SteadyFVMProblem(prob)
+
+using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)
+tricontourf!(ax, tri, sol.u, levels=0:500:20000, extendhigh=:auto)
+fig
+
+g = θ -&gt; sin(3θ) + cos(5θ)
+ε = 0.05
+R1_f = θ -&gt; R₁ * (1 + ε * g(θ))
+points = NTuple{2,Float64}[]
+circle = CircularArc((0.0, R₂), (0.0, R₂), (0.0, 0.0))
+tri = triangulate(points; boundary_nodes=[circle])
+xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+add_point!(tri, xin[1], yin[1])
+for i in 2:length(xin)
+    add_point!(tri, xin[i], yin[i])
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
+end
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+refine!(tri; max_area=1e-3get_area(tri))
+triplot(tri)
+
+mesh = FVMGeometry(tri)
+
+BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)
+
+function T_exact(x, y)
+    r = sqrt(x^2 + y^2)
+    if r &lt; R₁
+        return (R₁^2 - r^2) / (4D₁) + (R₂^2 - R₁^2) / (4D₂)
+    else
+        return (R₂^2 - r^2) / (4D₂)
+    end
+end
+diffusion_function = (x, y, t, u, p) -&gt; let r = sqrt(x^2 + y^2), θ = atan(y, x)
+    interface_val = p.R1_f(θ)
+    return ifelse(r &lt; interface_val, p.D₁, p.D₂)
+end
+diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+source_function = (x, y, t, u, p) -&gt; one(u)
+prob = FVMProblem(mesh, BCs;
+    diffusion_function, diffusion_parameters,
+    source_function, initial_condition,
+    final_time=Inf)
+steady_prob = SteadyFVMProblem(prob)
+
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)
+tricontourf!(ax, tri, sol.u, levels=0:500:20000, extendhigh=:auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig
+
+add_point!(tri, 0.0, 0.0)
+mesh = FVMGeometry(tri)
+ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u), dirichlet_nodes=Dict(DelaunayTriangulation.num_points(tri) =&gt; 1))
+BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs, ICs;
+    diffusion_function, diffusion_parameters,
+    source_function, initial_condition,
+    final_time=Inf)
+steady_prob = SteadyFVMProblem(prob)
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)
+tricontourf!(ax, tri, sol.u, levels=0:500:10000, extendhigh=:auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig
+
+ϵr = 0.25
+dirichlet_circle = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
+neumann_circle = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(ϵr), R₂ * sin(ϵr)), (0.0, 0.0))
+boundary_nodes = [[dirichlet_circle], [neumann_circle]]
+points = NTuple{2,Float64}[]
+tri = triangulate(points; boundary_nodes)
+xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+add_point!(tri, xin[1], yin[1])
+for i in 2:length(xin)
+    add_point!(tri, xin[i], yin[i])
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
+end
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+add_point!(tri, 0.0, 0.0)
+origin_idx = DelaunayTriangulation.num_points(tri)
+refine!(tri; max_area=1e-3get_area(tri))
+triplot(tri)
+
+mesh = FVMGeometry(tri)
+zero_f = (x, y, t, u, p) -&gt; zero(u)
+BCs = BoundaryConditions(mesh, (zero_f, zero_f), (Neumann, Dirichlet))
+ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u), dirichlet_nodes=Dict(origin_idx =&gt; 1))
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs, ICs;
+    diffusion_function, diffusion_parameters,
+    source_function, initial_condition,
+    final_time=Inf)
+steady_prob = SteadyFVMProblem(prob)
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)
+tricontourf!(ax, tri, sol.u, levels=0:2500:35000, extendhigh=:auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig
+
+hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive=false)
+boundary_nodes = [[[dirichlet_circle], [neumann_circle]], [[hole]]]
+points = NTuple{2,Float64}[]
+tri = triangulate(points; boundary_nodes)
+xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+add_point!(tri, xin[1], yin[1])
+for i in 2:length(xin)
+    add_point!(tri, xin[i], yin[i])
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
+end
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+add_point!(tri, -2.0, 0.0)
+add_point!(tri, 0.0, 2.95)
+pointhole_idxs = [DelaunayTriangulation.num_points(tri), DelaunayTriangulation.num_points(tri) - 1]
+refine!(tri; max_area=1e-3get_area(tri))
+triplot(tri)
+
+mesh = FVMGeometry(tri)
+zero_f = (x, y, t, u, p) -&gt; zero(u)
+BCs = BoundaryConditions(mesh, (zero_f, zero_f, zero_f), (Neumann, Dirichlet, Dirichlet))
+ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u), dirichlet_nodes=Dict(pointhole_idxs .=&gt; 1))
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs, ICs;
+    diffusion_function, diffusion_parameters,
+    source_function, initial_condition,
+    final_time=Inf)
+steady_prob = SteadyFVMProblem(prob)
+sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)
+tricontourf!(ax, tri, sol.u, levels=0:1000:15000, extendhigh=:auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See <a href="https://iopscience.iop.org/article/10.1088/1367-2630/abe60d">Simpson et al. (2021)</a> and <a href="https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d">Carr et al. (2022)</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../diffusion_equation_on_an_annulus/">« Diffusion Equation on an Annulus</a><a class="docs-footer-nextpage" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 17 October 2024 08:40">Thursday 17 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

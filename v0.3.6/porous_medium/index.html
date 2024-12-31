@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example IV: Porous-medium equation · FiniteVolumeMethod.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">FiniteVolumeMethod.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../interface/">Interface</a></li><li><a class="tocitem" href="../docstrings/">Docstrings</a></li><li><a class="tocitem" href="../example_list/">List of Examples and Setup</a></li><li><a class="tocitem" href="../diffusion_equation/">Example I: Diffusion equation on a square plate</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_wedge/">Example II: Diffusion equation in a wedge with mixed boundary conditions</a></li><li><a class="tocitem" href="../reaction_diffusion/">Example III: Reaction-diffusion equation with a time-dependent Dirichlet boundary condition on a disk</a></li><li class="is-active"><a class="tocitem" href>Example IV: Porous-medium equation</a><ul class="internal"><li><a class="tocitem" href="#No-source"><span>No source</span></a></li><li><a class="tocitem" href="#Linear-source"><span>Linear source</span></a></li></ul></li><li><a class="tocitem" href="../porous_fisher/">Example V: Porous-Fisher equation and travelling waves</a></li><li><a class="tocitem" href="../interpolants/">Example VI: Using the linear interpolants</a></li><li><a class="tocitem" href="../math/">Mathematical Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Example IV: Porous-medium equation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example IV: Porous-medium equation</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/docs/src/porous_medium.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Example-IV:-Porous-medium-equation"><a class="docs-heading-anchor" href="#Example-IV:-Porous-medium-equation">Example IV: Porous-medium equation</a><a id="Example-IV:-Porous-medium-equation-1"></a><a class="docs-heading-anchor-permalink" href="#Example-IV:-Porous-medium-equation" title="Permalink"></a></h1><p>Please ensure you have read the List of Examples section before proceeding.</p><h2 id="No-source"><a class="docs-heading-anchor" href="#No-source">No source</a><a id="No-source-1"></a><a class="docs-heading-anchor-permalink" href="#No-source" title="Permalink"></a></h2><p>We now consider the Porous medium equation,</p><p class="math-container">\[\dfrac{\partial u}{\partial t} = D\boldsymbol{\nabla} \boldsymbol{\cdot} \left[u^{m-1} \boldsymbol{\nabla}u\right],\]</p><p>with initial condition <span>$u(x, y, 0) = M\delta(x, y)$</span> where <span>$\delta(x, y)$</span> is the Dirac delta function and <span>$M = \iint_{\mathbb R^2} u(x, y, t)~\mathrm{d}A$</span>. The diffusion function here is <span>$D(x, y, t, u) = Du^{m-1}$</span>. We approximate <span>$\delta(x, y)$</span> by </p><p class="math-container">\[\delta(x, y) \approx g(x, y) = \frac{1}{\varepsilon^2 \mathrm{\pi}}\exp\left[-\frac{1}{\varepsilon^2}\left(x^2 + y^2\right)\right],\]</p><p>taking <span>$\varepsilon = 0.1$</span>. This equation has an exact solution (see e.g. Section 17.5 of the <em>The porous medium equation: Mathematical theory</em> by J. L. Vázquez (2007)) </p><p class="math-container">\[u(x, y, t) = \begin{cases} (Dt)^{-1/m}\left[\left(\dfrac{M}{4\mathrm{\pi}}\right)^{(m-1)/m} - \dfrac{m-1}{4m}\left(x^2+y^2\right)(Dt)^{-1/m}\right]^{1/(m-1)} &amp; x^2 + y^2 &lt; R_{m, M}(Dt)^{1/m}, \\
+0 &amp; x^2 + y^2 \geq R_{m, M}(Dt)^{1/m},\end{cases}\]</p><p>where <span>$R_{m, M} = [4m/(m-1)][M/(4\mathrm{\pi})]^{(m-1)/m}$</span>. This equation has compact support, so we replace <span>$\mathbb R^2$</span> by the domain <span>$\Omega = [-R_{m, M}^{1/2}(DT)^{1/2m}, R_{m, M}^{1/2}(DT)^{1/2m}]^2$</span>, where <span>$T$</span> is the time that we solve up to, and we take Dirichlet boundary conditions on <span>$\partial\Omega$</span>. We solve this problem as follows, taking <span>$m = 2$</span>, <span>$M = 0.37$</span>, <span>$D = 2.53$</span>, and <span>$T = 12$</span>. Note the use of the parameters.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod
+
+## Step 0: Define all the parameters 
+m = 2
+M = 0.37
+D = 2.53
+final_time = 12.0
+ε = 0.1
+
+## Step 1: Define the mesh 
+RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
+L = sqrt(RmM) * (D * final_time)^(1 / (2m))
+n = 500
+x₁ = LinRange(-L, L, n)
+x₂ = LinRange(L, L, n)
+x₃ = LinRange(L, -L, n)
+x₄ = LinRange(-L, -L, n)
+y₁ = LinRange(-L, -L, n)
+y₂ = LinRange(-L, L, n)
+y₃ = LinRange(L, L, n)
+y₄ = LinRange(L, -L, n)
+x = reduce(vcat, [x₁, x₂, x₃, x₄])
+y = reduce(vcat, [y₁, y₂, y₃, y₄])
+xy = [(x, y) for (x, y) in zip(x, y)]
+unique!(xy)
+x = getx.(xy)
+y = gety.(xy)
+r = 0.1
+(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+
+## Step 2: Define the boundary conditions 
+bc = ((x, y, t, u::T, p) where {T}) -&gt; zero(T)
+types = :D
+BCs = BoundaryConditions(mesh, bc, types, BN)
+
+## Step 3: Define the actual PDE  
+f = (x, y) -&gt; M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
+diff_fnc = (x, y, t, u, p) -&gt; p[1] * u^(p[2] - 1)
+diff_parameters = (D, m)
+u₀ = [f(points[:, i]...) for i in axes(points, 2)]
+prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc,
+    diffusion_parameters=diff_parameters, initial_condition=u₀, final_time)
+
+## Step 4: Solve
+using LinearSolve, OrdinaryDiffEq
+
+alg = TRBDF2(linsolve=KLUFactorization())
+sol = solve(prob, alg; saveat=3.0)
+
+## Step 5: Visualisation
+using CairoMakie
+
+pt_mat = Matrix(points&#39;)
+T_mat = [collect(T)[i][j] for i in 1:length(T), j in 1:3]
+fig = Figure(resolution=(2131.8438f0, 684.27f0), fontsize=38)
+ax = Axis(fig[1, 1], width=600, height=600)
+mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(0.0, 0.05), colormap=:matter)
+ax = Axis(fig[1, 2], width=600, height=600)
+mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(0.0, 0.05), colormap=:matter)
+ax = Axis(fig[1, 3], width=600, height=600)
+mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0.0, 0.05), colormap=:matter)</code></pre><p><img src="https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/porous_medium_test.png?raw=true" alt="Porous-medium equation with m=2"/></p><h2 id="Linear-source"><a class="docs-heading-anchor" href="#Linear-source">Linear source</a><a id="Linear-source-1"></a><a class="docs-heading-anchor-permalink" href="#Linear-source" title="Permalink"></a></h2><p>We can continue this example with the Porous medium equation by considering the same equation except with a linear source:</p><p class="math-container">\[\dfrac{\partial u}{\partial t} = D\boldsymbol{\nabla} \boldsymbol{\cdot} \left[u^{m-1}\boldsymbol{\nabla} u\right] + \lambda u, \quad \lambda&gt;0. \]</p><p>This equation has an exact solution given by </p><p class="math-container">\[u(x, y, t) = \mathrm{e}^{\lambda t}v\left(x, y, \frac{D}{\lambda(m-1)}\left[\mathrm{e}^{\lambda(m-1)t} - 1\right]\right),\]</p><p>where <span>$u(x, y, 0) = M\delta(x, y)$</span> and <span>$v$</span> is the exact solution we gave above except with <span>$D=1$</span>. This is what we use for assessing the solution in the tests - not shown here. The domain we use is now <span>$\Omega = [-R_{m, M}^{1/2}\tau(T)^{1/2m}, R_{m,M}^{1/2}\tau(T)^{1/2m}]^2$</span>, where <span>$\tau(T) = \frac{D}{\lambda(m-1)}[\mathrm{e}^{\lambda(m-1)T}-1]$</span>. The code below solves this problem.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, LinearSolve, FiniteVolumeMethod, DelaunayTriangulation, CairoMakie
+
+## Step 0: Define all the parameters 
+m = 3.4
+M = 2.3
+D = 0.581
+λ = 0.2
+final_time = 10.0
+ε = 0.1
+
+## Step 1: Define the mesh 
+RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
+L = sqrt(RmM) * (D / (λ * (m - 1)) * (exp(λ * (m - 1) * final_time) - 1))^(1 / (2m))
+n = 500
+x₁ = LinRange(-L, L, n)
+x₂ = LinRange(L, L, n)
+x₃ = LinRange(L, -L, n)
+x₄ = LinRange(-L, -L, n)
+y₁ = LinRange(-L, -L, n)
+y₂ = LinRange(-L, L, n)
+y₃ = LinRange(L, L, n)
+y₄ = LinRange(L, -L, n)
+x = reduce(vcat, [x₁, x₂, x₃, x₄])
+y = reduce(vcat, [y₁, y₂, y₃, y₄])
+xy = [(x, y) for (x, y) in zip(x, y)]
+unique!(xy)
+x = getx.(xy)
+y = gety.(xy)
+r = 0.07
+(T, adj, adj2v, DG, points), BN = generate_mesh(x, y, r; gmsh_path=GMSH_PATH)
+mesh = FVMGeometry(T, adj, adj2v, DG, points, BN)
+
+## Step 2: Define the boundary conditions 
+bc = ((x, y, t, u::T, p) where {T}) -&gt; zero(T)
+types = :D
+BCs = BoundaryConditions(mesh, bc, types, BN)
+
+## Step 3: Define the actual PDE  
+f = (x, y) -&gt; M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
+diff_fnc = (x, y, t, u, p) -&gt; p[1] * abs(u)^(p[2] - 1)
+reac_fnc = (x, y, t, u, p) -&gt; p[1] * u
+diff_parameters = (D, m)
+react_parameter = λ
+u₀ = [f(points[:, i]...) for i in axes(points, 2)]
+prob = FVMProblem(mesh, BCs; diffusion_function=diff_fnc,
+    diffusion_parameters=diff_parameters,
+    reaction_function=reac_fnc, reaction_parameters=react_parameter,
+    initial_condition=u₀, final_time)
+
+## Step 4: Solve
+alg = TRBDF2(linsolve=KLUFactorization())
+sol = solve(prob, alg; saveat=2.5)
+
+## Step 5: Visualisation 
+pt_mat = Matrix(points&#39;)
+T_mat = [collect(T)[i][j] for i in 1:length(T), j in 1:3]
+fig = Figure(resolution=(2131.8438f0, 684.27f0), fontsize=38)
+ax = Axis(fig[1, 1], width=600, height=600)
+mesh!(ax, pt_mat, T_mat, color=sol.u[1], colorrange=(0.0, 0.5), colormap=:matter)
+ax = Axis(fig[1, 2], width=600, height=600)
+mesh!(ax, pt_mat, T_mat, color=sol.u[3], colorrange=(0.0, 0.5), colormap=:matter)
+ax = Axis(fig[1, 3], width=600, height=600)
+mesh!(ax, pt_mat, T_mat, color=sol.u[5], colorrange=(0.0, 0.5), colormap=:matter)</code></pre><p><img src="https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/test/figures/porous_medium_linear_source_test.png?raw=true" alt="Porous-medium equation with linear source"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../reaction_diffusion/">« Example III: Reaction-diffusion equation with a time-dependent Dirichlet boundary condition on a disk</a><a class="docs-footer-nextpage" href="../porous_fisher/">Example V: Porous-Fisher equation and travelling waves »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Wednesday 21 December 2022 18:10">Wednesday 21 December 2022</span>. Using Julia version 1.8.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Solving Mazes with Laplace&#39;s Equation · FiniteVolumeMethod.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link rel="canonical" href="https://DanielVandH.github.io/FiniteVolumeMethod.jl/tutorials/solving_mazes_with_laplaces_equation/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time</a></li><li class="is-active"><a class="tocitem" href>Solving Mazes with Laplace&#39;s Equation</a><ul class="internal"><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../wyos/overview/">Section Overview</a></li><li><a class="tocitem" href="../../wyos/diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../../wyos/linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../../wyos/laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Solving Mazes with Laplace&#39;s Equation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Solving Mazes with Laplace&#39;s Equation</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/solving_mazes_with_laplaces_equation.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Solving-Mazes-with-Laplace&#39;s-Equation"><a class="docs-heading-anchor" href="#Solving-Mazes-with-Laplace&#39;s-Equation">Solving Mazes with Laplace&#39;s Equation</a><a id="Solving-Mazes-with-Laplace&#39;s-Equation-1"></a><a class="docs-heading-anchor-permalink" href="#Solving-Mazes-with-Laplace&#39;s-Equation" title="Permalink"></a></h1><p>In this tutorial, we consider solving mazes using Laplace&#39;s equation, applying the result of <a href="https://doi.org/10.1109/ROBOT.1990.126315">Conolly, Burns, and Weis (1990)</a>. In particular, given a maze <span>$\mathcal M$</span>, represented as a collection of edges together with some starting point <span>$\mathcal S_1$</span> and an endpoint <span>$\mathcal S_2$</span>, Laplace&#39;s equation can be used to find the solution:</p><p class="math-container">\[\begin{equation}
+\begin{aligned}
+\grad^2 \phi &amp;= 0, &amp; \vb x \in \mathcal M, \\
+\phi &amp;= 0 &amp; \vb x \in \mathcal S_1, \\
+\phi &amp;= 1 &amp; \vb x \in \mathcal S_2, \\
+\grad\phi\vdot\vu n &amp;= 0 &amp; \vb x \in \partial M \setminus (\mathcal S_1 \cup \mathcal S_2).
+\end{aligned}
+\end{equation}\]</p><p>The gradient <span>$\grad\phi$</span> will reveal the solution to the maze.  We just look at <span>$\|\grad\phi\|$</span> for revealing this solution, although other methods could e.g. use <span>$\grad\phi$</span> to follow the associated streamlines.</p><p>Here is what the maze looks like, where the start is in blue and the end is in red.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, CairoMakie, DelimitedFiles
+A = readdlm(joinpath(@__DIR__, &quot;../tutorials/maze.txt&quot;))
+A = unique(A, dims=1)
+x = A[1:10:end, 2] # downsample to make the problem faster
+y = A[1:10:end, 1]
+start = findall(y .== 648)
+finish = findall(y .== 5)
+start_idx_init, start_idx_end = extrema(start)
+finish_idx_init, finish_idx_end = extrema(finish)
+x_start = x[start]
+y_start = y[start]
+x_start_to_finish = [x[start_idx_end:end]; x[begin:finish_idx_init]]
+y_start_to_finish = [y[start_idx_end:end]; y[begin:finish_idx_init]]
+x_finish = x[finish]
+y_finish = y[finish]
+x_finish_to_start = x[finish_idx_end:start_idx_init]
+y_finish_to_start = y[finish_idx_end:start_idx_init]
+x_bnd = [x_start, x_start_to_finish, x_finish, x_finish_to_start]
+y_bnd = [y_start, y_start_to_finish, y_finish, y_finish_to_start]
+boundary_nodes, points = convert_boundary_points_to_indices(x_bnd, y_bnd)
+tri = triangulate(points; boundary_nodes, recompute_representative_point=false) # takes a while because maze.txt contains so many points
+refine!(tri)
+
+fig, ax, sc, = triplot(tri,
+    show_convex_hull=false,
+    show_constrained_edges=false)
+lines!(ax, [get_point(tri, get_boundary_nodes(tri, 1)...)...], color=:blue, linewidth=6)
+lines!(ax, [get_point(tri, get_boundary_nodes(tri, 3)...)...], color=:red, linewidth=6)
+fig</code></pre><p><img src="../solving_mazes_with_laplaces_equation-4.png" alt/></p><p>Now we can solve the problem.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, StableRNGs
+mesh = FVMGeometry(tri)
+start_bc = (x, y, t, u, p) -&gt; zero(u)
+start_to_finish_bc = (x, y, t, u, p) -&gt; zero(u)
+finish_bc = (x, y, t, u, p) -&gt; one(u)
+finish_to_start_bc = (x, y, t, u, p) -&gt; zero(u)
+fncs = (start_bc, start_to_finish_bc, finish_bc, finish_to_start_bc)
+types = (Dirichlet, Neumann, Dirichlet, Neumann)
+BCs = BoundaryConditions(mesh, fncs, types)
+diffusion_function = (x, y, t, u, p) -&gt; one(u)
+initial_condition = 0.05randn(StableRNG(123), DelaunayTriangulation.num_solid_vertices(tri)) # random initial condition - this is the initial guess for the solution
+final_time = Inf
+prob = FVMProblem(mesh, BCs;
+    diffusion_function=diffusion_function,
+    initial_condition=initial_condition,
+    final_time=final_time)
+steady_prob = SteadyFVMProblem(prob)</code></pre><pre><code class="nohighlight hljs">SteadyFVMProblem with 3681 nodes</code></pre><pre><code class="language-julia hljs">using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()), abstol=1e-14, reltol=1e-14))</code></pre><pre><code class="nohighlight hljs">u: 3681-element Vector{Float64}:
+ 0.0
+ 0.0
+ 0.005901063203169247
+ 0.012615649016879097
+ 0.01980957055330711
+ ⋮
+ 0.87464195399752
+ 0.9815283070684755
+ 0.3915447193906415
+ 0.39368781062194785
+ 0.8746419604744718</code></pre><p>We now have our solution.</p><pre><code class="language-julia hljs">tricontourf(tri, sol.u, colormap=:matter)</code></pre><p><img src="../solving_mazes_with_laplaces_equation-9.png" alt/></p><p>This is not what we use to compute the solution to the maze, instead we need <span>$\grad\phi$</span>. We compute the gradient at each point using NaturalNeighbours.jl.</p><pre><code class="language-julia hljs">using NaturalNeighbours, LinearAlgebra
+itp = interpolate(tri, sol.u; derivatives=true)
+∇ = NaturalNeighbours.get_gradient(itp)
+∇norms = norm.(∇)
+tricontourf(tri, ∇norms, colormap=:matter)</code></pre><p><img src="../solving_mazes_with_laplaces_equation-11.png" alt/></p><p>The solution to the maze is now extremely clear from this plot!</p><p>An alternative way to look at this solution is to consider the transient problem, where we do not solve the steady state problem and instead view the solution over time.</p><pre><code class="language-julia hljs">using Accessors
+prob = @set prob.final_time = 1e8
+LogRange(a, b, n) = exp10.(LinRange(log10(a), log10(b), n))
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=LogRange(1e2, prob.final_time, 24 * 10))
+all_∇norms = map(sol.u) do u
+    itp = interpolate(tri, u; derivatives=true)
+    ∇ = NaturalNeighbours.get_gradient(itp)
+    norm.(∇)
+end
+i = Observable(1)
+∇norms = map(i -&gt; all_∇norms[i], i)
+fig, ax, sc = tricontourf(tri, ∇norms, colormap=:matter, levels=LinRange(0, 0.0035, 25), extendlow=:auto, extendhigh=:auto)
+hidedecorations!(ax)
+tightlimits!(ax)
+record(fig, joinpath(@__DIR__, &quot;../figures&quot;, &quot;maze_solution_1.mp4&quot;), eachindex(sol);
+    framerate=24) do _i
+    i[] = _i
+end;</code></pre><pre><code class="nohighlight hljs">┌ Warning: Natural neighbour interpolation is only defined over unconstrained triangulations.
+│ You may find unexpected results when interpolating near the boundaries or constrained edges, and especially near non-convex boundaries or outside of the triangulation.
+│ In your later evaluations of this interpolant, consider using project=false.
+└ @ NaturalNeighbours ~/.julia/packages/NaturalNeighbours/lWoT4/src/data_structures/interpolant.jl:19
+</code></pre><p><video src="../../figures/maze_solution_1.mp4" controls="true" title="Animation of the solution of the maze"><a href="../../figures/maze_solution_1.mp4">Animation of the solution of the maze</a></video></p><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/solving_mazes_with_laplaces_equation.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, CairoMakie, DelimitedFiles
+A = readdlm(joinpath(@__DIR__, &quot;../tutorials/maze.txt&quot;))
+A = unique(A, dims=1)
+x = A[1:10:end, 2] # downsample to make the problem faster
+y = A[1:10:end, 1]
+start = findall(y .== 648)
+finish = findall(y .== 5)
+start_idx_init, start_idx_end = extrema(start)
+finish_idx_init, finish_idx_end = extrema(finish)
+x_start = x[start]
+y_start = y[start]
+x_start_to_finish = [x[start_idx_end:end]; x[begin:finish_idx_init]]
+y_start_to_finish = [y[start_idx_end:end]; y[begin:finish_idx_init]]
+x_finish = x[finish]
+y_finish = y[finish]
+x_finish_to_start = x[finish_idx_end:start_idx_init]
+y_finish_to_start = y[finish_idx_end:start_idx_init]
+x_bnd = [x_start, x_start_to_finish, x_finish, x_finish_to_start]
+y_bnd = [y_start, y_start_to_finish, y_finish, y_finish_to_start]
+boundary_nodes, points = convert_boundary_points_to_indices(x_bnd, y_bnd)
+tri = triangulate(points; boundary_nodes, recompute_representative_point=false) # takes a while because maze.txt contains so many points
+refine!(tri)
+
+fig, ax, sc, = triplot(tri,
+    show_convex_hull=false,
+    show_constrained_edges=false)
+lines!(ax, [get_point(tri, get_boundary_nodes(tri, 1)...)...], color=:blue, linewidth=6)
+lines!(ax, [get_point(tri, get_boundary_nodes(tri, 3)...)...], color=:red, linewidth=6)
+fig
+
+using FiniteVolumeMethod, StableRNGs
+mesh = FVMGeometry(tri)
+start_bc = (x, y, t, u, p) -&gt; zero(u)
+start_to_finish_bc = (x, y, t, u, p) -&gt; zero(u)
+finish_bc = (x, y, t, u, p) -&gt; one(u)
+finish_to_start_bc = (x, y, t, u, p) -&gt; zero(u)
+fncs = (start_bc, start_to_finish_bc, finish_bc, finish_to_start_bc)
+types = (Dirichlet, Neumann, Dirichlet, Neumann)
+BCs = BoundaryConditions(mesh, fncs, types)
+diffusion_function = (x, y, t, u, p) -&gt; one(u)
+initial_condition = 0.05randn(StableRNG(123), DelaunayTriangulation.num_solid_vertices(tri)) # random initial condition - this is the initial guess for the solution
+final_time = Inf
+prob = FVMProblem(mesh, BCs;
+    diffusion_function=diffusion_function,
+    initial_condition=initial_condition,
+    final_time=final_time)
+steady_prob = SteadyFVMProblem(prob)
+
+using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()), abstol=1e-14, reltol=1e-14))
+
+tricontourf(tri, sol.u, colormap=:matter)
+
+using NaturalNeighbours, LinearAlgebra
+itp = interpolate(tri, sol.u; derivatives=true)
+∇ = NaturalNeighbours.get_gradient(itp)
+∇norms = norm.(∇)
+tricontourf(tri, ∇norms, colormap=:matter)
+
+using Accessors
+prob = @set prob.final_time = 1e8
+LogRange(a, b, n) = exp10.(LinRange(log10(a), log10(b), n))
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=LogRange(1e2, prob.final_time, 24 * 10))
+all_∇norms = map(sol.u) do u
+    itp = interpolate(tri, u; derivatives=true)
+    ∇ = NaturalNeighbours.get_gradient(itp)
+    norm.(∇)
+end
+i = Observable(1)
+∇norms = map(i -&gt; all_∇norms[i], i)
+fig, ax, sc = tricontourf(tri, ∇norms, colormap=:matter, levels=LinRange(0, 0.0035, 25), extendlow=:auto, extendhigh=:auto)
+hidedecorations!(ax)
+tightlimits!(ax)
+record(fig, joinpath(@__DIR__, &quot;../figures&quot;, &quot;maze_solution_1.mp4&quot;), eachindex(sol);
+    framerate=24) do _i
+    i[] = _i
+end;</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../mean_exit_time/">« Mean Exit Time</a><a class="docs-footer-nextpage" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Saturday 16 September 2023 16:43">Saturday 16 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

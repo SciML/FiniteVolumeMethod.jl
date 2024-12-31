@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System · FiniteVolumeMethod.jl</title><meta name="title" content="Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System · FiniteVolumeMethod.jl"/><meta property="og:title" content="Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System · FiniteVolumeMethod.jl"/><meta property="twitter:title" content="Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System · FiniteVolumeMethod.jl"/><meta name="description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="twitter:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/"/><meta property="twitter:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/"/><link rel="canonical" href="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li class="is-active"><a class="tocitem" href>Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a><ul class="internal"><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../wyos/overview/">Section Overview</a></li><li><a class="tocitem" href="../../wyos/diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../../wyos/linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../../wyos/laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Gray-Scott-Model:-Turing-Patterns-from-a-Coupled-Reaction-Diffusion-System"><a class="docs-heading-anchor" href="#Gray-Scott-Model:-Turing-Patterns-from-a-Coupled-Reaction-Diffusion-System">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a><a id="Gray-Scott-Model:-Turing-Patterns-from-a-Coupled-Reaction-Diffusion-System-1"></a><a class="docs-heading-anchor-permalink" href="#Gray-Scott-Model:-Turing-Patterns-from-a-Coupled-Reaction-Diffusion-System" title="Permalink"></a></h1><p>In this tutorial, we explore some pattern formation from the Gray-Scott model:</p><p class="math-container">\[\begin{equation}
+\begin{aligned}
+\pdv{u}{t} &amp;= \varepsilon_1\grad^2u+b(1-u)-uv^2, \\
+\pdv{v}{t} &amp;= \varepsilon_2\grad^2 v - dv+uv^2,
+\end{aligned}
+\end{equation}\]</p><p>where <span>$u$</span> and <span>$v$</span> are the concentrations of two chemical species. The initial conditions we use are:</p><p class="math-container">\[\begin{align*}
+u(x, y, 0) &amp;= 1 -\exp\left[-80\left(x^2 + y^2\right)\right], \\
+v(x, y, 0) &amp;= \exp\left[-80\left(x^2+y^2\right)\right].
+\end{align*}\]</p><p>The domain we use is <span>$[-1, 1]^2$</span>, and we use zero flux boundary conditions.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
+tri = triangulate_rectangle(-1, 1, -1, 1, 200, 200, single_boundary=true)
+mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 40000 control volumes, 79202 triangles, and 119201 edges</code></pre><pre><code class="language-julia hljs">bc = (x, y, t, (u, v), p) -&gt; zero(u) * zero(v)
+u_BCs = BoundaryConditions(mesh, bc, Neumann)
+v_BCs = BoundaryConditions(mesh, bc, Neumann)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 1 boundary condition with type Neumann</code></pre><pre><code class="language-julia hljs">ε₁ = 0.00002
+ε₂ = 0.00001
+b = 0.04
+d = 0.1
+u_q = (x, y, t, α, β, γ, _ε₁) -&gt; (-α[1] * _ε₁, -β[1] * _ε₁)
+v_q = (x, y, t, α, β, γ, _ε₂) -&gt; (-α[2] * _ε₂, -β[2] * _ε₂)
+u_S = (x, y, t, (u, v), _b) -&gt; _b * (1 - u) - u * v^2
+v_S = (x, y, t, (u, v), _d) -&gt; -_d * v + u * v^2
+u_qp = ε₁
+v_qp = ε₂
+u_Sp = b
+v_Sp = d
+u_icf = (x, y) -&gt; 1 - exp(-80 * (x^2 + y^2))
+v_icf = (x, y) -&gt; exp(-80 * (x^ 2 + y^2))
+u_ic = [u_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+v_ic = [v_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+u_prob = FVMProblem(mesh, u_BCs;
+    flux_function=u_q, flux_parameters=u_qp,
+    source_function=u_S, source_parameters=u_Sp,
+    initial_condition=u_ic, final_time=6000.0)
+v_prob = FVMProblem(mesh, v_BCs;
+    flux_function=v_q, flux_parameters=v_qp,
+    source_function=v_S, source_parameters=v_Sp,
+    initial_condition=v_ic, final_time=6000.0)
+prob = FVMSystem(u_prob, v_prob)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMSystem with 2 equations and time span (0.0, 6000.0)</code></pre><p>Now that we have our system, we can solve.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, LinearSolve
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=10.0, parallel=Val(false))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+Interpolation: 1st order linear
+t: 601-element Vector{Float64}:
+    0.0
+   10.0
+   20.0
+   30.0
+   40.0
+    ⋮
+ 5960.0
+ 5970.0
+ 5980.0
+ 5990.0
+ 6000.0
+u: 601-element Vector{Matrix{Float64}}:
+ [1.0 1.0 … 1.0 1.0; 3.257488532207521e-70 1.6133794454928614e-69 … 1.6133794454928614e-69 3.257488532207521e-70]
+ [1.0 1.0 … 1.0 1.0; 2.420973351020189e-67 4.7101995374629156e-67 … 4.710199537463158e-67 2.4209733510177097e-67]
+ [1.0 1.0 … 1.0 1.0; 2.586382797940588e-65 4.737055999601915e-65 … 4.737055999602167e-65 2.5863827979381315e-65]
+ [1.0 1.0 … 1.0 1.0; 1.894532938343194e-63 3.291854487315196e-63 … 3.291854487315394e-63 1.8945329383415333e-63]
+ [1.0 1.0 … 1.0 1.0; 7.595317073029535e-62 1.2679635976901944e-61 … 1.2679635976902652e-61 7.595317073023244e-62]
+ ⋮
+ [0.8918649869385609 0.8881326203678607 … 0.8881326203678311 0.891864986938553; 0.003954731896362689 0.0046132680463009295 … 0.004613268046307745 0.003954731896364136]
+ [0.8906490237276454 0.8868790471409225 … 0.8868790471408929 0.8906490237276381; 0.004050427787415703 0.00472360484789472 … 0.004723604847901739 0.004050427787417169]
+ [0.8894650412509103 0.8856582494181386 … 0.8856582494181093 0.8894650412509036; 0.004144073255292567 0.004831568325014581 … 0.0048315683250217895 0.0041440732552940444]
+ [0.888311321071151 0.8844684499862349 … 0.884468449986206 0.8883113210711452; 0.004235739098163185 0.004937242858196053 … 0.004937242858203437 0.0042357390981646575]
+ [0.8871844914729486 0.883306155164335 … 0.8833061551643068 0.887184491472944; 0.0043255714870472145 0.005040804331459627 … 0.005040804331467172 0.004325571487048673]</code></pre><p>Here is an animation of the solution, looking only at the <span>$v$</span> variable.</p><pre><code class="language-julia hljs">using CairoMakie
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;)
+tightlimits!(ax)
+i = Observable(1)
+u = map(i -&gt; reshape(sol.u[i][2, :], 200, 200), i)
+x = LinRange(-1, 1, 200)
+y = LinRange(-1, 1, 200)
+heatmap!(ax, x, y, u, colorrange=(0.0, 0.4))
+hidedecorations!(ax)
+record(fig, joinpath(@__DIR__, &quot;../figures&quot;, &quot;gray_scott_patterns.mp4&quot;), eachindex(sol);
+    framerate=60) do _i
+    i[] = _i
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">&quot;/home/runner/work/FiniteVolumeMethod.jl/FiniteVolumeMethod.jl/docs/build/tutorials/../figures/gray_scott_patterns.mp4&quot;</code></pre><p><video src="../../figures/gray_scott_patterns.mp4" controls="true" title="Animation of the Gray-Scott model"><a href="../../figures/gray_scott_patterns.mp4">Animation of the Gray-Scott model</a></video></p><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.jl">here</a>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
+tri = triangulate_rectangle(-1, 1, -1, 1, 200, 200, single_boundary=true)
+mesh = FVMGeometry(tri)
+
+bc = (x, y, t, (u, v), p) -&gt; zero(u) * zero(v)
+u_BCs = BoundaryConditions(mesh, bc, Neumann)
+v_BCs = BoundaryConditions(mesh, bc, Neumann)
+
+ε₁ = 0.00002
+ε₂ = 0.00001
+b = 0.04
+d = 0.1
+u_q = (x, y, t, α, β, γ, _ε₁) -&gt; (-α[1] * _ε₁, -β[1] * _ε₁)
+v_q = (x, y, t, α, β, γ, _ε₂) -&gt; (-α[2] * _ε₂, -β[2] * _ε₂)
+u_S = (x, y, t, (u, v), _b) -&gt; _b * (1 - u) - u * v^2
+v_S = (x, y, t, (u, v), _d) -&gt; -_d * v + u * v^2
+u_qp = ε₁
+v_qp = ε₂
+u_Sp = b
+v_Sp = d
+u_icf = (x, y) -&gt; 1 - exp(-80 * (x^2 + y^2))
+v_icf = (x, y) -&gt; exp(-80 * (x^ 2 + y^2))
+u_ic = [u_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+v_ic = [v_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+u_prob = FVMProblem(mesh, u_BCs;
+    flux_function=u_q, flux_parameters=u_qp,
+    source_function=u_S, source_parameters=u_Sp,
+    initial_condition=u_ic, final_time=6000.0)
+v_prob = FVMProblem(mesh, v_BCs;
+    flux_function=v_q, flux_parameters=v_qp,
+    source_function=v_S, source_parameters=v_Sp,
+    initial_condition=v_ic, final_time=6000.0)
+prob = FVMSystem(u_prob, v_prob)
+
+using OrdinaryDiffEq, LinearSolve
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=10.0, parallel=Val(false))
+
+using CairoMakie
+fig = Figure(fontsize=33)
+ax = Axis(fig[1, 1], xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;)
+tightlimits!(ax)
+i = Observable(1)
+u = map(i -&gt; reshape(sol.u[i][2, :], 200, 200), i)
+x = LinRange(-1, 1, 200)
+y = LinRange(-1, 1, 200)
+heatmap!(ax, x, y, u, colorrange=(0.0, 0.4))
+hidedecorations!(ax)
+record(fig, joinpath(@__DIR__, &quot;../figures&quot;, &quot;gray_scott_patterns.mp4&quot;), eachindex(sol);
+    framerate=60) do _i
+    i[] = _i
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../reaction_diffusion_brusselator_system_of_pdes/">« A Reaction-Diffusion Brusselator System of PDEs</a><a class="docs-footer-nextpage" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 17 October 2024 08:40">Thursday 17 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

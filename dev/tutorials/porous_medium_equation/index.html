@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Porous-Medium Equation · FiniteVolumeMethod.jl</title><meta name="title" content="Porous-Medium Equation · FiniteVolumeMethod.jl"/><meta property="og:title" content="Porous-Medium Equation · FiniteVolumeMethod.jl"/><meta property="twitter:title" content="Porous-Medium Equation · FiniteVolumeMethod.jl"/><meta name="description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="twitter:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/porous_medium_equation/"/><meta property="twitter:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/porous_medium_equation/"/><link rel="canonical" href="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/porous_medium_equation/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li class="is-active"><a class="tocitem" href>Porous-Medium Equation</a><ul class="internal"><li><a class="tocitem" href="#No-source"><span>No source</span></a></li><li><a class="tocitem" href="#Linear-source"><span>Linear source</span></a></li><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../wyos/overview/">Section Overview</a></li><li><a class="tocitem" href="../../wyos/diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../../wyos/linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../../wyos/laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Porous-Medium Equation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Porous-Medium Equation</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_medium_equation.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Porous-Medium-Equation"><a class="docs-heading-anchor" href="#Porous-Medium-Equation">Porous-Medium Equation</a><a id="Porous-Medium-Equation-1"></a><a class="docs-heading-anchor-permalink" href="#Porous-Medium-Equation" title="Permalink"></a></h1><h2 id="No-source"><a class="docs-heading-anchor" href="#No-source">No source</a><a id="No-source-1"></a><a class="docs-heading-anchor-permalink" href="#No-source" title="Permalink"></a></h2><p>In this tutorial, we consider the porous-medium equation, given by</p><p class="math-container">\[\pdv{u}{t} = D\div[u^{m-1}\grad u],\]</p><p>with initial condition <span>$u(\vb x, 0) = M\delta(\vb x)$</span> where <span>$\delta(\vb x)$</span> is the Dirac delta function and <span>$M = \iint_{\mathbb R^2} u(\vb x, t) \dd{A}$</span>. The diffusion function for this problem is <span>$D(\vb x, t, u) = Du^{m-1}$</span>. To approximate <span>$\delta(\vb x)$</span>, we use</p><p class="math-container">\[\delta(\vb x) \approx g(\vb x) = \frac{1}{\varepsilon^2\pi}\exp\left[-\frac{1}{\varepsilon^2}\left(x^2 + y^2\right)\right],\]</p><p>taking <span>$\varepsilon = 0.1$</span>. It can be shown<sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup> that <span>$u(\vb x, t)$</span> is zero for <span>$x^2 + y^2 \geq R_{m, M}(Dt)^{1/m}$</span>, where</p><p class="math-container">\[R_{m, M} = \left(\frac{4m}{m-1}\right)\left[\frac{M}{4\pi}\right]^{(m-1)/m},\]</p><p>so we can replace the domain <span>$\mathbb R^2$</span> with the domain <span>$\Omega = [-L, L]^2$</span> where <span>$L = R_{m, M}^{1/2}(DT)^{1/2m}$</span> and <span>$T$</span> is the time that we solve up. We use a Dirichlet boundary condition on <span>$\partial\Omega$</span>.</p><p>Let us now solve this problem, taking <span>$m = 2$</span>, <span>$M = 0.37$</span>, <span>$D = 2.53$</span>, and <span>$T = 12$</span>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod
+
+# Step 0: Define all the parameters
+m = 2
+M = 0.37
+D = 2.53
+final_time = 12.0
+ε = 0.1
+# Step 1: Define the mesh
+RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
+L = sqrt(RmM) * (D * final_time)^(1 / (2m))
+tri = triangulate_rectangle(-L, L, -L, L, 125, 125, single_boundary=true)
+mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 15625 control volumes, 30752 triangles, and 46376 edges</code></pre><pre><code class="language-julia hljs"># Step 2: Define the boundary conditions
+BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 1 boundary condition with type Dirichlet</code></pre><pre><code class="language-julia hljs"># Step 3: Define the actual PDE
+f = (x, y) -&gt; M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
+diffusion_function = (x, y, t, u, p) -&gt; p[1] * u^(p[2] - 1)
+diffusion_parameters = (D, m)
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs;
+    diffusion_function,
+    diffusion_parameters,
+    initial_condition,
+    final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 15625 nodes and time span (0.0, 12.0)</code></pre><pre><code class="language-julia hljs"># Step 4: Solve
+using LinearSolve, OrdinaryDiffEq
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=3.0)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+Interpolation: 1st order linear
+t: 5-element Vector{Float64}:
+  0.0
+  3.0
+  6.0
+  9.0
+ 12.0
+u: 5-element Vector{Vector{Float64}}:
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]</code></pre><pre><code class="language-julia hljs"># Step 5: Visualise
+using CairoMakie
+fig = Figure(fontsize=38)
+for (i, j) in zip(1:3, (1, 3, 5))
+    ax = Axis(fig[1, i], width=600, height=600,
+        xlabel=&quot;x&quot;, ylabel=&quot;y&quot;,
+        title=&quot;t = $(sol.t[j])&quot;,
+        titlealign=:left)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.005:0.05, colormap=:matter, extendhigh=:auto)
+    tightlimits!(ax)
+end
+resize_to_layout!(fig)
+fig</code></pre><img src="b8398089.png" alt="Example block output"/><h2 id="Linear-source"><a class="docs-heading-anchor" href="#Linear-source">Linear source</a><a id="Linear-source-1"></a><a class="docs-heading-anchor-permalink" href="#Linear-source" title="Permalink"></a></h2><p>Let us now extend the problem above so that a linear source is now included:</p><p class="math-container">\[\pdv{u}{t} = D\div [u^{m-1}\grad u] + \lambda u, \quad \lambda &gt; 0.\]</p><p>We again let the initial condition be <span>$u(\vb x, 0) = M\delta(\vb x)$</span>. For the domain, we use</p><p class="math-container">\[\Omega = \left[-R_{m, M}^{1/2}\tau(T)^{1/2m}, R_{m,M}^{1/2}\tau(T)^{1/2m}\right]^2,\]</p><p>where</p><p class="math-container">\[\tau(T) = \frac{D}{\lambda(m-1)}\left[\mathrm{e}^{\lambda(m-1)T}-1\right].\]</p><p>The code below solves this problem.</p><pre><code class="language-julia hljs"># Step 0: Define all the parameters
+m = 3.4
+M = 2.3
+D = 0.581
+λ = 0.2
+final_time = 10.0
+ε = 0.1
+# Step 1: Define the mesh
+RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
+L = sqrt(RmM) * (D / (λ * (m - 1)) * (exp(λ * (m - 1) * final_time) - 1))^(1 / (2m))
+tri = triangulate_rectangle(-L, L, -L, L, 125, 125, single_boundary=true)
+mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 15625 control volumes, 30752 triangles, and 46376 edges</code></pre><pre><code class="language-julia hljs"># Step 2: Define the boundary conditions
+bc = (x, y, t, u, p) -&gt; zero(u)
+type = Dirichlet
+BCs = BoundaryConditions(mesh, bc, type)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 1 boundary condition with type Dirichlet</code></pre><pre><code class="language-julia hljs"># Step 3: Define the actual PDE
+f = (x, y) -&gt; M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
+diffusion_function = (x, y, t, u, p) -&gt; p.D * abs(u)^(p.m - 1)
+source_function = (x, y, t, u, λ) -&gt; λ * u
+diffusion_parameters = (D=D, m=m)
+source_parameters = λ
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs;
+    diffusion_function,
+    diffusion_parameters,
+    source_function,
+    source_parameters,
+    initial_condition,
+    final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 15625 nodes and time span (0.0, 10.0)</code></pre><pre><code class="language-julia hljs"># Step 4: Solve
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=2.5)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+Interpolation: 1st order linear
+t: 5-element Vector{Float64}:
+  0.0
+  2.5
+  5.0
+  7.5
+ 10.0
+u: 5-element Vector{Vector{Float64}}:
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]</code></pre><pre><code class="language-julia hljs"># Step 5: Visualise
+fig = Figure(fontsize=38)
+for (i, j) in zip(1:3, (1, 3, 5))
+    ax = Axis(fig[1, i], width=600, height=600,
+        xlabel=&quot;x&quot;, ylabel=&quot;y&quot;,
+        title=&quot;t = $(sol.t[j])&quot;,
+        titlealign=:left)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.05:1, extendlow=:auto, colormap=:matter, extendhigh=:auto)
+    tightlimits!(ax)
+end
+resize_to_layout!(fig)
+fig</code></pre><img src="c7b27e35.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_medium_equation.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod
+
+# Step 0: Define all the parameters
+m = 2
+M = 0.37
+D = 2.53
+final_time = 12.0
+ε = 0.1
+# Step 1: Define the mesh
+RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
+L = sqrt(RmM) * (D * final_time)^(1 / (2m))
+tri = triangulate_rectangle(-L, L, -L, L, 125, 125, single_boundary=true)
+mesh = FVMGeometry(tri)
+
+# Step 2: Define the boundary conditions
+BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)
+
+# Step 3: Define the actual PDE
+f = (x, y) -&gt; M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
+diffusion_function = (x, y, t, u, p) -&gt; p[1] * u^(p[2] - 1)
+diffusion_parameters = (D, m)
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs;
+    diffusion_function,
+    diffusion_parameters,
+    initial_condition,
+    final_time)
+
+# Step 4: Solve
+using LinearSolve, OrdinaryDiffEq
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=3.0)
+
+# Step 5: Visualise
+using CairoMakie
+fig = Figure(fontsize=38)
+for (i, j) in zip(1:3, (1, 3, 5))
+    ax = Axis(fig[1, i], width=600, height=600,
+        xlabel=&quot;x&quot;, ylabel=&quot;y&quot;,
+        title=&quot;t = $(sol.t[j])&quot;,
+        titlealign=:left)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.005:0.05, colormap=:matter, extendhigh=:auto)
+    tightlimits!(ax)
+end
+resize_to_layout!(fig)
+fig
+
+# Step 0: Define all the parameters
+m = 3.4
+M = 2.3
+D = 0.581
+λ = 0.2
+final_time = 10.0
+ε = 0.1
+# Step 1: Define the mesh
+RmM = 4m / (m - 1) * (M / (4π))^((m - 1) / m)
+L = sqrt(RmM) * (D / (λ * (m - 1)) * (exp(λ * (m - 1) * final_time) - 1))^(1 / (2m))
+tri = triangulate_rectangle(-L, L, -L, L, 125, 125, single_boundary=true)
+mesh = FVMGeometry(tri)
+
+# Step 2: Define the boundary conditions
+bc = (x, y, t, u, p) -&gt; zero(u)
+type = Dirichlet
+BCs = BoundaryConditions(mesh, bc, type)
+
+# Step 3: Define the actual PDE
+f = (x, y) -&gt; M * 1 / (ε^2 * π) * exp(-1 / (ε^2) * (x^2 + y^2))
+diffusion_function = (x, y, t, u, p) -&gt; p.D * abs(u)^(p.m - 1)
+source_function = (x, y, t, u, λ) -&gt; λ * u
+diffusion_parameters = (D=D, m=m)
+source_parameters = λ
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs;
+    diffusion_function,
+    diffusion_parameters,
+    source_function,
+    source_parameters,
+    initial_condition,
+    final_time)
+
+# Step 4: Solve
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=2.5)
+
+# Step 5: Visualise
+fig = Figure(fontsize=38)
+for (i, j) in zip(1:3, (1, 3, 5))
+    ax = Axis(fig[1, i], width=600, height=600,
+        xlabel=&quot;x&quot;, ylabel=&quot;y&quot;,
+        title=&quot;t = $(sol.t[j])&quot;,
+        titlealign=:left)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.05:1, extendlow=:auto, colormap=:matter, extendhigh=:auto)
+    tightlimits!(ax)
+end
+resize_to_layout!(fig)
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>This comes from the exact solution that we define in the <a href="../overview/">overview</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">« Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a><a class="docs-footer-nextpage" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 17 October 2024 08:40">Thursday 17 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
