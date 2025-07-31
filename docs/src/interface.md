@@ -2,34 +2,34 @@
 CurrentModule = FiniteVolumeMethod
 ```
 
-# Interface 
+# Interface
 
-```@contents 
+```@contents
 Pages = ["interface.md"]
 ```
 
 In this section, we describe the basic interface for defining and solving PDEs using this package. This interface will also be made clearer in the tutorials. The basic summary of the discussion below is as follows:
 
-1. Use `FVMGeometry` to define the problem's mesh.
-2. Provide boundary conditions using `BoundaryConditions`.
-3. (Optional) Provide internal conditions using `InternalConditions`.
-4. Convert the problem into an `FVMProblem`.
-5. If you want to make the problem steady, use `SteadyFVMProblem` on the `FVMProblem`.
-6. If you want a system of equations, construct an `FVMSystem` from multiple `FVMProblem`s; if you want this problem to be steady, skip step 5 and only now apply `SteadyFVMProblem`.
-7. Solve the problem using `solve`.
-8. For a discussion of custom constraints, see the tutorials.
-9. For interpolation, we provide `pl_interpolate` (but you might prefer [NaturalNeighbours.jl](https://github.com/DanielVandH/NaturalNeighbours.jl) - see [this tutorial for an example](tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.md)).
+ 1. Use `FVMGeometry` to define the problem's mesh.
+ 2. Provide boundary conditions using `BoundaryConditions`.
+ 3. (Optional) Provide internal conditions using `InternalConditions`.
+ 4. Convert the problem into an `FVMProblem`.
+ 5. If you want to make the problem steady, use `SteadyFVMProblem` on the `FVMProblem`.
+ 6. If you want a system of equations, construct an `FVMSystem` from multiple `FVMProblem`s; if you want this problem to be steady, skip step 5 and only now apply `SteadyFVMProblem`.
+ 7. Solve the problem using `solve`.
+ 8. For a discussion of custom constraints, see the tutorials.
+ 9. For interpolation, we provide `pl_interpolate` (but you might prefer [NaturalNeighbours.jl](https://github.com/DanielVandH/NaturalNeighbours.jl) - see [this tutorial for an example](tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.md)).
 
-# `FVMGeometry`: Defining the mesh 
+# `FVMGeometry`: Defining the mesh
 
-The finite volume method (FVM) requires an underlying triangular mesh, as outlined in the [mathematical details section](math.md). This triangular mesh is to be defined from [DelaunayTriangulation.jl](https://github.com/JuliaGeometry/DelaunayTriangulation.jl). The `FVMGeometry` type wraps the resulting `Triangulation` and computes information about the geometry required for solving the PDEs. The docstring for `FVMGeometry` is below; the fields of `FVMGeometry` are public API. 
+The finite volume method (FVM) requires an underlying triangular mesh, as outlined in the [mathematical details section](math.md). This triangular mesh is to be defined from [DelaunayTriangulation.jl](https://github.com/JuliaGeometry/DelaunayTriangulation.jl). The `FVMGeometry` type wraps the resulting `Triangulation` and computes information about the geometry required for solving the PDEs. The docstring for `FVMGeometry` is below; the fields of `FVMGeometry` are public API.
 
 ```@docs
 FVMGeometry
 ```
 
-The `FVMGeometry` struct uses `TriangleProperties` for storing properties of a control volume that intersects a given triangle, defined below. This struct is 
-public API, although it is unlikely you would ever need it. 
+The `FVMGeometry` struct uses `TriangleProperties` for storing properties of a control volume that intersects a given triangle, defined below. This struct is
+public API, although it is unlikely you would ever need it.
 
 ```@docs
 TriangleProperties
@@ -152,14 +152,13 @@ These `solve` functions rely on `fvm_eqs!` for evaluating the equations. You sho
 fvm_eqs!
 ```
 
-# Custom constraints 
+# Custom constraints
 
 You can also provide custom constraints. Rather than outlining this precisely here, it is best explained in the tutorials, namely [this tutorial](tutorials/solving_mazes_with_laplaces_equation.md). We note that one useful function for this is `compute_flux`, which allows you to compute the flux across a given edge. The docstring for `compute_flux` is below, and this function is public API.
 
 ```@docs
 compute_flux
 ```
-
 
 # Piecewise linear interpolation
 

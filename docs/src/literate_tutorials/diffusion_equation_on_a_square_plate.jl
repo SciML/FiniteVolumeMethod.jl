@@ -22,7 +22,7 @@ using ReferenceTests #src
 using StatsBase #src
 a, b, c, d = 0.0, 2.0, 0.0, 2.0
 nx, ny = 50, 50
-tri = triangulate_rectangle(a, b, c, d, nx, ny, single_boundary=true)
+tri = triangulate_rectangle(a, b, c, d, nx, ny, single_boundary = true)
 mesh = FVMGeometry(tri)
 
 # This mesh is shown below.
@@ -41,7 +41,7 @@ D = (x, y, t, u, p) -> 1 / 9
 
 # We can now define the problem:
 final_time = 0.5
-prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
+prob = FVMProblem(mesh, BCs; diffusion_function = D, initial_condition, final_time)
 
 # Note that in `prob`, it is not a diffusion function that is used but instead it is a flux function:
 prob.flux_function
@@ -56,18 +56,18 @@ prob.flux_function
 # and simply call `solve(prob, saveat=0.05)` so that the algorithm is chosen automatically instead 
 # of using `Tsit5()`.)
 using OrdinaryDiffEq
-sol = solve(prob, Tsit5(), saveat=0.05)
+sol = solve(prob, Tsit5(), saveat = 0.05)
 sol |> tc #hide
 
 # To visualise the solution, we can use `tricontourf!` from Makie.jl. 
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for (i, j) in zip(1:3, (1, 6, 11))
     local ax
-    ax = Axis(fig[1, i], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
-    tricontourf!(ax, tri, sol.u[j], levels=0:5:50, colormap=:matter)
+    ax = Axis(fig[1, i], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
+    tricontourf!(ax, tri, sol.u[j], levels = 0:5:50, colormap = :matter)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
@@ -80,7 +80,8 @@ function exact_solution(x, y, t) #src
         for m in 1:2:50 #src
             mterm = 2 / m * sin(m * π * x / 2) * exp(-π^2 * m^2 * t / 36) #src
             for n in 1:50 #src
-                nterm = (1 - cos(n * π / 2)) / n * sin(n * π * y / 2) * exp(-π^2 * n^2 * t / 36) #src
+                nterm = (1 - cos(n * π / 2)) / n * sin(n * π * y / 2) *
+                        exp(-π^2 * n^2 * t / 36) #src
                 s += mterm * nterm #src
             end #src
         end #src
@@ -103,13 +104,13 @@ function compare_solutions(sol, tri) #src
     return x, y, u #src
 end #src
 x, y, u = compare_solutions(sol, tri) #src
-fig = Figure(fontsize=64) #src
+fig = Figure(fontsize = 64) #src
 for i in eachindex(sol) #src
     local ax #src
-    ax = Axis(fig[1, i], width=600, height=600) #src
-    tricontourf!(ax, tri, sol.u[i], levels=0:5:50, colormap=:matter) #src
-    ax = Axis(fig[2, i], width=600, height=600) #src
-    tricontourf!(ax, tri, u[:, i], levels=0:5:50, colormap=:matter) #src
+    ax = Axis(fig[1, i], width = 600, height = 600) #src
+    tricontourf!(ax, tri, sol.u[i], levels = 0:5:50, colormap = :matter) #src
+    ax = Axis(fig[2, i], width = 600, height = 600) #src
+    tricontourf!(ax, tri, u[:, i], levels = 0:5:50, colormap = :matter) #src
 end #src
 resize_to_layout!(fig) #src
 fig #src

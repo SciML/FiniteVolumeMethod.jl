@@ -9,8 +9,10 @@ nothing #hide
 ````
 
 # Diffusion Equation in a Wedge with Mixed Boundary Conditions
+
 In this example, we consider a diffusion equation on a wedge
 with angle $\alpha$ and mixed boundary conditions:
+
 ```math
 \begin{equation*}
 \begin{aligned}
@@ -22,6 +24,7 @@ u(r, \theta, 0) &= f(r,\theta) & 0<r<1,\,0<\theta<\alpha,
 \end{aligned}
 \end{equation*}
 ```
+
 where we take $f(r,\theta) = 1-r$ and $\alpha=\pi/4$.
 
 Note that the PDE is provided in polar form, but Cartesian coordinates
@@ -52,7 +55,7 @@ upper_edge = [3, 1]
 boundary_nodes = [bottom_edge, [arc], upper_edge]
 tri = triangulate(points; boundary_nodes)
 A = get_area(tri)
-refine!(tri; max_area=1e-4A)
+refine!(tri; max_area = 1e-4A)
 mesh = FVMGeometry(tri)
 ````
 
@@ -89,7 +92,7 @@ f = (x, y) -> 1 - sqrt(x^2 + y^2)
 D = (x, y, t, u, p) -> one(u)
 initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.1
-prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
+prob = FVMProblem(mesh, BCs; diffusion_function = D, initial_condition, final_time)
 ````
 
 If you did want to use the flux formulation, you would need to provide
@@ -107,7 +110,7 @@ has the best performance for these problems.
 
 ````@example diffusion_equation_in_a_wedge_with_mixed_boundary_conditions
 using OrdinaryDiffEq, LinearSolve
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.01, parallel=Val(false))
+sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.01, parallel = Val(false))
 ind = findall(DelaunayTriangulation.each_point_index(tri)) do i #hide
     !DelaunayTriangulation.has_vertex(tri, i) #hide
 end #hide
@@ -118,14 +121,14 @@ sol |> tc #hide
 
 ````@example diffusion_equation_in_a_wedge_with_mixed_boundary_conditions
 using CairoMakie
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for (i, j) in zip(1:3, (1, 6, 11))
     local ax
-    ax = Axis(fig[1, i], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
-    tricontourf!(ax, tri, sol.u[j], levels=0:0.01:1, colormap=:matter)
+    ax = Axis(fig[1, i], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
+    tricontourf!(ax, tri, sol.u[j], levels = 0:0.01:1, colormap = :matter)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
@@ -133,6 +136,7 @@ fig
 ````
 
 ## Just the code
+
 An uncommented version of this example is given below.
 You can view the source code for this file [here](https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/diffusion_equation_in_a_wedge_with_mixed_boundary_conditions.jl).
 
@@ -147,7 +151,7 @@ upper_edge = [3, 1]
 boundary_nodes = [bottom_edge, [arc], upper_edge]
 tri = triangulate(points; boundary_nodes)
 A = get_area(tri)
-refine!(tri; max_area=1e-4A)
+refine!(tri; max_area = 1e-4A)
 mesh = FVMGeometry(tri)
 
 using CairoMakie
@@ -164,29 +168,28 @@ f = (x, y) -> 1 - sqrt(x^2 + y^2)
 D = (x, y, t, u, p) -> one(u)
 initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.1
-prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
+prob = FVMProblem(mesh, BCs; diffusion_function = D, initial_condition, final_time)
 
 flux = (x, y, t, α, β, γ, p) -> (-α, -β)
 
 using OrdinaryDiffEq, LinearSolve
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.01, parallel=Val(false))
+sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.01, parallel = Val(false))
 
 using CairoMakie
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for (i, j) in zip(1:3, (1, 6, 11))
     local ax
-    ax = Axis(fig[1, i], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
-    tricontourf!(ax, tri, sol.u[j], levels=0:0.01:1, colormap=:matter)
+    ax = Axis(fig[1, i], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
+    tricontourf!(ax, tri, sol.u[j], levels = 0:0.01:1, colormap = :matter)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
 fig
 ```
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

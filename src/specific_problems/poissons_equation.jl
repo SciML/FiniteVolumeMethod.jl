@@ -39,7 +39,7 @@ The struct has extra fields in addition to the arguments above:
 - `b`: The `b` above.
 - `problem`: The `LinearProblem` that represents the problem. This is the problem that is solved when you call [`solve`](@ref solve(::AbstractFVMTemplate, args...; kwargs...)) on the struct.
 """
-struct PoissonsEquation{M,C,D,DP,S,SP,A,B,ODE} <: AbstractFVMTemplate
+struct PoissonsEquation{M, C, D, DP, S, SP, A, B, ODE} <: AbstractFVMTemplate
     mesh::M
     conditions::C
     diffusion_function::D
@@ -56,20 +56,22 @@ function Base.show(io::IO, ::MIME"text/plain", prob::PoissonsEquation)
 end
 
 function PoissonsEquation(mesh::FVMGeometry,
-    BCs::BoundaryConditions,
-    ICs::InternalConditions=InternalConditions();
-    diffusion_function=(x, y, p) -> 1.0,
-    diffusion_parameters=nothing,
-    source_function,
-    source_parameters=nothing,
-    kwargs...)
+        BCs::BoundaryConditions,
+        ICs::InternalConditions = InternalConditions();
+        diffusion_function = (x, y, p) -> 1.0,
+        diffusion_parameters = nothing,
+        source_function,
+        source_parameters = nothing,
+        kwargs...)
     conditions = Conditions(mesh, BCs, ICs)
-    has_dudt_nodes(conditions) && throw(ArgumentError("PoissonsEquation does not support Dudt nodes."))
+    has_dudt_nodes(conditions) &&
+        throw(ArgumentError("PoissonsEquation does not support Dudt nodes."))
     n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
     b = create_rhs_b(mesh, conditions, source_function, source_parameters)
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
-    boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    boundary_edge_contributions!(
+        A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
     fix_missing_vertices!(A, b, mesh)
     Asp = sparse(A)

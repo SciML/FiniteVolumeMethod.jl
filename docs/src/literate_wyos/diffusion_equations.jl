@@ -107,7 +107,8 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # Let us start by writing out the contribution from all the triangles.
 using FiniteVolumeMethod
 const FVM = FiniteVolumeMethod
-function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+function triangle_contributions!(
+        A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
         ijk = triangle_vertices(T)
         i, j, k = ijk
@@ -132,7 +133,7 @@ end
 
 # Now we need the function that gets the contributions from the boundary edges.
 function boundary_edge_contributions!(A, b, mesh, conditions,
-    diffusion_function, diffusion_parameters)
+        diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
         i, j = DelaunayTriangulation.edge_vertices(e)
         nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
@@ -170,14 +171,16 @@ end
 function apply_dirichlet_conditions!(initial_condition, mesh, conditions)
     for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
         x, y = get_point(mesh, i)
-        initial_condition[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+        initial_condition[i] = FVM.eval_condition_fnc(
+            conditions, function_index, x, y, nothing, nothing)
     end
 end
 function apply_dudt_conditions!(b, mesh, conditions)
     for (i, function_index) in FVM.get_dudt_nodes(conditions)
         if !FVM.is_dirichlet_node(conditions, i) # overlapping edges can be both Dudt and Dirichlet. Dirichlet takes precedence
             x, y = get_point(mesh, i)
-            b[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+            b[i] = FVM.eval_condition_fnc(
+                conditions, function_index, x, y, nothing, nothing)
         end
     end
 end
@@ -201,21 +204,22 @@ end
 # ```
 # Note that this also requires that we append a `1` to the initial condition.
 function diffusion_equation(mesh::FVMGeometry,
-    BCs::BoundaryConditions,
-    ICs::InternalConditions=InternalConditions();
-    diffusion_function,
-    diffusion_parameters=nothing,
-    initial_condition,
-    initial_time=0.0,
-    final_time)
+        BCs::BoundaryConditions,
+        ICs::InternalConditions = InternalConditions();
+        diffusion_function,
+        diffusion_parameters = nothing,
+        initial_condition,
+        initial_time = 0.0,
+        final_time)
     conditions = Conditions(mesh, BCs, ICs)
     n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
     Afull = zeros(n + 1, n + 1)
-    A = @views Afull[begin:end-1, begin:end-1]
-    b = @views Afull[begin:end-1, end]
+    A = @views Afull[begin:(end - 1), begin:(end - 1)]
+    b = @views Afull[begin:(end - 1), end]
     _ic = vcat(initial_condition, 1)
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
-    boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    boundary_edge_contributions!(
+        A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_dudt_conditions!(b, mesh, conditions)
     apply_dirichlet_conditions!(_ic, mesh, conditions)
     A_op = MatrixOperator(sparse(Afull))
@@ -225,17 +229,18 @@ end
 
 # Let's now test the function. We use the same problem as in [this tutorial](../tutorials/diffusion_equation_on_a_square_plate.md). 
 using DelaunayTriangulation, OrdinaryDiffEq, LinearAlgebra, SparseArrays
-tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary=true)
+tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary = true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 diffusion_function = (x, y, p) -> 1 / 9
-initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in DelaunayTriangulation.each_point(tri)]
+initial_condition = [y ≤ 1.0 ? 50.0 : 0.0
+                     for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.5
 prob = diffusion_equation(mesh, BCs;
     diffusion_function,
     initial_condition,
     final_time)
-sol = solve(prob, Tsit5(); saveat=0.05)
+sol = solve(prob, Tsit5(); saveat = 0.05)
 sol |> tc #hide
 
 # (It would be nice to use `LinearExponential()` in the call above, but it just seems to be extremely numerically unstable, so it's unusable.)
@@ -252,14 +257,15 @@ DelaunayTriangulation.num_solid_vertices(tri)
 # Let's now plot.
 
 using CairoMakie
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for (i, j) in zip(1:3, (1, 6, 11))
-    ax = Axis(fig[1, i], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
+    ax = Axis(fig[1, i], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
     u = j == 1 ? initial_condition : sol.u[j] # sol.u[1] is modified slightly to force the Dirichlet conditions at t = 0
-    tricontourf!(ax, tri, u, levels=0:5:50, colormap=:matter, extendlow=:auto, extendhigh=:auto) # don't need to do u[begin:end-1], since tri doesn't have that extra vertex.
+    tricontourf!(ax, tri, u, levels = 0:5:50, colormap = :matter,
+        extendlow = :auto, extendhigh = :auto) # don't need to do u[begin:end-1], since tri doesn't have that extra vertex.
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
@@ -278,7 +284,7 @@ diff_eq = DiffusionEquation(mesh, BCs;
 
 # Let's compare `DiffusionEquation` to the `FVMProblem` approach. 
 fvm_prob = FVMProblem(mesh, BCs;
-    diffusion_function=let D = diffusion_function
+    diffusion_function = let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     initial_condition,
@@ -306,8 +312,8 @@ using LinearSolve #src
 
 # Much better! The `DiffusionEquation` approach is about 10 times faster.
 
-sol1 = solve(diff_eq, Tsit5(); saveat=0.05) #src
-sol2 = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.05) #src
+sol1 = solve(diff_eq, Tsit5(); saveat = 0.05) #src
+sol2 = solve(fvm_prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.05) #src
 using Test #src
 
 # To finish this example, let's solve a diffusion equation with constant Neumann boundary conditions:
@@ -321,7 +327,7 @@ using Test #src
 # ```
 # Here, $\Omega = [0, 320]^2$.
 L = 320.0
-tri = triangulate_rectangle(0, L, 0, L, 100, 100, single_boundary=true)
+tri = triangulate_rectangle(0, L, 0, L, 100, 100, single_boundary = true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> 2.0, Neumann)
 diffusion_function = (x, y, p) -> 2.0
@@ -340,18 +346,19 @@ prob = DiffusionEquation(mesh, BCs;
     final_time)
 
 # Let's solve and plot.
-sol = solve(prob, Tsit5(); saveat=100.0)
+sol = solve(prob, Tsit5(); saveat = 100.0)
 sol |> tc #hide
 
 #-
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for j in eachindex(sol)
-    ax = Axis(fig[1, j], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
+    ax = Axis(fig[1, j], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
     u = j == 1 ? initial_condition : sol.u[j]
-    tricontourf!(ax, tri, u, levels=0:0.1:1, colormap=:turbo, extendlow=:auto, extendhigh=:auto)
+    tricontourf!(ax, tri, u, levels = 0:0.1:1, colormap = :turbo,
+        extendlow = :auto, extendhigh = :auto)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
@@ -363,27 +370,28 @@ fig
 # $\vb q \vdot \vu n = -4$. Here is a comparison of the two solutions.
 BCs_prob = BoundaryConditions(mesh, (x, y, t, u, p) -> -4, Neumann)
 fvm_prob = FVMProblem(mesh, BCs_prob;
-    diffusion_function=let D = diffusion_function
+    diffusion_function = let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     initial_condition,
     final_time)
-fvm_sol = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()); saveat=100.0)
+fvm_sol = solve(fvm_prob, TRBDF2(linsolve = KLUFactorization()); saveat = 100.0)
 fvm_sol |> tc #hide
 
 for j in eachindex(fvm_sol)
-    ax = Axis(fig[2, j], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(fvm_sol.t[j])",
-        titlealign=:left)
+    ax = Axis(fig[2, j], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(fvm_sol.t[j])",
+        titlealign = :left)
     u = j == 1 ? initial_condition : fvm_sol.u[j]
-    tricontourf!(ax, tri, u, levels=0:0.1:1, colormap=:turbo, extendlow=:auto, extendhigh=:auto)
+    tricontourf!(ax, tri, u, levels = 0:0.1:1, colormap = :turbo,
+        extendlow = :auto, extendhigh = :auto)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
 fig
 @test_reference joinpath(@__DIR__, "../figures", "diffusion_equation_template_1.png") fig #src
-u_template = sol[begin:end-1, 2:end] #src
+u_template = sol[begin:(end - 1), 2:end] #src
 u_fvm = fvm_sol[begin:end, 2:end] #src
 @test u_template ≈ u_fvm rtol = 1e-3 #src
 
@@ -410,4 +418,5 @@ q = (30.0, 45.0)
 T = jump_and_march(tri, q)
 val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])
 using Test #src
-@test pl_interpolate(prob, T, sol.u[3], q[1], q[2]) ≈ pl_interpolate(fvm_prob, T, fvm_sol.u[3], q[1], q[2]) rtol = 1e-3 #src
+@test pl_interpolate(prob, T, sol.u[3], q[1], q[2]) ≈
+      pl_interpolate(fvm_prob, T, fvm_sol.u[3], q[1], q[2]) rtol = 1e-3 #src

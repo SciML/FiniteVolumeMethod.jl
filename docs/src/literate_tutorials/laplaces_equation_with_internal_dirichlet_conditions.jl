@@ -17,7 +17,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # ```
 # To start with solving this problem, let us define an initial mesh. 
 using DelaunayTriangulation, FiniteVolumeMethod
-tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary=false)
+tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary = false)
 
 # In this mesh, we don't have any points that lie exactly on the 
 # line $\{x = 1/2, 0 \leq y \leq 2/5\}$, so we cannot enforce this 
@@ -37,7 +37,7 @@ fig, ax, sc = triplot(tri)
 fig
 
 # It may also help to refine the mesh slightly.
-refine!(tri, max_area=1e-4)
+refine!(tri, max_area = 1e-4)
 fig, ax, sc = triplot(tri)
 fig
 
@@ -74,7 +74,7 @@ end
 vertices = find_all_points_on_line(tri)
 fig, ax, sc = triplot(tri)
 points = [get_point(tri, i) for i in vertices]
-scatter!(ax, points, color=:red, markersize=10)
+scatter!(ax, points, color = :red, markersize = 10)
 fig
 
 # Now that we have the vertices, we can define the internal conditions.
@@ -83,7 +83,7 @@ fig
 # condition for that vertex. In this case, that function index 
 # is `1` as we only have a single function.
 ICs = InternalConditions((x, y, t, u, p) -> zero(u),
-    dirichlet_nodes=Dict(vertices .=> 1))
+    dirichlet_nodes = Dict(vertices .=> 1))
 
 # Now we can define the problem. As discussed in 
 # the [Helmholtz tutorial](helmholtz_equation_with_inhomogeneous_boundary_conditions.md),
@@ -113,13 +113,12 @@ steady_prob = SteadyFVMProblem(prob)
 
 # Now let's solve the problem. 
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization())))
 sol |> tc #hide
 
 #-
-fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 100, 28))
+fig, ax, sc = tricontourf(tri, sol.u, levels = LinRange(0, 100, 28))
 tightlimits!(ax)
 fig
 using ReferenceTests #src
 @test_reference joinpath(@__DIR__, "../figures", "laplaces_equation_with_internal_dirichlet_conditions.png") fig #src
- 

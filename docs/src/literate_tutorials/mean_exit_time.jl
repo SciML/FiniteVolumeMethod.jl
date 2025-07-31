@@ -118,11 +118,11 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
 R₁, R₂ = 2.0, 3.0
 circle = CircularArc((0.0, R₂), (0.0, R₂), (0.0, 0.0))
-points = NTuple{2,Float64}[]
-tri = triangulate(points; boundary_nodes=[circle])
+points = NTuple{2, Float64}[]
+tri = triangulate(points; boundary_nodes = [circle])
 θ = LinRange(0, 2π, 250)
-xin = @views @. R₁ * cos(θ)[begin:end-1]
-yin = @views @. R₁ * sin(θ)[begin:end-1]
+xin = @views @. R₁ * cos(θ)[begin:(end - 1)]
+yin = @views @. R₁ * sin(θ)[begin:(end - 1)]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
@@ -131,7 +131,7 @@ for i in 2:length(xin)
 end
 n = DelaunayTriangulation.num_points(tri)
 add_segment!(tri, n - 1, n)
-refine!(tri; max_area=1e-3get_area(tri))
+refine!(tri; max_area = 1e-3get_area(tri))
 triplot(tri)
 
 #-
@@ -145,7 +145,7 @@ D₁, D₂ = 6.25e-4, 6.25e-5
 diffusion_function = (x, y, t, u, p) -> let r = sqrt(x^2 + y^2)
     return ifelse(r < p.R₁, p.D₁, p.D₂)
 end
-diffusion_parameters = (R₁=R₁, D₁=D₁, D₂=D₂)
+diffusion_parameters = (R₁ = R₁, D₁ = D₁, D₂ = D₂)
 
 # For the initial condition, which recall is the 
 # initial guess for the steady problem, let us use the 
@@ -163,7 +163,7 @@ source_function = (x, y, t, u, p) -> one(u)
 prob = FVMProblem(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
-    final_time=Inf)
+    final_time = Inf)
 
 #-
 steady_prob = SteadyFVMProblem(prob)
@@ -174,9 +174,9 @@ sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
 sol |> tc #hide
 
 #-
-fig = Figure(fontsize=33)
-ax = Axis(fig[1, 1], xlabel="x", ylabel="y")
-tricontourf!(ax, tri, sol.u, levels=0:500:20000, extendhigh=:auto)
+fig = Figure(fontsize = 33)
+ax = Axis(fig[1, 1], xlabel = "x", ylabel = "y")
+tricontourf!(ax, tri, sol.u, levels = 0:500:20000, extendhigh = :auto)
 fig
 using ReferenceTests #src
 @test_reference joinpath(@__DIR__, "../figures", "mean_exit_time_unperturbed_interface.png") fig #src
@@ -190,7 +190,7 @@ function T_exact(x, y) #src
     end #src
 end #src
 _T_exact = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)] #src
-tricontourf!(Axis(fig[1, 2]), tri, _T_exact, levels=0:500:20000, extendhigh=:auto) #src
+tricontourf!(Axis(fig[1, 2]), tri, _T_exact, levels = 0:500:20000, extendhigh = :auto) #src
 @test_reference joinpath(@__DIR__, "../figures", "mean_exit_time_unperturbed_interface_exact_comparison.png") fig #src
 
 # ## Perturbed interface
@@ -199,11 +199,11 @@ tricontourf!(Axis(fig[1, 2]), tri, _T_exact, levels=0:500:20000, extendhigh=:aut
 g = θ -> sin(3θ) + cos(5θ)
 ε = 0.05
 R1_f = θ -> R₁ * (1 + ε * g(θ))
-points = NTuple{2,Float64}[]
+points = NTuple{2, Float64}[]
 circle = CircularArc((0.0, R₂), (0.0, R₂), (0.0, 0.0))
-tri = triangulate(points; boundary_nodes=[circle])
-xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
-yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+tri = triangulate(points; boundary_nodes = [circle])
+xin = @views (@. R1_f(θ) * cos(θ))[begin:(end - 1)]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:(end - 1)]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
@@ -212,7 +212,7 @@ for i in 2:length(xin)
 end
 n = DelaunayTriangulation.num_points(tri)
 add_segment!(tri, n - 1, n)
-refine!(tri; max_area=1e-3get_area(tri))
+refine!(tri; max_area = 1e-3get_area(tri))
 triplot(tri)
 
 #-
@@ -236,13 +236,13 @@ diffusion_function = (x, y, t, u, p) -> let r = sqrt(x^2 + y^2), θ = atan(y, x)
     interface_val = p.R1_f(θ)
     return ifelse(r < interface_val, p.D₁, p.D₂)
 end
-diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
+diffusion_parameters = (D₁ = D₁, D₂ = D₂, R1_f = R1_f)
 initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 source_function = (x, y, t, u, p) -> one(u)
 prob = FVMProblem(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
-    final_time=Inf)
+    final_time = Inf)
 steady_prob = SteadyFVMProblem(prob)
 
 #-
@@ -250,10 +250,10 @@ sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
 sol |> tc #hide
 
 #-
-fig = Figure(fontsize=33)
-ax = Axis(fig[1, 1], xlabel="x", ylabel="y")
-tricontourf!(ax, tri, sol.u, levels=0:500:20000, extendhigh=:auto)
-lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig = Figure(fontsize = 33)
+ax = Axis(fig[1, 1], xlabel = "x", ylabel = "y")
+tricontourf!(ax, tri, sol.u, levels = 0:500:20000, extendhigh = :auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color = :magenta, linewidth = 5)
 fig
 @test_reference joinpath(@__DIR__, "../figures", "mean_exit_time_perturbed_interface.png") fig #src
 
@@ -269,19 +269,20 @@ fig
 # any nearby particles, i.e. $T(0,0)=0$.
 add_point!(tri, 0.0, 0.0)
 mesh = FVMGeometry(tri)
-ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(DelaunayTriangulation.num_points(tri) => 1))
+ICs = InternalConditions((x, y, t, u, p) -> zero(u),
+    dirichlet_nodes = Dict(DelaunayTriangulation.num_points(tri) => 1))
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(u), Dirichlet)
 initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
-    final_time=Inf)
+    final_time = Inf)
 steady_prob = SteadyFVMProblem(prob)
 sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
-fig = Figure(fontsize=33)
-ax = Axis(fig[1, 1], xlabel="x", ylabel="y")
-tricontourf!(ax, tri, sol.u, levels=0:500:10000, extendhigh=:auto)
-lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig = Figure(fontsize = 33)
+ax = Axis(fig[1, 1], xlabel = "x", ylabel = "y")
+tricontourf!(ax, tri, sol.u, levels = 0:500:10000, extendhigh = :auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color = :magenta, linewidth = 5)
 fig
 @test_reference joinpath(@__DIR__, "../figures", "mean_exit_time_perturbed_interface_with_hole.png") fig #src
 
@@ -291,13 +292,17 @@ fig
 # reflecting off all other parts. For the reflecting boundary condition, 
 # this is enforced by using Neumann boundary conditions. 
 ϵr = 0.25
-dirichlet_circle = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
-neumann_circle = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(ϵr), R₂ * sin(ϵr)), (0.0, 0.0))
+dirichlet_circle = CircularArc(
+    (R₂ * cos(ϵr), R₂ * sin(ϵr)), (
+        R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
+neumann_circle = CircularArc(
+    (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (
+        R₂ * cos(ϵr), R₂ * sin(ϵr)), (0.0, 0.0))
 boundary_nodes = [[dirichlet_circle], [neumann_circle]]
-points = NTuple{2,Float64}[]
+points = NTuple{2, Float64}[]
 tri = triangulate(points; boundary_nodes)
-xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
-yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+xin = @views (@. R1_f(θ) * cos(θ))[begin:(end - 1)]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:(end - 1)]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
@@ -308,37 +313,38 @@ n = DelaunayTriangulation.num_points(tri)
 add_segment!(tri, n - 1, n)
 add_point!(tri, 0.0, 0.0)
 origin_idx = DelaunayTriangulation.num_points(tri)
-refine!(tri; max_area=1e-3get_area(tri))
+refine!(tri; max_area = 1e-3get_area(tri))
 triplot(tri)
 
 #-
 mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, (zero_f, zero_f), (Neumann, Dirichlet))
-ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(origin_idx => 1))
+ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes = Dict(origin_idx => 1))
 initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
-    final_time=Inf)
+    final_time = Inf)
 steady_prob = SteadyFVMProblem(prob)
 sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
-fig = Figure(fontsize=33)
-ax = Axis(fig[1, 1], xlabel="x", ylabel="y")
-tricontourf!(ax, tri, sol.u, levels=0:2500:35000, extendhigh=:auto)
-lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig = Figure(fontsize = 33)
+ax = Axis(fig[1, 1], xlabel = "x", ylabel = "y")
+tricontourf!(ax, tri, sol.u, levels = 0:2500:35000, extendhigh = :auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color = :magenta, linewidth = 5)
 fig
-@test_reference joinpath(@__DIR__, "../figures", "mean_exit_time_perturbed_interface_with_hole_and_reflecting_boundary.png") fig #src
+@test_reference joinpath(
+    @__DIR__, "../figures", "mean_exit_time_perturbed_interface_with_hole_and_reflecting_boundary.png") fig #src
 
 # Now, as a last constraint, let's add a hole. We'll put hole at the origin,  and we'll 
 # move the point hole to $(-2, 0)$ rather than at the origin, and we'll also put a hole at 
 # $(0, 2.95)$.
-hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive=false)
+hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive = false)
 boundary_nodes = [[[dirichlet_circle], [neumann_circle]], [[hole]]]
-points = NTuple{2,Float64}[]
+points = NTuple{2, Float64}[]
 tri = triangulate(points; boundary_nodes)
-xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
-yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+xin = @views (@. R1_f(θ) * cos(θ))[begin:(end - 1)]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:(end - 1)]
 add_point!(tri, xin[1], yin[1])
 for i in 2:length(xin)
     add_point!(tri, xin[i], yin[i])
@@ -349,8 +355,9 @@ n = DelaunayTriangulation.num_points(tri)
 add_segment!(tri, n - 1, n)
 add_point!(tri, -2.0, 0.0)
 add_point!(tri, 0.0, 2.95)
-pointhole_idxs = [DelaunayTriangulation.num_points(tri), DelaunayTriangulation.num_points(tri) - 1]
-refine!(tri; max_area=1e-3get_area(tri))
+pointhole_idxs = [
+    DelaunayTriangulation.num_points(tri), DelaunayTriangulation.num_points(tri) - 1]
+refine!(tri; max_area = 1e-3get_area(tri))
 triplot(tri)
 
 # The boundary condition we'll use at the new interior hole  
@@ -358,17 +365,18 @@ triplot(tri)
 mesh = FVMGeometry(tri)
 zero_f = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, (zero_f, zero_f, zero_f), (Neumann, Dirichlet, Dirichlet))
-ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes=Dict(pointhole_idxs .=> 1))
+ICs = InternalConditions((x, y, t, u, p) -> zero(u), dirichlet_nodes = Dict(pointhole_idxs .=> 1))
 initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 prob = FVMProblem(mesh, BCs, ICs;
     diffusion_function, diffusion_parameters,
     source_function, initial_condition,
-    final_time=Inf)
+    final_time = Inf)
 steady_prob = SteadyFVMProblem(prob)
 sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
-fig = Figure(fontsize=33)
-ax = Axis(fig[1, 1], xlabel="x", ylabel="y")
-tricontourf!(ax, tri, sol.u, levels=0:1000:15000, extendhigh=:auto)
-lines!(ax, [xin; xin[1]], [yin; yin[1]], color=:magenta, linewidth=5)
+fig = Figure(fontsize = 33)
+ax = Axis(fig[1, 1], xlabel = "x", ylabel = "y")
+tricontourf!(ax, tri, sol.u, levels = 0:1000:15000, extendhigh = :auto)
+lines!(ax, [xin; xin[1]], [yin; yin[1]], color = :magenta, linewidth = 5)
 fig
-@test_reference joinpath(@__DIR__, "../figures", "mean_exit_time_perturbed_interface_with_hole_and_reflecting_boundary_and_holes.png") fig #src
+@test_reference joinpath(@__DIR__, "../figures",
+    "mean_exit_time_perturbed_interface_with_hole_and_reflecting_boundary_and_holes.png") fig #src

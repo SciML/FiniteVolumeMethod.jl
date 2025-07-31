@@ -9,7 +9,7 @@
 end
 
 # primitive: get the shape function coefficients for a system
-@inline function get_shape_function_coefficients(props::TriangleProperties, T, u, prob::FVMSystem) 
+@inline function get_shape_function_coefficients(props::TriangleProperties, T, u, prob::FVMSystem)
     i, j, k = triangle_vertices(T)
     s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉ = props.shape_function_coefficients
     α = ntuple(ℓ -> s₁ * u[ℓ, i] + s₂ * u[ℓ, j] + s₃ * u[ℓ, k], _neqs(prob))

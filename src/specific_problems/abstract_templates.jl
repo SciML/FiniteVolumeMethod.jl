@@ -1,20 +1,21 @@
 """
     abstract type AbstractFVMTemplate <: AbstractFVMProblem
 
-An abstract type that defines some specific problems. These problems are those that could 
+An abstract type that defines some specific problems. These problems are those that could
 be defined directly using [`FVMProblem`](@ref)s, but are common enough
 that (1) it is useful to have them defined here, and (2) it is
 useful to have them defined in a way that is more efficient than
-with a default implementation (e.g. exploiting linearity). The 
-problems are all defined as subtypes of a common abstract type, 
+with a default implementation (e.g. exploiting linearity). The
+problems are all defined as subtypes of a common abstract type,
 namely, `AbstractFVMTemplate` (the home of this docstring), which itself is a subtype of
-`AbstractFVMProblem`. 
+`AbstractFVMProblem`.
 
-To understand how to make use of these specific problems, either 
-see the docstring for each problem, or see the 
+To understand how to make use of these specific problems, either
+see the docstring for each problem, or see the
 "Solvers for Specific Problems, and Writing Your Own" section of the docs.
 
-To see the full list of problems, do 
+To see the full list of problems, do
+
 ```julia-repl
 julia> using FiniteVolumeMethod
 
@@ -29,9 +30,9 @@ julia> subtypes(FiniteVolumeMethod.AbstractFVMTemplate)
 
 The constructor for each problem is defined in its docstring. Note that all the problems above are exported.
 
-These problems can all be solved using the standard `solve` interface from 
-DifferentialEquations.jl, just like for [`FVMProblem`](@ref)s. The only exception 
-is for steady state problems, in which case the `solve` interface is still used, except 
+These problems can all be solved using the standard `solve` interface from
+DifferentialEquations.jl, just like for [`FVMProblem`](@ref)s. The only exception
+is for steady state problems, in which case the `solve` interface is still used, except
 the interface is from LinearSolve.jl.
 """
 abstract type AbstractFVMTemplate <: AbstractFVMProblem end
@@ -51,10 +52,12 @@ export LaplacesEquation
 """
     solve(prob::AbstractFVMTemplate, args...; kwargs...)
 
-Solve the problem `prob` using the standard `solve` interface from DifferentialEquations.jl. For 
+Solve the problem `prob` using the standard `solve` interface from DifferentialEquations.jl. For
 steady state problems, the interface is from LinearSolve.jl.
 """
-CommonSolve.solve(prob::AbstractFVMTemplate, args...; kwargs...) = CommonSolve.solve(prob.problem, args...; kwargs...)
+function CommonSolve.solve(prob::AbstractFVMTemplate, args...; kwargs...)
+    CommonSolve.solve(prob.problem, args...; kwargs...)
+end
 
 @doc raw"""
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
@@ -67,7 +70,8 @@ Add the contributions from each triangle to the matrix `A`, based on the equatio
 as explained in the docs. Will not update any rows corresponding to 
 [`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
 """
-function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+function triangle_contributions!(
+        A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
         ijk = triangle_vertices(T)
         i, j, k = ijk
@@ -101,7 +105,8 @@ zero, and `b[i]` is zero, where `i` is a node with a Dirichlet condition.
 function apply_dirichlet_conditions!(initial_condition, mesh, conditions)
     for (i, function_index) in get_dirichlet_nodes(conditions)
         x, y = get_point(mesh, i)
-        initial_condition[i] = eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+        initial_condition[i] = eval_condition_fnc(
+            conditions, function_index, x, y, nothing, nothing)
     end
 end
 
@@ -135,9 +140,11 @@ as explained in the docs. Will not update any rows corresponding to
 [`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
 """
 function boundary_edge_contributions!(A, b, mesh, conditions,
-    diffusion_function, diffusion_parameters)
-    non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters) # this is split to make it easier to, in the future, support semilinear equations where the Neumann contributions do need to go into the nonlinear component
-    neumann_boundary_edge_contributions!(b, mesh, conditions, diffusion_function, diffusion_parameters)
+        diffusion_function, diffusion_parameters)
+    non_neumann_boundary_edge_contributions!(
+        A, mesh, conditions, diffusion_function, diffusion_parameters) # this is split to make it easier to, in the future, support semilinear equations where the Neumann contributions do need to go into the nonlinear component
+    neumann_boundary_edge_contributions!(
+        b, mesh, conditions, diffusion_function, diffusion_parameters)
     return nothing
 end
 
@@ -154,7 +161,8 @@ as explained in the docs. Will not update any rows corresponding to
 [`Dirichlet`](@ref) or [`Dudt`](@ref) nodes. This function will pass `nothing` in place 
 of the arguments `u` and `t` in the boundary condition functions.
 """
-function neumann_boundary_edge_contributions!(b, mesh, conditions, diffusion_function, diffusion_parameters)
+function neumann_boundary_edge_contributions!(
+        b, mesh, conditions, diffusion_function, diffusion_parameters)
     for (e, fidx) in get_neumann_edges(conditions)
         i, j = DelaunayTriangulation.edge_vertices(e)
         _, _, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, _, _ = get_boundary_cv_components(mesh, i, j)
@@ -182,7 +190,8 @@ Add the contributions from each Neumann boundary edge to the vector `F`, based o
 as explained in the docs. Will not update any rows corresponding to 
 [`Dirichlet`](@ref) or [`Dudt`](@ref) nodes. 
 """
-function neumann_boundary_edge_contributions!(F, mesh, conditions, diffusion_function, diffusion_parameters, u, t)
+function neumann_boundary_edge_contributions!(
+        F, mesh, conditions, diffusion_function, diffusion_parameters, u, t)
     for (e, fidx) in FVM.get_neumann_edges(conditions)
         i, j = DelaunayTriangulation.edge_vertices(e)
         _, _, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, _, _ = FVM.get_boundary_cv_components(mesh, i, j)
@@ -212,7 +221,8 @@ Add the contributions from each non-Neumann boundary edge to the matrix `A`, bas
 as explained in the docs. Will not update any rows corresponding to 
 [`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
 """
-function non_neumann_boundary_edge_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+function non_neumann_boundary_edge_contributions!(
+        A, mesh, conditions, diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
         i, j = DelaunayTriangulation.edge_vertices(e)
         if !is_neumann_edge(conditions, i, j)
@@ -241,7 +251,7 @@ end
 """
     create_rhs_b(mesh, conditions, source_function, source_parameters)
 
-Create the vector `b` defined by 
+Create the vector `b` defined by
 
     b = [source_function(x, y, source_parameters) for (x, y) in DelaunayTriangulation.each_point(mesh.triangulation)],
 

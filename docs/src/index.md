@@ -2,7 +2,7 @@
 CurrentModule = FiniteVolumeMethod
 ```
 
-# Introduction 
+# Introduction
 
 This is the documentation for FiniteVolumeMethod.jl. [Click here to go back to the GitHub repository](https://github.com/SciML/FiniteVolumeMethod.jl).
 
@@ -20,10 +20,10 @@ using the finite volume method, with additional support for steady-state problem
 
 The [tutorials](tutorials/overview.md) in the sidebar demonstrate the many possibilities of this package. In addition to these two generic forms, we also provide support for specific problems that can be solved in a more efficient manner, namely:
 
-1. `DiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u]$.
-2. `MeanExitTimeProblem`s: $\div[D(\vb x)\grad T(\vb x)] = -1$.
-3. `LinearReactionDiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u] + f(\vb x)u$.
-4. `PoissonsEquation`: $\div[D(\vb x)\grad u]  = f(\vb x)$.
-5. `LaplacesEquation`: $\div[D(\vb x)\grad u] = 0$.
+ 1. `DiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u]$.
+ 2. `MeanExitTimeProblem`s: $\div[D(\vb x)\grad T(\vb x)] = -1$.
+ 3. `LinearReactionDiffusionEquation`s: $\partial_tu = \div[D(\vb x)\grad u] + f(\vb x)u$.
+ 4. `PoissonsEquation`: $\div[D(\vb x)\grad u]  = f(\vb x)$.
+ 5. `LaplacesEquation`: $\div[D(\vb x)\grad u] = 0$.
 
 See the [Solvers for Specific Problems, and Writing Your Own](wyos/overview.md) section for more information on these templates.

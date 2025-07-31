@@ -56,18 +56,20 @@ end
 using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
 const FVM = FiniteVolumeMethod
 function poissons_equation(mesh::FVMGeometry,
-    BCs::BoundaryConditions,
-    ICs::InternalConditions=InternalConditions();
-    diffusion_function=(x,y,p)->1.0,
-    diffusion_parameters=nothing,
-    source_function,
-    source_parameters=nothing)
+        BCs::BoundaryConditions,
+        ICs::InternalConditions = InternalConditions();
+        diffusion_function = (x, y, p)->1.0,
+        diffusion_parameters = nothing,
+        source_function,
+        source_parameters = nothing)
     conditions = Conditions(mesh, BCs, ICs)
     n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
     b = create_rhs_b(mesh, conditions, source_function, source_parameters)
-    FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
-    FVM.boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    FVM.triangle_contributions!(
+        A, mesh, conditions, diffusion_function, diffusion_parameters)
+    FVM.boundary_edge_contributions!(
+        A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
     FVM.fix_missing_vertices!(A, b, mesh)
     return LinearProblem(sparse(A), b)
@@ -82,11 +84,11 @@ end
 # \end{aligned}
 # \end{equation*}
 # ```
-tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=true)
+tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary = true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 source_function = (x, y, p) -> -sin(π * x) * sin(π * y)
-prob = poissons_equation(mesh, BCs;  source_function)
+prob = poissons_equation(mesh, BCs; source_function)
 using DisplayAs #hide
 prob |> tc #hide
 
@@ -96,11 +98,14 @@ sol |> tc #hide
 
 #-
 using CairoMakie
-fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 0.05, 10), colormap=:matter, extendhigh=:auto)
+fig, ax,
+sc = tricontourf(
+    tri, sol.u, levels = LinRange(0, 0.05, 10), colormap = :matter, extendhigh = :auto)
 tightlimits!(ax)
 fig
 using Test #src
-@test sol.u ≈ [1 / (2π^2) * sin(π * x) * sin(π * y) for (x, y) in DelaunayTriangulation.each_point(tri)] rtol = 1e-4 #src
+@test sol.u ≈ [1 / (2π^2) * sin(π * x) * sin(π * y)
+       for (x, y) in DelaunayTriangulation.each_point(tri)] rtol = 1e-4 #src
 
 # If we wanted to turn this into a `SteadyFVMProblem`, we use a similar call to `poissons_equation` 
 # above except with an `initial_condition` for the initial guess. Moreover, we need to 
@@ -108,20 +113,21 @@ using Test #src
 # when `FVMProblem`s assume that we are solving $0 = \div[D(\vb x)\grad u] + f(\vb x)$.
 initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
-    diffusion_function= (x, y, t, u, p) -> 1.0,
-    source_function=let S = source_function
+    diffusion_function = (x, y, t, u, p) -> 1.0,
+    source_function = let S = source_function
         (x, y, t, u, p) -> -S(x, y, p)
     end,
     initial_condition,
-    final_time=Inf))
+    final_time = Inf))
 
 #-
 using SteadyStateDiffEq, OrdinaryDiffEq
-fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization())))
 fvm_sol |> tc #hide
 using ReferenceTests #src
 ax = Axis(fig[1, 2]) #src
-tricontourf!(ax, tri, fvm_sol.u, levels=LinRange(0, 0.05, 10), colormap=:matter, extendhigh=:auto) #src
+tricontourf!(ax, tri, fvm_sol.u, levels = LinRange(0, 0.05, 10),
+    colormap = :matter, extendhigh = :auto) #src
 tightlimits!(ax) #src
 resize_to_layout!(fig) #src
 fig #src
@@ -131,12 +137,13 @@ fig #src
 # ## Using the Provided Template
 # Let's now use the built-in `PoissonsEquation` which implements the above template 
 # inside FiniteVolumeMethod.jl. The above problem can be constructed as follows:
-prob = PoissonsEquation(mesh, BCs; source_function=source_function)
+prob = PoissonsEquation(mesh, BCs; source_function = source_function)
 
 #-
 sol = solve(prob, KLUFactorization())
 sol |> tc #hide
-@test sol.u ≈ [1 / (2π^2) * sin(π * x) * sin(π * y) for (x, y) in DelaunayTriangulation.each_point(tri)] rtol = 1e-4 #src
+@test sol.u ≈ [1 / (2π^2) * sin(π * x) * sin(π * y)
+       for (x, y) in DelaunayTriangulation.each_point(tri)] rtol = 1e-4 #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-4 #src
 
 # Here is a benchmark comparison of the `PoissonsEquation` approach against the `FVMProblem` approach.
@@ -189,9 +196,9 @@ g, h = (2.0, 7.0), (8.0, 7.0)
 points = [(a, c), (b, c), (b, d), (a, d), e, f, g, h]
 boundary_nodes = [[1, 2], [2, 3], [3, 4], [4, 1]]
 segments = Set(((5, 6), (7, 8)))
-tri = triangulate(points; boundary_nodes, segments, delete_ghosts=false)
-refine!(tri; max_area=1e-4get_area(tri))
-fig, ax, sc = triplot(tri, show_constrained_edges=true, constrained_edge_linewidth=5)
+tri = triangulate(points; boundary_nodes, segments, delete_ghosts = false)
+refine!(tri; max_area = 1e-4get_area(tri))
+fig, ax, sc = triplot(tri, show_constrained_edges = true, constrained_edge_linewidth = 5)
 fig
 
 #-
@@ -223,7 +230,7 @@ dirichlet_nodes = Dict(
     (upper_plate .=> 2)...
 )
 internal_f = ((x, y, t, u, p) -> -one(x), (x, y, t, u, p) -> one(x))
-ICs = InternalConditions(internal_f, dirichlet_nodes=dirichlet_nodes)
+ICs = InternalConditions(internal_f, dirichlet_nodes = dirichlet_nodes)
 
 # Next, we define $\epsilon(\vb x)$ and $\rho(\vb x)$. We need a function that computes the distance 
 # between a point and the plates. For the distance between a point and a line segment, we can use:[^3]
@@ -265,13 +272,13 @@ function plate_source_function(x, y, p)
 end
 
 # Now we can define our problem.  
-diffusion_parameters = (ϵ₀=8.8541878128e-12, Δ=4.0)
-source_parameters = (ϵ₀=8.8541878128e-12, Q=1e-6)
+diffusion_parameters = (ϵ₀ = 8.8541878128e-12, Δ = 4.0)
+source_parameters = (ϵ₀ = 8.8541878128e-12, Q = 1e-6)
 prob = PoissonsEquation(mesh, BCs, ICs;
-    diffusion_function=dielectric_function,
-    diffusion_parameters=diffusion_parameters,
-    source_function=plate_source_function,
-    source_parameters=source_parameters)
+    diffusion_function = dielectric_function,
+    diffusion_parameters = diffusion_parameters,
+    source_function = plate_source_function,
+    source_parameters = source_parameters)
 
 #-
 sol = solve(prob, KLUFactorization())
@@ -280,7 +287,7 @@ sol |> tc #hide
 # With this solution, we can also define the electric field $\vb E$, using $\vb E = -\grad V$.
 # To compute the gradients, we use NaturalNeighbours.jl. 
 using NaturalNeighbours
-itp = interpolate(tri, sol.u; derivatives=true)
+itp = interpolate(tri, sol.u; derivatives = true)
 E = map(.-, itp.gradient) # E = -∇V
 E |> tc #hide
 
@@ -293,41 +300,41 @@ x = LinRange(0, 10, 25)
 y = LinRange(0, 10, 25)
 x_vec = [x for x in x, y in y] |> vec
 y_vec = [y for x in x, y in y] |> vec
-E_itp = map(.-, ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2)))
+E_itp = map(.-, ∂(x_vec, y_vec, interpolant_method = Hiyoshi(2)))
 E_intensity = norm.(E_itp)
-fig = Figure(fontsize=38)
-ax = Axis(fig[1, 1], width=600, height=600, titlealign=:left,
-    xlabel="x", ylabel="y", title="Voltage")
-tricontourf!(ax, tri, sol.u, levels=15, colormap=:ocean)
+fig = Figure(fontsize = 38)
+ax = Axis(fig[1, 1], width = 600, height = 600, titlealign = :left,
+    xlabel = "x", ylabel = "y", title = "Voltage")
+tricontourf!(ax, tri, sol.u, levels = 15, colormap = :ocean)
 arrow_positions = [Point2f(x, y) for (x, y) in zip(x_vec, y_vec)]
 arrow_directions = [Point2f(e...) for e in E_itp]
 arrows!(ax, arrow_positions, arrow_directions,
-    lengthscale=0.3, normalize=true, arrowcolor=E_intensity, linecolor=E_intensity)
-    xlims!(ax,0,10)
-    ylims!(ax,0,10)
-ax = Axis(fig[1, 2], width=600, height=600, titlealign=:left,
-    xlabel="x", ylabel="y", title="Electric Field")
-tricontourf!(ax, tri, norm.(E), levels=15, colormap=:ocean)
+    lengthscale = 0.3, normalize = true, arrowcolor = E_intensity, linecolor = E_intensity)
+xlims!(ax, 0, 10)
+ylims!(ax, 0, 10)
+ax = Axis(fig[1, 2], width = 600, height = 600, titlealign = :left,
+    xlabel = "x", ylabel = "y", title = "Electric Field")
+tricontourf!(ax, tri, norm.(E), levels = 15, colormap = :ocean)
 arrows!(ax, arrow_positions, arrow_directions,
-    lengthscale=0.3, normalize=true, arrowcolor=E_intensity, linecolor=E_intensity)
-xlims!(ax,0,10)
-ylims!(ax,0,10)
+    lengthscale = 0.3, normalize = true, arrowcolor = E_intensity, linecolor = E_intensity)
+xlims!(ax, 0, 10)
+ylims!(ax, 0, 10)
 resize_to_layout!(fig)
 fig
 @test_reference joinpath(@__DIR__, "../figures", "poissons_equation_template_2.png") fig by = psnr_equality(20) #src
 
 # To finish, let us benchmark the `PoissonsEquation` approach against the `FVMProblem` approach.
 fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
-    diffusion_function=let D = dielectric_function
+    diffusion_function = let D = dielectric_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
-    source_function=let S = plate_source_function
+    source_function = let S = plate_source_function
         (x, y, t, u, p) -> -S(x, y, p)
     end,
-    diffusion_parameters=diffusion_parameters,
-    source_parameters=source_parameters,
-    initial_condition=zeros(DelaunayTriangulation.num_points(tri)),
-    final_time=Inf))
+    diffusion_parameters = diffusion_parameters,
+    source_parameters = source_parameters,
+    initial_condition = zeros(DelaunayTriangulation.num_points(tri)),
+    final_time = Inf))
 
 # ````julia
 # @btime solve($prob, $KLUFactorization());
@@ -345,5 +352,5 @@ fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
 #   329.327 ms (201134 allocations: 93.70 MiB)
 # ````
 
-fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization()))) #src
+fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization()))) #src
 @test sol.u ≈ fvm_sol.u rtol = 1e-4 #src

@@ -26,7 +26,7 @@ points = NTuple{2, Float64}[]
 boundary_nodes = [circle]
 tri = triangulate(points; boundary_nodes)
 A = get_area(tri)
-refine!(tri; max_area=1e-4A)
+refine!(tri; max_area = 1e-4A)
 mesh = FVMGeometry(tri)
 
 #-
@@ -44,31 +44,33 @@ R = (x, y, t, u, p) -> u * (1 - u)
 initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.10
 prob = FVMProblem(mesh, BCs;
-    diffusion_function=D,
-    source_function=R,
+    diffusion_function = D,
+    source_function = R,
     final_time,
     initial_condition)
 
 # We can now solve. 
 using OrdinaryDiffEq, LinearSolve
-alg = FBDF(linsolve=UMFPACKFactorization(), autodiff=false)
-sol = solve(prob, alg, saveat=0.01)
+alg = FBDF(linsolve = UMFPACKFactorization(), autodiff = false)
+sol = solve(prob, alg, saveat = 0.01)
 sol |> tc #hide
 
 #-
 using ReferenceTests #src
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for (i, j) in zip(1:3, (1, 6, 11))
-    ax = Axis(fig[1, i], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
-    tricontourf!(ax, tri, sol.u[j], levels=1:0.01:1.4, colormap=:matter)
+    ax = Axis(fig[1, i], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
+    tricontourf!(ax, tri, sol.u[j], levels = 1:0.01:1.4, colormap = :matter)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
 fig
-@test_reference joinpath(@__DIR__, "../figures", "reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk.png") fig #src
+@test_reference joinpath(@__DIR__,
+    "../figures",
+    "reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk.png") fig #src
 
 using ReferenceTests #src
 function exact_solution(x, y, t) #src
@@ -90,13 +92,15 @@ function compare_solutions(sol, tri) #src
     return x, y, u #src
 end #src
 x, y, u = compare_solutions(sol, tri) #src
-fig = Figure(fontsize=64) #src
+fig = Figure(fontsize = 64) #src
 for i in eachindex(sol) #src
-    ax = Axis(fig[1, i], width=600, height=600) #src
-    tricontourf!(ax, tri, sol.u[i], levels=1:0.01:1.4, colormap=:matter) #src
-    ax = Axis(fig[2, i], width=600, height=600) #src
-    tricontourf!(ax, tri, u[:, i], levels=1:0.01:1.4, colormap=:matter) #src
+    ax = Axis(fig[1, i], width = 600, height = 600) #src
+    tricontourf!(ax, tri, sol.u[i], levels = 1:0.01:1.4, colormap = :matter) #src
+    ax = Axis(fig[2, i], width = 600, height = 600) #src
+    tricontourf!(ax, tri, u[:, i], levels = 1:0.01:1.4, colormap = :matter) #src
 end #src
 resize_to_layout!(fig) #src
 fig #src
-@test_reference joinpath(@__DIR__, "../figures", "reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk_exact_comparisons.png") fig #src
+@test_reference joinpath(@__DIR__,
+    "../figures",
+    "reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk_exact_comparisons.png") fig #src

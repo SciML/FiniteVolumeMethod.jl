@@ -9,8 +9,10 @@ nothing #hide
 ````
 
 # Laplace's Equation with Internal Dirichlet Conditions
+
 In this tutorial, we consider Laplace's equation with some additional complexity
 put into the problem via internal Dirichlet conditions:
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -23,11 +25,12 @@ u(1/2, y) &= 0 & 0 \leq y \leq 2/5.
 \end{aligned}
 \end{equation}
 ```
+
 To start with solving this problem, let us define an initial mesh.
 
 ````@example laplaces_equation_with_internal_dirichlet_conditions
 using DelaunayTriangulation, FiniteVolumeMethod
-tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary=false)
+tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary = false)
 ````
 
 In this mesh, we don't have any points that lie exactly on the
@@ -37,7 +40,6 @@ We do not need to add any constrained edges in this case, since these internal
 conditions are enforced only at points.
 
 [^1]: Of course, by defining the grid spacing appropriately we could have such points, but we just want to show here how we can add these points in if needed.
-
 Let us now add in the points.
 
 ````@example laplaces_equation_with_internal_dirichlet_conditions
@@ -53,7 +55,7 @@ fig
 It may also help to refine the mesh slightly.
 
 ````@example laplaces_equation_with_internal_dirichlet_conditions
-refine!(tri, max_area=1e-4)
+refine!(tri, max_area = 1e-4)
 fig, ax, sc = triplot(tri)
 fig
 ````
@@ -97,7 +99,7 @@ end
 vertices = find_all_points_on_line(tri)
 fig, ax, sc = triplot(tri)
 points = [get_point(tri, i) for i in vertices]
-scatter!(ax, points, color=:red, markersize=10)
+scatter!(ax, points, color = :red, markersize = 10)
 fig
 ````
 
@@ -109,7 +111,7 @@ is `1` as we only have a single function.
 
 ````@example laplaces_equation_with_internal_dirichlet_conditions
 ICs = InternalConditions((x, y, t, u, p) -> zero(u),
-    dirichlet_nodes=Dict(vertices .=> 1))
+    dirichlet_nodes = Dict(vertices .=> 1))
 ````
 
 Now we can define the problem. As discussed in
@@ -149,23 +151,24 @@ Now let's solve the problem.
 
 ````@example laplaces_equation_with_internal_dirichlet_conditions
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization())))
 sol |> tc #hide
 ````
 
 ````@example laplaces_equation_with_internal_dirichlet_conditions
-fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 100, 28))
+fig, ax, sc = tricontourf(tri, sol.u, levels = LinRange(0, 100, 28))
 tightlimits!(ax)
 fig
 ````
 
 ## Just the code
+
 An uncommented version of this example is given below.
 You can view the source code for this file [here](https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/laplaces_equation_with_internal_dirichlet_conditions.jl).
 
 ```julia
 using DelaunayTriangulation, FiniteVolumeMethod
-tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary=false)
+tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary = false)
 
 using CairoMakie
 new_points = LinRange(0, 2 / 5, 250)
@@ -175,7 +178,7 @@ end
 fig, ax, sc = triplot(tri)
 fig
 
-refine!(tri, max_area=1e-4)
+refine!(tri, max_area = 1e-4)
 fig, ax, sc = triplot(tri)
 fig
 
@@ -202,11 +205,11 @@ end
 vertices = find_all_points_on_line(tri)
 fig, ax, sc = triplot(tri)
 points = [get_point(tri, i) for i in vertices]
-scatter!(ax, points, color=:red, markersize=10)
+scatter!(ax, points, color = :red, markersize = 10)
 fig
 
 ICs = InternalConditions((x, y, t, u, p) -> zero(u),
-    dirichlet_nodes=Dict(vertices .=> 1))
+    dirichlet_nodes = Dict(vertices .=> 1))
 
 initial_condition = zeros(DelaunayTriangulation.num_points(tri))
 for i in each_solid_vertex(tri)
@@ -224,14 +227,13 @@ prob = FVMProblem(mesh, BCs, ICs;
 steady_prob = SteadyFVMProblem(prob)
 
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization())))
 
-fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 100, 28))
+fig, ax, sc = tricontourf(tri, sol.u, levels = LinRange(0, 100, 28))
 tightlimits!(ax)
 fig
 ```
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

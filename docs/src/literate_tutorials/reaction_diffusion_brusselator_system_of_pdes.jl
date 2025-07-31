@@ -83,7 +83,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # \end{equation*}
 # ```
 using FiniteVolumeMethod, DelaunayTriangulation
-tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=false)
+tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary = false)
 mesh = FVMGeometry(tri)
 
 # Now we define the boundary conditions. When considering a system of PDEs, 
@@ -128,19 +128,19 @@ mesh = FVMGeometry(tri)
 Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)];
 
 # Next, we can define the `FVMProblem`s for each variable. 
-Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function=Φ_q, source_function=Φ_S,
-    initial_condition=Φ₀, final_time=5.0)
+Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function = Φ_q, source_function = Φ_S,
+    initial_condition = Φ₀, final_time = 5.0)
 
 #-
-Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function=Ψ_q, source_function=Ψ_S,
-    initial_condition=Ψ₀, final_time=5.0)
+Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function = Ψ_q, source_function = Ψ_S,
+    initial_condition = Ψ₀, final_time = 5.0)
 
 # Finally, the `FVMSystem` is constructed by these two problems: 
 system = FVMSystem(Φ_prob, Ψ_prob)
 
 # We can now solve the problem just as we've done previously. 
 using OrdinaryDiffEq, LinearSolve
-sol = solve(system, TRBDF2(linsolve=KLUFactorization()), saveat=1.0)
+sol = solve(system, TRBDF2(linsolve = KLUFactorization()), saveat = 1.0)
 sol |> tc #hide
 
 # For this solution, note that the `u` values are matrices. For example: 
@@ -154,16 +154,16 @@ sol.u[3][1, :] |> tc #hide
 # are the value of $\Phi$ at the third time, and similarly `sol.u[3][2, :]` 
 # are the values of $\Psi$ at the third time. We can visualise the solutions as follows:
 using CairoMakie
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for i in eachindex(sol)
-    ax1 = Axis(fig[1, i], xlabel=L"x", ylabel=L"y",
-        width=400, height=400,
-        title=L"\Phi: t = %$(sol.t[i])", titlealign=:left)
-    ax2 = Axis(fig[2, i], xlabel=L"x", ylabel=L"y",
-        width=400, height=400,
-        title=L"\Psi: t = %$(sol.t[i])", titlealign=:left)
-    tricontourf!(ax1, tri, sol[i][1, :], levels=0:0.1:1, colormap=:matter)
-    tricontourf!(ax2, tri, sol[i][2, :], levels=1:10:100, colormap=:matter)
+    ax1 = Axis(fig[1, i], xlabel = L"x", ylabel = L"y",
+        width = 400, height = 400,
+        title = L"\Phi: t = %$(sol.t[i])", titlealign = :left)
+    ax2 = Axis(fig[2, i], xlabel = L"x", ylabel = L"y",
+        width = 400, height = 400,
+        title = L"\Psi: t = %$(sol.t[i])", titlealign = :left)
+    tricontourf!(ax1, tri, sol[i][1, :], levels = 0:0.1:1, colormap = :matter)
+    tricontourf!(ax2, tri, sol[i][2, :], levels = 1:10:100, colormap = :matter)
 end
 resize_to_layout!(fig)
 fig
@@ -173,15 +173,16 @@ using ReferenceTests #src
 x = getx.(get_points(tri)) #src
 y = gety.(get_points(tri)) #src
 for i in eachindex(sol) #src
-    ax3 = Axis(fig[3, i], xlabel=L"x", ylabel=L"y", #src
-        width=400, height=400, #src
-        title=L"Exact $\Phi: t = %$(sol.t[i])$", titlealign=:left) #src
-    ax4 = Axis(fig[4, i], xlabel=L"x", ylabel=L"y", #src
-        width=400, height=400, #src
-        title=L"Exact $\Psi: t = %$(sol.t[i])$", titlealign=:left) #src
-    tricontourf!(ax3, tri, Φ_exact.(x, y, sol.t[i]), levels=0:0.1:1, colormap=:matter) #src
-    tricontourf!(ax4, tri, Ψ_exact.(x, y, sol.t[i]), levels=1:10:100, colormap=:matter) #src
+    ax3 = Axis(fig[3, i], xlabel = L"x", ylabel = L"y", #src
+        width = 400, height = 400, #src
+        title = L"Exact $\Phi: t = %$(sol.t[i])$", titlealign = :left) #src
+    ax4 = Axis(fig[4, i], xlabel = L"x", ylabel = L"y", #src
+        width = 400, height = 400, #src
+        title = L"Exact $\Psi: t = %$(sol.t[i])$", titlealign = :left) #src
+    tricontourf!(ax3, tri, Φ_exact.(x, y, sol.t[i]), levels = 0:0.1:1, colormap = :matter) #src
+    tricontourf!(ax4, tri, Ψ_exact.(x, y, sol.t[i]), levels = 1:10:100, colormap = :matter) #src
 end  #src
 resize_to_layout!(fig) #src
 fig #src
-@test_reference joinpath(@__DIR__, "../figures", "reaction_diffusion_brusselator_system_of_pdes_exact_comparisons.png") fig #src
+@test_reference joinpath(
+    @__DIR__, "../figures", "reaction_diffusion_brusselator_system_of_pdes_exact_comparisons.png") fig #src

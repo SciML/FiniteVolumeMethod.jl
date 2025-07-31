@@ -4,30 +4,32 @@
 This is a `struct` that wraps a function `f` and some parameters `p` into a single object.
 
 # Fields
-- `fnc::F`
+
+  - `fnc::F`
 
 The function that is wrapped.
-- `parameters::P`
+
+  - `parameters::P`
 
 The parameters that are wrapped.
 """
-struct ParametrisedFunction{F<:Function,P} <: Function
+struct ParametrisedFunction{F <: Function, P} <: Function
     fnc::F
     parameters::P
 end
-@inline (f::ParametrisedFunction{F,P})(args...) where {F,P} = f.fnc(args..., f.parameters)
+@inline (f::ParametrisedFunction{F, P})(args...) where {F, P} = f.fnc(args..., f.parameters)
 
 """
     ConditionType 
 
 This is an `Enum`-type, with four instances:
 
-- [`Neumann`](@ref)
-- [`Dudt`](@ref)
-- [`Dirichlet`](@ref)
-- [`Constrained`](@ref)
+  - [`Neumann`](@ref)
+  - [`Dudt`](@ref)
+  - [`Dirichlet`](@ref)
+  - [`Constrained`](@ref)
 
-This is used for declaring conditions in the PDEs. See 
+This is used for declaring conditions in the PDEs. See
 the associated docstrings, and also [`BoundaryConditions`](@ref)
 and [`InternalConditions`](@ref).
 """
@@ -130,37 +132,42 @@ end
 """
     BoundaryConditions(mesh::FVMGeometry, functions, conditions; parameters=nothing)
 
-This is a constructor for the [`BoundaryConditions`](@ref) struct, which holds the boundary conditions for the PDE. 
+This is a constructor for the [`BoundaryConditions`](@ref) struct, which holds the boundary conditions for the PDE.
 See also [`Conditions`](@ref) (which [`FVMProblem`](@ref) wraps this into), [`ConditionType`](@ref), and [`InternalConditions`](@ref).
 
 # Arguments
-- `mesh::FVMGeometry`
+
+  - `mesh::FVMGeometry`
 
 The mesh on which the PDE is defined.
-- `functions::Union{<:Tuple,<:Function}`
 
-The functions that define the boundary conditions. The `i`th function should correspond to the part of the boundary of 
-the `mesh` corresponding to the `i`th boundary index, as defined in DelaunayTriangulation.jl. 
-- `conditions::Union{<:Tuple,<:ConditionType}`
+  - `functions::Union{<:Tuple,<:Function}`
 
-The classification for the boundary condition type corresponding to each boundary index as above. See 
+The functions that define the boundary conditions. The `i`th function should correspond to the part of the boundary of
+the `mesh` corresponding to the `i`th boundary index, as defined in DelaunayTriangulation.jl.
+
+  - `conditions::Union{<:Tuple,<:ConditionType}`
+
+The classification for the boundary condition type corresponding to each boundary index as above. See
 [`ConditionType`](@ref) for possible conditions - should be one of [`Neumann`](@ref), [`Dudt`](@ref), [`Dirichlet`](@ref), or [`Constrained`](@ref).
 
 # Keyword Arguments
-- `parameters=ntuple(_ -> nothing, length(functions))`
+
+  - `parameters=ntuple(_ -> nothing, length(functions))`
 
 The parameters for the functions, with `parameters[i]` giving the argument `p` in `functions[i]`.
 
 # Outputs
+
 The returned value is the corresponding [`BoundaryConditions`](@ref) struct.
 """
-struct BoundaryConditions{F<:Tuple,C<:Tuple}
+struct BoundaryConditions{F <: Tuple, C <: Tuple}
     functions::F
     condition_types::C
-    function BoundaryConditions(functions::F, condition_types::C) where {F,C}
+    function BoundaryConditions(functions::F, condition_types::C) where {F, C}
         @assert length(functions) == length(condition_types) "The number of functions and types must be the same."
         @assert all(t -> t isa ConditionType, condition_types) "The condition types must be ConditionType instances."
-        return new{F,C}(functions, condition_types)
+        return new{F, C}(functions, condition_types)
     end
 end
 function Base.show(io::IO, ::MIME"text/plain", bc::BoundaryConditions)
@@ -182,35 +189,40 @@ This is a constructor for the [`InternalConditions`](@ref) struct, which holds t
 See also [`Conditions`](@ref) (which [`FVMProblem`](@ref) wraps this into), [`ConditionType`](@ref), and [`BoundaryConditions`](@ref).
 
 # Arguments
-- `functions::Union{<:Tuple,<:Function}=()`
+
+  - `functions::Union{<:Tuple,<:Function}=()`
 
 The functions that define the internal conditions. These are the functions referred to in `edge_conditions` and `point_conditions`.
 
 # Keyword Arguments
-- `dirichlet_nodes::Dict{Int,Int}=Dict{Int,Int}()`
+
+  - `dirichlet_nodes::Dict{Int,Int}=Dict{Int,Int}()`
 
 A `Dict` that stores all [`Dirichlet`](@ref) points `u` as keys, with keys mapping to indices
 `idx` that refer to the corresponding condition function and parameters in `functions` and `parameters`.
-- `dudt_nodes::Dict{Int,Int}=Dict{Int,Int}()`
+
+  - `dudt_nodes::Dict{Int,Int}=Dict{Int,Int}()`
 
 A `Dict` that stores all [`Dudt`](@ref) points `u` as keys, with keys mapping to indices
 `idx` that refer to the corresponding condition function and parameters in `functions` and `parameters`.
-- `parameters::Tuple=ntuple(_ -> nothing, length(functions))`
+
+  - `parameters::Tuple=ntuple(_ -> nothing, length(functions))`
 
 The parameters for the functions, with `parameters[i]` giving the argument `p` in `functions[i]`.
 
 # Outputs
+
 The returned value is the corresponding [`InternalConditions`](@ref) struct.
 
-!!! note 
+!!! note
 
-    When the internal conditions get merged with the boundary conditions, 
-    any internal conditions that are placed onto the boundary will 
+    When the internal conditions get merged with the boundary conditions,
+    any internal conditions that are placed onto the boundary will
     be replaced with the boundary condition at that point on the boundary.
 """
-struct InternalConditions{F<:Tuple}
-    dirichlet_nodes::Dict{Int,Int}
-    dudt_nodes::Dict{Int,Int}
+struct InternalConditions{F <: Tuple}
+    dirichlet_nodes::Dict{Int, Int}
+    dudt_nodes::Dict{Int, Int}
     functions::F
     function InternalConditions(dirichlet_conditions, dudt_conditions, functions::F) where {F}
         return new{F}(dirichlet_conditions, dudt_conditions, functions)
@@ -223,29 +235,29 @@ function Base.show(io::IO, ::MIME"text/plain", ic::InternalConditions)
 end
 
 function BoundaryConditions(mesh::FVMGeometry, functions::Tuple, types::Tuple;
-    parameters::Tuple=ntuple(_ -> nothing, length(functions)))
+        parameters::Tuple = ntuple(_ -> nothing, length(functions)))
     nbnd_idx = DelaunayTriangulation.num_ghost_vertices(mesh.triangulation_statistics)
     @assert length(functions) == nbnd_idx "The number of boundary conditions must be the same as the number of parts of the mesh's boundary."
     wrapped_functions = wrap_functions(functions, parameters)
     return BoundaryConditions(wrapped_functions, types)
 end
 function BoundaryConditions(mesh::FVMGeometry, functions::Function, types::ConditionType;
-    parameters=nothing)
-    return BoundaryConditions(mesh, (functions,), (types,), parameters=(parameters,))
+        parameters = nothing)
+    return BoundaryConditions(mesh, (functions,), (types,), parameters = (parameters,))
 end
 
-@inline function InternalConditions(functions::Tuple=();
-    dirichlet_nodes::Dict{Int,Int}=Dict{Int,Int}(),
-    dudt_nodes::Dict{Int,Int}=Dict{Int,Int}(),
-    parameters::Tuple=ntuple(_ -> nothing, length(functions)))
+@inline function InternalConditions(functions::Tuple = ();
+        dirichlet_nodes::Dict{Int, Int} = Dict{Int, Int}(),
+        dudt_nodes::Dict{Int, Int} = Dict{Int, Int}(),
+        parameters::Tuple = ntuple(_ -> nothing, length(functions)))
     wrapped_functions = wrap_functions(functions, parameters)
     return InternalConditions(dirichlet_nodes, dudt_nodes, wrapped_functions)
 end
 @inline function InternalConditions(functions::Function;
-    dirichlet_nodes::Dict{Int,Int}=Dict{Int,Int}(),
-    dudt_nodes::Dict{Int,Int}=Dict{Int,Int}(),
-    parameters=nothing)
-    return InternalConditions((functions,); dirichlet_nodes, dudt_nodes, parameters=(parameters,))
+        dirichlet_nodes::Dict{Int, Int} = Dict{Int, Int}(),
+        dudt_nodes::Dict{Int, Int} = Dict{Int, Int}(),
+        parameters = nothing)
+    return InternalConditions((functions,); dirichlet_nodes, dudt_nodes, parameters = (parameters,))
 end
 
 abstract type AbstractConditions end
@@ -253,43 +265,50 @@ abstract type AbstractConditions end
 """
     Conditions{F} <: AbstractConditions
 
-This is a `struct` that holds the boundary and internal conditions for the PDE. The constructor is 
+This is a `struct` that holds the boundary and internal conditions for the PDE. The constructor is
 
     Conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions=InternalConditions())
 
 The fields are:
 
-# Fields 
-- `neumann_conditions::Dict{NTuple{2,Int},Int}`
+# Fields
 
-A `Dict` that stores all [`Neumann`](@ref) edges `(u, v)` as keys, with keys mapping to indices 
+  - `neumann_conditions::Dict{NTuple{2,Int},Int}`
+
+A `Dict` that stores all [`Neumann`](@ref) edges `(u, v)` as keys, with keys mapping to indices
 `idx` that refer to the corresponding condition function and parameters in `functions`.
-- `constrained_conditions::Dict{NTuple{2,Int},Int}`
+
+  - `constrained_conditions::Dict{NTuple{2,Int},Int}`
 
 A `Dict` that stores all [`Constrained`](@ref) edges `(u, v)` as keys, with keys mapping to indices
 `idx` that refer to the corresponding condition function and parameters in `functions`.
-- `dirichlet_conditions::Dict{Int,Int}`
+
+  - `dirichlet_conditions::Dict{Int,Int}`
 
 A `Dict` that stores all [`Dirichlet`](@ref) points `u` as keys, with keys mapping to indices
 `idx` that refer to the corresponding condition function and parameters in `functions`.
-- `dudt_conditions::Dict{Int,Int}`
+
+  - `dudt_conditions::Dict{Int,Int}`
 
 A `Dict` that stores all [`Dudt`](@ref) points `u` as keys, with keys mapping to indices
 `idx` that refer to the corresponding condition function and parameters in `functions`.
-- `functions::F<:Tuple`
+
+  - `functions::F<:Tuple`
 
 The functions that define the boundary and internal conditions. The `i`th function should correspond to the part of the boundary of
-the `mesh` corresponding to the `i`th boundary index, as defined in DelaunayTriangulation.jl. The `i`th function is stored 
+the `mesh` corresponding to the `i`th boundary index, as defined in DelaunayTriangulation.jl. The `i`th function is stored
 as a [`ParametrisedFunction`](@ref).
 """
-struct Conditions{F<:Tuple} <: AbstractConditions
-    neumann_edges::Dict{NTuple{2,Int},Int}
-    constrained_edges::Dict{NTuple{2,Int},Int}
-    dirichlet_nodes::Dict{Int,Int}
-    dudt_nodes::Dict{Int,Int}
+struct Conditions{F <: Tuple} <: AbstractConditions
+    neumann_edges::Dict{NTuple{2, Int}, Int}
+    constrained_edges::Dict{NTuple{2, Int}, Int}
+    dirichlet_nodes::Dict{Int, Int}
+    dudt_nodes::Dict{Int, Int}
     functions::F
-    @inline function Conditions(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions::F) where {F}
-        return new{F}(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions)
+    @inline function Conditions(neumann_edges, constrained_edges, dirichlet_nodes,
+            dudt_nodes, functions::F) where {F}
+        return new{F}(
+            neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions)
     end
 end
 function Base.show(io::IO, ::MIME"text/plain", conds::AbstractConditions)
@@ -316,7 +335,8 @@ Get the index of the function that corresponds to the [`Dudt`](@ref) condition a
 
 Get the index of the function that corresponds to the [`Neumann`](@ref) condition at the edge `(i, j)`.
 """
-@inline get_neumann_fidx(conds::AbstractConditions, i, j) = conds.neumann_edges[(i, j)]
+@inline get_neumann_fidx(conds::AbstractConditions, i, j) = conds.neumann_edges[(
+    i, j)]
 
 """
     get_dirichlet_fidx(conds, node)
@@ -330,7 +350,8 @@ Get the index of the function that corresponds to the [`Dirichlet`](@ref) condit
 
 Get the index of the function that corresponds to the [`Constrained`](@ref) condition at the edge `(i, j)`.
 """
-@inline get_constrained_fidx(conds::AbstractConditions, i, j) = conds.constrained_edges[(i, j)]
+@inline get_constrained_fidx(conds::AbstractConditions, i, j) = conds.constrained_edges[(
+    i, j)]
 
 @inline get_f(conds::Conditions{F}, fidx) where {F} = conds.functions[fidx]
 
@@ -339,7 +360,8 @@ Get the index of the function that corresponds to the [`Constrained`](@ref) cond
 
 Evaluate the function that corresponds to the condition at `fidx` at the point `(x, y)` at time `t` with solution `u`.
 """
-@inline eval_condition_fnc(conds::Conditions, fidx, x, y, t, u) = eval_fnc_in_het_tuple(conds.functions, fidx, x, y, t, u)
+@inline eval_condition_fnc(conds::Conditions, fidx, x, y, t,
+    u) = eval_fnc_in_het_tuple(conds.functions, fidx, x, y, t, u)
 
 """
     is_dudt_node(conds, node)
@@ -352,7 +374,8 @@ Check if `node` has a [`Dudt`](@ref) condition.
 
 Check if the edge `(i, j)` has a [`Neumann`](@ref) condition.
 """
-@inline is_neumann_edge(conds::AbstractConditions, i, j) = haskey(conds.neumann_edges, (i, j))
+@inline is_neumann_edge(conds::AbstractConditions, i, j) = haskey(conds.neumann_edges, (
+    i, j))
 
 """
     is_dirichlet_node(conds, node)
@@ -366,7 +389,8 @@ Check if `node` has a [`Dirichlet`](@ref) condition.
 
 Check if the edge `(i, j)` has a [`Constrained`](@ref) condition.
 """
-@inline is_constrained_edge(conds::AbstractConditions, i, j) =  haskey(conds.constrained_edges, (i, j))
+@inline is_constrained_edge(conds::AbstractConditions, i, j) = haskey(conds.constrained_edges, (
+    i, j))
 
 """
     has_constrained_edges(conds)
@@ -387,7 +411,9 @@ Check if any edge has a [`Neumann`](@ref) condition.
 
 Check if `node` has any condition.
 """
-@inline has_condition(conds::AbstractConditions, node) = is_dudt_node(conds, node) || is_dirichlet_node(conds, node)
+@inline has_condition(
+    conds::AbstractConditions, node) = is_dudt_node(conds, node) ||
+                                       is_dirichlet_node(conds, node)
 
 """
     has_dirichlet_nodes(conds)
@@ -434,8 +460,8 @@ Get all edges that have a [`Constrained`](@ref) condition.
 @inline function prepare_conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions)
     bc_functions = bc.functions
     ic_functions = ic.functions
-    neumann_edges = Dict{NTuple{2,Int},Int}()
-    constrained_edges = Dict{NTuple{2,Int},Int}()
+    neumann_edges = Dict{NTuple{2, Int}, Int}()
+    constrained_edges = Dict{NTuple{2, Int}, Int}()
     dirichlet_nodes = copy(ic.dirichlet_nodes)
     dudt_nodes = copy(ic.dudt_nodes)
     ne = DelaunayTriangulation.num_segments(mesh.triangulation_statistics)
@@ -445,7 +471,8 @@ Get all edges that have a [`Constrained`](@ref) condition.
     sizehint!(dirichlet_nodes, nv)
     sizehint!(dudt_nodes, nv)
     functions = (ic_functions..., bc_functions...)
-    conditions = Conditions(neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions)
+    conditions = Conditions(
+        neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions)
     return conditions
 end
 
@@ -489,16 +516,16 @@ function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditi
     return conditions
 end
 
-@inline function Conditions(mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions=InternalConditions())
+@inline function Conditions(
+        mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions = InternalConditions())
     conditions = prepare_conditions(mesh, bc, ic)
     merge_conditions!(conditions, mesh, bc.condition_types, length(ic.functions))
     return conditions
 end
 
 struct SimpleConditions <: AbstractConditions # in 2.0, this needs to be part of Conditions. need this for type stability in FVMSystems
-    neumann_edges::Dict{NTuple{2,Int},Int}
-    constrained_edges::Dict{NTuple{2,Int},Int}
-    dirichlet_nodes::Dict{Int,Int}
-    dudt_nodes::Dict{Int,Int}
+    neumann_edges::Dict{NTuple{2, Int}, Int}
+    constrained_edges::Dict{NTuple{2, Int}, Int}
+    dirichlet_nodes::Dict{Int, Int}
+    dudt_nodes::Dict{Int, Int}
 end
-

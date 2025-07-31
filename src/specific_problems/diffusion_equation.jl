@@ -46,7 +46,7 @@ The struct has extra fields in addition to the arguments above:
 - `Aop`: The `MatrixOperator` that represents the system so that `du/dt = Aop*u` (with `u` padded with an extra component since `A` is now inside `Aop`).
 - `problem`: The `ODEProblem` that represents the problem. This is the problem that is solved when you call [`solve`](@ref solve(::AbstractFVMTemplate, args...; kwargs...)) on the struct.
 """
-struct DiffusionEquation{M,C,D,DP,IC,FT,A,B,OP,ODE} <: AbstractFVMTemplate
+struct DiffusionEquation{M, C, D, DP, IC, FT, A, B, OP, ODE} <: AbstractFVMTemplate
     mesh::M
     conditions::C
     diffusion_function::D
@@ -67,22 +67,23 @@ function Base.show(io::IO, ::MIME"text/plain", prob::DiffusionEquation)
 end
 
 function DiffusionEquation(mesh::FVMGeometry,
-    BCs::BoundaryConditions,
-    ICs::InternalConditions=InternalConditions();
-    diffusion_function,
-    diffusion_parameters=nothing,
-    initial_condition,
-    initial_time=0.0,
-    final_time,
-    kwargs...)
+        BCs::BoundaryConditions,
+        ICs::InternalConditions = InternalConditions();
+        diffusion_function,
+        diffusion_parameters = nothing,
+        initial_condition,
+        initial_time = 0.0,
+        final_time,
+        kwargs...)
     conditions = Conditions(mesh, BCs, ICs)
     n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
     Afull = zeros(n + 1, n + 1)
-    A = @views Afull[begin:end-1, begin:end-1]
-    b = @views Afull[begin:end-1, end]
+    A = @views Afull[begin:(end - 1), begin:(end - 1)]
+    b = @views Afull[begin:(end - 1), end]
     _ic = vcat(initial_condition, 1)
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
-    boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    boundary_edge_contributions!(
+        A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_dudt_conditions!(b, mesh, conditions)
     apply_dirichlet_conditions!(_ic, mesh, conditions)
     fix_missing_vertices!(A, b, mesh)

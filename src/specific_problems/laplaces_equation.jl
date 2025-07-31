@@ -34,7 +34,7 @@ The struct has extra fields in addition to the arguments above:
 - `b`: The `b` above.
 - `problem`: The `LinearProblem` that represents the problem. This is the problem that is solved when you call [`solve`](@ref solve(::AbstractFVMTemplate, args...; kwargs...)) on the struct.
 """
-struct LaplacesEquation{M,C,D,DP,A,B,ODE} <: AbstractFVMTemplate
+struct LaplacesEquation{M, C, D, DP, A, B, ODE} <: AbstractFVMTemplate
     mesh::M
     conditions::C
     diffusion_function::D
@@ -49,18 +49,20 @@ function Base.show(io::IO, ::MIME"text/plain", prob::LaplacesEquation)
 end
 
 function LaplacesEquation(mesh::FVMGeometry,
-    BCs::BoundaryConditions,
-    ICs::InternalConditions=InternalConditions();
-    diffusion_function=(x, y, p) -> 1.0,
-    diffusion_parameters=nothing,
-    kwargs...)
+        BCs::BoundaryConditions,
+        ICs::InternalConditions = InternalConditions();
+        diffusion_function = (x, y, p) -> 1.0,
+        diffusion_parameters = nothing,
+        kwargs...)
     conditions = Conditions(mesh, BCs, ICs)
-    has_dudt_nodes(conditions) && throw(ArgumentError("PoissonsEquation does not support Dudt nodes."))
+    has_dudt_nodes(conditions) &&
+        throw(ArgumentError("PoissonsEquation does not support Dudt nodes."))
     n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
     A = zeros(n, n)
     b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
-    boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    boundary_edge_contributions!(
+        A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
     fix_missing_vertices!(A, b, mesh)
     Asp = sparse(A)
