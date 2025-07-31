@@ -9,13 +9,15 @@ function _safe_get_triangle_props(mesh::FVMGeometry, T)
         return (k, i, j), get_triangle_props(mesh, k, i, j)
     end
 end
-_safe_get_triangle_props(prob::AbstractFVMProblem, T) = _safe_get_triangle_props(prob.mesh, T)
+function _safe_get_triangle_props(prob::AbstractFVMProblem, T)
+    _safe_get_triangle_props(prob.mesh, T)
+end
 
 """
     pl_interpolate(prob, T, u, x, y)
 
-Given a `prob <: AbstractFVMProblem`, a triangle `T` containing a point `(x, y)`, 
-and a set of function values `u` at the corresponding nodes of `prob`, interpolates 
+Given a `prob <: AbstractFVMProblem`, a triangle `T` containing a point `(x, y)`,
+and a set of function values `u` at the corresponding nodes of `prob`, interpolates
 the solution at the point `(x, y)` using piecewise linear interpolation.
 """
 function pl_interpolate(prob, T, u, x, y)
@@ -27,7 +29,7 @@ end
 """
     two_point_interpolant(mesh, u, i, j, mx, my)
 
-Given a `mesh <: FVMGeometry`, a set of function values `u` at the nodes of `mesh`, 
+Given a `mesh <: FVMGeometry`, a set of function values `u` at the nodes of `mesh`,
 and a point `(mx, my)` on the line segment between the nodes `i` and `j`,
 interpolates the solution at the point `(mx, my)` using two-point interpolation.
 """
@@ -39,7 +41,7 @@ function two_point_interpolant(mesh, u::AbstractVector, i, j, mx, my)
     return u[i] + (u[j] - u[i]) * ℓ′ / ℓ
 end
 
-function flatten_tuples(f::NTuple{N,Any}) where {N}
+function flatten_tuples(f::NTuple{N, Any}) where {N}
     tail_f = Base.tail(f)
     return (f[1]..., flatten_tuples(tail_f)...)
 end

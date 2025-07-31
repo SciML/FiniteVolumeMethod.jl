@@ -14,7 +14,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # except that the final `FVMProblem` must be wrapped in a `SteadyFVMProblem`.
 # Let us start by defining the mesh and the boundary conditions.
 using DelaunayTriangulation, FiniteVolumeMethod
-tri = triangulate_rectangle(-1, 1, -1, 1, 125, 125, single_boundary=true)
+tri = triangulate_rectangle(-1, 1, -1, 1, 125, 125, single_boundary = true)
 mesh = FVMGeometry(tri)
 
 # For the boundary condition, 
@@ -63,7 +63,7 @@ using NonlinearSolve
 sol = solve(steady_prob, NewtonRaphson())
 copyto!(prob.initial_condition, sol.u) # this also changes steady_prob's initial condition
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization())))
 sol |> tc #hide
 
 # For this problem, this correction by `DynamicSS` doesn't seem to actually be needed.
@@ -71,9 +71,10 @@ sol |> tc #hide
 
 using CairoMakie
 using ReferenceTests #src
-fig, ax, sc = tricontourf(tri, sol.u, levels=-2.5:0.15:-1.0, colormap=:matter)
+fig, ax, sc = tricontourf(tri, sol.u, levels = -2.5:0.15:-1.0, colormap = :matter)
 fig
-@test_reference joinpath(@__DIR__, "../figures", "helmholtz_equation_with_inhomogeneous_boundary_conditions.png") fig #src
+@test_reference joinpath(
+    @__DIR__, "../figures", "helmholtz_equation_with_inhomogeneous_boundary_conditions.png") fig #src
 
 function exact_solution(x, y) #src
     return -(cos(x + 1) + cos(1 - x) + cos(y + 1) + cos(1 - y)) / sin(2) #src
@@ -90,11 +91,12 @@ function compare_solutions(tri) #src
     return x, y, u #src
 end #src
 x, y, u = compare_solutions(tri) #src
-fig = Figure(fontsize=44) #src
-ax = Axis(fig[1, 1], width=400, height=400) #src
-tricontourf!(ax, tri, sol.u, levels=-2.5:0.15:-1.0, colormap=:matter) #src
-ax = Axis(fig[1, 2], width=400, height=400) #src
-tricontourf!(ax, tri, u, levels=-2.5:0.15:-1.0, colormap=:matter) #src
+fig = Figure(fontsize = 44) #src
+ax = Axis(fig[1, 1], width = 400, height = 400) #src
+tricontourf!(ax, tri, sol.u, levels = -2.5:0.15:-1.0, colormap = :matter) #src
+ax = Axis(fig[1, 2], width = 400, height = 400) #src
+tricontourf!(ax, tri, u, levels = -2.5:0.15:-1.0, colormap = :matter) #src
 resize_to_layout!(fig) #src
 fig #src
-@test_reference joinpath(@__DIR__, "../figures", "helmholtz_equation_with_inhomogeneous_boundary_conditions_exact_comparisons.png") fig #src
+@test_reference joinpath(@__DIR__, "../figures",
+    "helmholtz_equation_with_inhomogeneous_boundary_conditions_exact_comparisons.png") fig #src

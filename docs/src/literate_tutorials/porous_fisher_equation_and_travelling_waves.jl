@@ -49,7 +49,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # Now with this preamble out of the way, let us solve this problem.
 using DelaunayTriangulation, FiniteVolumeMethod, OrdinaryDiffEq, LinearSolve
 a, b, c, d, nx, ny = 0.0, 3.0, 0.0, 40.0, 60, 80
-tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary=false)
+tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary = false)
 mesh = FVMGeometry(tri)
 one_bc = (x, y, t, u, p) -> one(u)
 zero_bc = (x, y, t, u, p) -> zero(u)
@@ -68,7 +68,7 @@ prob = FVMProblem(mesh, BCs;
     diffusion_function, diffusion_parameters,
     source_function, source_parameters,
     initial_condition, final_time)
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=0.5)
+sol = solve(prob, TRBDF2(linsolve = KLUFactorization()); saveat = 0.5)
 sol |> tc #hide
 
 # Let us now look at the travelling wave behaviour. We will plot the evolution over 
@@ -89,27 +89,29 @@ for (i, t_idx) in pairs(large_time_idx:lastindex(sol))
         y = c + (k - 1) * (d - c) / (ny - 1)
         z = y - c * τ
         z_vals[k, i] = z
-        travelling_wave_values[k, i] = u[nx÷2, k]
+        travelling_wave_values[k, i] = u[nx ÷ 2, k]
     end
 end
 
 # Now we are in a position to plot.
 using CairoMakie
-fig = Figure(resolution=(3200.72f0, 800.64f0), fontsize=38)
+fig = Figure(resolution = (3200.72f0, 800.64f0), fontsize = 38)
 for (i, j) in zip(1:3, (1, 51, 101))
-    ax = Axis(fig[1, i], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
-    tricontourf!(ax, tri, sol.u[j], levels=0:0.05:1, colormap=:matter)
+    ax = Axis(fig[1, i], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
+    tricontourf!(ax, tri, sol.u[j], levels = 0:0.05:1, colormap = :matter)
     tightlimits!(ax)
 end
-ax = Axis(fig[1, 4], width=900, height=600)
-colors = cgrad(:matter, length(sol) - large_time_idx + 1; categorical=false)
-[lines!(ax, z_vals[:, i], travelling_wave_values[:, i], color=colors[i], linewidth=2) for i in 1:(length(sol)-large_time_idx+1)]
+ax = Axis(fig[1, 4], width = 900, height = 600)
+colors = cgrad(:matter, length(sol) - large_time_idx + 1; categorical = false)
+[lines!(ax, z_vals[:, i], travelling_wave_values[:, i], color = colors[i], linewidth = 2)
+ for i in 1:(length(sol) - large_time_idx + 1)]
 exact_z_vals = collect(LinRange(extrema(z_vals)..., 500))
 exact_travelling_wave_values = exact_solution.(exact_z_vals)
-lines!(ax, exact_z_vals, exact_travelling_wave_values, color=:red, linewidth=4, linestyle=:dash)
+lines!(ax, exact_z_vals, exact_travelling_wave_values,
+    color = :red, linewidth = 4, linestyle = :dash)
 fig
 using ReferenceTests #src
 @test_reference joinpath(@__DIR__, "../figures", "porous_fisher_equation_and_travelling_waves.png") fig #src

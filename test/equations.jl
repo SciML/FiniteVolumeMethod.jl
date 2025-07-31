@@ -44,9 +44,11 @@ end
     x1 = q[1]
     y1 = r[2]
     u1, u2, u3 = u[[T...]]
-    A = PolygonOps.area(((0.0, 0.0), (x1 / 2, 0.0), (x1 / 3, y1 / 3), (0, y1 / 2), (0.0, 0.0)))
+    A = PolygonOps.area((
+        (0.0, 0.0), (x1 / 2, 0.0), (x1 / 3, y1 / 3), (0, y1 / 2), (0.0, 0.0)))
     @test prob.mesh.cv_volumes[1] ≈ A
-    @test FVM.get_shape_function_coefficients(prob.mesh.triangle_props[T], T, u, prob) == (0.0, 0.0, 10.0)
+    @test FVM.get_shape_function_coefficients(prob.mesh.triangle_props[T], T, u, prob) ==
+          (0.0, 0.0, 10.0)
     props = prob.mesh.triangle_props[T]
     c1, c2, c3, c4 = (0.0, 0.0), (x1 / 2, 0.0), (x1 / 3, y1 / 3), (0.0, y1 / 2)
     m1 = (c1 .+ c2) ./ 2
@@ -73,8 +75,10 @@ end
     fl = -(1 / A) * sum((flux1, flux2, flux3, flux4))
     fltest = get_dudt_val(prob, u, t, i, false)
     @test fl ≈ fltest
-    flpar = FVM.fvm_eqs!(zeros(DelaunayTriangulation.num_solid_vertices(tri)), u, (prob=prob, parallel=Val(false)), t)[i]
-    flser = FVM.fvm_eqs!(zeros(DelaunayTriangulation.num_solid_vertices(tri)), u, FVM.get_multithreading_parameters(prob), t)[i]
+    flpar = FVM.fvm_eqs!(zeros(DelaunayTriangulation.num_solid_vertices(tri)),
+        u, (prob = prob, parallel = Val(false)), t)[i]
+    flser = FVM.fvm_eqs!(zeros(DelaunayTriangulation.num_solid_vertices(tri)),
+        u, FVM.get_multithreading_parameters(prob), t)[i]
     @test fl ≈ flpar
     @test fl ≈ flser
 end
@@ -95,10 +99,10 @@ end
     prob = example_diffusion_problem()
     @test_throws FVM.InvalidFluxError FVMSystem(prob, prob)
     sys, prob = example_diffusion_problem_system()
-    solsys = solve(sys, TRBDF2(linsolve=KLUFactorization()), saveat=0.05)
-    solsysser = solve(sys, TRBDF2(linsolve=KLUFactorization()), saveat=0.05, parallel=Val(false))
-    solprob = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.05)
-    solprobser = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.05, parallel=Val(false))
+    solsys = solve(sys, TRBDF2(linsolve = KLUFactorization()), saveat = 0.05)
+    solsysser = solve(sys, TRBDF2(linsolve = KLUFactorization()), saveat = 0.05, parallel = Val(false))
+    solprob = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.05)
+    solprobser = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.05, parallel = Val(false))
     solprobu = reduce(hcat, solprob.u)
     solprobseru = reduce(hcat, solprobser.u)
     solsysu1 = reduce(hcat, [solsys.u[i][1, :] for i in eachindex(solsys)])

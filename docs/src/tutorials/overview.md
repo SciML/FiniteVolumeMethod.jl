@@ -1,10 +1,10 @@
-# Section Overview 
+# Section Overview
 
 ```@contents
 Pages = ["overview.md"]
 ```
 
-We provide many tutorials in this section. Each tutorial is self-contained, although 
+We provide many tutorials in this section. Each tutorial is self-contained, although
 more detail will be offered in the earlier examples. At the end of each tutorial we show the uncommented code, but if you want to see the actual script itself that generates these tutorials, then click on the `Edit on GitHub` section on the top right of the respective tutorial.
 
 We list all the examples below, but the tutorials can be accessed in their respective sections of the sidebar.
@@ -12,6 +12,7 @@ We list all the examples below, but the tutorials can be accessed in their respe
 Note that this tutorial covers problems of the form $\partial u/\partial_t + \div\vb q = S$, and converting problems into this form. For an explanation of how to use the templates we provide for specific problems, e.g. the diffusion equation, see the [Solvers for Specific Problems, and Writing Your Own](../wyos/overview.md) section.
 
 # Diffusion Equation on a Square Plate
+
 [This tutorial](diffusion_equation_on_a_square_plate.md) considers a diffusion equation problem on a square plate:
 
 ```math
@@ -23,7 +24,9 @@ u(\vb x, 0) &= f(\vb x) & \vb x \in \Omega,
 \end{aligned}
 \end{equation*}
 ```
+
 where $\Omega = [0, 2]^2$ and
+
 ```math
 f(x, y) = \begin{cases} 50 & y \leq 1, \\ 0 & y > 1. \end{cases}
 ```
@@ -37,8 +40,8 @@ u(\vb x, t) = \frac{200}{\pi^2}\sum_{m=1}^\infty\sum_{n=1}^\infty \frac{\left[1 
 although we do not refer to this in the tutorial (only in the tests).
 
 [^1]: See [here](http://ramanujan.math.trinity.edu/rdaileda/teach/s12/m3357/lectures/lecture_3_6_short.pdf) for a derivation.
+# Diffusion Equation in a Wedge with Mixed Boundary Conditions
 
-# Diffusion Equation in a Wedge with Mixed Boundary Conditions 
 This [tutorial](diffusion_equation_in_a_wedge_with_mixed_boundary_conditions.md) considers a similar example as in the first example, except now the diffusion is in a wedge, has mixed boundary conditions, and is also now in polar coordinates:
 
 ```math
@@ -52,21 +55,26 @@ u(r, \theta, 0) &= f(r,\theta) & 0<r<1,\,0<\theta<\alpha,
 \end{aligned}
 \end{equation*}
 ```
+
 where we take $f(r,\theta) = 1-r$ and $\alpha=\pi/4$. This problem also has an exact solution:[^2]
 
 ```math
 u(r, \theta, t) = \frac{1}{2}\sum_{m=1}^\infty A_{0, m}\mathrm{e}^{-\zeta_{0, m}^2t}J_0(\zeta_{0, m}r) + \sum_{n=1}^\infty\sum_{m=1}^\infty A_{n, m}\mathrm{e}^{-\zeta_{n,m}^2t}J_{n\pi/\alpha}\left(\zeta_{n\pi/\alpha,m}r\right)\cos\left(\frac{n\pi\theta}{\alpha}\right),
 ```
+
 where
+
 ```math
 A_{n, m} = \frac{4}{\alpha J_{n\pi/\alpha+1}^2\left(\zeta_{n\pi/\alpha,m}\right)}\int_0^1\int_0^\alpha f(r, \theta)J_{n\pi/\alpha}\left(\zeta_{n\pi/\alpha,m}r\right)\cos\left(\frac{n\pi\theta}{\alpha}\right) r\dd{r}\dd{\theta}
 ```
+
 for $n=0,1,2,\ldots$ and $m=1,2,3,\ldots$, and where we write the roots of $J_\mu$, the $\mu$th order Bessel function of the first kind, as $0 < \zeta_{\mu, 1} < \zeta_{\mu, 2} < \cdots$ with $\zeta_{\mu, m} \to \infty$ as $m \to \infty$. We don't discuss this in the tutorial, but it is used in the tests.
 
 [^2]: To derive this, use $u(r, \theta, t) = \mathrm{e}^{-\lambda t}v(r, \theta)$ and use separation of variables.
+# Reaction Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk
 
-# Reaction Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk 
 This [tutorial](reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk.md) considers a reaction-diffusion problem with a $\mathrm du/\mathrm dt$ condition on a disk in polar coordinates:
+
 ```math
 \begin{equation*}
 \begin{aligned}
@@ -76,16 +84,19 @@ u(r,\theta,0) &= \sqrt{I_0(\sqrt{2}r)} & 0<r<1,\,0<\theta<2\pi,
 \end{aligned}
 \end{equation*}
 ```
+
 where $I_0$ is the modified Bessel function of the first kind of order zero. This problem also has an exact solution,[^3]
+
 ```math
 u(r, \theta, t) = \mathrm{e}^t\sqrt{I_0(\sqrt{2}r)}
 ```
+
 that we use in the tests.
 
 [^3]: See [Bokhari et al. (2008)](https://doi.org/10.1016/j.na.2007.11.012) for a derivation.
+# Porous-Medium Equation
 
-# Porous-Medium Equation 
-This [tutorial](porous_medium_equation.md) considers the porous-medium equation, given by 
+This [tutorial](porous_medium_equation.md) considers the porous-medium equation, given by
 
 ```math
 \begin{equation}\label{eq:porousmedium}
@@ -105,7 +116,6 @@ u(\vb x, t) = \begin{cases} (Dt)^{-1/m}\left[\left(\frac{M}{4\pi}\right)^{(m-1)/
 where $R_{m, M} = [4m/(m-1)][M/(4\pi)]^{(m-1)/m}$.
 
 [^4]: This exact solution is derived in Section 17.5 of the book _The porous medium equation: Mathematical theory_ by J. L. Vázquez (2007).
-
 We also consider a similar problem to \eqref{eq:porousmedium}, where now the problem has a linear source:
 
 ```math
@@ -120,9 +130,10 @@ u(\vb x, t) = \mathrm{e}^{\lambda t}v\left(\vb x, \frac{D}{\lambda(m-1)}\left[\m
 
 where $v$ is the exact solution from \eqref{eq:porousmediumexact} except with $D=1$.
 
-# Porous-Fisher Equation and Travelling Waves 
+# Porous-Fisher Equation and Travelling Waves
 
 This [tutorial](porous_fisher_equation_and_travelling_waves.md) looks at the Porous-Fisher equation,
+
 ```math
 \begin{equation*}
 \begin{aligned}
@@ -135,24 +146,29 @@ u(\vb x, 0) & = f(y) & 0 \leq x \leq a,\, 0 \leq  y\leq b.
 \end{aligned}
 \end{equation*}
 ```
+
 We solve this problem and also compare it to known travelling wave solutions.
 
 # Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation
 
 This [tutorial](piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.md) looks at how we can apply interpolation to solutions from the PDEs discussed, making use of [NaturalNeighbours.jl](https://github.com/DanielVandH/NaturalNeighbours.jl) for this purpose. To demonstrate this, we use a two-dimensional advection equation of the form
+
 ```math
 \pdv{u}{t} = D\pdv[2]{u}{x} + D\pdv[2]{u}{y} - \nu\pdv{u}{x},
 ```
-defined for $\vb x \in \mathbb R^2$ and $u(\vb x, 0) = \delta(\vb x)$, where $\delta$ is the Dirac delta function, and with homogeneous 
+
+defined for $\vb x \in \mathbb R^2$ and $u(\vb x, 0) = \delta(\vb x)$, where $\delta$ is the Dirac delta function, and with homogeneous
 Dirichlet conditions. This problem has an exact solution, given by[^5]
+
 ```math
 u(\vb x, t) = \frac{1}{4D\pi t}\exp\left(\frac{-(x-\nu t)^2-y^2}{4Dt}\right).
 ```
 
 [^5]: A derivation is given [here](https://math.stackexchange.com/a/3925070/861404).
+# Helmholtz Equation with Inhomogeneous Boundary Conditions
 
-# Helmholtz Equation with Inhomogeneous Boundary Conditions 
 This [tutorial](helmholtz_equation_with_inhomogeneous_boundary_conditions.md) considers the Helmholtz equation with inhomogeneous boundary conditions:
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -161,13 +177,17 @@ This [tutorial](helmholtz_equation_with_inhomogeneous_boundary_conditions.md) co
 \end{aligned}
 \end{equation}
 ```
+
 This is different to the other problems considered thus far as the problem is now a _steady state problem_. The exact solution is
+
 ```math
 u(x, y) = -\frac{\cos(x+1)+\cos(1-x)+\cos(y+1)+\cos(1-y)}{\sin(2)}.
 ```
 
-# Laplace's Equation with Internal Dirichlet Conditions 
+# Laplace's Equation with Internal Dirichlet Conditions
+
 This [tutorial](laplaces_equation_with_internal_dirichlet_conditions.md) considers Laplace's equation with internal Dirichlet conditions:
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -180,11 +200,13 @@ u(1/2, y) &= 0 & 0 \leq y \leq 2/5.
 \end{aligned}
 \end{equation}
 ```
+
 This last condition $u(1/2, y) = 0$ is the internal condition that needs to be dealt with.
 
 # Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems
 
 This [tutorial](equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.md) considers the equilibrium temperature distribution in a square plate with mixed boundary conditions:
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -196,6 +218,7 @@ T &= 70 & \vb x \in \Gamma_4. \\
 \end{aligned}
 \end{equation}
 ```
+
 This domain $\Omega$ with boundary $\partial\Omega=\Gamma_1\cup\Gamma_2\cup\Gamma_3\cup\Gamma_4$ is shown below. For this tutorial, we also consider how varying $T_{\infty}$ affects the results, using interpolation and `EnsembleProblem`s to study this efficiently.
 
 ```@setup equilex
@@ -220,12 +243,14 @@ text!(ax, [(0.015, 0.053)], text=L"\Gamma_4", fontsize=44)
 text!(ax, [(0.001, 0.03)], text=L"\Gamma_1", fontsize=44)
 ```
 
-```@example equilex 
+```@example equilex
 fig #hide
 ```
 
-# A Reaction-Diffusion Brusselator System of PDEs 
+# A Reaction-Diffusion Brusselator System of PDEs
+
 In this [tutorial](reaction_diffusion_brusselator_system_of_pdes.md) we consider the following system:
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -234,7 +259,9 @@ In this [tutorial](reaction_diffusion_brusselator_system_of_pdes.md) we consider
 \end{aligned} \quad \vb x \in [0, 1]^2,
 \end{equation}
 ```
+
 which has a solution[^6]
+
 ```math
 \begin{equation}\label{eq:brusleexct}
 \begin{aligned}
@@ -247,9 +274,10 @@ which has a solution[^6]
 We use this exact solution to define the initial condition and Neumann boundary conditions.
 
 [^6]: See [Islam, Ali, and Haq (2010)](https://doi.org/10.1016/j.apm.2010.03.028).
-
 # Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System
+
 In this [tutorial](gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system.md) we consider the Gray-Scott model, given by
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -258,12 +286,14 @@ In this [tutorial](gray_scott_model_turing_patterns_from_a_coupled_reaction_diff
 \end{aligned}
 \end{equation}
 ```
+
 with zero flux boundary conditions. We use this example to explore how changing parameters slightly leads to some amazing patterns, known as _Turing patterns_.[^7]
 
 [^7]: There are many papers discussing this. See, e.g., [Gandy and Nelson (2022)](https://epubs.siam.org/doi/epdf/10.1137/21M1402868) for a recent paper. The parameter values we use come from [this Chebfun example](https://www.chebfun.org/examples/pde/GrayScott.html).
+# Diffusion Equation on an Annulus
 
-# Diffusion Equation on an Annulus 
 In this [tutorial](diffusion_equation_on_an_annulus.md) we consider the diffusion equation on an annulus:[^8]
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -274,17 +304,21 @@ u(\vb x, t) &= u_0(\vb x),
 \end{aligned}
 \end{equation}
 ```
-demonstrating how we can solve PDEs over multiply-connected domains. Here, $\mathcal D(0, r)$ is a circle of radius $r$ centered at the origin,  $\Omega$ is the annulus between $\mathcal D(0,0.2)$ and $\mathcal D(0, 1)$, $c(t) = 50[1-\mathrm{e}^{-t/2}]$, and 
+
+demonstrating how we can solve PDEs over multiply-connected domains. Here, $\mathcal D(0, r)$ is a circle of radius $r$ centered at the origin,  $\Omega$ is the annulus between $\mathcal D(0,0.2)$ and $\mathcal D(0, 1)$, $c(t) = 50[1-\mathrm{e}^{-t/2}]$, and
+
 ```math
 u_0(x) = 10\mathrm{e}^{-25\left[\left(x+\frac12\right)^2+\left(y+\frac12\right)^2\right]} - 10\mathrm{e}^{-45\left[\left(x-\frac12\right)^2+\left(y-\frac12\right)^2\right]} - 5\mathrm{e}^{-50\left[\left(x+\frac{3}{10}\right)^2+\left(y+\frac12\right)^2\right]}.
 ```
-We also use this tutorial as an opportunity to give an example of 
+
+We also use this tutorial as an opportunity to give an example of
 performing natural neighbour interpolation on a multiply-connected domain.
 
 [^8]: This example comes from [here](http://onelab.info/wiki/Tutorial/Heat_equation_with_Dirichlet_boundary_control).
+# Mean Exit Time
 
-# Mean Exit Time 
 In this [tutorial](mean_exit_time.md), we consider mean time problems. The main problem we consider is that of mean exit time on a compound disk:[^9]
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -296,12 +330,14 @@ T^{(2)}(R_2, \theta) &= 0, \\
 \end{aligned}
 \end{equation}
 ```
+
 with a perturbed interface $\mathcal R_1(\theta) = R_1(1+\varepsilon g(\theta))$, $g(\theta)=\sin(3\theta)+\cos(5\theta)$. The conditions at the interface are needed to enforce continuity. The variable $T^{(1)}$ is the mean exit time in $0 < r < \mathcal R_1(\theta)$, and $T^{(2)}$ is the mean exit time in $\mathcal R_1(\theta) < r < R_2(\theta)$. The end of this tutorial also considers mean exit time with obstacles and internal conditions.
 
 [^9]: This problem comes from [Carr et al. (2022)](https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d/meta).
+# Solving Mazes with Laplace's Equation
 
-# Solving Mazes with Laplace's Equation 
 In this [tutorial](solving_mazes_with_laplaces_equation.md), we consider solving mazes using Laplace's equation, applying the result of [Conolly, Burns, and Weis (1990)](https://doi.org/10.1109/ROBOT.1990.126315). In particular, given a maze $\mathcal M$, represented as a collection of edges together with some starting point $\mathcal S_1$ and an endpoint $\mathcal S_2$, Laplace's equation can be used to find the solution:
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -312,11 +348,14 @@ In this [tutorial](solving_mazes_with_laplaces_equation.md), we consider solving
 \end{aligned}
 \end{equation}
 ```
+
 The solution can then be found by looking at the potential $\grad\phi$.
 
-# Keller-Segel Model of Chemotaxis 
+# Keller-Segel Model of Chemotaxis
+
 In this [tutorial](keller_segel_chemotaxis.md), we consider the following Keller-Segel model of chemotaxis:[^10]
-```math 
+
+```math
 \begin{equation*}
 \begin{aligned}
 \pdv{u}{t} &= \grad^2u - \div \left(\frac{cu}{1+u^2}\grad v\right) + u(1-u), \\
@@ -324,6 +363,7 @@ In this [tutorial](keller_segel_chemotaxis.md), we consider the following Keller
 \end{aligned}
 \end{equation*}
 ```
+
 inside the square $[0, 100]^2$ with homogeneous Neumann boundary conditions.
 
 [^10]: This example comes from [VisualPDE](https://visualpde.com/mathematical-biology/keller-segel.html).

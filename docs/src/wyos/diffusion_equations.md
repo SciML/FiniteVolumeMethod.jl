@@ -9,14 +9,18 @@ nothing #hide
 ````
 
 # Diffusion Equations
+
 ```@contents
 Pages = ["diffusion_equations.md"]
 ```
+
 We start by writing a specialised solver for solving diffusion equations. What we produce
 in this section can also be accessed in `FiniteVolumeMethod.DiffusionEquation`.
 
 ## Mathematical Details
+
 Let us start by considering the mathematical details. The equation we consider is
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -24,23 +28,31 @@ Let us start by considering the mathematical details. The equation we consider i
 \end{aligned}
 \end{equation}
 ```
+
 From the [mathematical details section](../math.md) (where we also define the notation that follows),
 we know that discretising this problem leads to an equation of the form
+
 ```math
 \dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i}\left[\vb q\left(\vb x_\sigma, t, \alpha_{k(\sigma)}x_\sigma+\beta_{k(\sigma)}y_\sigma+\gamma_{k(\sigma)}\right)\vdot\vu n\right]L_\sigma = S_i,
 ```
+
 For the diffusion equation,
 the flux function is $\vb q = -D\grad u$, meaning for an interior node we have
+
 ```math
 \vb q(\vb x_\sigma, t, \alpha_{k(\sigma)}x_\sigma+\beta_{k(\sigma)}y_\sigma+\gamma_{k(\sigma)}) = -D(\vb x_\sigma)(\alpha_{k(\sigma)}, \beta_{k(\sigma)})^{\mkern-1.5mu\mathsf{T}}.
 ```
+
 Thus, also using $S_i=0$,
+
 ```math
 \dv{u_i}{t} = \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} D(\vb x_\sigma)\left[\alpha_{k(\sigma)}n_\sigma^x + \beta_{k(\sigma)}n_\sigma^y\right]L_\sigma,
 ```
+
 where $\vu n = (n_\sigma^x, n_\sigma^y)^{\mkern-1.5mu\mathsf{T}}$. It is still
 not immediately obvious how we can turn this into a linear problem. To see the linearity,
 note that
+
 ```math
 \begin{equation}
 \begin{aligned}
@@ -49,7 +61,9 @@ note that
 \end{aligned}
 \end{equation}
 ```
+
 thus, now writing $k=k(\sigma)$ for simplicity,
+
 ```math
 \begin{equation*}
 \begin{aligned}
@@ -59,48 +73,53 @@ thus, now writing $k=k(\sigma)$ for simplicity,
 \end{aligned}
 \end{equation*}
 ```
+
 Now, the result
+
 ```math
 \begin{equation}\label{eq:disc1}
 \dv{u_i}{t} = \vb a_i^{\mkern-1.5mu\mathsf{T}}\vb u + b_i,
 \end{equation}
 ```
+
 where $b_i=0$, is for the case that $i$ is an interior node. We need to think about how
 boundary conditions get incorporated. For this problem, we will not allow
 the boundary conditions to depend on $u$ or $t$.[^1]
 
 [^1]: It would be fine to allow the boundary conditions to depend on $t$ - we would still have linearity. The issue would just be that we need to reconstruct the matrix at every time step. So, for simplicity, let's not allow it so that the template we build is efficient for the most common case (where there is no $t$ dependence).
-
 Let's think about what we each type of boundary condition would to our problem.
-  1. For a Dirichlet boundary condition, we have $u_i = a(\vb x_i)$ for some $\vb x_i$.
-      To implement this, we let the $i$th row of $\vb A$ be zero and $b_i=0$. Then,
-      as long as we start the Dirichlet nodes at $u_i=a(\vb x_i)$, they will stay at
-      that value as $u_i' = 0$ there.[^2]
-  2. Suppose we have a Neumann boundary condition, say $\grad u \vdot \vu n = a(\vb x)$,
-      we need to write the sum over $\sigma \in \mathcal E_i$ so that the differences
-      between the boundary edges and the interior edges are made explicit. Over these
-      boundary edges, we get sums that go into $\vb b$ rather than into $\vb A$.
-  3. For conditions of the form $\mathrm du_i/\mathrm dt = a(\vb x_i)$, we should just
-      set $\vb a_i = \vb 0$ and $b_i = a(\vb x_i)$. Note that here $\vb A$ is singular.
+
+ 1. For a Dirichlet boundary condition, we have $u_i = a(\vb x_i)$ for some $\vb x_i$.
+    To implement this, we let the $i$th row of $\vb A$ be zero and $b_i=0$. Then,
+    as long as we start the Dirichlet nodes at $u_i=a(\vb x_i)$, they will stay at
+    that value as $u_i' = 0$ there.[^2]
+ 2. Suppose we have a Neumann boundary condition, say $\grad u \vdot \vu n = a(\vb x)$,
+    we need to write the sum over $\sigma \in \mathcal E_i$ so that the differences
+    between the boundary edges and the interior edges are made explicit. Over these
+    boundary edges, we get sums that go into $\vb b$ rather than into $\vb A$.
+ 3. For conditions of the form $\mathrm du_i/\mathrm dt = a(\vb x_i)$, we should just
+    set $\vb a_i = \vb 0$ and $b_i = a(\vb x_i)$. Note that here $\vb A$ is singular.
 
 [^2]: If the boundary condition was non-autonomous, we could use a mass matrix instead, or build the condition into $\vb A$ and $\vb b$ directly by using the exact values of $u$ where applicable.
-
 ## Implementation
+
 We now know enough to implement our solver. Let us walk through this slowly,
 defining our function and then iterating it slowly to incorporate different
 features. The function signature will be similar to how we define an `FVMProblem`, namely
+
 ```julia
 function diffusion_equation(mesh::FVMGeometry,
-    BCs::BoundaryConditions,
-    ICs::InternalConditions=InternalConditions();
-    diffusion_function,
-    diffusion_parameters=nothing,
-    initial_condition,
-    initial_time=0.0,
-    final_time)
+        BCs::BoundaryConditions,
+        ICs::InternalConditions = InternalConditions();
+        diffusion_function,
+        diffusion_parameters = nothing,
+        initial_condition,
+        initial_time = 0.0,
+        final_time)
     # return the ODEProblem
 end
 ```
+
 For the boundary and internal conditions, we'll assume that the functions take the same form, i.e.
 `(x, y, t, u, p) -> Number`, but the `t` and `u` arguments will both be
 passed as `nothing`. The diffusion function should be of the form `(x, y, p) -> Number`,
@@ -117,7 +136,8 @@ Let us start by writing out the contribution from all the triangles.
 ````@example diffusion_equations
 using FiniteVolumeMethod
 const FVM = FiniteVolumeMethod
-function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+function triangle_contributions!(
+        A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
         ijk = triangle_vertices(T)
         i, j, k = ijk
@@ -145,7 +165,7 @@ Now we need the function that gets the contributions from the boundary edges.
 
 ````@example diffusion_equations
 function boundary_edge_contributions!(A, b, mesh, conditions,
-    diffusion_function, diffusion_parameters)
+        diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
         i, j = DelaunayTriangulation.edge_vertices(e)
         nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
@@ -186,14 +206,16 @@ need to worry about e.g. zeroing out rows of $\vb A$ for a node with a boundary 
 function apply_dirichlet_conditions!(initial_condition, mesh, conditions)
     for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
         x, y = get_point(mesh, i)
-        initial_condition[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+        initial_condition[i] = FVM.eval_condition_fnc(
+            conditions, function_index, x, y, nothing, nothing)
     end
 end
 function apply_dudt_conditions!(b, mesh, conditions)
     for (i, function_index) in FVM.get_dudt_nodes(conditions)
         if !FVM.is_dirichlet_node(conditions, i) # overlapping edges can be both Dudt and Dirichlet. Dirichlet takes precedence
             x, y = get_point(mesh, i)
-            b[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+            b[i] = FVM.eval_condition_fnc(
+                conditions, function_index, x, y, nothing, nothing)
         end
     end
 end
@@ -201,40 +223,49 @@ end
 
 Now let's define `diffusion_equation`. For this, we note we want to write the problem in
 the form
+
 ```math
 \dv{\vb u}{t} = \vb A\vb u
 ```
+
 to get the most out of our linearity in OrdinaryDiffEq.jl, whereas we currently have
+
 ```math
 \dv{\vb u}{t} = \vb A\vb u + \vb b.
 ```
+
 To get around this, we define
+
 ```math
 \tilde{\vb u} = \begin{bmatrix} \vb u \\ 1 \end{bmatrix}, \quad \tilde{\vb A} = \begin{bmatrix}\vb A & \vb b \\ \vb 0^{\mkern-1.5mu\mathsf{T}} & 0 \end{bmatrix},
 ```
+
 so that
+
 ```math
 \dv{\tilde{\vb u}}{t} = \begin{bmatrix} \vb u' \\ 0 \end{bmatrix} = \begin{bmatrix} \vb A\vb u + \vb b \\ 0 \end{bmatrix} = \tilde{\vb A}\tilde{\vb u}.
 ```
+
 Note that this also requires that we append a `1` to the initial condition.
 
 ````@example diffusion_equations
 function diffusion_equation(mesh::FVMGeometry,
-    BCs::BoundaryConditions,
-    ICs::InternalConditions=InternalConditions();
-    diffusion_function,
-    diffusion_parameters=nothing,
-    initial_condition,
-    initial_time=0.0,
-    final_time)
+        BCs::BoundaryConditions,
+        ICs::InternalConditions = InternalConditions();
+        diffusion_function,
+        diffusion_parameters = nothing,
+        initial_condition,
+        initial_time = 0.0,
+        final_time)
     conditions = Conditions(mesh, BCs, ICs)
     n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
     Afull = zeros(n + 1, n + 1)
-    A = @views Afull[begin:end-1, begin:end-1]
-    b = @views Afull[begin:end-1, end]
+    A = @views Afull[begin:(end - 1), begin:(end - 1)]
+    b = @views Afull[begin:(end - 1), end]
     _ic = vcat(initial_condition, 1)
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
-    boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    boundary_edge_contributions!(
+        A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_dudt_conditions!(b, mesh, conditions)
     apply_dirichlet_conditions!(_ic, mesh, conditions)
     A_op = MatrixOperator(sparse(Afull))
@@ -247,17 +278,18 @@ Let's now test the function. We use the same problem as in [this tutorial](../tu
 
 ````@example diffusion_equations
 using DelaunayTriangulation, OrdinaryDiffEq, LinearAlgebra, SparseArrays
-tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary=true)
+tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary = true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 diffusion_function = (x, y, p) -> 1 / 9
-initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in DelaunayTriangulation.each_point(tri)]
+initial_condition = [y ≤ 1.0 ? 50.0 : 0.0
+                     for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.5
 prob = diffusion_equation(mesh, BCs;
     diffusion_function,
     initial_condition,
     final_time)
-sol = solve(prob, Tsit5(); saveat=0.05)
+sol = solve(prob, Tsit5(); saveat = 0.05)
 sol |> tc #hide
 ````
 
@@ -280,14 +312,15 @@ Let's now plot.
 
 ````@example diffusion_equations
 using CairoMakie
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for (i, j) in zip(1:3, (1, 6, 11))
-    ax = Axis(fig[1, i], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
+    ax = Axis(fig[1, i], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
     u = j == 1 ? initial_condition : sol.u[j] # sol.u[1] is modified slightly to force the Dirichlet conditions at t = 0
-    tricontourf!(ax, tri, u, levels=0:5:50, colormap=:matter, extendlow=:auto, extendhigh=:auto) # don't need to do u[begin:end-1], since tri doesn't have that extra vertex.
+    tricontourf!(ax, tri, u, levels = 0:5:50, colormap = :matter,
+        extendlow = :auto, extendhigh = :auto) # don't need to do u[begin:end-1], since tri doesn't have that extra vertex.
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
@@ -297,6 +330,7 @@ fig
 This is exactly the solution we expect!
 
 ## Using the Provided Template
+
 Let's now use the built-in `DiffusionEquation()` which implements the above template inside FiniteVolumeMethod.jl.
 
 ````@example diffusion_equations
@@ -310,7 +344,7 @@ Let's compare `DiffusionEquation` to the `FVMProblem` approach.
 
 ````@example diffusion_equations
 fvm_prob = FVMProblem(mesh, BCs;
-    diffusion_function=let D = diffusion_function
+    diffusion_function = let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     initial_condition,
@@ -319,7 +353,7 @@ fvm_prob = FVMProblem(mesh, BCs;
 
 ````julia
 using BenchmarkTools
-@btime solve($diff_eq, $Tsit5(), saveat=$0.05);
+@btime solve($diff_eq, $Tsit5(), saveat = $0.05);
 ````
 
 ````
@@ -328,7 +362,7 @@ using BenchmarkTools
 
 ````julia
 using LinearSolve
-@btime solve($fvm_prob, $TRBDF2(linsolve=KLUFactorization()), saveat=$0.05);
+@btime solve($fvm_prob, $TRBDF2(linsolve = KLUFactorization()), saveat = $0.05);
 ````
 
 ````
@@ -338,6 +372,7 @@ using LinearSolve
 Much better! The `DiffusionEquation` approach is about 10 times faster.
 
 To finish this example, let's solve a diffusion equation with constant Neumann boundary conditions:
+
 ```math
 \begin{equation*}
 \begin{aligned}
@@ -346,11 +381,12 @@ To finish this example, let's solve a diffusion equation with constant Neumann b
 \end{aligned}
 \end{equation*}
 ```
+
 Here, $\Omega = [0, 320]^2$.
 
 ````@example diffusion_equations
 L = 320.0
-tri = triangulate_rectangle(0, L, 0, L, 100, 100, single_boundary=true)
+tri = triangulate_rectangle(0, L, 0, L, 100, 100, single_boundary = true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> 2.0, Neumann)
 diffusion_function = (x, y, p) -> 2.0
@@ -372,19 +408,20 @@ prob = DiffusionEquation(mesh, BCs;
 Let's solve and plot.
 
 ````@example diffusion_equations
-sol = solve(prob, Tsit5(); saveat=100.0)
+sol = solve(prob, Tsit5(); saveat = 100.0)
 sol |> tc #hide
 ````
 
 ````@example diffusion_equations
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for j in eachindex(sol)
-    ax = Axis(fig[1, j], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
+    ax = Axis(fig[1, j], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
     u = j == 1 ? initial_condition : sol.u[j]
-    tricontourf!(ax, tri, u, levels=0:0.1:1, colormap=:turbo, extendlow=:auto, extendhigh=:auto)
+    tricontourf!(ax, tri, u, levels = 0:0.1:1, colormap = :turbo,
+        extendlow = :auto, extendhigh = :auto)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
@@ -399,21 +436,22 @@ $\vb q \vdot \vu n = -4$. Here is a comparison of the two solutions.
 ````@example diffusion_equations
 BCs_prob = BoundaryConditions(mesh, (x, y, t, u, p) -> -4, Neumann)
 fvm_prob = FVMProblem(mesh, BCs_prob;
-    diffusion_function=let D = diffusion_function
+    diffusion_function = let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     initial_condition,
     final_time)
-fvm_sol = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()); saveat=100.0)
+fvm_sol = solve(fvm_prob, TRBDF2(linsolve = KLUFactorization()); saveat = 100.0)
 fvm_sol |> tc #hide
 
 for j in eachindex(fvm_sol)
-    ax = Axis(fig[2, j], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(fvm_sol.t[j])",
-        titlealign=:left)
+    ax = Axis(fig[2, j], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(fvm_sol.t[j])",
+        titlealign = :left)
     u = j == 1 ? initial_condition : fvm_sol.u[j]
-    tricontourf!(ax, tri, u, levels=0:0.1:1, colormap=:turbo, extendlow=:auto, extendhigh=:auto)
+    tricontourf!(ax, tri, u, levels = 0:0.1:1, colormap = :turbo,
+        extendlow = :auto, extendhigh = :auto)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
@@ -421,8 +459,9 @@ fig
 ````
 
 Here is a benchmark comparison.
+
 ````julia
-@btime solve($prob, $Tsit5(), saveat=$100.0);
+@btime solve($prob, $Tsit5(), saveat = $100.0);
 ````
 
 ````
@@ -431,7 +470,7 @@ Here is a benchmark comparison.
 
 ````julia
 using Sundials
-@btime solve($fvm_prob, $CVODE_BDF(linear_solver=:GMRES), saveat=$100.0);
+@btime solve($fvm_prob, $CVODE_BDF(linear_solver = :GMRES), saveat = $100.0);
 ````
 
 ````
@@ -447,13 +486,15 @@ val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])
 ````
 
 ## Just the code
+
 An uncommented version of this example is given below.
 You can view the source code for this file [here](https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/diffusion_equations.jl).
 
 ```julia
 using FiniteVolumeMethod
 const FVM = FiniteVolumeMethod
-function triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+function triangle_contributions!(
+        A, mesh, conditions, diffusion_function, diffusion_parameters)
     for T in each_solid_triangle(mesh.triangulation)
         ijk = triangle_vertices(T)
         i, j, k = ijk
@@ -477,7 +518,7 @@ function triangle_contributions!(A, mesh, conditions, diffusion_function, diffus
 end
 
 function boundary_edge_contributions!(A, b, mesh, conditions,
-    diffusion_function, diffusion_parameters)
+        diffusion_function, diffusion_parameters)
     for e in keys(get_boundary_edge_map(mesh.triangulation))
         i, j = DelaunayTriangulation.edge_vertices(e)
         nx, ny, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, T, props = FVM.get_boundary_cv_components(mesh, i, j)
@@ -511,34 +552,37 @@ end
 function apply_dirichlet_conditions!(initial_condition, mesh, conditions)
     for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
         x, y = get_point(mesh, i)
-        initial_condition[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+        initial_condition[i] = FVM.eval_condition_fnc(
+            conditions, function_index, x, y, nothing, nothing)
     end
 end
 function apply_dudt_conditions!(b, mesh, conditions)
     for (i, function_index) in FVM.get_dudt_nodes(conditions)
         if !FVM.is_dirichlet_node(conditions, i) # overlapping edges can be both Dudt and Dirichlet. Dirichlet takes precedence
             x, y = get_point(mesh, i)
-            b[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+            b[i] = FVM.eval_condition_fnc(
+                conditions, function_index, x, y, nothing, nothing)
         end
     end
 end
 
 function diffusion_equation(mesh::FVMGeometry,
-    BCs::BoundaryConditions,
-    ICs::InternalConditions=InternalConditions();
-    diffusion_function,
-    diffusion_parameters=nothing,
-    initial_condition,
-    initial_time=0.0,
-    final_time)
+        BCs::BoundaryConditions,
+        ICs::InternalConditions = InternalConditions();
+        diffusion_function,
+        diffusion_parameters = nothing,
+        initial_condition,
+        initial_time = 0.0,
+        final_time)
     conditions = Conditions(mesh, BCs, ICs)
     n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
     Afull = zeros(n + 1, n + 1)
-    A = @views Afull[begin:end-1, begin:end-1]
-    b = @views Afull[begin:end-1, end]
+    A = @views Afull[begin:(end - 1), begin:(end - 1)]
+    b = @views Afull[begin:(end - 1), end]
     _ic = vcat(initial_condition, 1)
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
-    boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    boundary_edge_contributions!(
+        A, b, mesh, conditions, diffusion_function, diffusion_parameters)
     apply_dudt_conditions!(b, mesh, conditions)
     apply_dirichlet_conditions!(_ic, mesh, conditions)
     A_op = MatrixOperator(sparse(Afull))
@@ -547,31 +591,33 @@ function diffusion_equation(mesh::FVMGeometry,
 end
 
 using DelaunayTriangulation, OrdinaryDiffEq, LinearAlgebra, SparseArrays
-tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary=true)
+tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary = true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
 diffusion_function = (x, y, p) -> 1 / 9
-initial_condition = [y ≤ 1.0 ? 50.0 : 0.0 for (x, y) in DelaunayTriangulation.each_point(tri)]
+initial_condition = [y ≤ 1.0 ? 50.0 : 0.0
+                     for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.5
 prob = diffusion_equation(mesh, BCs;
     diffusion_function,
     initial_condition,
     final_time)
-sol = solve(prob, Tsit5(); saveat=0.05)
+sol = solve(prob, Tsit5(); saveat = 0.05)
 
 length(sol.u[1])
 
 DelaunayTriangulation.num_solid_vertices(tri)
 
 using CairoMakie
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for (i, j) in zip(1:3, (1, 6, 11))
-    ax = Axis(fig[1, i], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
+    ax = Axis(fig[1, i], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
     u = j == 1 ? initial_condition : sol.u[j] # sol.u[1] is modified slightly to force the Dirichlet conditions at t = 0
-    tricontourf!(ax, tri, u, levels=0:5:50, colormap=:matter, extendlow=:auto, extendhigh=:auto) # don't need to do u[begin:end-1], since tri doesn't have that extra vertex.
+    tricontourf!(ax, tri, u, levels = 0:5:50, colormap = :matter,
+        extendlow = :auto, extendhigh = :auto) # don't need to do u[begin:end-1], since tri doesn't have that extra vertex.
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
@@ -583,14 +629,14 @@ diff_eq = DiffusionEquation(mesh, BCs;
     final_time)
 
 fvm_prob = FVMProblem(mesh, BCs;
-    diffusion_function=let D = diffusion_function
+    diffusion_function = let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     initial_condition,
     final_time)
 
 L = 320.0
-tri = triangulate_rectangle(0, L, 0, L, 100, 100, single_boundary=true)
+tri = triangulate_rectangle(0, L, 0, L, 100, 100, single_boundary = true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> 2.0, Neumann)
 diffusion_function = (x, y, p) -> 2.0
@@ -608,16 +654,17 @@ prob = DiffusionEquation(mesh, BCs;
     initial_condition,
     final_time)
 
-sol = solve(prob, Tsit5(); saveat=100.0)
+sol = solve(prob, Tsit5(); saveat = 100.0)
 
-fig = Figure(fontsize=38)
+fig = Figure(fontsize = 38)
 for j in eachindex(sol)
-    ax = Axis(fig[1, j], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(sol.t[j])",
-        titlealign=:left)
+    ax = Axis(fig[1, j], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(sol.t[j])",
+        titlealign = :left)
     u = j == 1 ? initial_condition : sol.u[j]
-    tricontourf!(ax, tri, u, levels=0:0.1:1, colormap=:turbo, extendlow=:auto, extendhigh=:auto)
+    tricontourf!(ax, tri, u, levels = 0:0.1:1, colormap = :turbo,
+        extendlow = :auto, extendhigh = :auto)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
@@ -625,20 +672,21 @@ fig
 
 BCs_prob = BoundaryConditions(mesh, (x, y, t, u, p) -> -4, Neumann)
 fvm_prob = FVMProblem(mesh, BCs_prob;
-    diffusion_function=let D = diffusion_function
+    diffusion_function = let D = diffusion_function
         (x, y, t, u, p) -> D(x, y, p)
     end,
     initial_condition,
     final_time)
-fvm_sol = solve(fvm_prob, TRBDF2(linsolve=KLUFactorization()); saveat=100.0)
+fvm_sol = solve(fvm_prob, TRBDF2(linsolve = KLUFactorization()); saveat = 100.0)
 
 for j in eachindex(fvm_sol)
-    ax = Axis(fig[2, j], width=600, height=600,
-        xlabel="x", ylabel="y",
-        title="t = $(fvm_sol.t[j])",
-        titlealign=:left)
+    ax = Axis(fig[2, j], width = 600, height = 600,
+        xlabel = "x", ylabel = "y",
+        title = "t = $(fvm_sol.t[j])",
+        titlealign = :left)
     u = j == 1 ? initial_condition : fvm_sol.u[j]
-    tricontourf!(ax, tri, u, levels=0:0.1:1, colormap=:turbo, extendlow=:auto, extendhigh=:auto)
+    tricontourf!(ax, tri, u, levels = 0:0.1:1, colormap = :turbo,
+        extendlow = :auto, extendhigh = :auto)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
@@ -649,7 +697,6 @@ T = jump_and_march(tri, q)
 val = pl_interpolate(prob, T, sol.u[3], q[1], q[2])
 ```
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

@@ -24,7 +24,8 @@ end
 end
 
 # get flux contribution for a non-system, also picking up the cv components first
-@inline function get_flux(prob::AbstractFVMProblem, props, α::A, β, γ, t::T, edge_index) where {A,T}
+@inline function get_flux(
+        prob::AbstractFVMProblem, props, α::A, β, γ, t::T, edge_index) where {A, T}
     x, y, nx, ny, ℓ = get_cv_components(props, edge_index)
     qn = _get_flux(prob, x, y, t, α, β, γ, nx, ny)
     return qn * ℓ
@@ -38,7 +39,7 @@ end
 end
 
 # get flux contribution for a system, also picking up the cv components first, and getting it for all variables
-function get_flux(prob::FVMSystem, props, α::A, β, γ, t::T, edge_index) where {A,T}
+function get_flux(prob::FVMSystem, props, α::A, β, γ, t::T, edge_index) where {A, T}
     x, y, nx, ny, ℓ = get_cv_components(props, edge_index)
     q = eval_flux_function(prob, x, y, t, α, β, γ)
     qn = ntuple(_neqs(prob)) do var

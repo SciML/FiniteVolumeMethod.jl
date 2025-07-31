@@ -4,21 +4,25 @@
 Pages = ["math.md"]
 ```
 
-Here we outline the mathematical and implementation details involved in implementing the finite volume method (FVM). We assume that our partial differential equation (PDE) is given by 
+Here we outline the mathematical and implementation details involved in implementing the finite volume method (FVM). We assume that our partial differential equation (PDE) is given by
+
 ```math
 \begin{equation}
 \label{eq:pde}
 \pdv{u(\vb x, t)}{t} + \div \vb q(\vb x, t, u) = S(\vb x, t, u), \quad \vb x \in \Omega,
 \end{equation}
 ```
+
 together with some boundary conditions or internal conditions that we discuss later. We also discuss steady-state problems and systems of PDEs of the form \eqref{eq:pde}.
 
-# Interior Discretisation 
+# Interior Discretisation
 
-Let us start by discretising \eqref{eq:pde} inside $\Omega$. The first step in this discretisation is to compute a triangulation of $\Omega$, decomposing $\Omega$ into a collection of disjoint triangles $\{T_k\}$ so that 
+Let us start by discretising \eqref{eq:pde} inside $\Omega$. The first step in this discretisation is to compute a triangulation of $\Omega$, decomposing $\Omega$ into a collection of disjoint triangles $\{T_k\}$ so that
+
 ```math
 \Omega = \bigcup_k T_k.
 ```
+
 This triangulation is typically a _constrained Delaunay triangulation_, denoted $\mathcal T(\Omega)$, with appropriate care taken if $\Omega$ is multiply-connected; these triangulations can be computed using [DelaunayTriangulation.jl](https://github.com/JuliaGeometry/DelaunayTriangulation.jl). An example of such a domain $\Omega$ and its triangulation $\mathcal T(\Omega)$ is shown below, where we use a multiply-connected domain to emphasise that these details are not necessarily restricted to simple domains.
 
 ```@setup ex_tri
@@ -53,7 +57,7 @@ fig #hide
 
 Key to the FVM are the _control volumes_, which are used to define volumes $\Omega_i$ around individual vertices $\vb x_i$ that we integrate the PDE over. To define these volumes, take $\vb x_i \in \Omega$, which is a vertex of $\mathcal T(\Omega)$, and take the set of triangles $\mathcal T_i = \{T_k\}$ that have $\vb x_i$ as a vertex. For each of these triangles $T_{k'} \in \mathcal T_i$, connect its centroid to the midpoints of the triangle's edges. Once this procedure is complete, we obtain a closed polygon around $\vb x_i$ that we denote by $\partial\Omega_i$ and whose interior defines the control volume $\Omega_i$. We show the result of this procedure, applied to the above domain, below, where we show the centroids in red and the control volume boundaries in blue.
 
-```@setup ex_tri 
+```@setup ex_tri
 centroids = NTuple{2,Float64}[]
 linesegments = NTuple{2,Float64}[]
 for T in each_solid_triangle(tri)
@@ -68,25 +72,25 @@ linesegments!(ax, linesegments, color=:blue)
 scatter!(ax, centroids, color=:red, markersize=8)
 ```
 
-```@example ex_tri 
+```@example ex_tri
 fig #hide
 ```
 
-Let us now establish some notation for referring to these control volumes, using the figure below 
+Let us now establish some notation for referring to these control volumes, using the figure below
 as a reference.
 
-| Symbol | Description | Example |
-| :---   | :---        | :---    |
-| $\vb x_i$ | A vertex of $\mathcal T(\Omega)$ | The blue point below |
-| $\Omega_i$ | The control volume around $\vb x_i$ | The green region below |
-| $\partial\Omega_i$ | The boundary of $\Omega_i$ | The blue edges below |
-| $V_i$ | The volume of $\Omega_i$ | The volume of the green region below |
-| $\mathcal E_i$ | The set of edges of $\partial\Omega_i$ | The blue edges below |
-| $\sigma$ | An edge $\sigma \in \mathcal E_i$ | The magenta edge below. Note that $\bigcup_{\sigma \in \mathcal E_i} \sigma = \partial\Omega_i$ |
-| $\vb x_{\sigma}$ | The midpoint of $\sigma \in \mathcal E_i$ | The blue point below on $\sigma$ |
-| $\hat{\vb n}_{\sigma}$ | The outward unit normal vector to $\sigma \in \mathcal E_i$ | The black arrow below |
-| $\mathcal T_i$ | The set of triangles that have $\vb x_i$ as a vertex | The black triangles surrounding $\vb x_i$ below |
-| $L_\sigma$ | The length of $\sigma \in \mathcal E_i$ | The length of the magenta edge below
+| Symbol                 | Description                                                 | Example                                                                                         |
+|:---------------------- |:----------------------------------------------------------- |:----------------------------------------------------------------------------------------------- |
+| $\vb x_i$              | A vertex of $\mathcal T(\Omega)$                            | The blue point below                                                                            |
+| $\Omega_i$             | The control volume around $\vb x_i$                         | The green region below                                                                          |
+| $\partial\Omega_i$     | The boundary of $\Omega_i$                                  | The blue edges below                                                                            |
+| $V_i$                  | The volume of $\Omega_i$                                    | The volume of the green region below                                                            |
+| $\mathcal E_i$         | The set of edges of $\partial\Omega_i$                      | The blue edges below                                                                            |
+| $\sigma$               | An edge $\sigma \in \mathcal E_i$                           | The magenta edge below. Note that $\bigcup_{\sigma \in \mathcal E_i} \sigma = \partial\Omega_i$ |
+| $\vb x_{\sigma}$       | The midpoint of $\sigma \in \mathcal E_i$                   | The blue point below on $\sigma$                                                                |
+| $\hat{\vb n}_{\sigma}$ | The outward unit normal vector to $\sigma \in \mathcal E_i$ | The black arrow below                                                                           |
+| $\mathcal T_i$         | The set of triangles that have $\vb x_i$ as a vertex        | The black triangles surrounding $\vb x_i$ below                                                 |
+| $L_\sigma$             | The length of $\sigma \in \mathcal E_i$                     | The length of the magenta edge below                                                            |
 
 ```@setup cv_notation
 using DelaunayTriangulation, CairoMakie, LinearAlgebra
@@ -167,56 +171,71 @@ resize_to_layout!(fig)
 fig #hide
 ```
 
-## Discretising the PDE 
+## Discretising the PDE
 
-Now that we have our concept of control volumes, we can discretise the PDE \eqref{eq:pde}. We do this 
+Now that we have our concept of control volumes, we can discretise the PDE \eqref{eq:pde}. We do this
 by considering each PDE inside each $\Omega_i$ and integrating. For a given control volume $\Omega_i$, we can integrate the PDE to give
-```math 
+
+```math
 \begin{equation}\label{eq:integratedi}
 \dv{t}\iint_{\Omega_i} u\dd{V} + \iint_{\Omega_i} \div\vb q \dd{V} = \iint_{\Omega_i} S \dd{V}.
 \end{equation}
 ```
+
 Using the divergence theorem, the second integral in \eqref{eq:integratedi} becomes
+
 ```math
 \begin{equation}\label{eq:applieddthm}
 \iint_{\Omega_i} \div\vb q = \oint_{\partial\Omega_i} \vb q \vdot \vu n_\sigma \dd{s} = \sum_{\sigma \in \mathcal E_i} \int_\sigma \vb q \vdot \vu n_\sigma \dd{s},
 \end{equation}
 ```
+
 where the last equality in \eqref{eq:applieddthm} follows from integrating over each individual line segment that defines $\partial\Omega_i$, which is simply $\mathcal E_i$. We then define the _control volume averages_,
+
 ```math
 \begin{equation}\label{eq:averages}
 \bar u_i = \frac{1}{V_i}\iint_{\Omega_i} u\dd{V},\quad \bar S_i = \frac{1}{V_i}\iint_{\Omega_i} S\dd{V},
 \end{equation}
 ```
+
 so that our integral formulation \eqref{eq:integratedi} becomes
+
 ```math
 \begin{equation}\label{eq:intform}
 \dv{\bar u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i}\int_\sigma \vb q \vdot \vu n_\sigma \dd{s} = \bar S_i.
 \end{equation}
 ```
+
 Note that \eqref{eq:intform} is still an exact expression.
 
 To proceed, we need to approximate the integrals $\int_\sigma \vb q \vdot \vu n_\sigma\dd{s}$. To accomplish this, we use a midpoint rule, writing
+
 ```math
 \begin{equation}\label{eq:midpt_rule}
 \int_\sigma \vb q \vdot \vu n_\sigma \dd{s} \approx \left[\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t))\vdot \vu n_\sigma\right]L_\sigma.
 \end{equation}
 ```
+
 Then, replacing the control volume averages with their value at $\vb x_i$, we obtain the following approximation:
+
 ```math
 \begin{equation}\label{eq:nextapprox}
 \dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t)) \vdot \vu n_\sigma\right]L_\sigma = S_i,
 \end{equation}
 ```
-where $u_i = u(\vb x_i, t)$ and $S_i = S(\vb x_i, t)$. 
+
+where $u_i = u(\vb x_i, t)$ and $S_i = S(\vb x_i, t)$.
 
 The final step in this part of the approximation is the evaluation of $\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t))$. To deal with this function, consider some $T_k \in \mathcal T_i$ so that $\vb x_\sigma$ is inside $T_k$. We use a linear shape function inside $T_k$ to approximate $u$, writing
+
 ```math
 \begin{equation}\label{eq:shape}
 u(\vb x, t) = \alpha_kx + \beta_ky + \gamma_k, \quad \vb x \in T_k,
 \end{equation}
 ```
+
 where we have suppressed the dependence of the coefficients $(\alpha_k, \beta_k,\gamma_k)$ on $t$. The vertices of $T_k$ are given by $v_{k1}, v_{k2}, v_{k3}$ with corresponding coordinates $\vb x_{k1}, \vb x_{k2}, \vb x_{k3}$, respectively. We can then solve for the coefficients in \eqref{eq:shape} by requiring that $u$ is equal to the values at the vertices of $T_k$, giving the system of equations
+
 ```math
 \begin{equation}\label{eq:near_cramer}
 \begin{aligned}
@@ -226,19 +245,25 @@ u(\vb x_{k3}, t) &= \alpha_kx_{k3} + \beta_ky_{k3} + \gamma_k,
 \end{aligned}
 \end{equation}
 ```
+
 where $\vb x_{ki} = (x_{ki}, y_{ki})^{\mkern-1.5mu\mathsf{T}}$. Note that the values on the left-hand side of \eqref{eq:near_cramer} are all known from either the initial condition or the previous time-step. Using Cramer's rule, we define
+
 ```math
 \begin{equation}\label{eq:shape_coeffs}
 \vb S_k = \frac{1}{\Delta_k}\begin{bmatrix} y_{k2}-y_{k3} & y_{k3}-y_{k1} & y_{k1}-y_{k2} \\ x_{k3} - x_{k2} & x_{k1}-x_{k3}&x_{k2}-x_{k1} \\ x_{k2}y_{k3}-x_{k3}y_{k2} & x_{k3}y_{k1}-x_{k1}y_{k3}&x_{k1}y_{k2}-x_{k2}y_{k1} \end{bmatrix},
 \end{equation}
 ```
+
 where
+
 ```math
 \begin{equation}\label{eq:deltak}
 \Delta_k = x_{k1}y_{k2}-x_{k2}y_{k1}-x_{k1}y_{k3}+x_{k3}y_{k1}+x_{k2}y_{k3}-x_{k3}y_{k2},
 \end{equation}
 ```
+
 and thus we obtain
+
 ```math
 \begin{equation}\label{eq:shapecoeffvals}
 \begin{aligned}
@@ -248,17 +273,21 @@ and thus we obtain
 \end{aligned}
 \end{equation}
 ```
+
 where $u_{ki} = u(\vb x_{ki}, t)$ and $s_{k,ij}$ are the elements of $\vb S_k$. With \eqref{eq:shape} and \eqref{eq:shapecoeffvals}, we can approximate $\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t))$ and thus obtain the approximation
+
 ```math
 \begin{equation}\label{eq:interiorapproximation}
 \dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} \left[\vb q\left(\vb x_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_{k(\sigma)}\right)\vdot \vu n_\sigma\right]L_\sigma = S_i,
 \end{equation}
 ```
+
 where $k(\sigma)$ is the index of the triangle that contains $\vb x_\sigma$. This linear shape function also allows us to compute gradients like $\grad u(\vb x_\sigma, t)$, since $\grad u(\vb x_\sigma, t) = (\alpha_{k(\sigma)}, \beta_{k(\sigma)})^{\mkern-1.5mu\mathsf{T}}$.
 
 # Boundary Conditions
 
 Let us now discuss how boundary conditions (BCs) are handled. We assume that BCs take on any of the following forms:
+
 ```math
 \begin{align}
 \vb q(\vb x, t, u) \vdot \vu n_\sigma &= a(\vb x, t, u) & \vb x \in \mathcal B \subseteq \partial\Omega, \label{eq:neumann} \\
@@ -266,30 +295,35 @@ Let us now discuss how boundary conditions (BCs) are handled. We assume that BCs
 u(\vb x, t) &= a(\vb x, t, u) & \vb x \in \mathcal B \subseteq \partial\Omega, \label{eq:dirichlet}
 \end{align}
 ```
-where the functions $a$ are user-provided functions. The conditions \eqref{eq:neumann}--\eqref{eq:dirichlet} are called _Neumann_, _time-dependent Dirichlet_, and _Dirichlet_, respectively. We discuss how we handle incompatible BCs below, and then how each of these three types are implemented. 
+
+where the functions $a$ are user-provided functions. The conditions \eqref{eq:neumann}--\eqref{eq:dirichlet} are called _Neumann_, _time-dependent Dirichlet_, and _Dirichlet_, respectively. We discuss how we handle incompatible BCs below, and then how each of these three types are implemented.
 
 ## Dirichlet boundary conditions
 
 When we have a Dirichlet BC of the form \eqref{eq:dirichlet}, the implementation is simple: Rather than using \eqref{eq:interiorapproximation}, we instead leave $\mathrm du_i/\mathrm dt = 0$ and update the value of $u_i$ with $a(\vb x_i, t, u_i)$ at the end of the iteration using a callback; note that the expression $u_i = a(\vb x_i, t, u_i)$ is __not__ an implicit equation for $u_i$, rather it is simply a reassignment of $u_i$ to $a(\vb x_i, t, u_i)$, i.e. $u_i \leftarrow a(\vb x_i, t, u_i)$.
 
-## Time-dependent Dirichlet boundary conditions 
+## Time-dependent Dirichlet boundary conditions
 
-For a time-dependent Dirichlet BC of the form \eqref{eq:dudtdirichlet}, the implementation is again simple: Rather than using \eqref{eq:interiorapproximation}, simply compute $\mathrm du_i/\mathrm dt = a(\vb x_i, t, u_i)$ instead. 
+For a time-dependent Dirichlet BC of the form \eqref{eq:dudtdirichlet}, the implementation is again simple: Rather than using \eqref{eq:interiorapproximation}, simply compute $\mathrm du_i/\mathrm dt = a(\vb x_i, t, u_i)$ instead.
 
 ## Neumann boundary conditions
 
 Neumann boundary conditions \eqref{eq:neumann} are the most complex out of the three. Let us return to our integral formulation \eqref{eq:intform}. Let $\mathcal E_i^n$ be the set of edges in $\mathcal E_i$ that have a Neumann BC associated with them, and $\mathcal E_i^c = \mathcal E_i \setminus \mathcal E_i^n$. Then, also using \eqref{eq:interiorapproximation}, in the case of \eqref{eq:neumann} we can write
+
 ```math
 \begin{equation}\label{eq:neumanndecomp}
 \dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in \mathcal E_i^c} \left[\vb q(\vb x_\sigma, t, \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_{k(\sigma)}) \vdot \vu n_\sigma\right]L_\sigma + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i^n} \int_{\sigma} a_{\sigma}(\vb x, t, u)\dd{s} = S_i,
 \end{equation}
 ```
+
 where $a_\sigma$ is the BC function associated with $\sigma$. This integral is then approximated using a midpoint rule as done previously, giving
+
 ```math
 \begin{equation}\label{eq:neumanndecompapprox}
 \dv{u_i}{t} + \frac{1}{V_i}\sum_{\sigma\in \mathcal E_i^c} \left[\vb q(\vb x_\sigma, t, u(\vb x_\sigma, t)) \vdot \vu n_\sigma\right]L_\sigma + \frac{1}{V_i}\sum_{\sigma\in\mathcal E_i^n} \left[a_{\sigma}(\vb x_\sigma, t, u(\vb x_\sigma, t))\right]L_\sigma = S_i,
 \end{equation}
 ```
+
 where $u(\vb x_\sigma, t) = \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sigma + \gamma_{k(\sigma)}$.
 
 # Internal Conditions
@@ -297,8 +331,7 @@ where $u(\vb x_\sigma, t) = \alpha_{k(\sigma)}x_\sigma + \beta_{k(\sigma)}y_\sig
 We also allow for specifying internal conditions, meaning conditions of the form \eqref{eq:neumann}--\eqref{eq:dirichlet} that are applied away from the boundary. We do not currently allow for internal Neumann conditions directly.[^1] These conditions are handled in the same way as BCs, except that the user is to provide them per-vertex rather than per-edge.
 
 [^1]: This is a technical limitation due to how the control volumes are defined. For vertices away from the boundary, the control volume edges do not lie along any of the triangle's edges, which is where we would like to impose Neumann conditions.
-
-# Putting Everything Together 
+# Putting Everything Together
 
 We have now specified how we discretise the PDE itself, and how we handle both boundary and internal conditions. The remaining task is to actually discuss how we compute $\mathrm du_i/\mathrm dt$. As written, \eqref{eq:interiorapproximation} indicates that we loop over each vertex and, within each vertex, loop over each edge of its control volume. On average, $|\mathcal E_i^c| = 12$ (since, on average, a point in a Delaunay triangulation has six neighbours), and so computing $\mathrm du_i/\mathrm dt$ for each $i$ requires $\mathcal O(12n)$ loop iterates and many repeated computations (since each control volume edge appears in another control volume), where $n$ is the number of points in the mesh. An alternative approach is to instead loop over each triangle in $\mathcal T(\Omega)$ and to then loop over each edge, adding the contributions from each to the associated vertices. This instead requires $\mathcal O(3|\mathcal T|)$ loop iterates, where $|\mathcal T|$ is the number of triangles in $\mathcal T(\Omega)$, and we instead only need to compute the relevant quantities for each control volume edge a single time; note that $|\mathcal T| = \mathcal O(n)$ by Euler's formula. This is the approach we take in our implementation.
 
@@ -387,9 +420,10 @@ resize_to_layout!(fig)
 fig #hide
 ```
 
-We denote the triangle in blue by $T$, and refer to the blue, red, and green vertices by $v_b$, $v_r$, and $v_g$, respectively. The relevant edges that contribute to $\mathrm du_b/\mathrm dt$, $\mathrm du_r/\mathrm dt$, and $\mathrm du_g/\mathrm dt$ are $\sigma_{br}$, $\sigma_{rg}$, and $\sigma_{gb}$, as annotated above. In particular, $\sigma_{br}$ contributes to both $\mathrm du_b/\mathrm dt$ and $\mathrm du_r/\mathrm dt$, $\sigma_{rg}$ contributes to both $\mathrm du_r/\mathrm dt$ and $\mathrm du_g/\mathrm dt$, and $\sigma_{gb}$ contributes to both $\mathrm du_g/\mathrm dt$ and $\mathrm du_b/\mathrm dt$. 
+We denote the triangle in blue by $T$, and refer to the blue, red, and green vertices by $v_b$, $v_r$, and $v_g$, respectively. The relevant edges that contribute to $\mathrm du_b/\mathrm dt$, $\mathrm du_r/\mathrm dt$, and $\mathrm du_g/\mathrm dt$ are $\sigma_{br}$, $\sigma_{rg}$, and $\sigma_{gb}$, as annotated above. In particular, $\sigma_{br}$ contributes to both $\mathrm du_b/\mathrm dt$ and $\mathrm du_r/\mathrm dt$, $\sigma_{rg}$ contributes to both $\mathrm du_r/\mathrm dt$ and $\mathrm du_g/\mathrm dt$, and $\sigma_{gb}$ contributes to both $\mathrm du_g/\mathrm dt$ and $\mathrm du_b/\mathrm dt$.
 
 Let us focus on $u_b$ and $u_r$. The contribution from $e_{br}$ to $\mathrm du_b/\mathrm dt$ and $\mathrm du_r/\mathrm dt$ is given by:
+
 ```math
 \begin{equation}\label{eq:triangleupdate}
 \begin{aligned}
@@ -398,20 +432,24 @@ Let us focus on $u_b$ and $u_r$. The contribution from $e_{br}$ to $\mathrm du_b
 \end{aligned}
 \end{equation}
 ```
-where 
+
+where
+
 ```math
 Q = \left[\vb q\left(\vb x_{br}, t, \alpha x_{br} + \beta y_{br} + \gamma\right) \vdot \vu n_{br}\right]L_{br},
 ```
-and $\vb x_{br}$ is the midpoint of $e_{br}$; $\vu n_{br}$ is the unit normal vector to the edge $\sigma_{br} = \overrightarrow{\vb x_{br}\vb x_T}$, where $\vb x_T$ is the centroid of $T$ which should only be computed once for the current $T$, which should point away from $\vb x_b$ but towards $\vb x_r$; $L_{br} = \|\vb x_T - \vb x_{br}\|$, and $\alpha,\beta,\gamma$ are computed from \eqref{eq:shapecoeffvals} using the vertices of $T$. Notice that \eqref{eq:triangleupdate} uses a minus sign for $\mathrm du_b/\mathrm dt$ and a plus sign for $\mathrm du_r/\mathrm dt$, because we have brought the sum in \eqref{eq:interiorapproximation} to the right-hand side of the equation. 
+
+and $\vb x_{br}$ is the midpoint of $e_{br}$; $\vu n_{br}$ is the unit normal vector to the edge $\sigma_{br} = \overrightarrow{\vb x_{br}\vb x_T}$, where $\vb x_T$ is the centroid of $T$ which should only be computed once for the current $T$, which should point away from $\vb x_b$ but towards $\vb x_r$; $L_{br} = \|\vb x_T - \vb x_{br}\|$, and $\alpha,\beta,\gamma$ are computed from \eqref{eq:shapecoeffvals} using the vertices of $T$. Notice that \eqref{eq:triangleupdate} uses a minus sign for $\mathrm du_b/\mathrm dt$ and a plus sign for $\mathrm du_r/\mathrm dt$, because we have brought the sum in \eqref{eq:interiorapproximation} to the right-hand side of the equation.
 
 When we apply the procedure above to each triangle, we will have computed the contribution from each edge to each vertex - almost. The only issue is with boundary triangles, where the edges that lie on the boundary will not be iterated over as they not of the form $\overrightarrow{\vb x_{br}\vb x_T}$ (i.e., they are not connected to a centroid). There are two ways to handle this:
-1. For each triangle looped over, also check if it is a boundary triangle and then consider its boundary edges.
-2. After looping over all triangles, loop over all boundary edges to pick up the missing contributions.
-The second approach is preferable, as we don't need to worry about needless checks for boundary triangles, the number of boundary edges it has, etc. 
+
+ 1. For each triangle looped over, also check if it is a boundary triangle and then consider its boundary edges.
+ 2. After looping over all triangles, loop over all boundary edges to pick up the missing contributions.
+    The second approach is preferable, as we don't need to worry about needless checks for boundary triangles, the number of boundary edges it has, etc.
 
 To understand how to pick up contributions from a single edge, consider the figure below which shows some control volumes in the corner of a domain:
 
-```@setup ex_focus 
+```@setup ex_focus
 tri = triangulate_rectangle(0, 1, 0, 1, 10, 10, single_boundary = false)
 add_ghost_triangles!(tri)
 linesegs = NTuple{2, Float64}[]
@@ -443,6 +481,7 @@ fig #hide
 ```
 
 Consider the edge $e_{ij}$ shown in red. There two control volumes that lie on $e_{ij}$, the one for $v_i$ and the other for $v_j$. We denote the midpoint of $e_{ij}$ by $\vb x_{ij} = (\vb x_i + \vb x_j)/2$, so that the two control volume edges are $\overrightarrow{\vb x_i\vb x_{ij}}$ and $\overrightarrow{\vb x_{ij}\vb x_j}$ for $v_i$ and $v_j$, respectively. The contributions from the flux over each edge gives
+
 ```math
 \begin{equation}\label{eq:bndedgecontrbi}
 \begin{aligned}
@@ -451,7 +490,9 @@ Consider the edge $e_{ij}$ shown in red. There two control volumes that lie on $
 \end{aligned}
 \end{equation}
 ```
-where 
+
+where
+
 ```math
 \begin{equation}\label{eq:bndedgecontrbiflux}
 \begin{aligned}
@@ -460,15 +501,18 @@ Q_j &= \left[\vb q\left(\vb m_j, t, \alpha_{ij} m_{jx} + \beta_{ij} m_{jy} + \ga
 \end{aligned}
 \end{equation}
 ```
+
 where $\vb m_i = (\vb x_i + \vb x_{ij})/2 = (m_{ix}, m_{iy})^{\mkern-1.5mu\mathsf{T}}$, $\vb m_j = (\vb x_{ij} + \vb x_j)/2 = (m_{jx}, m_{jy})^{\mkern-1.5mu\mathsf{T}}$, $\vb n_{ij}$ is the outward unit normal vector to $e_{ij}$, $L_i = \|\vb x_{ij} - \vb x_i\|$, $L_j = \|\vb x_j - \vb x_{ij}\|$, and $\alpha_{ij}, \beta_{ij}, \gamma_{ij}$ are computed from \eqref{eq:shapecoeffvals} using the vertices of the triangle that contains $e_{ij}$. If there is a Neumann boundary condition on $e_{ij}$, \eqref{eq:bndedgecontrbiflux} uses the boundary condition functions for computing the $\vb q \vdot \vu n$ terms.
 
-Now that we have looped over all triangles and also over all boundary edges, the final values for each $\mathrm du_i/\mathrm dt$ is given by 
+Now that we have looped over all triangles and also over all boundary edges, the final values for each $\mathrm du_i/\mathrm dt$ is given by
+
 ```math
 \dv{u_i}{t} \leftarrow \frac{1}{V_i}\dv{u_i}{t} + S(\vb x_i, t, u_i).
 ```
+
 Of course, if there is a Dirichlet boundary condition at $u_i$ we set $\mathrm du_i/\mathrm dt = 0$, and if there is a boundary condition on $\mathrm du_i/\mathrm dt$ we use that boundary condition instead.
 
-# Systems of Equations 
+# Systems of Equations
 
 We also provide support for systems of PDEs that take the form
 

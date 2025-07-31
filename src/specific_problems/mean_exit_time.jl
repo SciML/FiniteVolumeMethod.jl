@@ -40,7 +40,7 @@ The struct has extra fields in addition to the arguments above:
 - `b`: The `b` above.
 - `problem`: The `LinearProblem` that represents the problem. This is the problem that is solved when you call [`solve`](@ref solve(::AbstractFVMTemplate, args...; kwargs...)) on the struct.
 """
-struct MeanExitTimeProblem{M,C,D,DP,A,B,LP} <: AbstractFVMTemplate
+struct MeanExitTimeProblem{M, C, D, DP, A, B, LP} <: AbstractFVMTemplate
     mesh::M
     conditions::C
     diffusion_function::D
@@ -55,14 +55,16 @@ function Base.show(io::IO, ::MIME"text/plain", prob::MeanExitTimeProblem)
 end
 
 function MeanExitTimeProblem(mesh::FVMGeometry,
-    BCs::BoundaryConditions,
-    ICs::InternalConditions=InternalConditions();
-    diffusion_function,
-    diffusion_parameters=nothing,
-    kwargs...)
+        BCs::BoundaryConditions,
+        ICs::InternalConditions = InternalConditions();
+        diffusion_function,
+        diffusion_parameters = nothing,
+        kwargs...)
     conditions = Conditions(mesh, BCs, ICs)
-    has_dudt_nodes(conditions) && throw(ArgumentError("MeanExitTimeProblem does not support Dudt nodes."))
-    has_constrained_edges(conditions) && throw(ArgumentError("MeanExitTimeProblem does not support Constrained edges."))
+    has_dudt_nodes(conditions) &&
+        throw(ArgumentError("MeanExitTimeProblem does not support Dudt nodes."))
+    has_constrained_edges(conditions) &&
+        throw(ArgumentError("MeanExitTimeProblem does not support Constrained edges."))
     n = DelaunayTriangulation.num_points(mesh.triangulation)
     A = zeros(n, n)
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)

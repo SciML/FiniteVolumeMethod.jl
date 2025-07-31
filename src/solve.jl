@@ -1,4 +1,4 @@
-function get_multithreading_parameters(prob::Union{FVMProblem,FVMSystem})
+function get_multithreading_parameters(prob::Union{FVMProblem, FVMSystem})
     u = prob.initial_condition
     nt = Threads.nthreads()
     if prob isa FVMProblem
@@ -14,26 +14,26 @@ function get_multithreading_parameters(prob::Union{FVMProblem,FVMSystem})
     boundary_edges = collect(keys(get_boundary_edge_map(prob.mesh.triangulation)))
     chunked_boundary_edges = chunks(boundary_edges, nt)
     return (
-        duplicated_du=duplicated_du,
-        dirichlet_nodes=dirichlet_nodes,
-        solid_triangles=solid_triangles,
-        solid_vertices=solid_vertices,
-        chunked_solid_triangles=chunked_solid_triangles,
-        boundary_edges=boundary_edges,
-        chunked_boundary_edges=chunked_boundary_edges,
-        parallel=Val(true),
-        prob=prob
+        duplicated_du = duplicated_du,
+        dirichlet_nodes = dirichlet_nodes,
+        solid_triangles = solid_triangles,
+        solid_vertices = solid_vertices,
+        chunked_solid_triangles = chunked_solid_triangles,
+        boundary_edges = boundary_edges,
+        chunked_boundary_edges = chunked_boundary_edges,
+        parallel = Val(true),
+        prob = prob
     )
 end
 
-function get_serial_parameters(prob::Union{FVMProblem,FVMSystem})
+function get_serial_parameters(prob::Union{FVMProblem, FVMSystem})
     return (
-        parallel=Val(false),
-        prob=prob
+        parallel = Val(false),
+        prob = prob
     )
 end
 
-function get_fvm_parameters(prob::Union{FVMProblem,FVMSystem}, parallel::Val{B}) where {B}
+function get_fvm_parameters(prob::Union{FVMProblem, FVMSystem}, parallel::Val{B}) where {B}
     if B
         return get_multithreading_parameters(prob)
     else
@@ -48,7 +48,9 @@ Returns a prototype for the Jacobian of the given `prob`.
 """
 jacobian_sparsity
 jacobian_sparsity(prob::FVMProblem) = jacobian_sparsity(prob.mesh.triangulation)
-jacobian_sparsity(prob::FVMSystem{N}) where {N} = jacobian_sparsity(prob.mesh.triangulation, N)
+function jacobian_sparsity(prob::FVMSystem{N}) where {N}
+    jacobian_sparsity(prob.mesh.triangulation, N)
+end
 jacobian_sparsity(prob::SteadyFVMProblem) = jacobian_sparsity(prob.problem)
 
 function jacobian_sparsity(tri)
@@ -133,7 +135,7 @@ end
         cb = DiscreteCallback(
             (u, t, integrator) -> true,
             f,
-            save_positions=(!has_saveat, !has_saveat),
+            save_positions = (!has_saveat, !has_saveat)
         )
     else
         cb = CallbackSet()
@@ -144,64 +146,66 @@ end
 """
     get_dirichlet_callback(prob[, f=update_dirichlet_nodes!]; kwargs...)
 
-Get the callback for updating [`Dirichlet`](@ref) nodes. The `kwargs...` argument is ignored, 
-except to detect if a user has already provided a callback, in which case the 
-callback gets merged into a `CallbackSet` with the [`Dirichlet`](@ref) callback. If the problem 
-`prob` has no [`Dirichlet`](@ref) nodes, the returned callback does nothing and is never 
+Get the callback for updating [`Dirichlet`](@ref) nodes. The `kwargs...` argument is ignored,
+except to detect if a user has already provided a callback, in which case the
+callback gets merged into a `CallbackSet` with the [`Dirichlet`](@ref) callback. If the problem
+`prob` has no [`Dirichlet`](@ref) nodes, the returned callback does nothing and is never
 called.
 
 You can provide `f` to change the function that updates the [`Dirichlet`](@ref) nodes.
 """
-@inline function get_dirichlet_callback(prob, f::F=update_dirichlet_nodes!;saveat=(), callback=CallbackSet(), kwargs...) where {F}
+@inline function get_dirichlet_callback(prob, f::F = update_dirichlet_nodes!; saveat = (),
+        callback = CallbackSet(), kwargs...) where {F}
     has_dir_nodes = has_dirichlet_nodes(prob)
     dir_callback = dirichlet_callback(f, !isempty(saveat), has_dir_nodes)
     cb = CallbackSet(dir_callback, callback)
     return cb
 end
 
-function SciMLBase.ODEProblem(prob::Union{FVMProblem,FVMSystem};
-    specialization::Type{S}=SciMLBase.AutoSpecialize,
-    jac_prototype=jacobian_sparsity(prob),
-    parallel::Val{B}=Val(true),
-    kwargs...) where {S,B}
+function SciMLBase.ODEProblem(prob::Union{FVMProblem, FVMSystem};
+        specialization::Type{S} = SciMLBase.AutoSpecialize,
+        jac_prototype = jacobian_sparsity(prob),
+        parallel::Val{B} = Val(true),
+        kwargs...) where {S, B}
     initial_time = prob.initial_time
     final_time = prob.final_time
     time_span = (initial_time, final_time)
     initial_condition = prob.initial_condition
     cb = get_dirichlet_callback(prob; kwargs...)
-    f = ODEFunction{true,S}(fvm_eqs!; jac_prototype)
+    f = ODEFunction{true, S}(fvm_eqs!; jac_prototype)
     p = get_fvm_parameters(prob, parallel)
-    ode_problem = ODEProblem{true,S}(f, initial_condition, time_span, p; callback=cb)
+    ode_problem = ODEProblem{true, S}(f, initial_condition, time_span, p; callback = cb)
     return ode_problem
 end
 
 function SciMLBase.SteadyStateProblem(prob::SteadyFVMProblem;
-    specialization::Type{S}=SciMLBase.AutoSpecialize,
-    jac_prototype=jacobian_sparsity(prob),
-    parallel::Val{B}=Val(true),
-    kwargs...) where {S,B}
+        specialization::Type{S} = SciMLBase.AutoSpecialize,
+        jac_prototype = jacobian_sparsity(prob),
+        parallel::Val{B} = Val(true),
+        kwargs...) where {S, B}
     ode_prob = ODEProblem(prob.problem; specialization, jac_prototype, parallel, kwargs...)
     nl_prob = SteadyStateProblem{true}(ode_prob.f, ode_prob.u0, ode_prob.p; ode_prob.kwargs...)
     return nl_prob
 end
 
-function CommonSolve.init(prob::Union{FVMProblem,FVMSystem}, args...;
-    specialization::Type{S}=SciMLBase.AutoSpecialize,
-    jac_prototype=jacobian_sparsity(prob),
-    parallel::Val{B}=Val(true),
-    kwargs...) where {S,B}
-    ode_prob = SciMLBase.ODEProblem(prob; specialization, jac_prototype, parallel, kwargs...)
+function CommonSolve.init(prob::Union{FVMProblem, FVMSystem}, args...;
+        specialization::Type{S} = SciMLBase.AutoSpecialize,
+        jac_prototype = jacobian_sparsity(prob),
+        parallel::Val{B} = Val(true),
+        kwargs...) where {S, B}
+    ode_prob = SciMLBase.ODEProblem(
+        prob; specialization, jac_prototype, parallel, kwargs...)
     return CommonSolve.init(ode_prob, args...; kwargs...)
 end
 function CommonSolve.solve(prob::SteadyFVMProblem, args...;
-    specialization::Type{S}=SciMLBase.AutoSpecialize,
-    jac_prototype=jacobian_sparsity(prob),
-    parallel::Val{B}=Val(true),
-    kwargs...) where {S,B}
-    nl_prob = SciMLBase.SteadyStateProblem(prob; specialization, jac_prototype, parallel, kwargs...)
+        specialization::Type{S} = SciMLBase.AutoSpecialize,
+        jac_prototype = jacobian_sparsity(prob),
+        parallel::Val{B} = Val(true),
+        kwargs...) where {S, B}
+    nl_prob = SciMLBase.SteadyStateProblem(
+        prob; specialization, jac_prototype, parallel, kwargs...)
     return CommonSolve.solve(nl_prob, args...; kwargs...)
 end
-
 
 @doc """
     solve(prob::Union{FVMProblem,FVMSystem}, alg; 
@@ -237,7 +241,7 @@ In this case, `sol::ODESolution` is such that the `i`th component of `sol` refer
 - [`FVMSystem`](@ref)
 
 In this case, the `(j, i)`th component of `sol::ODESolution` refers to the `i`th node of the underlying mesh for the `j`th component of the system.
-""" solve(::Union{FVMProblem,FVMSystem}, ::Any; kwargs...)
+""" solve(::Union{FVMProblem, FVMSystem}, ::Any; kwargs...)
 
 @doc """
     solve(prob::SteadyFVMProblem, alg; 

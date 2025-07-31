@@ -5,23 +5,24 @@
 This is a struct for holding the properties of a control volume's intersection with a triangle.
 
 # Fields
-- `shape_function_coefficients::NTuple{9,Float64}`: The shape function coefficients for the triangle.
-- `cv_edge_midpoints::NTuple{3,NTuple{2,Float64}}`: The midpoints of the control volume edges. If the triangle is `(i, j, k)`, then the edges are given in the order `(i, j)`, `(j, k)`, and `(k, i)`, where 'edge' refers to the edge joining e.g. the midpoint of the edge `(i, j)` to the centroid of the triangle. 
-- `cv_edge_normals::NTuple{3,NTuple{2,Float64}}`: The normal vectors to the control volume edges, in the same order as in `cv_edge_midpoints`.
-- `cv_edge_lengths::NTuple{3,Float64}`: The lengths of the control volume edges, in the same order as in `cv_edge_midpoints`.
 
-!!! notes 
+  - `shape_function_coefficients::NTuple{9,Float64}`: The shape function coefficients for the triangle.
+  - `cv_edge_midpoints::NTuple{3,NTuple{2,Float64}}`: The midpoints of the control volume edges. If the triangle is `(i, j, k)`, then the edges are given in the order `(i, j)`, `(j, k)`, and `(k, i)`, where 'edge' refers to the edge joining e.g. the midpoint of the edge `(i, j)` to the centroid of the triangle.
+  - `cv_edge_normals::NTuple{3,NTuple{2,Float64}}`: The normal vectors to the control volume edges, in the same order as in `cv_edge_midpoints`.
+  - `cv_edge_lengths::NTuple{3,Float64}`: The lengths of the control volume edges, in the same order as in `cv_edge_midpoints`.
+
+!!! notes
 
     The shape function coefficients are defined so that, if `s` are the coefficients and the triangle is `T = (i, j, k)`,
-    with function values `u[i]`, `u[j]`, and `u[k]` at the vertices `i`, `j`, and `k`, respectively, 
-    then `αxₙ + βyₙ + γₙ = u[n]` for `n = i, j, k`, where `xₙ` and `yₙ` are the `x`- and `y`-coordinates of the `n`th vertex, respectively, 
+    with function values `u[i]`, `u[j]`, and `u[k]` at the vertices `i`, `j`, and `k`, respectively,
+    then `αxₙ + βyₙ + γₙ = u[n]` for `n = i, j, k`, where `xₙ` and `yₙ` are the `x`- and `y`-coordinates of the `n`th vertex, respectively,
     `α = s₁u₁ + s₂u₂ + s₃u₃`, `β = s₄u₁ + s₅u₂ + s₆u₃`, and `γ = s₇u₁ + s₈u₂ + s₉u₃`.
 """
 struct TriangleProperties
-    shape_function_coefficients::NTuple{9,Float64}
-    cv_edge_midpoints::NTuple{3,NTuple{2,Float64}}
-    cv_edge_normals::NTuple{3,NTuple{2,Float64}}
-    cv_edge_lengths::NTuple{3,Float64}
+    shape_function_coefficients::NTuple{9, Float64}
+    cv_edge_midpoints::NTuple{3, NTuple{2, Float64}}
+    cv_edge_normals::NTuple{3, NTuple{2, Float64}}
+    cv_edge_lengths::NTuple{3, Float64}
 end
 
 """
@@ -30,19 +31,21 @@ end
 This is a constructor for the [`FVMGeometry`](@ref) struct, which holds the mesh and associated data for the PDE.
 
 !!! note
+
     It is assumed that all vertices in `tri` are in the triangulation, meaning `v` is in `tri` for each `v` in `DelaunayTriangulation.each_point_index(tri)`.
 
-# Fields 
-- `triangulation`: The underlying `Triangulation` from DelaunayTriangulation.jl.
-- `triangulation_statistics`: The statistics of the triangulation. 
-- `cv_volumes::Vector{Float64}`: A `Vector` of the volumes of each control volume.
-- `triangle_props::Dict{NTuple{3,Int},TriangleProperties}`: A `Dict` mapping the indices of each triangle to its [`TriangleProperties`].
+# Fields
+
+  - `triangulation`: The underlying `Triangulation` from DelaunayTriangulation.jl.
+  - `triangulation_statistics`: The statistics of the triangulation.
+  - `cv_volumes::Vector{Float64}`: A `Vector` of the volumes of each control volume.
+  - `triangle_props::Dict{NTuple{3,Int},TriangleProperties}`: A `Dict` mapping the indices of each triangle to its [`TriangleProperties`].
 """
-struct FVMGeometry{T,S}
+struct FVMGeometry{T, S}
     triangulation::T
     triangulation_statistics::S
     cv_volumes::Vector{Float64}
-    triangle_props::Dict{NTuple{3,Int},TriangleProperties}
+    triangle_props::Dict{NTuple{3, Int}, TriangleProperties}
 end
 function Base.show(io::IO, ::MIME"text/plain", geo::FVMGeometry)
     nv = DelaunayTriangulation.num_solid_vertices(geo.triangulation_statistics)
@@ -55,7 +58,8 @@ end
 
 Get the [`TriangleProperties`](@ref) for the triangle `(i, j, k)` in `mesh`.
 """
-get_triangle_props(mesh::FVMGeometry, i, j, k) = mesh.triangle_props[(i, j, k)]
+get_triangle_props(mesh::FVMGeometry, i, j, k) = mesh.triangle_props[(
+    i, j, k)]
 
 """
     get_volume(mesh, i)
@@ -69,7 +73,9 @@ get_volume(mesh::FVMGeometry, i) = mesh.cv_volumes[i]
 
 Get the `i`th point in `mesh`.
 """
-DelaunayTriangulation.get_point(mesh::FVMGeometry, i) = DelaunayTriangulation.get_point(mesh.triangulation, i)
+function DelaunayTriangulation.get_point(mesh::FVMGeometry, i)
+    DelaunayTriangulation.get_point(mesh.triangulation, i)
+end
 
 #=
 function build_vertex_map(tri::Triangulation)
@@ -92,7 +98,7 @@ function FVMGeometry(tri::Triangulation)
     nn = DelaunayTriangulation.num_points(tri)
     nt = num_solid_triangles(stats)
     cv_volumes = zeros(nn)
-    triangle_props = Dict{NTuple{3,Int},TriangleProperties}()
+    triangle_props = Dict{NTuple{3, Int}, TriangleProperties}()
     sizehint!(cv_volumes, nn)
     sizehint!(triangle_props, nt)
     for T in each_solid_triangle(tri)
@@ -151,7 +157,9 @@ function FVMGeometry(tri::Triangulation)
         n₂x, n₂y = e₂y / ℓ₂, -e₂x / ℓ₂
         n₃x, n₃y = e₃y / ℓ₃, -e₃x / ℓ₃
         ## Now construct the TriangleProperties
-        triangle_props[triangle_vertices(T)] = TriangleProperties(shape_function_coefficients, ((m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy)), ((n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)), (ℓ₁, ℓ₂, ℓ₃))
+        triangle_props[triangle_vertices(T)] = TriangleProperties(
+            shape_function_coefficients, ((m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy)),
+            ((n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)), (ℓ₁, ℓ₂, ℓ₃))
     end
     return FVMGeometry(tri, stats, cv_volumes, triangle_props)
 end

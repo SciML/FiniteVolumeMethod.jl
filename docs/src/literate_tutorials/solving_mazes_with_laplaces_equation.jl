@@ -25,7 +25,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # looks like, where the start is in blue and the end is in red.
 using DelaunayTriangulation, CairoMakie, DelimitedFiles
 A = readdlm(joinpath(@__DIR__, "../tutorials/maze.txt"))
-A = unique(A, dims=1)
+A = unique(A, dims = 1)
 x = A[1:10:end, 2] # downsample to make the problem faster
 y = A[1:10:end, 1]
 start = findall(y .== 648)
@@ -47,10 +47,10 @@ tri = triangulate(points; boundary_nodes) # takes a while because maze.txt conta
 refine!(tri)
 
 fig, ax, sc, = triplot(tri,
-    show_convex_hull=false,
-    show_constrained_edges=false)
-lines!(ax, [get_point(tri, get_boundary_nodes(tri, 1)...)...], color=:blue, linewidth=6)
-lines!(ax, [get_point(tri, get_boundary_nodes(tri, 3)...)...], color=:red, linewidth=6)
+    show_convex_hull = false,
+    show_constrained_edges = false)
+lines!(ax, [get_point(tri, get_boundary_nodes(tri, 1)...)...], color = :blue, linewidth = 6)
+lines!(ax, [get_point(tri, get_boundary_nodes(tri, 3)...)...], color = :red, linewidth = 6)
 fig
 
 # Now we can solve the problem. 
@@ -67,27 +67,27 @@ diffusion_function = (x, y, t, u, p) -> one(u)
 initial_condition = 0.05randn(StableRNG(123), DelaunayTriangulation.num_points(tri)) # random initial condition - this is the initial guess for the solution
 final_time = Inf
 prob = FVMProblem(mesh, BCs;
-    diffusion_function=diffusion_function,
-    initial_condition=initial_condition,
-    final_time=final_time)
+    diffusion_function = diffusion_function,
+    initial_condition = initial_condition,
+    final_time = final_time)
 steady_prob = SteadyFVMProblem(prob)
 
 #-
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization(), autodiff=false)))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization(), autodiff = false)))
 sol |> tc #hide
 
 # We now have our solution. 
-tricontourf(tri, sol.u, colormap=:matter)
+tricontourf(tri, sol.u, colormap = :matter)
 
 # This is not what we use to compute the solution to the maze,
 # instead we need $\grad\phi$. We compute the gradient at each point using 
 # NaturalNeighbours.jl. 
 using NaturalNeighbours, LinearAlgebra
-itp = interpolate(tri, sol.u; derivatives=true)
+itp = interpolate(tri, sol.u; derivatives = true)
 ∇ = NaturalNeighbours.get_gradient(itp)
 ∇norms = norm.(∇)
-tricontourf(tri, ∇norms, colormap=:matter)
+tricontourf(tri, ∇norms, colormap = :matter)
 
 # The solution to the maze is now extremely clear from this plot!
 
@@ -97,19 +97,22 @@ tricontourf(tri, ∇norms, colormap=:matter)
 using Accessors
 prob = @set prob.final_time = 1e8
 LogRange(a, b, n) = exp10.(LinRange(log10(a), log10(b), n))
-sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=LogRange(1e2, prob.final_time, 24 * 10))
+sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = LogRange(1e2, prob.final_time, 24 *
+                                                                                                 10))
 all_∇norms = map(sol.u) do u
-    itp = interpolate(tri, u; derivatives=true)
+    itp = interpolate(tri, u; derivatives = true)
     ∇ = NaturalNeighbours.get_gradient(itp)
     norm.(∇)
 end
 i = Observable(1)
 ∇norms = map(i -> all_∇norms[i], i)
-fig, ax, sc = tricontourf(tri, ∇norms, colormap=:matter, levels=LinRange(0, 0.0035, 25), extendlow=:auto, extendhigh=:auto)
+fig, ax,
+sc = tricontourf(tri, ∇norms, colormap = :matter, levels = LinRange(0, 0.0035, 25),
+    extendlow = :auto, extendhigh = :auto)
 hidedecorations!(ax)
 tightlimits!(ax)
 record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol);
-    framerate=24) do _i
+    framerate = 24) do _i
     i[] = _i
 end;
 # ![Animation of the solution of the maze](../figures/maze_solution_1.mp4)
