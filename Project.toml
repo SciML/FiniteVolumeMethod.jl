@@ -14,7 +14,7 @@ SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-ChunkSplitters = "0.1, 1.0, 2.0"
+ChunkSplitters = "0.1, 1.0, 2.0, 3.1"
 CommonSolve = "0.2"
 DelaunayTriangulation = "1.0"
 PreallocationTools = "0.4"
