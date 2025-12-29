@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload the resutls
         if: always()
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           files: lcov.info
   docs:
