@@ -1,13 +1,24 @@
 module FiniteVolumeMethod
 
-using DelaunayTriangulation
-using PreallocationTools
-using LinearAlgebra
-using SparseArrays
-using SciMLBase
+using ChunkSplitters: ChunkSplitters, chunks
+using CommonSolve: CommonSolve
+using DelaunayTriangulation: DelaunayTriangulation, Triangulation,
+    add_ghost_triangles!,
+    convert_boundary_points_to_indices,
+    delete_ghost_triangles!, each_solid_triangle,
+    each_solid_vertex, get_adjacent, get_area,
+    get_boundary_edge_map, get_boundary_nodes,
+    get_ghost_vertex_map, get_neighbours, get_point,
+    getxy, lock_convex_hull!, num_boundary_edges,
+    num_solid_triangles, refine!, statistics,
+    triangle_vertices, triangulate,
+    triangulate_rectangle, unlock_convex_hull!
+using LinearAlgebra: LinearAlgebra, norm
+using PreallocationTools: PreallocationTools, DiffCache, get_tmp
+using SciMLBase: SciMLBase, CallbackSet, DiscreteCallback, LinearProblem,
+    MatrixOperator, ODEFunction, ODEProblem, SteadyStateProblem
+using SparseArrays: SparseArrays, sparse
 using Base.Threads
-using ChunkSplitters
-using CommonSolve
 
 include("geometry.jl")
 include("conditions.jl")
@@ -40,7 +51,7 @@ export FVMGeometry,
        compute_flux,
        pl_interpolate
 
-using PrecompileTools
+using PrecompileTools: PrecompileTools, @compile_workload, @setup_workload
 @setup_workload begin
     @compile_workload begin
         # Compile a non-steady problem 
