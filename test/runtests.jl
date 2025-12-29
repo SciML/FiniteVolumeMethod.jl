@@ -95,4 +95,8 @@ end
         Aqua.test_all(FiniteVolumeMethod; ambiguities = false, project_extras = false) # don't care about julia < 1.2
         Aqua.test_ambiguities(FiniteVolumeMethod) # don't pick up Base and Core...
     end
+
+    @testset verbose = true "Explicit Imports" begin
+        safe_include("explicit_imports.jl")
+    end
 end
