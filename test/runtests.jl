@@ -91,6 +91,10 @@ end
         safe_include(joinpath(dir, file_names[5]); name = file_names[5]) # laplaces_equation
     end
 
+    @testset verbose = true "ModelingToolkit Integration" begin
+        safe_include("mtk_integration.jl")
+    end
+
     @testset verbose = true "Aqua" begin
         Aqua.test_all(FiniteVolumeMethod; ambiguities = false, project_extras = false) # don't care about julia < 1.2
         Aqua.test_ambiguities(FiniteVolumeMethod) # don't pick up Base and Core...

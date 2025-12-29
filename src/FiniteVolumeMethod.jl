@@ -24,8 +24,10 @@ include("solve.jl")
 include("utils.jl")
 
 include("specific_problems/abstract_templates.jl")
+include("mtk_discretization.jl")
 
 export FVMGeometry,
+       FVMDiscretization,
        FVMProblem,
        FVMSystem,
        SteadyFVMProblem,

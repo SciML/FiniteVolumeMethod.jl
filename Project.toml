@@ -13,13 +13,24 @@ PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
+[weakdeps]
+DomainSets = "5b8099bc-c8ec-5219-889f-1d9e522a28bf"
+ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+
+[extensions]
+FiniteVolumeMethodModelingToolkitExt = ["DomainSets", "ModelingToolkit", "Symbolics"]
+
 [compat]
 ChunkSplitters = "0.1, 1.0, 2.0"
 CommonSolve = "0.2"
 DelaunayTriangulation = "1.0"
+DomainSets = "0.6, 0.7"
+ModelingToolkit = "9, 10"
 PreallocationTools = "0.4"
 PrecompileTools = "1.2"
 SciMLBase = "1, 2"
+Symbolics = "5, 6"
 julia = "1"
 
 [extras]
