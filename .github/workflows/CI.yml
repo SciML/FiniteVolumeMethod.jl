@@ -35,7 +35,7 @@ jobs:
           sudo swapon /swapfile
           sudo swapon --show      
       - name: Checkout repository for access
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@v2
@@ -76,7 +76,7 @@ jobs:
           sudo mkswap /swapfile
           sudo swapon /swapfile
           sudo swapon --show      
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
