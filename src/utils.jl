@@ -10,7 +10,7 @@ function _safe_get_triangle_props(mesh::FVMGeometry, T)
     end
 end
 function _safe_get_triangle_props(prob::AbstractFVMProblem, T)
-    _safe_get_triangle_props(prob.mesh, T)
+    return _safe_get_triangle_props(prob.mesh, T)
 end
 
 """

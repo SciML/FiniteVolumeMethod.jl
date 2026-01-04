@@ -52,17 +52,19 @@ struct PoissonsEquation{M, C, D, DP, S, SP, A, B, ODE} <: AbstractFVMTemplate
 end
 function Base.show(io::IO, ::MIME"text/plain", prob::PoissonsEquation)
     nv = DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation)
-    print(io, "PoissonsEquation with $(nv) nodes")
+    return print(io, "PoissonsEquation with $(nv) nodes")
 end
 
-function PoissonsEquation(mesh::FVMGeometry,
+function PoissonsEquation(
+        mesh::FVMGeometry,
         BCs::BoundaryConditions,
         ICs::InternalConditions = InternalConditions();
         diffusion_function = (x, y, p) -> 1.0,
         diffusion_parameters = nothing,
         source_function,
         source_parameters = nothing,
-        kwargs...)
+        kwargs...
+    )
     conditions = Conditions(mesh, BCs, ICs)
     has_dudt_nodes(conditions) &&
         throw(ArgumentError("PoissonsEquation does not support Dudt nodes."))
@@ -71,13 +73,16 @@ function PoissonsEquation(mesh::FVMGeometry,
     b = create_rhs_b(mesh, conditions, source_function, source_parameters)
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     boundary_edge_contributions!(
-        A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+        A, b, mesh, conditions, diffusion_function, diffusion_parameters
+    )
     apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
     fix_missing_vertices!(A, b, mesh)
     Asp = sparse(A)
     prob = LinearProblem(Asp, b; kwargs...)
-    return PoissonsEquation(mesh, conditions,
+    return PoissonsEquation(
+        mesh, conditions,
         diffusion_function, diffusion_parameters,
         source_function, source_parameters,
-        Asp, b, prob)
+        Asp, b, prob
+    )
 end

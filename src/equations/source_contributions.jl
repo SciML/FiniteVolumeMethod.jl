@@ -24,14 +24,15 @@ end
     else # Dudt
         function_index = get_dudt_fidx(prob, i, var)
         S = @views eval_condition_fnc(prob, function_index, var, x, y, t, u[:, i]) *
-                   one(eltype(T))
+            one(eltype(T))
     end
     return S
 end
 
 # add on the final source term for a single node for a non-system
 @inline function fvm_eqs_single_source_contribution!(
-        du, u::T, prob::AbstractFVMProblem, t, i) where {T}
+        du, u::T, prob::AbstractFVMProblem, t, i
+    ) where {T}
     if !DelaunayTriangulation.has_vertex(prob.mesh.triangulation, i)
         du[i] = zero(eltype(T))
     else
@@ -47,7 +48,8 @@ end
 
 # add on the final source term for a single node for a system for all variables
 @inline function fvm_eqs_single_source_contribution!(
-        du, u::T, prob::FVMSystem, t, i) where {T}
+        du, u::T, prob::FVMSystem, t, i
+    ) where {T}
     if !DelaunayTriangulation.has_vertex(prob.mesh.triangulation, i)
         for var in 1:_neqs(prob)
             du[var, i] = zero(eltype(T))
