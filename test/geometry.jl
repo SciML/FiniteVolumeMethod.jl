@@ -53,7 +53,7 @@ for tri in (example_tri(), example_tri_rect())
         @test collect(cij_mid) ≈ collect(m1)
         @test collect(cjk_mid) ≈ collect(m2)
         @test collect(cki_mid) ≈ collect(m3)
-        # The edge normals 
+        # The edge normals
         e1 = centroid .- ij_mid
         e2 = centroid .- jk_mid
         e3 = centroid .- ki_mid
@@ -64,7 +64,7 @@ for tri in (example_tri(), example_tri_rect())
         @test collect(n1) ≈ collect(nn1)
         @test collect(n2) ≈ collect(nn2)
         @test collect(n3) ≈ collect(nn3)
-        # The edge lengths 
+        # The edge lengths
         ℓ1 = norm(e1)
         ℓ2 = norm(e2)
         ℓ3 = norm(e3)

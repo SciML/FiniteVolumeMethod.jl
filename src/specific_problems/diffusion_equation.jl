@@ -63,10 +63,11 @@ function Base.show(io::IO, ::MIME"text/plain", prob::DiffusionEquation)
     nv = DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation)
     t0 = prob.initial_time
     tf = prob.final_time
-    print(io, "DiffusionEquation with $(nv) nodes and time span ($t0, $tf)")
+    return print(io, "DiffusionEquation with $(nv) nodes and time span ($t0, $tf)")
 end
 
-function DiffusionEquation(mesh::FVMGeometry,
+function DiffusionEquation(
+        mesh::FVMGeometry,
         BCs::BoundaryConditions,
         ICs::InternalConditions = InternalConditions();
         diffusion_function,
@@ -74,7 +75,8 @@ function DiffusionEquation(mesh::FVMGeometry,
         initial_condition,
         initial_time = 0.0,
         final_time,
-        kwargs...)
+        kwargs...
+    )
     conditions = Conditions(mesh, BCs, ICs)
     n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
     Afull = zeros(n + 1, n + 1)
@@ -83,14 +85,17 @@ function DiffusionEquation(mesh::FVMGeometry,
     _ic = vcat(initial_condition, 1)
     triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
     boundary_edge_contributions!(
-        A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+        A, b, mesh, conditions, diffusion_function, diffusion_parameters
+    )
     apply_dudt_conditions!(b, mesh, conditions)
     apply_dirichlet_conditions!(_ic, mesh, conditions)
     fix_missing_vertices!(A, b, mesh)
     A_op = MatrixOperator(sparse(Afull))
     prob = ODEProblem(A_op, _ic, (initial_time, final_time); kwargs...)
-    return DiffusionEquation(mesh, conditions,
+    return DiffusionEquation(
+        mesh, conditions,
         diffusion_function, diffusion_parameters,
         initial_condition, initial_time, final_time,
-        sparse(A), b, A_op, prob)
+        sparse(A), b, A_op, prob
+    )
 end

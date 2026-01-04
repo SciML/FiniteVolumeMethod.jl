@@ -172,7 +172,7 @@ struct BoundaryConditions{F <: Tuple, C <: Tuple}
 end
 function Base.show(io::IO, ::MIME"text/plain", bc::BoundaryConditions)
     n = length(bc.functions)
-    if n > 1
+    return if n > 1
         print(io, "BoundaryConditions with $(n) boundary conditions with types $(bc.condition_types)")
     else
         print(io, "BoundaryConditions with $(n) boundary condition with type $(bc.condition_types[1])")
@@ -231,32 +231,40 @@ end
 function Base.show(io::IO, ::MIME"text/plain", ic::InternalConditions)
     nd = length(ic.dirichlet_nodes)
     ndt = length(ic.dudt_nodes)
-    print(io, "InternalConditions with $(nd) Dirichlet nodes and $(ndt) Dudt nodes")
+    return print(io, "InternalConditions with $(nd) Dirichlet nodes and $(ndt) Dudt nodes")
 end
 
-function BoundaryConditions(mesh::FVMGeometry, functions::Tuple, types::Tuple;
-        parameters::Tuple = ntuple(_ -> nothing, length(functions)))
+function BoundaryConditions(
+        mesh::FVMGeometry, functions::Tuple, types::Tuple;
+        parameters::Tuple = ntuple(_ -> nothing, length(functions))
+    )
     nbnd_idx = DelaunayTriangulation.num_ghost_vertices(mesh.triangulation_statistics)
     @assert length(functions) == nbnd_idx "The number of boundary conditions must be the same as the number of parts of the mesh's boundary."
     wrapped_functions = wrap_functions(functions, parameters)
     return BoundaryConditions(wrapped_functions, types)
 end
-function BoundaryConditions(mesh::FVMGeometry, functions::Function, types::ConditionType;
-        parameters = nothing)
+function BoundaryConditions(
+        mesh::FVMGeometry, functions::Function, types::ConditionType;
+        parameters = nothing
+    )
     return BoundaryConditions(mesh, (functions,), (types,), parameters = (parameters,))
 end
 
-@inline function InternalConditions(functions::Tuple = ();
+@inline function InternalConditions(
+        functions::Tuple = ();
         dirichlet_nodes::Dict{Int, Int} = Dict{Int, Int}(),
         dudt_nodes::Dict{Int, Int} = Dict{Int, Int}(),
-        parameters::Tuple = ntuple(_ -> nothing, length(functions)))
+        parameters::Tuple = ntuple(_ -> nothing, length(functions))
+    )
     wrapped_functions = wrap_functions(functions, parameters)
     return InternalConditions(dirichlet_nodes, dudt_nodes, wrapped_functions)
 end
-@inline function InternalConditions(functions::Function;
+@inline function InternalConditions(
+        functions::Function;
         dirichlet_nodes::Dict{Int, Int} = Dict{Int, Int}(),
         dudt_nodes::Dict{Int, Int} = Dict{Int, Int}(),
-        parameters = nothing)
+        parameters = nothing
+    )
     return InternalConditions((functions,); dirichlet_nodes, dudt_nodes, parameters = (parameters,))
 end
 
@@ -305,10 +313,13 @@ struct Conditions{F <: Tuple} <: AbstractConditions
     dirichlet_nodes::Dict{Int, Int}
     dudt_nodes::Dict{Int, Int}
     functions::F
-    @inline function Conditions(neumann_edges, constrained_edges, dirichlet_nodes,
-            dudt_nodes, functions::F) where {F}
+    @inline function Conditions(
+            neumann_edges, constrained_edges, dirichlet_nodes,
+            dudt_nodes, functions::F
+        ) where {F}
         return new{F}(
-            neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions)
+            neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions
+        )
     end
 end
 function Base.show(io::IO, ::MIME"text/plain", conds::AbstractConditions)
@@ -320,7 +331,7 @@ function Base.show(io::IO, ::MIME"text/plain", conds::AbstractConditions)
     println(io, "   $(nn) Neumann edges")
     println(io, "   $(nc) Constrained edges")
     println(io, "   $(nd) Dirichlet nodes")
-    print(io, "   $(ndt) Dudt nodes")
+    return print(io, "   $(ndt) Dudt nodes")
 end
 
 """
@@ -335,8 +346,11 @@ Get the index of the function that corresponds to the [`Dudt`](@ref) condition a
 
 Get the index of the function that corresponds to the [`Neumann`](@ref) condition at the edge `(i, j)`.
 """
-@inline get_neumann_fidx(conds::AbstractConditions, i, j) = conds.neumann_edges[(
-    i, j)]
+@inline get_neumann_fidx(conds::AbstractConditions, i, j) = conds.neumann_edges[
+    (
+        i, j,
+    ),
+]
 
 """
     get_dirichlet_fidx(conds, node)
@@ -350,8 +364,11 @@ Get the index of the function that corresponds to the [`Dirichlet`](@ref) condit
 
 Get the index of the function that corresponds to the [`Constrained`](@ref) condition at the edge `(i, j)`.
 """
-@inline get_constrained_fidx(conds::AbstractConditions, i, j) = conds.constrained_edges[(
-    i, j)]
+@inline get_constrained_fidx(conds::AbstractConditions, i, j) = conds.constrained_edges[
+    (
+        i, j,
+    ),
+]
 
 @inline get_f(conds::Conditions{F}, fidx) where {F} = conds.functions[fidx]
 
@@ -360,8 +377,10 @@ Get the index of the function that corresponds to the [`Constrained`](@ref) cond
 
 Evaluate the function that corresponds to the condition at `fidx` at the point `(x, y)` at time `t` with solution `u`.
 """
-@inline eval_condition_fnc(conds::Conditions, fidx, x, y, t,
-    u) = eval_fnc_in_het_tuple(conds.functions, fidx, x, y, t, u)
+@inline eval_condition_fnc(
+    conds::Conditions, fidx, x, y, t,
+    u
+) = eval_fnc_in_het_tuple(conds.functions, fidx, x, y, t, u)
 
 """
     is_dudt_node(conds, node)
@@ -374,8 +393,11 @@ Check if `node` has a [`Dudt`](@ref) condition.
 
 Check if the edge `(i, j)` has a [`Neumann`](@ref) condition.
 """
-@inline is_neumann_edge(conds::AbstractConditions, i, j) = haskey(conds.neumann_edges, (
-    i, j))
+@inline is_neumann_edge(conds::AbstractConditions, i, j) = haskey(
+    conds.neumann_edges, (
+        i, j,
+    )
+)
 
 """
     is_dirichlet_node(conds, node)
@@ -389,8 +411,11 @@ Check if `node` has a [`Dirichlet`](@ref) condition.
 
 Check if the edge `(i, j)` has a [`Constrained`](@ref) condition.
 """
-@inline is_constrained_edge(conds::AbstractConditions, i, j) = haskey(conds.constrained_edges, (
-    i, j))
+@inline is_constrained_edge(conds::AbstractConditions, i, j) = haskey(
+    conds.constrained_edges, (
+        i, j,
+    )
+)
 
 """
     has_constrained_edges(conds)
@@ -412,8 +437,9 @@ Check if any edge has a [`Neumann`](@ref) condition.
 Check if `node` has any condition.
 """
 @inline has_condition(
-    conds::AbstractConditions, node) = is_dudt_node(conds, node) ||
-                                       is_dirichlet_node(conds, node)
+    conds::AbstractConditions, node
+) = is_dudt_node(conds, node) ||
+    is_dirichlet_node(conds, node)
 
 """
     has_dirichlet_nodes(conds)
@@ -472,7 +498,8 @@ Get all edges that have a [`Constrained`](@ref) condition.
     sizehint!(dudt_nodes, nv)
     functions = (ic_functions..., bc_functions...)
     conditions = Conditions(
-        neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions)
+        neumann_edges, constrained_edges, dirichlet_nodes, dudt_nodes, functions
+    )
     return conditions
 end
 
@@ -499,11 +526,11 @@ function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditi
             elseif condition == Dirichlet
                 conditions.dirichlet_nodes[u] = updated_bc_number
                 conditions.dirichlet_nodes[v] = updated_bc_number
-            else # Dudt 
-                # Strictly speaking, we do need to take care that no Dudt 
-                # nodes are also assigned as Dirichlet nodes, since 
-                # Dirichlet conditions take precedence over Dudt conditions. 
-                # However, in the code we also defend against this by checking 
+            else # Dudt
+                # Strictly speaking, we do need to take care that no Dudt
+                # nodes are also assigned as Dirichlet nodes, since
+                # Dirichlet conditions take precedence over Dudt conditions.
+                # However, in the code we also defend against this by checking
                 # for Dirichlet first, so this check is not _technically_
                 # needed at all.
                 conditions.dudt_nodes[u] = updated_bc_number
@@ -517,7 +544,8 @@ function merge_conditions!(conditions::Conditions, mesh::FVMGeometry, bc_conditi
 end
 
 @inline function Conditions(
-        mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions = InternalConditions())
+        mesh::FVMGeometry, bc::BoundaryConditions, ic::InternalConditions = InternalConditions()
+    )
     conditions = prepare_conditions(mesh, bc, ic)
     merge_conditions!(conditions, mesh, bc.condition_types, length(ic.functions))
     return conditions

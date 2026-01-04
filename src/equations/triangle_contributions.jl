@@ -44,17 +44,20 @@ end
 
 # get the contributions to the dudt system across all triangles in parallel
 function get_parallel_triangle_contributions!(
-        duplicated_du, u, prob, t, chunked_solid_triangles, solid_triangles)
+        duplicated_du, u, prob, t, chunked_solid_triangles, solid_triangles
+    )
     Threads.@threads for (triangle_range, chunk_idx) in chunked_solid_triangles
         _get_parallel_triangle_contributions!(
-            duplicated_du, u, prob, t, triangle_range, chunk_idx, solid_triangles)
+            duplicated_du, u, prob, t, triangle_range, chunk_idx, solid_triangles
+        )
     end
     return nothing
 end
 
 # get the contributions to the dudt system across a chunk of triangles
 function _get_parallel_triangle_contributions!(
-        duplicated_du, u, prob, t, triangle_range, chunk_idx, solid_triangles)
+        duplicated_du, u, prob, t, triangle_range, chunk_idx, solid_triangles
+    )
     for triangle_idx in triangle_range
         T = solid_triangles[triangle_idx]
         if prob isa FVMSystem

@@ -38,17 +38,17 @@ fig #hide
 # Let us start by defining the mesh.
 using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
 A, B,
-C,
-D,
-E,
-F,
-G = (0.0, 0.0),
-(0.06, 0.0),
-(0.06, 0.03),
-(0.05, 0.03),
-(0.03, 0.05),
-(0.03, 0.06),
-(0.0, 0.06)
+    C,
+    D,
+    E,
+    F,
+    G = (0.0, 0.0),
+    (0.06, 0.0),
+    (0.06, 0.03),
+    (0.05, 0.03),
+    (0.03, 0.05),
+    (0.03, 0.06),
+    (0.0, 0.06)
 bn1 = [G, A, B]
 bn2 = [B, C]
 bn3 = [C, D, E, F]
@@ -56,44 +56,48 @@ bn4 = [F, G]
 bn = [bn1, bn2, bn3, bn4]
 boundary_nodes, points = convert_boundary_points_to_indices(bn)
 tri = triangulate(points; boundary_nodes)
-refine!(tri; max_area = 1e-4get_area(tri))
+refine!(tri; max_area = 1.0e-4get_area(tri))
 triplot(tri)
 
 #-
 mesh = FVMGeometry(tri)
 
-# For the boundary conditions, the parameters that we use are 
-# $k = 3$, $h = 20$, and $T_{\infty} = 20$ for thermal conductivity, 
+# For the boundary conditions, the parameters that we use are
+# $k = 3$, $h = 20$, and $T_{\infty} = 20$ for thermal conductivity,
 # heat transfer coefficient, and ambient temperature, respectively.
 k = 3.0
 h = 20.0
 T∞ = 20.0
-bc1 = (x, y, t, T, p) -> zero(T) # ∇T⋅n=0 
+bc1 = (x, y, t, T, p) -> zero(T) # ∇T⋅n=0
 bc2 = (x, y, t, T, p) -> oftype(T, 40.0) # T=40
-bc3 = (x, y, t, T, p) -> -p.h * (p.T∞ - T) / p.k # k∇T⋅n=h(T∞-T). The minus is since q = -∇T 
+bc3 = (x, y, t, T, p) -> -p.h * (p.T∞ - T) / p.k # k∇T⋅n=h(T∞-T). The minus is since q = -∇T
 bc4 = (x, y, t, T, p) -> oftype(T, 70.0) # T=70
 parameters = (nothing, nothing, (h = h, T∞ = T∞, k = k), nothing)
-BCs = BoundaryConditions(mesh, (bc1, bc2, bc3, bc4),
+BCs = BoundaryConditions(
+    mesh, (bc1, bc2, bc3, bc4),
     (Neumann, Dirichlet, Neumann, Dirichlet);
-    parameters)
+    parameters
+)
 
-# Now we can define the actual problem. For the initial condition, 
-# which recall is used as an initial guess for steady state problems, 
+# Now we can define the actual problem. For the initial condition,
+# which recall is used as an initial guess for steady state problems,
 # let us use an initial condition which ranges from $T=70$ at $y=0.06$
 # down to $T=40$ at $y=0$.
 diffusion_function = (x, y, t, T, p) -> one(T)
 f = (x, y) -> 500y + 40
 initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = Inf
-prob = FVMProblem(mesh, BCs;
+prob = FVMProblem(
+    mesh, BCs;
     diffusion_function,
     initial_condition,
-    final_time)
+    final_time
+)
 
 #-
 steady_prob = SteadyFVMProblem(prob)
 
-# Now we can solve. 
+# Now we can solve.
 using OrdinaryDiffEq, SteadyStateDiffEq
 sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
 sol |> tc #hide
@@ -102,6 +106,8 @@ sol |> tc #hide
 fig, ax, sc = tricontourf(tri, sol.u, levels = 40:70, axis = (xlabel = "x", ylabel = "y"))
 fig
 using ReferenceTests #src
-@test_reference joinpath(@__DIR__,
+@test_reference joinpath(
+    @__DIR__,
     "../figures",
-    "equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.png") fig #src
+    "equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.png"
+) fig #src

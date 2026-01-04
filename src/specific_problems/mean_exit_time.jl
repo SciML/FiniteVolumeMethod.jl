@@ -51,15 +51,17 @@ struct MeanExitTimeProblem{M, C, D, DP, A, B, LP} <: AbstractFVMTemplate
 end
 function Base.show(io::IO, ::MIME"text/plain", prob::MeanExitTimeProblem)
     nv = DelaunayTriangulation.num_solid_vertices(prob.mesh.triangulation)
-    print(io, "MeanExitTimeProblem with $(nv) nodes")
+    return print(io, "MeanExitTimeProblem with $(nv) nodes")
 end
 
-function MeanExitTimeProblem(mesh::FVMGeometry,
+function MeanExitTimeProblem(
+        mesh::FVMGeometry,
         BCs::BoundaryConditions,
         ICs::InternalConditions = InternalConditions();
         diffusion_function,
         diffusion_parameters = nothing,
-        kwargs...)
+        kwargs...
+    )
     conditions = Conditions(mesh, BCs, ICs)
     has_dudt_nodes(conditions) &&
         throw(ArgumentError("MeanExitTimeProblem does not support Dudt nodes."))
@@ -72,9 +74,11 @@ function MeanExitTimeProblem(mesh::FVMGeometry,
     fix_missing_vertices!(A, b, mesh)
     Asp = sparse(A)
     prob = LinearProblem(Asp, b; kwargs...)
-    return MeanExitTimeProblem(mesh, conditions,
+    return MeanExitTimeProblem(
+        mesh, conditions,
         diffusion_function, diffusion_parameters,
-        Asp, b, prob)
+        Asp, b, prob
+    )
 end
 
 function create_met_b!(A, mesh, conditions)

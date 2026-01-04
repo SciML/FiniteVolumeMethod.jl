@@ -1,4 +1,4 @@
-# get the relevant quantities for a control volume edge not on the boundary 
+# get the relevant quantities for a control volume edge not on the boundary
 """
     get_cv_components(props, edge_index)
 

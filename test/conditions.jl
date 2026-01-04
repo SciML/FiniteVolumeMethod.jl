@@ -20,7 +20,8 @@ include("test_functions.jl")
     constrained_edges = NTuple{2, Float64}[]
     neumann_edges = NTuple{2, Float64}[]
     test_bc_conditions!(
-        tri, conds, t, dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges)
+        tri, conds, t, dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges
+    )
     fig, ax, sc = triplot(tri, show_constrained_edges = false)
     scatter!(ax, dudt_nodes, color = :green, markersize = 18)
     scatter!(ax, dirichlet_nodes, color = :red, markersize = 18)
@@ -36,13 +37,13 @@ end
     f, t, p, g, q, dirichlet_nodes, dudt_nodes = example_bc_ic_setup()
     BCs = BoundaryConditions(mesh, f, t; parameters = p)
     @test sprint(show, MIME"text/plain"(), BCs) ==
-          "BoundaryConditions with $(length(tri.ghost_vertex_ranges)) boundary conditions with types $(BCs.condition_types)"
+        "BoundaryConditions with $(length(tri.ghost_vertex_ranges)) boundary conditions with types $(BCs.condition_types)"
     ICs = InternalConditions(g; dirichlet_nodes, dudt_nodes, parameters = q)
     @test sprint(show, MIME"text/plain"(), ICs) ==
-          "InternalConditions with $(length(ICs.dirichlet_nodes)) Dirichlet nodes and $(length(ICs.dudt_nodes)) Dudt nodes"
+        "InternalConditions with $(length(ICs.dirichlet_nodes)) Dirichlet nodes and $(length(ICs.dudt_nodes)) Dudt nodes"
     conds = FVM.Conditions(mesh, BCs, ICs)
     @test sprint(show, MIME"text/plain"(), conds) ==
-          "Conditions with\n   $(length(conds.neumann_edges)) Neumann edges\n   $(length(conds.constrained_edges)) Constrained edges\n   $(length(conds.dirichlet_nodes)) Dirichlet nodes\n   $(length(conds.dudt_nodes)) Dudt nodes"
+        "Conditions with\n   $(length(conds.neumann_edges)) Neumann edges\n   $(length(conds.constrained_edges)) Constrained edges\n   $(length(conds.dirichlet_nodes)) Dirichlet nodes\n   $(length(conds.dudt_nodes)) Dudt nodes"
     @test FVM.get_f(conds, 1) == conds.functions[1]
     @test FVM.get_f(conds, 2) == conds.functions[2]
     @test BCs.condition_types == t
@@ -53,7 +54,8 @@ end
     constrained_edges = NTuple{2, Float64}[]
     neumann_edges = NTuple{2, Float64}[]
     test_bc_ic_conditions!(
-        tri, conds, t, dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges, ICs)
+        tri, conds, t, dirichlet_nodes, dudt_nodes, constrained_edges, neumann_edges, ICs
+    )
     fig, ax, sc = triplot(tri, show_constrained_edges = false)
     scatter!(ax, dudt_nodes, color = :green, markersize = 18)
     scatter!(ax, dirichlet_nodes, color = :red, markersize = 18)

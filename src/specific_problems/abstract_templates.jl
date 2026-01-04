@@ -56,7 +56,7 @@ Solve the problem `prob` using the standard `solve` interface from DifferentialE
 steady state problems, the interface is from LinearSolve.jl.
 """
 function CommonSolve.solve(prob::AbstractFVMTemplate, args...; kwargs...)
-    CommonSolve.solve(prob.problem, args...; kwargs...)
+    return CommonSolve.solve(prob.problem, args...; kwargs...)
 end
 
 @doc raw"""
@@ -71,7 +71,8 @@ as explained in the docs. Will not update any rows corresponding to
 [`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
 """
 function triangle_contributions!(
-        A, mesh, conditions, diffusion_function, diffusion_parameters)
+        A, mesh, conditions, diffusion_function, diffusion_parameters
+    )
     for T in each_solid_triangle(mesh.triangulation)
         ijk = triangle_vertices(T)
         i, j, k = ijk
@@ -81,9 +82,11 @@ function triangle_contributions!(
             x, y, nx, ny, ℓ = get_cv_components(props, edge_index)
             D = diffusion_function(x, y, diffusion_parameters)
             Dℓ = D * ℓ
-            a123 = (Dℓ * (s₁₁ * nx + s₂₁ * ny),
+            a123 = (
+                Dℓ * (s₁₁ * nx + s₂₁ * ny),
                 Dℓ * (s₁₂ * nx + s₂₂ * ny),
-                Dℓ * (s₁₃ * nx + s₂₃ * ny))
+                Dℓ * (s₁₃ * nx + s₂₃ * ny),
+            )
             e1_hascond = has_condition(conditions, e1)
             e2_hascond = has_condition(conditions, e2)
             for vert in 1:3
@@ -92,6 +95,7 @@ function triangle_contributions!(
             end
         end
     end
+    return
 end
 
 @doc raw"""
@@ -106,8 +110,10 @@ function apply_dirichlet_conditions!(initial_condition, mesh, conditions)
     for (i, function_index) in get_dirichlet_nodes(conditions)
         x, y = get_point(mesh, i)
         initial_condition[i] = eval_condition_fnc(
-            conditions, function_index, x, y, nothing, nothing)
+            conditions, function_index, x, y, nothing, nothing
+        )
     end
+    return
 end
 
 @doc raw"""
@@ -125,6 +131,7 @@ function apply_dudt_conditions!(b, mesh, conditions)
             b[i] = eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
         end
     end
+    return
 end
 
 @doc raw"""
@@ -139,12 +146,16 @@ Add the contributions from each boundary edge to the matrix `A`, based on the eq
 as explained in the docs. Will not update any rows corresponding to 
 [`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
 """
-function boundary_edge_contributions!(A, b, mesh, conditions,
-        diffusion_function, diffusion_parameters)
+function boundary_edge_contributions!(
+        A, b, mesh, conditions,
+        diffusion_function, diffusion_parameters
+    )
     non_neumann_boundary_edge_contributions!(
-        A, mesh, conditions, diffusion_function, diffusion_parameters) # this is split to make it easier to, in the future, support semilinear equations where the Neumann contributions do need to go into the nonlinear component
+        A, mesh, conditions, diffusion_function, diffusion_parameters
+    ) # this is split to make it easier to, in the future, support semilinear equations where the Neumann contributions do need to go into the nonlinear component
     neumann_boundary_edge_contributions!(
-        b, mesh, conditions, diffusion_function, diffusion_parameters)
+        b, mesh, conditions, diffusion_function, diffusion_parameters
+    )
     return nothing
 end
 
@@ -162,7 +173,8 @@ as explained in the docs. Will not update any rows corresponding to
 of the arguments `u` and `t` in the boundary condition functions.
 """
 function neumann_boundary_edge_contributions!(
-        b, mesh, conditions, diffusion_function, diffusion_parameters)
+        b, mesh, conditions, diffusion_function, diffusion_parameters
+    )
     for (e, fidx) in get_neumann_edges(conditions)
         i, j = DelaunayTriangulation.edge_vertices(e)
         _, _, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, _, _ = get_boundary_cv_components(mesh, i, j)
@@ -191,7 +203,8 @@ as explained in the docs. Will not update any rows corresponding to
 [`Dirichlet`](@ref) or [`Dudt`](@ref) nodes. 
 """
 function neumann_boundary_edge_contributions!(
-        F, mesh, conditions, diffusion_function, diffusion_parameters, u, t)
+        F, mesh, conditions, diffusion_function, diffusion_parameters, u, t
+    )
     for (e, fidx) in FVM.get_neumann_edges(conditions)
         i, j = DelaunayTriangulation.edge_vertices(e)
         _, _, mᵢx, mᵢy, mⱼx, mⱼy, ℓ, _, _ = FVM.get_boundary_cv_components(mesh, i, j)
@@ -222,7 +235,8 @@ as explained in the docs. Will not update any rows corresponding to
 [`Dirichlet`](@ref) or [`Dudt`](@ref) nodes.
 """
 function non_neumann_boundary_edge_contributions!(
-        A, mesh, conditions, diffusion_function, diffusion_parameters)
+        A, mesh, conditions, diffusion_function, diffusion_parameters
+    )
     for e in keys(get_boundary_edge_map(mesh.triangulation))
         i, j = DelaunayTriangulation.edge_vertices(e)
         if !is_neumann_edge(conditions, i, j)
@@ -233,12 +247,16 @@ function non_neumann_boundary_edge_contributions!(
             Dⱼ = diffusion_function(mⱼx, mⱼy, diffusion_parameters)
             i_hascond = has_condition(conditions, i)
             j_hascond = has_condition(conditions, j)
-            aᵢ123 = (Dᵢ * ℓ * (s₁₁ * nx + s₂₁ * ny),
+            aᵢ123 = (
+                Dᵢ * ℓ * (s₁₁ * nx + s₂₁ * ny),
                 Dᵢ * ℓ * (s₁₂ * nx + s₂₂ * ny),
-                Dᵢ * ℓ * (s₁₃ * nx + s₂₃ * ny))
-            aⱼ123 = (Dⱼ * ℓ * (s₁₁ * nx + s₂₁ * ny),
+                Dᵢ * ℓ * (s₁₃ * nx + s₂₃ * ny),
+            )
+            aⱼ123 = (
+                Dⱼ * ℓ * (s₁₁ * nx + s₂₁ * ny),
                 Dⱼ * ℓ * (s₁₂ * nx + s₂₂ * ny),
-                Dⱼ * ℓ * (s₁₃ * nx + s₂₃ * ny))
+                Dⱼ * ℓ * (s₁₃ * nx + s₂₃ * ny),
+            )
             for vert in 1:3
                 i_hascond || (A[i, ijk[vert]] += aᵢ123[vert] / get_volume(mesh, i))
                 j_hascond || (A[j, ijk[vert]] += aⱼ123[vert] / get_volume(mesh, i))
@@ -287,6 +305,7 @@ function apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
         b[i] = eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
         A[i, i] = 1.0
     end
+    return
 end
 
 @doc """

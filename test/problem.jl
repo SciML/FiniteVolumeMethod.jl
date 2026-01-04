@@ -12,11 +12,11 @@ include("test_functions.jl")
 
 @testset "Some generic tests" begin
     prob, tri, mesh, BCs, ICs,
-    flux_function, flux_parameters,
-    source_function, source_parameters,
-    initial_condition = example_problem()
+        flux_function, flux_parameters,
+        source_function, source_parameters,
+        initial_condition = example_problem()
     @test sprint(show, MIME"text/plain"(), prob) ==
-          "FVMProblem with $(DelaunayTriangulation.num_points(tri)) nodes and time span ($(prob.initial_time), $(prob.final_time))"
+        "FVMProblem with $(DelaunayTriangulation.num_points(tri)) nodes and time span ($(prob.initial_time), $(prob.final_time))"
     conds = FVM.Conditions(mesh, BCs, ICs)
     @test prob.mesh == mesh
     @test prob.conditions == conds
@@ -78,7 +78,7 @@ include("test_functions.jl")
     qy = x + t - β * u * p[2]
     steady = SteadyFVMProblem(prob)
     @test sprint(show, MIME"text/plain"(), steady) ==
-          "SteadyFVMProblem with $(DelaunayTriangulation.num_points(tri)) nodes"
+        "SteadyFVMProblem with $(DelaunayTriangulation.num_points(tri)) nodes"
     @inferred SteadyFVMProblem(prob)
     @test FVM.eval_flux_function(steady, x, y, t, α, β, γ) == (qx, qy)
     @inferred FVM.eval_flux_function(steady, x, y, t, α, β, γ)
@@ -86,16 +86,16 @@ include("test_functions.jl")
     @test !FVM.is_system(steady)
 
     prob1, prob2,
-    prob3,
-    prob4,
-    prob5 = example_problem(1; tri, mesh, initial_condition)[1],
-    example_problem(2; tri, mesh, initial_condition)[1],
-    example_problem(3; tri, mesh, initial_condition)[1],
-    example_problem(4; tri, mesh, initial_condition)[1],
-    example_problem(5; tri, mesh, initial_condition)[1]
+        prob3,
+        prob4,
+        prob5 = example_problem(1; tri, mesh, initial_condition)[1],
+        example_problem(2; tri, mesh, initial_condition)[1],
+        example_problem(3; tri, mesh, initial_condition)[1],
+        example_problem(4; tri, mesh, initial_condition)[1],
+        example_problem(5; tri, mesh, initial_condition)[1]
     system = FVMSystem(prob1, prob2, prob3, prob4, prob5)
     @test sprint(show, MIME"text/plain"(), system) ==
-          "FVMSystem with 5 equations and time span ($(system.initial_time), $(system.final_time))"
+        "FVMSystem with 5 equations and time span ($(system.initial_time), $(system.final_time))"
     @inferred FVMSystem(prob1, prob2, prob3, prob4, prob5)
     _α = ntuple(_ -> α, 5)
     _β = ntuple(_ -> β, 5)
@@ -103,7 +103,7 @@ include("test_functions.jl")
     @test FVM.eval_flux_function(system, x, y, t, _α, _β, _γ) == ntuple(_ -> (qx, qy), 5)
     @inferred FVM.eval_flux_function(system, x, y, t, _α, _β, _γ)
     @test system.initial_condition ≈
-          [initial_condition initial_condition initial_condition initial_condition initial_condition]'
+        [initial_condition initial_condition initial_condition initial_condition initial_condition]'
     @test FVM._neqs(system) == 5
     @test FVM.is_system(system)
     @test system.initial_time == 2.0
@@ -133,16 +133,18 @@ include("test_functions.jl")
     @test system.conditions[3].dudt_nodes == prob3.conditions.dudt_nodes
     @test system.conditions[4].dudt_nodes == prob4.conditions.dudt_nodes
     @test system.conditions[5].dudt_nodes == prob5.conditions.dudt_nodes
-    @test system.functions == (prob1.conditions.functions...,
+    @test system.functions == (
+        prob1.conditions.functions...,
         prob2.conditions.functions...,
         prob3.conditions.functions...,
         prob4.conditions.functions...,
-        prob5.conditions.functions...)
+        prob5.conditions.functions...,
+    )
 
     steady_system = SteadyFVMProblem(system)
     @inferred SteadyFVMProblem(system)
     @test FVM.eval_flux_function(steady_system, x, y, t, _α, _β, _γ) ==
-          ntuple(_ -> (qx, qy), 5)
+        ntuple(_ -> (qx, qy), 5)
     @inferred FVM.eval_flux_function(steady_system, x, y, t, _α, _β, _γ)
     @test FVM._neqs(steady_system) == 5
     @test FVM.is_system(steady_system)
@@ -190,10 +192,14 @@ end
     Ψ_exact = (x, y, t) -> exp(x + y + t / 2)
     Φ₀ = [Φ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)]
     Ψ₀ = [Ψ_exact(x, y, 0) for (x, y) in DelaunayTriangulation.each_point(tri)]
-    Φ_prob = FVMProblem(mesh, Φ_BCs; flux_function = Φ_q, source_function = Φ_S,
-        initial_condition = Φ₀, final_time = 5.0)
-    Ψ_prob = FVMProblem(mesh, Ψ_BCs; flux_function = Ψ_q, source_function = Ψ_S,
-        initial_condition = Ψ₀, final_time = 5.0)
+    Φ_prob = FVMProblem(
+        mesh, Φ_BCs; flux_function = Φ_q, source_function = Φ_S,
+        initial_condition = Φ₀, final_time = 5.0
+    )
+    Ψ_prob = FVMProblem(
+        mesh, Ψ_BCs; flux_function = Ψ_q, source_function = Ψ_S,
+        initial_condition = Ψ₀, final_time = 5.0
+    )
     prob = FVMSystem(Φ_prob, Ψ_prob)
 
     @test prob.mesh === mesh
@@ -202,10 +208,12 @@ end
     @test prob.final_time == 5.0
     cond1 = FVM.SimpleConditions(
         Φ_prob.conditions.neumann_edges, Φ_prob.conditions.constrained_edges,
-        Φ_prob.conditions.dirichlet_nodes, Φ_prob.conditions.dudt_nodes)
+        Φ_prob.conditions.dirichlet_nodes, Φ_prob.conditions.dudt_nodes
+    )
     cond2 = FVM.SimpleConditions(
         Ψ_prob.conditions.neumann_edges, Ψ_prob.conditions.constrained_edges,
-        Ψ_prob.conditions.dirichlet_nodes, Ψ_prob.conditions.dudt_nodes)
+        Ψ_prob.conditions.dirichlet_nodes, Ψ_prob.conditions.dudt_nodes
+    )
     syscond = (cond1, cond2)
     @test prob.conditions == syscond
     @test prob.cnum_fncs == (0, 4)
@@ -233,9 +241,9 @@ end
 
         x, y, t, u = rand(4)
         @test Φ_prob.conditions.functions[fidx](x, y, t, u) ==
-              prob.functions[fidx](x, y, t, u)
+            prob.functions[fidx](x, y, t, u)
         @test FVM.eval_condition_fnc(prob, fidx, 1, x, y, t, u) ==
-              prob.functions[fidx](x, y, t, u)
+            prob.functions[fidx](x, y, t, u)
         @inferred FVM.eval_condition_fnc(prob, fidx, 1, x, y, t, u)
 
         @test FVM.is_neumann_edge(prob, i, j, 1)
@@ -245,9 +253,9 @@ end
 
         x, y, t, u = rand(4)
         @test Ψ_prob.conditions.functions[fidx](x, y, t, u) ==
-              prob.functions[fidx + 4](x, y, t, u)
+            prob.functions[fidx + 4](x, y, t, u)
         @test FVM.eval_condition_fnc(prob, fidx, 2, x, y, t, u) ==
-              prob.functions[fidx + 4](x, y, t, u)
+            prob.functions[fidx + 4](x, y, t, u)
         @inferred FVM.eval_condition_fnc(prob, fidx, 2, x, y, t, u)
 
         @test FVM.is_neumann_edge(prob, i, j, 2)
@@ -257,9 +265,9 @@ end
 
         x, y, t, u = rand(4)
         @test Φ_prob.conditions.functions[fidx](x, y, t, u) ==
-              prob.functions[fidx](x, y, t, u)
+            prob.functions[fidx](x, y, t, u)
         @test FVM.eval_condition_fnc(prob, fidx, 1, x, y, t, u) ==
-              prob.functions[fidx](x, y, t, u)
+            prob.functions[fidx](x, y, t, u)
         @inferred FVM.eval_condition_fnc(prob, fidx, 1, x, y, t, u)
 
         @test FVM.is_dirichlet_node(prob, i, 1)
@@ -269,9 +277,9 @@ end
 
         x, y, t, u = rand(4)
         @test Ψ_prob.conditions.functions[fidx](x, y, t, u) ==
-              prob.functions[fidx + 4](x, y, t, u)
+            prob.functions[fidx + 4](x, y, t, u)
         @test FVM.eval_condition_fnc(prob, fidx, 2, x, y, t, u) ==
-              prob.functions[fidx + 4](x, y, t, u)
+            prob.functions[fidx + 4](x, y, t, u)
         @inferred FVM.eval_condition_fnc(prob, fidx, 2, x, y, t, u)
 
         @test FVM.is_dirichlet_node(prob, i, 2)

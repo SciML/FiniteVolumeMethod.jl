@@ -1,7 +1,7 @@
 using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
-# # Diffusion Equation in a Wedge with Mixed Boundary Conditions 
-# In this example, we consider a diffusion equation on a wedge 
+# # Diffusion Equation in a Wedge with Mixed Boundary Conditions
+# In this example, we consider a diffusion equation on a wedge
 # with angle $\alpha$ and mixed boundary conditions:
 # ```math
 # \begin{equation*}
@@ -16,21 +16,21 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # ```
 # where we take $f(r,\theta) = 1-r$ and $\alpha=\pi/4$.
 #
-# Note that the PDE is provided in polar form, but Cartesian coordinates 
-# are assumed for the operators in our code. The conversion is easy, noting 
+# Note that the PDE is provided in polar form, but Cartesian coordinates
+# are assumed for the operators in our code. The conversion is easy, noting
 # that the two Neumann conditions are just equations of the form $\grad u \vdot \vu n = 0$.
-# Moreover, although the right-hand side of the PDE is given as a Laplacian, 
+# Moreover, although the right-hand side of the PDE is given as a Laplacian,
 # recall that $\grad^2 = \div\grad$, so we can write the PDE as $\partial u/\partial t + \div \vb q = 0$,
 # where $\vb q = -\grad u$.
 #
-# Let us now setup the problem. To define the geometry, 
-# we need to be careful that the `Triangulation` recognises 
+# Let us now setup the problem. To define the geometry,
+# we need to be careful that the `Triangulation` recognises
 # that we need to split the boundary into three parts,
-# one part for each boundary condition. This is accomplished 
+# one part for each boundary condition. This is accomplished
 # by providing a single vector for each part of the boundary as follows
 # (and as described in DelaunayTriangulation.jl's documentation),
-# where we also `refine!` the mesh to get a better mesh. For the arc, 
-# we use the `CircularArc` so that the mesh knows that it is triangulating 
+# where we also `refine!` the mesh to get a better mesh. For the arc,
+# we use the `CircularArc` so that the mesh knows that it is triangulating
 # a certain arc in that area.
 using DelaunayTriangulation, FiniteVolumeMethod, ElasticArrays
 using ReferenceTests, Bessels, FastGaussQuadrature, Cubature #src
@@ -43,7 +43,7 @@ upper_edge = [3, 1]
 boundary_nodes = [bottom_edge, [arc], upper_edge]
 tri = triangulate(points; boundary_nodes)
 A = get_area(tri)
-refine!(tri; max_area = 1e-4A)
+refine!(tri; max_area = 1.0e-4A)
 mesh = FVMGeometry(tri)
 
 # This is the mesh we've constructed.
@@ -54,30 +54,30 @@ fig
 # To confirm that the boundary is now in three parts, see:
 get_boundary_nodes(tri)
 
-# We now need to define the boundary conditions. For this, 
-# we need to provide `Tuple`s, where the `i`th element of the 
-# `Tuple`s refers to the `i`th part of the boundary. The boundary 
+# We now need to define the boundary conditions. For this,
+# we need to provide `Tuple`s, where the `i`th element of the
+# `Tuple`s refers to the `i`th part of the boundary. The boundary
 # conditions are thus:
 lower_bc = arc_bc = upper_bc = (x, y, t, u, p) -> zero(u)
 types = (Neumann, Dirichlet, Neumann)
 BCs = BoundaryConditions(mesh, (lower_bc, arc_bc, upper_bc), types)
 
-# Now we can define the PDE. We use the reaction-diffusion formulation, 
-# specifying the diffusion function as a constant. 
+# Now we can define the PDE. We use the reaction-diffusion formulation,
+# specifying the diffusion function as a constant.
 f = (x, y) -> 1 - sqrt(x^2 + y^2)
 D = (x, y, t, u, p) -> one(u)
 initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 final_time = 0.1
 prob = FVMProblem(mesh, BCs; diffusion_function = D, initial_condition, final_time)
 
-# If you did want to use the flux formulation, you would need to provide 
+# If you did want to use the flux formulation, you would need to provide
 flux = (x, y, t, α, β, γ, p) -> (-α, -β)
 
 # which replaces `u` with `αx + βy + γ` so that we approximate $\grad u$ by $(\alpha,\beta)^{\mkern-1.5mu\mathsf{T}}$,
 # and the negative is needed since $\vb q = -\grad u$.
 
 # We now solve the problem. We provide the solver for this problem.
-# In my experience, I've found that `TRBDF2(linsolve=KLUFactorization())` typically 
+# In my experience, I've found that `TRBDF2(linsolve=KLUFactorization())` typically
 # has the best performance for these problems.
 using OrdinaryDiffEq, LinearSolve
 sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.01, parallel = Val(false))
@@ -93,17 +93,20 @@ using CairoMakie
 fig = Figure(fontsize = 38)
 for (i, j) in zip(1:3, (1, 6, 11))
     local ax
-    ax = Axis(fig[1, i], width = 600, height = 600,
+    ax = Axis(
+        fig[1, i], width = 600, height = 600,
         xlabel = "x", ylabel = "y",
         title = "t = $(sol.t[j])",
-        titlealign = :left)
+        titlealign = :left
+    )
     tricontourf!(ax, tri, sol.u[j], levels = 0:0.01:1, colormap = :matter)
     tightlimits!(ax)
 end
 resize_to_layout!(fig)
 fig
 @test_reference joinpath(
-    @__DIR__, "../figures", "diffusion_equation_in_a_wedge_with_mixed_boundary_conditions.png") fig #src
+    @__DIR__, "../figures", "diffusion_equation_in_a_wedge_with_mixed_boundary_conditions.png"
+) fig #src
 
 function get_ζ_terms(M, N, α) #src
     ζ = zeros(M, N + 2) #src
@@ -120,9 +123,9 @@ function get_sum_coefficients(M, N, α, ζ) #src
         order = n * π / α #src
         for m in 1:M #src
             integrand = rθ -> _f(rθ[2], rθ[1]) * besselj(order, ζ[m, n + 1] * rθ[2]) *
-                              cos(order * rθ[1]) * rθ[2] #src
+                cos(order * rθ[1]) * rθ[2] #src
             A[m, n + 1] = 4.0 / (α * besselj(order + 1, ζ[m, n + 1])^2) *
-                          hcubature(integrand, [0.0, 0.0], [α, 1.0]; abstol = 1e-8)[1] #src
+                hcubature(integrand, [0.0, 0.0], [α, 1.0]; abstol = 1.0e-8)[1] #src
         end #src
     end #src
     return A #src
@@ -141,7 +144,7 @@ function exact_solution(x, y, t, A, ζ, f, α) #src
         order = n * π / α #src
         for m in 1:M #src
             s += +A[m, n + 1] * exp(-ζ[m, n + 1]^2 * t) * besselj(order, ζ[m, n + 1] * r) *
-                 cos(order * θ) #src
+                cos(order * θ) #src
         end #src
     end #src
     return s #src
@@ -172,5 +175,7 @@ for i in eachindex(sol) #src
 end #src
 resize_to_layout!(fig) #src
 fig #src
-@test_reference joinpath(@__DIR__, "../figures",
-    "diffusion_equation_in_a_wedge_with_mixed_boundary_conditions_exact_comparisons.png") fig #src
+@test_reference joinpath(
+    @__DIR__, "../figures",
+    "diffusion_equation_in_a_wedge_with_mixed_boundary_conditions_exact_comparisons.png"
+) fig #src

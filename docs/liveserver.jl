@@ -8,9 +8,10 @@ withenv("LIVESERVER_ACTIVE" => "true") do
         launch_browser = true,
         foldername = joinpath(repo_root, "docs"),
         include_dirs = [joinpath(repo_root, "src")],
-        skip_dirs = [joinpath(repo_root, "docs/src/tutorials"),
+        skip_dirs = [
+            joinpath(repo_root, "docs/src/tutorials"),
             joinpath(repo_root, "docs/src/wyos"),
-            joinpath(repo_root, "docs/src/figures")
+            joinpath(repo_root, "docs/src/figures"),
         ]
     )
 end
