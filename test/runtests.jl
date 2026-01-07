@@ -99,4 +99,11 @@ end
     @testset verbose = true "Explicit Imports" begin
         safe_include("explicit_imports.jl")
     end
+
+    # Allocation tests run separately to avoid precompilation interference
+    if get(ENV, "GROUP", "all") == "all" || get(ENV, "GROUP", "all") == "nopre"
+        @testset verbose = true "Allocation Tests" begin
+            safe_include("alloc_tests.jl")
+        end
+    end
 end
