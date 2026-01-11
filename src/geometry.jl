@@ -51,15 +51,18 @@ function Base.show(io::IO, ::MIME"text/plain", geo::FVMGeometry)
     nv = DelaunayTriangulation.num_solid_vertices(geo.triangulation_statistics)
     nt = DelaunayTriangulation.num_solid_triangles(geo.triangulation_statistics)
     ne = DelaunayTriangulation.num_solid_edges(geo.triangulation_statistics)
-    print(io, "FVMGeometry with $(nv) control volumes, $(nt) triangles, and $(ne) edges")
+    return print(io, "FVMGeometry with $(nv) control volumes, $(nt) triangles, and $(ne) edges")
 end
 """
     get_triangle_props(mesh, i, j, k)
 
 Get the [`TriangleProperties`](@ref) for the triangle `(i, j, k)` in `mesh`.
 """
-get_triangle_props(mesh::FVMGeometry, i, j, k) = mesh.triangle_props[(
-    i, j, k)]
+get_triangle_props(mesh::FVMGeometry, i, j, k) = mesh.triangle_props[
+    (
+        i, j, k,
+    ),
+]
 
 """
     get_volume(mesh, i)
@@ -74,7 +77,7 @@ get_volume(mesh::FVMGeometry, i) = mesh.cv_volumes[i]
 Get the `i`th point in `mesh`.
 """
 function DelaunayTriangulation.get_point(mesh::FVMGeometry, i)
-    DelaunayTriangulation.get_point(mesh.triangulation, i)
+    return DelaunayTriangulation.get_point(mesh.triangulation, i)
 end
 
 #=
@@ -111,7 +114,7 @@ function FVMGeometry(tri::Triangulation)
         centroid = DelaunayTriangulation.get_centroid(stats, T)
         m₁, m₂, m₃ = DelaunayTriangulation.get_edge_midpoints(stats, T)
         ## Need to get the sub-control volume areas
-        # We need to connect the centroid to each vertex 
+        # We need to connect the centroid to each vertex
         cx, cy = getxy(centroid)
         pcx, pcy = cx - px, cy - py
         qcx, qcy = cx - qx, cy - qy
@@ -123,7 +126,7 @@ function FVMGeometry(tri::Triangulation)
         m₁₃x, m₁₃y = m₁x - m₃x, m₁y - m₃y
         m₂₁x, m₂₁y = m₂x - m₁x, m₂y - m₁y
         m₃₂x, m₃₂y = m₃x - m₂x, m₃y - m₂y
-        # We can now contribute the portion of each vertex's control volume inside the triangle to its total volume 
+        # We can now contribute the portion of each vertex's control volume inside the triangle to its total volume
         S₁ = 1 / 2 * abs(pcx * m₁₃y - pcy * m₁₃x)
         S₂ = 1 / 2 * abs(qcx * m₂₁y - qcy * m₂₁x)
         S₃ = 1 / 2 * abs(rcx * m₃₂y - rcy * m₃₂x)
@@ -142,11 +145,11 @@ function FVMGeometry(tri::Triangulation)
         s₈ = (rx * py - px * ry) / Δ
         s₉ = (px * qy - qx * py) / Δ
         shape_function_coefficients = (s₁, s₂, s₃, s₄, s₅, s₆, s₇, s₈, s₉)
-        ## Now we need the control volume edge midpoints 
+        ## Now we need the control volume edge midpoints
         m₁cx, m₁cy = (m₁x + cx) / 2, (m₁y + cy) / 2
         m₂cx, m₂cy = (m₂x + cx) / 2, (m₂y + cy) / 2
         m₃cx, m₃cy = (m₃x + cx) / 2, (m₃y + cy) / 2
-        ## Next, we need the normal vectors to the control volume edges 
+        ## Next, we need the normal vectors to the control volume edges
         e₁x, e₁y = cx - m₁x, cy - m₁y
         e₂x, e₂y = cx - m₂x, cy - m₂y
         e₃x, e₃y = cx - m₃x, cy - m₃y
@@ -159,7 +162,8 @@ function FVMGeometry(tri::Triangulation)
         ## Now construct the TriangleProperties
         triangle_props[triangle_vertices(T)] = TriangleProperties(
             shape_function_coefficients, ((m₁cx, m₁cy), (m₂cx, m₂cy), (m₃cx, m₃cy)),
-            ((n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)), (ℓ₁, ℓ₂, ℓ₃))
+            ((n₁x, n₁y), (n₂x, n₂y), (n₃x, n₃y)), (ℓ₁, ℓ₂, ℓ₃)
+        )
     end
     return FVMGeometry(tri, stats, cv_volumes, triangle_props)
 end

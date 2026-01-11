@@ -37,24 +37,24 @@ include("utils.jl")
 include("specific_problems/abstract_templates.jl")
 
 export FVMGeometry,
-       FVMProblem,
-       FVMSystem,
-       SteadyFVMProblem,
-       BoundaryConditions,
-       InternalConditions,
-       Conditions,
-       Neumann,
-       Dudt,
-       Dirichlet,
-       Constrained,
-       solve,
-       compute_flux,
-       pl_interpolate
+    FVMProblem,
+    FVMSystem,
+    SteadyFVMProblem,
+    BoundaryConditions,
+    InternalConditions,
+    Conditions,
+    Neumann,
+    Dudt,
+    Dirichlet,
+    Constrained,
+    solve,
+    compute_flux,
+    pl_interpolate
 
 using PrecompileTools: PrecompileTools, @compile_workload, @setup_workload
 @setup_workload begin
     @compile_workload begin
-        # Compile a non-steady problem 
+        # Compile a non-steady problem
         n = 5
         α = π / 4
         x₁ = [0.0, 1.0]
@@ -77,9 +77,11 @@ using PrecompileTools: PrecompileTools, @compile_workload, @setup_workload
         BCs = BoundaryConditions(mesh, (lower_bc, arc_bc, upper_bc), types)
         f = (x, y) -> 1 - sqrt(x^2 + y^2)
         D = (x, y, t, u, p) -> one(u)
-        initial_condition = [f(x, y)
-                             for (x, y) in
-                                 DelaunayTriangulation.DelaunayTriangulation.each_point(tri)]
+        initial_condition = [
+            f(x, y)
+                for (x, y) in
+                DelaunayTriangulation.DelaunayTriangulation.each_point(tri)
+        ]
         final_time = 0.1
         prob = FVMProblem(mesh, BCs; diffusion_function = D, initial_condition, final_time)
         ode_prob = ODEProblem(prob)
@@ -118,14 +120,18 @@ using PrecompileTools: PrecompileTools, @compile_workload, @setup_workload
         u_initial_condition = 0.01rand(DelaunayTriangulation.num_solid_vertices(tri))
         v_initial_condition = zeros(DelaunayTriangulation.num_solid_vertices(tri))
         final_time = 1000.0
-        u_prob = FVMProblem(mesh, BCs_u;
+        u_prob = FVMProblem(
+            mesh, BCs_u;
             flux_function = q_u, flux_parameters = q_u_parameters,
             source_function = S_u,
-            initial_condition = u_initial_condition, final_time = final_time)
-        v_prob = FVMProblem(mesh, BCs_v;
+            initial_condition = u_initial_condition, final_time = final_time
+        )
+        v_prob = FVMProblem(
+            mesh, BCs_v;
             flux_function = q_v, flux_parameters = q_v_parameters,
             source_function = S_v, source_parameters = S_v_parameters,
-            initial_condition = v_initial_condition, final_time = final_time)
+            initial_condition = v_initial_condition, final_time = final_time
+        )
         prob = FVMSystem(u_prob, v_prob)
         ode_prob = ODEProblem(prob)
         steady_prob = SteadyFVMProblem(prob)

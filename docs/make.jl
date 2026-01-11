@@ -10,11 +10,11 @@ if RUN_EXAMPLES
     using CairoMakie
     CairoMakie.activate!()
 
-    # When running docs locally, the EditURL is incorrect. For example, we might get 
+    # When running docs locally, the EditURL is incorrect. For example, we might get
     #   ```@meta
     #   EditURL = "<unknown>/docs/src/literate_tutorials/name.jl"
     #   ```
-    # We need to replace this EditURL if we are running the docs locally. The last case is more complicated because, 
+    # We need to replace this EditURL if we are running the docs locally. The last case is more complicated because,
     # after changing to use temporary directories, it can now look like...
     #   ```@meta
     #   EditURL = "../../../../../../../AppData/Local/Temp/jl_8nsMGu/name_just_the_code.jl"
@@ -22,8 +22,10 @@ if RUN_EXAMPLES
     function update_edit_url(content, file, folder)
         content = replace(content, "<unknown>" => "https://github.com/SciML/FiniteVolumeMethod.jl/tree/main")
         content = replace(content, "temp/" => "") # as of Literate 2.14.1
-        content = replace(content,
-            r"EditURL\s*=\s*\"[^\"]*\"" => "EditURL = \"https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_$(folder)/$file\"")
+        content = replace(
+            content,
+            r"EditURL\s*=\s*\"[^\"]*\"" => "EditURL = \"https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_$(folder)/$file\""
+        )
         return content
     end
     # We can add the code to the end of each file in its uncommented form programatically.
@@ -37,8 +39,10 @@ if RUN_EXAMPLES
             write(io, "\n")
             write(io, "# ## Just the code\n")
             write(io, "# An uncommented version of this example is given below.\n")
-            write(io,
-                "# You can view the source code for this file [here](<unknown>/docs/src/$folder/@__NAME__.jl).\n")
+            write(
+                io,
+                "# You can view the source code for this file [here](<unknown>/docs/src/$folder/@__NAME__.jl).\n"
+            )
             write(io, "\n")
             write(io, "# ```julia\n")
             write(io, "# @__CODE__\n")
@@ -61,14 +65,14 @@ if RUN_EXAMPLES
         "tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.jl",
         "tutorials/helmholtz_equation_with_inhomogeneous_boundary_conditions.jl",
         "tutorials/laplaces_equation_with_internal_dirichlet_conditions.jl",
-        "tutorials/diffusion_equation_on_an_annulus.jl"
+        "tutorials/diffusion_equation_on_an_annulus.jl",
     ]
     wyos_files = [
         "wyos/diffusion_equations.jl",
         "wyos/laplaces_equation.jl",
         "wyos/mean_exit_time.jl",
         "wyos/poissons_equation.jl",
-        "wyos/linear_reaction_diffusion_equations.jl"
+        "wyos/linear_reaction_diffusion_equations.jl",
     ]
     example_files = vcat(tutorial_files, wyos_files)
     session_tmp = mktempdir()
@@ -81,8 +85,10 @@ if RUN_EXAMPLES
         file_path = joinpath(dir, file)
         # See also https://github.com/Ferrite-FEM/Ferrite.jl/blob/d474caf357c696cdb80d7c5e1edcbc7b4c91af6b/docs/generate.jl for some of this
         new_file_path = add_just_the_code_section(dir, file)
-        script = Literate.script(file_path, session_tmp, name = splitext(file)[1] *
-                                                                "_just_the_code_cleaned")
+        script = Literate.script(
+            file_path, session_tmp, name = splitext(file)[1] *
+                "_just_the_code_cleaned"
+        )
         code = strip(read(script, String))
         @info "[$(ct())] Processing $file: Converting markdown script"
         line_ending_symbol = occursin(code, "\r\n") ? "\r\n" : "\n"
@@ -130,7 +136,7 @@ _PAGES = [
         "Diffusion Equation on an Annulus" => "tutorials/diffusion_equation_on_an_annulus.md",
         "Mean Exit Time" => "tutorials/mean_exit_time.md",
         "Solving Mazes with Laplace's Equation" => "tutorials/solving_mazes_with_laplaces_equation.md",
-        "Keller-Segel Model of Chemotaxis" => "tutorials/keller_segel_chemotaxis.md"
+        "Keller-Segel Model of Chemotaxis" => "tutorials/keller_segel_chemotaxis.md",
     ],
     "Solvers for Specific Problems, and Writing Your Own" => [
         "Section Overview" => "wyos/overview.md",
@@ -138,9 +144,9 @@ _PAGES = [
         "Mean Exit Time Problems" => "wyos/mean_exit_time.md",
         "Linear Reaction-Diffusion Equations" => "wyos/linear_reaction_diffusion_equations.md",
         "Poisson's Equation" => "wyos/poissons_equation.md",
-        "Laplace's Equation" => "wyos/laplaces_equation.md"
+        "Laplace's Equation" => "wyos/laplaces_equation.md",
     ],
-    "Mathematical and Implementation Details" => "math.md"
+    "Mathematical and Implementation Details" => "math.md",
 ]
 
 # Make sure we haven't forgotten any files
@@ -173,8 +179,10 @@ end
 !isempty(missing_set) && error("Missing files: $missing_set")
 
 # Make and deploy
-DocMeta.setdocmeta!(FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod, Test);
-    recursive = true)
+DocMeta.setdocmeta!(
+    FiniteVolumeMethod, :DocTestSetup, :(using FiniteVolumeMethod, Test);
+    recursive = true
+)
 IS_LIVESERVER = get(ENV, "LIVESERVER_ACTIVE", "false") == "true"
 IS_CI = get(ENV, "CI", "false") == "true"
 makedocs(;
@@ -186,14 +194,17 @@ makedocs(;
         edit_link = "main",
         collapselevel = 1,
         assets = String[],
-        mathengine = MathJax3(Dict(
-            :loader => Dict("load" => ["[tex]/physics"]),
-            :tex => Dict(
-                "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
-                "tags" => "ams",
-                "packages" => ["base", "ams", "autoload", "physics"]
+        mathengine = MathJax3(
+            Dict(
+                :loader => Dict("load" => ["[tex]/physics"]),
+                :tex => Dict(
+                    "inlineMath" => [["\$", "\$"], ["\\(", "\\)"]],
+                    "tags" => "ams",
+                    "packages" => ["base", "ams", "autoload", "physics"]
+                )
             )
-        ))),
+        )
+    ),
     draft = IS_LIVESERVER,
     pages = _PAGES,
     warnonly = true
@@ -202,4 +213,5 @@ makedocs(;
 deploydocs(;
     repo = "github.com/SciML/FiniteVolumeMethod.jl",
     devbranch = "main",
-    push_preview = true)
+    push_preview = true
+)

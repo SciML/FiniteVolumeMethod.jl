@@ -45,17 +45,21 @@ v_qp = ε₂
 u_Sp = b
 v_Sp = d
 u_icf = (x, y) -> 1 - exp(-80 * (x^2 + y^2))
-v_icf = (x, y) -> exp(-80 * (x ^ 2 + y^2))
+v_icf = (x, y) -> exp(-80 * (x^2 + y^2))
 u_ic = [u_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 v_ic = [v_icf(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
-u_prob = FVMProblem(mesh, u_BCs;
+u_prob = FVMProblem(
+    mesh, u_BCs;
     flux_function = u_q, flux_parameters = u_qp,
     source_function = u_S, source_parameters = u_Sp,
-    initial_condition = u_ic, final_time = 6000.0)
-v_prob = FVMProblem(mesh, v_BCs;
+    initial_condition = u_ic, final_time = 6000.0
+)
+v_prob = FVMProblem(
+    mesh, v_BCs;
     flux_function = v_q, flux_parameters = v_qp,
     source_function = v_S, source_parameters = v_Sp,
-    initial_condition = v_ic, final_time = 6000.0)
+    initial_condition = v_ic, final_time = 6000.0
+)
 prob = FVMSystem(u_prob, v_prob)
 
 # Now that we have our system, we can solve.
@@ -74,8 +78,10 @@ x = LinRange(-1, 1, 200)
 y = LinRange(-1, 1, 200)
 heatmap!(ax, x, y, u, colorrange = (0.0, 0.4))
 hidedecorations!(ax)
-record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachindex(sol);
-    framerate = 60) do _i
+record(
+    fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachindex(sol);
+    framerate = 60
+) do _i
     i[] = _i
 end
 
@@ -87,15 +93,19 @@ times = [0, 1000, 2000, 3000, 4000, 5000, 6000] #src
 t_idx = [findlast(≤(τ), sol.t) for τ in times] #src
 plotij = [(1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (2, 3), (3, 1)] #src
 for (i, j) in enumerate(t_idx) #src
-    ax = Axis(fig[plotij[i]...], width = 600, height = 600,
-        xlabel = L"x", ylabel = L"y", title = "t = $(sol.t[j])") #src
+    ax = Axis(
+        fig[plotij[i]...], width = 600, height = 600,
+        xlabel = L"x", ylabel = L"y", title = "t = $(sol.t[j])"
+    ) #src
     heatmap!(ax, x, y, reshape(sol.u[j][2, :], 200, 200), colorrange = (0.0, 0.4)) #src
     tightlimits!(ax) #src
 end  #src
 plotij = [(4, 1), (4, 2), (4, 3), (5, 1), (5, 2), (5, 3), (6, 1)] #src
 for (i, j) in enumerate(t_idx) #src
-    ax = Axis(fig[plotij[i]...], width = 600, height = 600,
-        xlabel = L"x", ylabel = L"y", title = "t = $(sol.t[j])") #src
+    ax = Axis(
+        fig[plotij[i]...], width = 600, height = 600,
+        xlabel = L"x", ylabel = L"y", title = "t = $(sol.t[j])"
+    ) #src
     heatmap!(ax, x, y, reshape(sol.u[j][1, :], 200, 200), colorrange = (0.0, 1)) #src
     tightlimits!(ax) #src
 end  #src

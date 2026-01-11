@@ -34,7 +34,7 @@ fig
 bc = (x, y, t, u, p) -> zero(u)
 BCs = BoundaryConditions(mesh, bc, Dirichlet)
 
-# We can now define the actual PDE. We start by defining the initial condition and the diffusion function. 
+# We can now define the actual PDE. We start by defining the initial condition and the diffusion function.
 f = (x, y) -> y ≤ 1.0 ? 50.0 : 0.0
 initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
 D = (x, y, t, u, p) -> 1 / 9
@@ -47,26 +47,28 @@ prob = FVMProblem(mesh, BCs; diffusion_function = D, initial_condition, final_ti
 prob.flux_function
 
 # When providing `diffusion_function`, the flux is given by $\vb q(\vb x, t, \alpha,\beta,\gamma) = (-\alpha/9, -\beta/9)^{\mkern-1.5mu\mathsf{T}}$,
-# where $(\alpha, \beta, \gamma)$ defines the approximation to $u$ via $u(x, y) = \alpha x + \beta y + \gamma$ so that 
+# where $(\alpha, \beta, \gamma)$ defines the approximation to $u$ via $u(x, y) = \alpha x + \beta y + \gamma$ so that
 # $\grad u(\vb x, t) = (\alpha,\beta)^{\mkern-1.5mu\mathsf{T}}$.
 
-# To now solve the problem, we simply use `solve`. Note that, 
+# To now solve the problem, we simply use `solve`. Note that,
 # in the `solve` call below, multithreading is enabled by default.
-# (If you don't know what algorithm to consider, do `using DifferentialEquations` instead 
-# and simply call `solve(prob, saveat=0.05)` so that the algorithm is chosen automatically instead 
+# (If you don't know what algorithm to consider, do `using DifferentialEquations` instead
+# and simply call `solve(prob, saveat=0.05)` so that the algorithm is chosen automatically instead
 # of using `Tsit5()`.)
 using OrdinaryDiffEq
 sol = solve(prob, Tsit5(), saveat = 0.05)
 sol |> tc #hide
 
-# To visualise the solution, we can use `tricontourf!` from Makie.jl. 
+# To visualise the solution, we can use `tricontourf!` from Makie.jl.
 fig = Figure(fontsize = 38)
 for (i, j) in zip(1:3, (1, 6, 11))
     local ax
-    ax = Axis(fig[1, i], width = 600, height = 600,
+    ax = Axis(
+        fig[1, i], width = 600, height = 600,
         xlabel = "x", ylabel = "y",
         title = "t = $(sol.t[j])",
-        titlealign = :left)
+        titlealign = :left
+    )
     tricontourf!(ax, tri, sol.u[j], levels = 0:5:50, colormap = :matter)
     tightlimits!(ax)
 end
@@ -81,7 +83,7 @@ function exact_solution(x, y, t) #src
             mterm = 2 / m * sin(m * π * x / 2) * exp(-π^2 * m^2 * t / 36) #src
             for n in 1:50 #src
                 nterm = (1 - cos(n * π / 2)) / n * sin(n * π * y / 2) *
-                        exp(-π^2 * n^2 * t / 36) #src
+                    exp(-π^2 * n^2 * t / 36) #src
                 s += mterm * nterm #src
             end #src
         end #src
