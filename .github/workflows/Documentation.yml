@@ -1,4 +1,4 @@
-name: "Format Check"
+name: "Documentation"
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 jobs:
-  runic:
-    name: "Runic"
-    uses: "SciML/.github/.github/workflows/runic.yml@v1"
+  documentation:
+    name: "Documentation"
+    uses: "SciML/.github/.github/workflows/documentation.yml@v1"
     secrets: "inherit"
