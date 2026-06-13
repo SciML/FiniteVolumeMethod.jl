@@ -14,7 +14,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # ```
 # We want to turn this into an equation of the form $\mathrm d\vb u/\mathrm dt = \vb A\vb u + \vb b$
 # as usual. This takes the same form as our [diffusion equation example](diffusion_equations.md),
-# except with the extra $f(\vb x)u$ term, which just adds an exta $f(\vb x)$ term
+# except with the extra $f(\vb x)u$ term, which just adds an extra $f(\vb x)$ term
 # to the diagonal of $\vb A$. See the previois sections for further mathematical details.
 
 # ## Implementation

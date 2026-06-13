@@ -1,4 +1,6 @@
 [default.extend-words]
+# Math subscript in LaTeX (m_{iy} = y-component of midpoint m_i) in docs/src/math.md
+iy = "iy"
 # Julia-specific functions
 indexin = "indexin"
 findfirst = "findfirst"

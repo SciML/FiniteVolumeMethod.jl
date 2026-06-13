@@ -312,7 +312,7 @@ E |> tc #hide
 # For plotting the electric field, we will show the electric field intensity $\|\vb E\|$,
 # and we can also show the arrows. Rather than showing all arrows, we will show them at
 # a smaller grid of values, which requires differentiating `itp` so that we can get the
-# gradients at arbitary points.
+# gradients at arbitrary points.
 ∂ = differentiate(itp, 1)
 x = LinRange(0, 10, 25)
 y = LinRange(0, 10, 25)

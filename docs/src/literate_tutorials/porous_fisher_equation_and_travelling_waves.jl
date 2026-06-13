@@ -38,7 +38,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # \end{equation}
 # ```
 # where $c_{\min} = \sqrt{\lambda/(2D)}$, $c = \sqrt{D\lambda/2}$, and $z = x-ct$ is the
-# travelling wave coordinates. This travelling wave would mathc our problem exactly
+# travelling wave coordinates. This travelling wave would match our problem exactly
 # if the rectangle were instead $[0, a] \times \mathbb R$, but by choosing $b$ large
 # enough we can at least emulate the travelling wave behaviour closely; the
 # homogeneous Neumann conditions are to ensure no energy is lost, thus allowing the travelling
