@@ -28,7 +28,7 @@ if RUN_EXAMPLES
         )
         return content
     end
-    # We can add the code to the end of each file in its uncommented form programatically.
+    # We can add the code to the end of each file in its uncommented form programmatically.
     function add_just_the_code_section(dir, file)
         file_name, file_ext = splitext(file)
         file_path = joinpath(dir, file)

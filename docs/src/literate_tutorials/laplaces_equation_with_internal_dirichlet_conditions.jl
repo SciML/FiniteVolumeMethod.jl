@@ -59,7 +59,7 @@ BCs = BoundaryConditions(mesh, bcs, types)
 # This is done using `InternalConditions`. First,
 # we need to find all the vertices that lie on
 # the line $\{x = 1/2, 0 \leq y \leq 2/5\}$. We could
-# compute these manually, but let's find them programatically
+# compute these manually, but let's find them programmatically
 # instead for the sake of demonstration.
 function find_all_points_on_line(tri)
     vertices = Int[]

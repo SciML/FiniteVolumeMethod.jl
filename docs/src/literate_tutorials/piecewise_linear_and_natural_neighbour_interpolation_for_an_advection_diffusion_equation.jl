@@ -1,6 +1,6 @@
 using DisplayAs #hide
 tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
-# # Piecewise Linear and Natural Neighbour Inteprolation for an Advection-Diffusion Equation
+# # Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation
 # In this tutorial, we have three aims:
 #
 # 1. Demonstrate how to solve an advection-diffusion equation.
@@ -243,7 +243,7 @@ fig
 ) fig #src
 
 # ## Natural neighbour interpolation
-# Since the solution is defined over a triangulation, the most natural form of inteprolation to use,
+# Since the solution is defined over a triangulation, the most natural form of interpolation to use,
 # other than piecewise linear interpolation, is natural neighbour interpolation. We can use
 # [NaturalNeighbours.jl](https://github.com/DanielVandH/NaturalNeighbours.jl) for this;
 # NaturalNeighbours.jl also provides the same piecewise linear interpolant above via its

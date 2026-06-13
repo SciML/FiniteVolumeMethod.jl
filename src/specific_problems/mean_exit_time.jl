@@ -26,7 +26,7 @@ You can solve this problem using [`solve`](@ref solve(::AbstractFVMTemplate, arg
 - `ICs::InternalConditions=InternalConditions()`: The [`InternalConditions`](@ref).
 
 The functions for `BCs` and `ICs` are not used. Whenever a [`Neumann`](@ref) condition is encountered, 
-or a [`Dirichlet`](@ref) condition, it is assumed that the conditon is homogeneous. If any of the 
+or a [`Dirichlet`](@ref) condition, it is assumed that the condition is homogeneous. If any of the 
 conditions are [`Dudt`](@ref) or [`Constrained`](@ref) types, then an error is thrown.
 
 ## Keyword Arguments
