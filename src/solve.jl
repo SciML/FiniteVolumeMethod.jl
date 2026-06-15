@@ -10,9 +10,9 @@ function get_multithreading_parameters(prob::Union{FVMProblem, FVMSystem})
     end
     solid_triangles = collect(each_solid_triangle(prob.mesh.triangulation))
     solid_vertices = collect(DelaunayTriangulation.each_point_index(prob.mesh.triangulation)) # we check for points in the vertex inside the source contribution codes
-    chunked_solid_triangles = chunks(solid_triangles, nt)
+    chunked_solid_triangles = [(range, i) for (i, range) in enumerate(index_chunks(solid_triangles; n = nt))]
     boundary_edges = collect(keys(get_boundary_edge_map(prob.mesh.triangulation)))
-    chunked_boundary_edges = chunks(boundary_edges, nt)
+    chunked_boundary_edges = [(range, i) for (i, range) in enumerate(index_chunks(boundary_edges; n = nt))]
     return (
         duplicated_du = duplicated_du,
         dirichlet_nodes = dirichlet_nodes,
