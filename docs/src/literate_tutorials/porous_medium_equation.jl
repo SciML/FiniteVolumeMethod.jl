@@ -60,7 +60,7 @@ prob = FVMProblem(
 
 #-
 ## Step 4: Solve
-using LinearSolve, OrdinaryDiffEq
+using LinearSolve, OrdinaryDiffEq, OrdinaryDiffEqSDIRK
 sol = solve(prob, TRBDF2(linsolve = KLUFactorization()); saveat = 3.0)
 sol |> tc #hide
 

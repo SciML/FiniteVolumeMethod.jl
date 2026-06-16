@@ -22,7 +22,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # as in the previous sections, but we will need an extra function to add $f(\vb x)$ to the appropriate diagonals.
 # We can also reuse `apply_dirichlet_conditions!`, `apply_dudt_conditions`, and
 # `boundary_edge_contributions!` from the diffusion equation example. Here is our implementation.
-using FiniteVolumeMethod, SparseArrays, OrdinaryDiffEq, LinearAlgebra
+using FiniteVolumeMethod, SparseArrays, OrdinaryDiffEq, LinearAlgebra, SciMLOperators
 const FVM = FiniteVolumeMethod
 function linear_source_contributions!(
         A, mesh, conditions, source_function, source_parameters

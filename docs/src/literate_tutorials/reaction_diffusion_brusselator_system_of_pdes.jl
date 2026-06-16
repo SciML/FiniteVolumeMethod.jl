@@ -143,7 +143,7 @@ mesh = FVMGeometry(tri)
 system = FVMSystem(Φ_prob, Ψ_prob)
 
 # We can now solve the problem just as we've done previously.
-using OrdinaryDiffEq, LinearSolve
+using OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearSolve
 sol = solve(system, TRBDF2(linsolve = KLUFactorization()), saveat = 1.0)
 sol |> tc #hide
 

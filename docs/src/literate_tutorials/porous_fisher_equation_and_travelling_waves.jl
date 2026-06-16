@@ -47,7 +47,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # takes the solution some time to evolve towards the travelling wave solution.
 #
 # Now with this preamble out of the way, let us solve this problem.
-using DelaunayTriangulation, FiniteVolumeMethod, OrdinaryDiffEq, LinearSolve
+using DelaunayTriangulation, FiniteVolumeMethod, OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearSolve
 a, b, c, d, nx, ny = 0.0, 3.0, 0.0, 40.0, 60, 80
 tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary = false)
 mesh = FVMGeometry(tri)

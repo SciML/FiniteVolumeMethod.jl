@@ -79,7 +79,7 @@ flux = (x, y, t, α, β, γ, p) -> (-α, -β)
 # We now solve the problem. We provide the solver for this problem.
 # In my experience, I've found that `TRBDF2(linsolve=KLUFactorization())` typically
 # has the best performance for these problems.
-using OrdinaryDiffEq, LinearSolve
+using OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearSolve
 sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.01, parallel = Val(false))
 ind = findall(DelaunayTriangulation.each_point_index(tri)) do i #hide
     !DelaunayTriangulation.has_vertex(tri, i) #hide

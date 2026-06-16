@@ -177,7 +177,7 @@ fvm_prob = SteadyFVMProblem(
 )
 
 # Let's compare the two solutions.
-using SteadyStateDiffEq, OrdinaryDiffEq
+using SteadyStateDiffEq, OrdinaryDiffEq, OrdinaryDiffEqSDIRK
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
 fvm_sol |> tc #hide
 

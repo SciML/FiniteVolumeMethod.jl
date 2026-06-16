@@ -63,7 +63,7 @@ v_prob = FVMProblem(
 prob = FVMSystem(u_prob, v_prob)
 
 # Now that we have our system, we can solve.
-using OrdinaryDiffEq, LinearSolve
+using OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearSolve
 sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 10.0, parallel = Val(false))
 sol |> tc #hide
 
