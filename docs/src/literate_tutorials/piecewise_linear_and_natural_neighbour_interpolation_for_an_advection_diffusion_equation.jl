@@ -133,9 +133,9 @@ function exact_solution(x, y, t, D, ν) #src
     return 1 / (4 * D * π * t) * exp(1 / (4 * D * t) * (-(x - ν * t)^2 - y^2)) #src
 end #src
 function get_errs(_sol, tri, flux_parameters) #src
-    _errs = zeros(length(_sol)) #src
+    _errs = zeros(length(_sol.u)) #src
     _err = zeros(DelaunayTriangulation.num_points(tri)) #src
-    for i in eachindex(_sol) #src
+    for i in eachindex(_sol.u) #src
         !DelaunayTriangulation.has_vertex(tri, i) && continue #src
         i == 1 && continue #src
         m = maximum(_sol.u[i]) #src

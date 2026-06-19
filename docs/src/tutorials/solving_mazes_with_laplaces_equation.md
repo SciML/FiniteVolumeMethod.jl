@@ -91,7 +91,7 @@ steady_prob = SteadyFVMProblem(prob)
 
 ````@example solving_mazes_with_laplaces_equation
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization(), autodiff = false)))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization(), autodiff = AutoFiniteDiff())))
 sol |> tc #hide
 ````
 
@@ -201,7 +201,7 @@ prob = FVMProblem(mesh, BCs;
 steady_prob = SteadyFVMProblem(prob)
 
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization(), autodiff = false)))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization(), autodiff = AutoFiniteDiff())))
 
 tricontourf(tri, sol.u, colormap = :matter)
 

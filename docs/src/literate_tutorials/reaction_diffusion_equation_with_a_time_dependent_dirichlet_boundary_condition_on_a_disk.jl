@@ -53,7 +53,7 @@ prob = FVMProblem(
 
 # We can now solve.
 using OrdinaryDiffEq, LinearSolve
-alg = FBDF(linsolve = UMFPACKFactorization(), autodiff = false)
+alg = FBDF(linsolve = UMFPACKFactorization(), autodiff = AutoFiniteDiff())
 sol = solve(prob, alg, saveat = 0.01)
 sol |> tc #hide
 

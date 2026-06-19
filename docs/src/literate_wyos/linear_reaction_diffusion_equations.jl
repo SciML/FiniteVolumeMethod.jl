@@ -140,7 +140,7 @@ fvm_prob = FVMProblem(
 fvm_sol = solve(fvm_prob, Tsit5(), saveat = 2.0)
 fvm_sol |> tc #hide
 
-for j in eachindex(fvm_sol) #src
+for j in eachindex(fvm_sol.u) #src
     ax = Axis(
         fig[2, j], width = 600, height = 600, #src
         xlabel = "x", ylabel = "y", #src

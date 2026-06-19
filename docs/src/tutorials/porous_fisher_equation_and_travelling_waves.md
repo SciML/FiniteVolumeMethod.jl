@@ -102,7 +102,7 @@ exact_solution(z) = ifelse(z ≤ zᶜ, 1 - exp(cₘᵢₙ * z), zero(z))
 travelling_wave_values = zeros(ny, length(sol.u) - large_time_idx + 1)
 z_vals = zero(travelling_wave_values)
 u_mat = [reshape(u, (nx, ny)) for u in sol.u]
-for (i, t_idx) in pairs(large_time_idx:lastindex(sol))
+for (i, t_idx) in pairs(large_time_idx:lastindex(sol.u))
     u = u_mat[t_idx]
     τ = sol.t[t_idx]
     for k in 1:ny
@@ -175,7 +175,7 @@ exact_solution(z) = ifelse(z ≤ zᶜ, 1 - exp(cₘᵢₙ * z), zero(z))
 travelling_wave_values = zeros(ny, length(sol.u) - large_time_idx + 1)
 z_vals = zero(travelling_wave_values)
 u_mat = [reshape(u, (nx, ny)) for u in sol.u]
-for (i, t_idx) in pairs(large_time_idx:lastindex(sol))
+for (i, t_idx) in pairs(large_time_idx:lastindex(sol.u))
     u = u_mat[t_idx]
     τ = sol.t[t_idx]
     for k in 1:ny

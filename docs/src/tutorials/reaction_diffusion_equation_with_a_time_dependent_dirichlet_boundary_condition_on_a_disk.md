@@ -74,7 +74,7 @@ We can now solve.
 
 ````@example reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk
 using OrdinaryDiffEq, LinearSolve
-alg = FBDF(linsolve = UMFPACKFactorization(), autodiff = false)
+alg = FBDF(linsolve = UMFPACKFactorization(), autodiff = AutoFiniteDiff())
 sol = solve(prob, alg, saveat = 0.01)
 sol |> tc #hide
 ````
@@ -127,7 +127,7 @@ prob = FVMProblem(mesh, BCs;
     initial_condition)
 
 using OrdinaryDiffEq, LinearSolve
-alg = FBDF(linsolve = UMFPACKFactorization(), autodiff = false)
+alg = FBDF(linsolve = UMFPACKFactorization(), autodiff = AutoFiniteDiff())
 sol = solve(prob, alg, saveat = 0.01)
 
 fig = Figure(fontsize = 38)

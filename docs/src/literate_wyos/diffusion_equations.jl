@@ -416,7 +416,7 @@ fvm_prob = FVMProblem(
 fvm_sol = solve(fvm_prob, TRBDF2(linsolve = KLUFactorization()); saveat = 100.0)
 fvm_sol |> tc #hide
 
-for j in eachindex(fvm_sol)
+for j in eachindex(fvm_sol.u)
     ax = Axis(
         fig[2, j], width = 600, height = 600,
         xlabel = "x", ylabel = "y",
