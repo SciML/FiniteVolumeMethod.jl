@@ -99,7 +99,7 @@ c = sqrt(λ / (2D))
 cₘᵢₙ = sqrt(λ * D / 2)
 zᶜ = 0.0
 exact_solution(z) = ifelse(z ≤ zᶜ, 1 - exp(cₘᵢₙ * z), zero(z))
-travelling_wave_values = zeros(ny, length(sol) - large_time_idx + 1)
+travelling_wave_values = zeros(ny, length(sol.u) - large_time_idx + 1)
 z_vals = zero(travelling_wave_values)
 u_mat = [reshape(u, (nx, ny)) for u in sol.u]
 for (i, t_idx) in pairs(large_time_idx:lastindex(sol))
@@ -128,9 +128,9 @@ for (i, j) in zip(1:3, (1, 51, 101))
     tightlimits!(ax)
 end
 ax = Axis(fig[1, 4], width = 900, height = 600)
-colors = cgrad(:matter, length(sol) - large_time_idx + 1; categorical = false)
+colors = cgrad(:matter, length(sol.u) - large_time_idx + 1; categorical = false)
 [lines!(ax, z_vals[:, i], travelling_wave_values[:, i], color = colors[i], linewidth = 2)
- for i in 1:(length(sol) - large_time_idx + 1)]
+ for i in 1:(length(sol.u) - large_time_idx + 1)]
 exact_z_vals = collect(LinRange(extrema(z_vals)..., 500))
 exact_travelling_wave_values = exact_solution.(exact_z_vals)
 lines!(ax, exact_z_vals, exact_travelling_wave_values,
@@ -172,7 +172,7 @@ c = sqrt(λ / (2D))
 cₘᵢₙ = sqrt(λ * D / 2)
 zᶜ = 0.0
 exact_solution(z) = ifelse(z ≤ zᶜ, 1 - exp(cₘᵢₙ * z), zero(z))
-travelling_wave_values = zeros(ny, length(sol) - large_time_idx + 1)
+travelling_wave_values = zeros(ny, length(sol.u) - large_time_idx + 1)
 z_vals = zero(travelling_wave_values)
 u_mat = [reshape(u, (nx, ny)) for u in sol.u]
 for (i, t_idx) in pairs(large_time_idx:lastindex(sol))
@@ -197,9 +197,9 @@ for (i, j) in zip(1:3, (1, 51, 101))
     tightlimits!(ax)
 end
 ax = Axis(fig[1, 4], width = 900, height = 600)
-colors = cgrad(:matter, length(sol) - large_time_idx + 1; categorical = false)
+colors = cgrad(:matter, length(sol.u) - large_time_idx + 1; categorical = false)
 [lines!(ax, z_vals[:, i], travelling_wave_values[:, i], color = colors[i], linewidth = 2)
- for i in 1:(length(sol) - large_time_idx + 1)]
+ for i in 1:(length(sol.u) - large_time_idx + 1)]
 exact_z_vals = collect(LinRange(extrema(z_vals)..., 500))
 exact_travelling_wave_values = exact_solution.(exact_z_vals)
 lines!(ax, exact_z_vals, exact_travelling_wave_values,

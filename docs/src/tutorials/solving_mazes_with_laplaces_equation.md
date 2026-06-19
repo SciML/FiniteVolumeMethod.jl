@@ -137,7 +137,7 @@ sc = tricontourf(tri, ∇norms, colormap = :matter, levels = LinRange(0, 0.0035,
     extendlow = :auto, extendhigh = :auto)
 hidedecorations!(ax)
 tightlimits!(ax)
-record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol);
+record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol.u);
     framerate = 24) do _i
     i[] = _i
 end;
@@ -228,7 +228,7 @@ sc = tricontourf(tri, ∇norms, colormap = :matter, levels = LinRange(0, 0.0035,
     extendlow = :auto, extendhigh = :auto)
 hidedecorations!(ax)
 tightlimits!(ax)
-record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol);
+record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol.u);
     framerate = 24) do _i
     i[] = _i
 end;

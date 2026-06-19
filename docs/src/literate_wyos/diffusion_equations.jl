@@ -383,7 +383,7 @@ sol |> tc #hide
 
 #-
 fig = Figure(fontsize = 38)
-for j in eachindex(sol)
+for j in eachindex(sol.u)
     ax = Axis(
         fig[1, j], width = 600, height = 600,
         xlabel = "x", ylabel = "y",

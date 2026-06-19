@@ -99,10 +99,10 @@ function exact_solution(x, y, t, m, M, D) #src
 end #src
 function compare_solutions(sol, tri, m, M, D) #src
     n = DelaunayTriangulation.num_points(tri) #src
-    x = zeros(n, length(sol)) #src
-    y = zeros(n, length(sol)) #src
-    u = zeros(n, length(sol)) #src
-    for i in eachindex(sol) #src
+    x = zeros(n, length(sol.u)) #src
+    y = zeros(n, length(sol.u)) #src
+    u = zeros(n, length(sol.u)) #src
+    for i in eachindex(sol.u) #src
         !DelaunayTriangulation.has_vertex(tri, i) && continue #src
         for j in each_solid_vertex(tri) #src
             x[j, i], y[j, i] = get_point(tri, j) #src
@@ -113,7 +113,7 @@ function compare_solutions(sol, tri, m, M, D) #src
 end #src
 x, y, u = compare_solutions(sol, tri, m, M, D) #src
 fig = Figure(fontsize = 64) #src
-for i in eachindex(sol) #src
+for i in eachindex(sol.u) #src
     ax = Axis(fig[1, i], width = 600, height = 600) #src
     tricontourf!(ax, tri, sol.u[i], levels = 0:0.005:0.1, colormap = :matter) #src
     ax = Axis(fig[2, i], width = 600, height = 600) #src
@@ -207,10 +207,10 @@ function exact_solution(x, y, t, m, M, D, λ) #src
 end #src
 function compare_solutions(sol, tri, m, M, D, λ) #src
     n = DelaunayTriangulation.num_solid_vertices(tri) #src
-    x = zeros(n, length(sol)) #src
-    y = zeros(n, length(sol)) #src
-    u = zeros(n, length(sol)) #src
-    for i in eachindex(sol) #src
+    x = zeros(n, length(sol.u)) #src
+    y = zeros(n, length(sol.u)) #src
+    u = zeros(n, length(sol.u)) #src
+    for i in eachindex(sol.u) #src
         for j in each_solid_vertex(tri) #src
             x[j, i], y[j, i] = get_point(tri, j) #src
             u[j, i] = exact_solution(x[j, i], y[j, i], sol.t[i], m, M, D, λ) #src
@@ -220,7 +220,7 @@ function compare_solutions(sol, tri, m, M, D, λ) #src
 end #src
 x, y, u = compare_solutions(sol, tri, m, M, D, λ) #src
 fig = Figure(fontsize = 64) #src
-for i in eachindex(sol) #src
+for i in eachindex(sol.u) #src
     ax = Axis(fig[1, i], width = 600, height = 600) #src
     tricontourf!(
         ax, tri, sol.u[i], levels = 0:0.05:1, extendlow = :auto,

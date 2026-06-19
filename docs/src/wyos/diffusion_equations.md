@@ -414,7 +414,7 @@ sol |> tc #hide
 
 ````@example diffusion_equations
 fig = Figure(fontsize = 38)
-for j in eachindex(sol)
+for j in eachindex(sol.u)
     ax = Axis(fig[1, j], width = 600, height = 600,
         xlabel = "x", ylabel = "y",
         title = "t = $(sol.t[j])",
@@ -657,7 +657,7 @@ prob = DiffusionEquation(mesh, BCs;
 sol = solve(prob, Tsit5(); saveat = 100.0)
 
 fig = Figure(fontsize = 38)
-for j in eachindex(sol)
+for j in eachindex(sol.u)
     ax = Axis(fig[1, j], width = 600, height = 600,
         xlabel = "x", ylabel = "y",
         title = "t = $(sol.t[j])",

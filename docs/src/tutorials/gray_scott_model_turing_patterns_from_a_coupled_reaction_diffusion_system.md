@@ -96,7 +96,7 @@ x = LinRange(-1, 1, 200)
 y = LinRange(-1, 1, 200)
 heatmap!(ax, x, y, u, colorrange = (0.0, 0.4))
 hidedecorations!(ax)
-record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachindex(sol);
+record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachindex(sol.u);
     framerate = 60) do _i
     i[] = _i
 end
@@ -157,7 +157,7 @@ x = LinRange(-1, 1, 200)
 y = LinRange(-1, 1, 200)
 heatmap!(ax, x, y, u, colorrange = (0.0, 0.4))
 hidedecorations!(ax)
-record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachindex(sol);
+record(fig, joinpath(@__DIR__, "../figures", "gray_scott_patterns.mp4"), eachindex(sol.u);
     framerate = 60) do _i
     i[] = _i
 end

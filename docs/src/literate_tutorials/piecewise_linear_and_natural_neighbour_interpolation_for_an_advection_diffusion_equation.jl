@@ -105,7 +105,7 @@ sol |> tc #hide
 using CairoMakie
 using ReferenceTests #src
 fig = Figure(fontsize = 38)
-for i in eachindex(sol)
+for i in eachindex(sol.u)
     ax = Axis(
         fig[1, i], width = 400, height = 400,
         xlabel = "x", ylabel = "y",
@@ -205,8 +205,8 @@ for j in eachindex(y)
         triangles[i, j] = jump_and_march(tri, (x[i], y[j]))
     end
 end
-interpolated_vals = zeros(length(x), length(y), length(sol))
-for k in eachindex(sol)
+interpolated_vals = zeros(length(x), length(y), length(sol.u))
+for k in eachindex(sol.u)
     for j in eachindex(y)
         for i in eachindex(x)
             interpolated_vals[i, j, k] = pl_interpolate(
@@ -220,7 +220,7 @@ end
 # our grid to make the `tricontourf` call faster.
 _tri = triangulate([[x for x in x, _ in y] |> vec [y for _ in x, y in y] |> vec]')
 fig = Figure(fontsize = 38)
-for i in eachindex(sol)
+for i in eachindex(sol.u)
     ax = Axis(
         fig[1, i], width = 400, height = 400,
         xlabel = "x", ylabel = "y",

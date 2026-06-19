@@ -94,10 +94,10 @@ function exact_solution(x, y, t) #src
 end #src
 function compare_solutions(sol, tri) #src
     n = DelaunayTriangulation.num_points(tri) #src
-    x = zeros(n, length(sol)) #src
-    y = zeros(n, length(sol)) #src
-    u = zeros(n, length(sol)) #src
-    for i in eachindex(sol) #src
+    x = zeros(n, length(sol.u)) #src
+    y = zeros(n, length(sol.u)) #src
+    u = zeros(n, length(sol.u)) #src
+    for i in eachindex(sol.u) #src
         for j in each_solid_vertex(tri) #src
             x[j, i], y[j, i] = get_point(tri, j) #src
             u[j, i] = exact_solution(x[j, i], y[j, i], sol.t[i]) #src
@@ -107,7 +107,7 @@ function compare_solutions(sol, tri) #src
 end #src
 x, y, u = compare_solutions(sol, tri) #src
 fig = Figure(fontsize = 64) #src
-for i in eachindex(sol) #src
+for i in eachindex(sol.u) #src
     local ax #src
     ax = Axis(fig[1, i], width = 600, height = 600) #src
     tricontourf!(ax, tri, sol.u[i], levels = 0:5:50, colormap = :matter) #src

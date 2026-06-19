@@ -122,7 +122,7 @@ fig, ax,
 hidedecorations!(ax)
 tightlimits!(ax)
 record(
-    fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol);
+    fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol.u);
     framerate = 24
 ) do _i
     i[] = _i

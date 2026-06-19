@@ -115,7 +115,7 @@ ind = findall(DelaunayTriangulation.each_point_index(tri)) do i #hide
     !DelaunayTriangulation.has_vertex(tri, i) #hide
 end #hide
 using Test #hide
-@test sol[ind, :] ≈ reshape(repeat(initial_condition, length(sol)), :, length(sol))[ind, :] # make sure that missing vertices don't change #hide
+@test sol[ind, :] ≈ reshape(repeat(initial_condition, length(sol.u)), :, length(sol.u))[ind, :] # make sure that missing vertices don't change #hide
 sol |> tc #hide
 ````
 

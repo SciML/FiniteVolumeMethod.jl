@@ -208,15 +208,15 @@ are the values of $\Psi$ at the third time. We can visualise the solutions as fo
 ````@example reaction_diffusion_brusselator_system_of_pdes
 using CairoMakie
 fig = Figure(fontsize = 38)
-for i in eachindex(sol)
+for i in eachindex(sol.u)
     ax1 = Axis(fig[1, i], xlabel = L"x", ylabel = L"y",
         width = 400, height = 400,
         title = L"\Phi: t = %$(sol.t[i])", titlealign = :left)
     ax2 = Axis(fig[2, i], xlabel = L"x", ylabel = L"y",
         width = 400, height = 400,
         title = L"\Psi: t = %$(sol.t[i])", titlealign = :left)
-    tricontourf!(ax1, tri, sol[i][1, :], levels = 0:0.1:1, colormap = :matter)
-    tricontourf!(ax2, tri, sol[i][2, :], levels = 1:10:100, colormap = :matter)
+    tricontourf!(ax1, tri, sol.u[i][1, :], levels = 0:0.1:1, colormap = :matter)
+    tricontourf!(ax2, tri, sol.u[i][2, :], levels = 1:10:100, colormap = :matter)
 end
 resize_to_layout!(fig)
 fig
@@ -275,15 +275,15 @@ sol.u[3][1, :]
 
 using CairoMakie
 fig = Figure(fontsize = 38)
-for i in eachindex(sol)
+for i in eachindex(sol.u)
     ax1 = Axis(fig[1, i], xlabel = L"x", ylabel = L"y",
         width = 400, height = 400,
         title = L"\Phi: t = %$(sol.t[i])", titlealign = :left)
     ax2 = Axis(fig[2, i], xlabel = L"x", ylabel = L"y",
         width = 400, height = 400,
         title = L"\Psi: t = %$(sol.t[i])", titlealign = :left)
-    tricontourf!(ax1, tri, sol[i][1, :], levels = 0:0.1:1, colormap = :matter)
-    tricontourf!(ax2, tri, sol[i][2, :], levels = 1:10:100, colormap = :matter)
+    tricontourf!(ax1, tri, sol.u[i][1, :], levels = 0:0.1:1, colormap = :matter)
+    tricontourf!(ax2, tri, sol.u[i][2, :], levels = 1:10:100, colormap = :matter)
 end
 resize_to_layout!(fig)
 fig
