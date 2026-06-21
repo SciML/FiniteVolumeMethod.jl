@@ -39,7 +39,7 @@ with \eqref{eq:advdiffeq}. For the mesh, we could use
 near the origin, so we need to use `refine!` on an initial mesh.
 
 ````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
-using DelaunayTriangulation, FiniteVolumeMethod, LinearAlgebra, CairoMakie
+using DelaunayTriangulation, FiniteVolumeMethod, LinearAlgebra, CairoMakie, StableRNGs
 L = 30
 tri = triangulate_rectangle(-L, L, -L, L, 2, 2, single_boundary = true)
 tot_area = get_area(tri)
@@ -53,7 +53,7 @@ area_constraint = (_tri, T) -> begin
     flag = A ≥ max_area_function(A, dist_to_origin)
     return flag
 end
-refine!(tri; min_angle = 33.0, custom_constraint = area_constraint)
+refine!(tri; min_angle = 33.0, custom_constraint = area_constraint, rng = StableRNG(123))
 triplot(tri)
 ````
 
@@ -135,7 +135,7 @@ sol |> tc #hide
 ````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
 using CairoMakie
 fig = Figure(fontsize = 38)
-for i in eachindex(sol)
+for i in eachindex(sol.u)
     ax = Axis(fig[1, i], width = 400, height = 400,
         xlabel = "x", ylabel = "y",
         title = "t = $(sol.t[i])",
@@ -177,8 +177,8 @@ for j in eachindex(y)
         triangles[i, j] = jump_and_march(tri, (x[i], y[j]))
     end
 end
-interpolated_vals = zeros(length(x), length(y), length(sol))
-for k in eachindex(sol)
+interpolated_vals = zeros(length(x), length(y), length(sol.u))
+for k in eachindex(sol.u)
     for j in eachindex(y)
         for i in eachindex(x)
             interpolated_vals[i, j, k] = pl_interpolate(
@@ -192,9 +192,9 @@ Let's visualise these results to check their accuracy. We compute the triangulat
 our grid to make the `tricontourf` call faster.
 
 ````@example piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation
-_tri = triangulate([[x for x in x, _ in y] |> vec [y for _ in x, y in y] |> vec]')
+_tri = triangulate([[x for x in x, _ in y] |> vec [y for _ in x, y in y] |> vec]', rng = StableRNG(123))
 fig = Figure(fontsize = 38)
-for i in eachindex(sol)
+for i in eachindex(sol.u)
     ax = Axis(fig[1, i], width = 400, height = 400,
         xlabel = "x", ylabel = "y",
         title = "t = $(sol.t[i])",
@@ -311,7 +311,7 @@ An uncommented version of this example is given below.
 You can view the source code for this file [here](https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation.jl).
 
 ```julia
-using DelaunayTriangulation, FiniteVolumeMethod, LinearAlgebra, CairoMakie
+using DelaunayTriangulation, FiniteVolumeMethod, LinearAlgebra, CairoMakie, StableRNGs
 L = 30
 tri = triangulate_rectangle(-L, L, -L, L, 2, 2, single_boundary = true)
 tot_area = get_area(tri)
@@ -325,7 +325,7 @@ area_constraint = (_tri, T) -> begin
     flag = A ≥ max_area_function(A, dist_to_origin)
     return flag
 end
-refine!(tri; min_angle = 33.0, custom_constraint = area_constraint)
+refine!(tri; min_angle = 33.0, custom_constraint = area_constraint, rng = StableRNG(123))
 triplot(tri)
 
 mesh = FVMGeometry(tri)
@@ -357,7 +357,7 @@ sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = times)
 
 using CairoMakie
 fig = Figure(fontsize = 38)
-for i in eachindex(sol)
+for i in eachindex(sol.u)
     ax = Axis(fig[1, i], width = 400, height = 400,
         xlabel = "x", ylabel = "y",
         title = "t = $(sol.t[i])",
@@ -378,8 +378,8 @@ for j in eachindex(y)
         triangles[i, j] = jump_and_march(tri, (x[i], y[j]))
     end
 end
-interpolated_vals = zeros(length(x), length(y), length(sol))
-for k in eachindex(sol)
+interpolated_vals = zeros(length(x), length(y), length(sol.u))
+for k in eachindex(sol.u)
     for j in eachindex(y)
         for i in eachindex(x)
             interpolated_vals[i, j, k] = pl_interpolate(
@@ -388,9 +388,9 @@ for k in eachindex(sol)
     end
 end
 
-_tri = triangulate([[x for x in x, _ in y] |> vec [y for _ in x, y in y] |> vec]')
+_tri = triangulate([[x for x in x, _ in y] |> vec [y for _ in x, y in y] |> vec]', rng = StableRNG(123))
 fig = Figure(fontsize = 38)
-for i in eachindex(sol)
+for i in eachindex(sol.u)
     ax = Axis(fig[1, i], width = 400, height = 400,
         xlabel = "x", ylabel = "y",
         title = "t = $(sol.t[i])",

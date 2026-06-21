@@ -53,7 +53,7 @@ prob = FVMProblem(
 
 # We can now solve.
 using OrdinaryDiffEq, LinearSolve
-alg = FBDF(linsolve = UMFPACKFactorization(), autodiff = false)
+alg = FBDF(linsolve = UMFPACKFactorization(), autodiff = AutoFiniteDiff())
 sol = solve(prob, alg, saveat = 0.01)
 sol |> tc #hide
 
@@ -85,10 +85,10 @@ function exact_solution(x, y, t) #src
 end #src
 function compare_solutions(sol, tri) #src
     n = DelaunayTriangulation.num_points(tri) #src
-    x = zeros(n, length(sol)) #src
-    y = zeros(n, length(sol)) #src
-    u = zeros(n, length(sol)) #src
-    for i in eachindex(sol) #src
+    x = zeros(n, length(sol.u)) #src
+    y = zeros(n, length(sol.u)) #src
+    u = zeros(n, length(sol.u)) #src
+    for i in eachindex(sol.u) #src
         !DelaunayTriangulation.has_vertex(tri, i) && continue #src
         for j in each_solid_vertex(tri) #src
             x[j, i], y[j, i] = get_point(tri, j) #src
@@ -99,7 +99,7 @@ function compare_solutions(sol, tri) #src
 end #src
 x, y, u = compare_solutions(sol, tri) #src
 fig = Figure(fontsize = 64) #src
-for i in eachindex(sol) #src
+for i in eachindex(sol.u) #src
     ax = Axis(fig[1, i], width = 600, height = 600) #src
     tricontourf!(ax, tri, sol.u[i], levels = 1:0.01:1.4, colormap = :matter) #src
     ax = Axis(fig[2, i], width = 600, height = 600) #src

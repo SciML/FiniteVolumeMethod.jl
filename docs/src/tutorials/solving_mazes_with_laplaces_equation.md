@@ -91,7 +91,7 @@ steady_prob = SteadyFVMProblem(prob)
 
 ````@example solving_mazes_with_laplaces_equation
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization(), autodiff = false)))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization(), autodiff = AutoFiniteDiff())))
 sol |> tc #hide
 ````
 
@@ -137,7 +137,7 @@ sc = tricontourf(tri, ∇norms, colormap = :matter, levels = LinRange(0, 0.0035,
     extendlow = :auto, extendhigh = :auto)
 hidedecorations!(ax)
 tightlimits!(ax)
-record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol);
+record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol.u);
     framerate = 24) do _i
     i[] = _i
 end;
@@ -201,7 +201,7 @@ prob = FVMProblem(mesh, BCs;
 steady_prob = SteadyFVMProblem(prob)
 
 using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
-sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization(), autodiff = false)))
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization(), autodiff = AutoFiniteDiff())))
 
 tricontourf(tri, sol.u, colormap = :matter)
 
@@ -228,7 +228,7 @@ sc = tricontourf(tri, ∇norms, colormap = :matter, levels = LinRange(0, 0.0035,
     extendlow = :auto, extendhigh = :auto)
 hidedecorations!(ax)
 tightlimits!(ax)
-record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol);
+record(fig, joinpath(@__DIR__, "../figures", "maze_solution_1.mp4"), eachindex(sol.u);
     framerate = 24) do _i
     i[] = _i
 end;

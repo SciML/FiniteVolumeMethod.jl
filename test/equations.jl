@@ -4,6 +4,7 @@ using PolygonOps
 using LinearAlgebra
 using DelaunayTriangulation
 using OrdinaryDiffEq
+using OrdinaryDiffEqSDIRK: TRBDF2
 using LinearSolve
 const FVM = FiniteVolumeMethod
 const DT = DelaunayTriangulation
@@ -112,9 +113,9 @@ end
     solprobser = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.05, parallel = Val(false))
     solprobu = reduce(hcat, solprob.u)
     solprobseru = reduce(hcat, solprobser.u)
-    solsysu1 = reduce(hcat, [solsys.u[i][1, :] for i in eachindex(solsys)])
-    solsysu2 = reduce(hcat, [solsys.u[i][2, :] for i in eachindex(solsys)])
-    solsysser1 = reduce(hcat, [solsysser.u[i][1, :] for i in eachindex(solsysser)])
-    solsysser2 = reduce(hcat, [solsysser.u[i][2, :] for i in eachindex(solsysser)])
+    solsysu1 = reduce(hcat, [solsys.u[i][1, :] for i in eachindex(solsys.u)])
+    solsysu2 = reduce(hcat, [solsys.u[i][2, :] for i in eachindex(solsys.u)])
+    solsysser1 = reduce(hcat, [solsysser.u[i][1, :] for i in eachindex(solsysser.u)])
+    solsysser2 = reduce(hcat, [solsysser.u[i][2, :] for i in eachindex(solsysser.u)])
     @test all(≈(solprobu), (solprobseru, solsysu1, solsysu2, solsysser1, solsysser2))
 end

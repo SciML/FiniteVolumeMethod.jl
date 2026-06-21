@@ -143,7 +143,7 @@ mesh = FVMGeometry(tri)
 system = FVMSystem(Φ_prob, Ψ_prob)
 
 # We can now solve the problem just as we've done previously.
-using OrdinaryDiffEq, LinearSolve
+using OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearSolve
 sol = solve(system, TRBDF2(linsolve = KLUFactorization()), saveat = 1.0)
 sol |> tc #hide
 
@@ -159,7 +159,7 @@ sol.u[3][1, :] |> tc #hide
 # are the values of $\Psi$ at the third time. We can visualise the solutions as follows:
 using CairoMakie
 fig = Figure(fontsize = 38)
-for i in eachindex(sol)
+for i in eachindex(sol.u)
     ax1 = Axis(
         fig[1, i], xlabel = L"x", ylabel = L"y",
         width = 400, height = 400,
@@ -170,8 +170,8 @@ for i in eachindex(sol)
         width = 400, height = 400,
         title = L"\Psi: t = %$(sol.t[i])", titlealign = :left
     )
-    tricontourf!(ax1, tri, sol[i][1, :], levels = 0:0.1:1, colormap = :matter)
-    tricontourf!(ax2, tri, sol[i][2, :], levels = 1:10:100, colormap = :matter)
+    tricontourf!(ax1, tri, sol.u[i][1, :], levels = 0:0.1:1, colormap = :matter)
+    tricontourf!(ax2, tri, sol.u[i][2, :], levels = 1:10:100, colormap = :matter)
 end
 resize_to_layout!(fig)
 fig
@@ -180,7 +180,7 @@ using ReferenceTests #src
 
 x = getx.(get_points(tri)) #src
 y = gety.(get_points(tri)) #src
-for i in eachindex(sol) #src
+for i in eachindex(sol.u) #src
     ax3 = Axis(
         fig[3, i], xlabel = L"x", ylabel = L"y", #src
         width = 400, height = 400, #src

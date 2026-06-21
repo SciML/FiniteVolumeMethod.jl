@@ -22,7 +22,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # as in the previous sections, but we will need an extra function to add $f(\vb x)$ to the appropriate diagonals.
 # We can also reuse `apply_dirichlet_conditions!`, `apply_dudt_conditions`, and
 # `boundary_edge_contributions!` from the diffusion equation example. Here is our implementation.
-using FiniteVolumeMethod, SparseArrays, OrdinaryDiffEq, LinearAlgebra
+using FiniteVolumeMethod, SparseArrays, OrdinaryDiffEq, LinearAlgebra, SciMLOperators
 const FVM = FiniteVolumeMethod
 function linear_source_contributions!(
         A, mesh, conditions, source_function, source_parameters
@@ -101,7 +101,7 @@ sol |> tc #hide
 #-
 using CairoMakie
 fig = Figure(fontsize = 38)
-for j in eachindex(sol)
+for j in eachindex(sol.u)
     ax = Axis(
         fig[1, j], width = 600, height = 600,
         xlabel = "x", ylabel = "y",
@@ -140,7 +140,7 @@ fvm_prob = FVMProblem(
 fvm_sol = solve(fvm_prob, Tsit5(), saveat = 2.0)
 fvm_sol |> tc #hide
 
-for j in eachindex(fvm_sol) #src
+for j in eachindex(fvm_sol.u) #src
     ax = Axis(
         fig[2, j], width = 600, height = 600, #src
         xlabel = "x", ylabel = "y", #src

@@ -133,7 +133,7 @@ fvm_prob = SteadyFVMProblem(
 )
 
 #-
-using SteadyStateDiffEq, OrdinaryDiffEq
+using SteadyStateDiffEq, OrdinaryDiffEq, OrdinaryDiffEqSDIRK
 fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization())))
 fvm_sol |> tc #hide
 using ReferenceTests #src

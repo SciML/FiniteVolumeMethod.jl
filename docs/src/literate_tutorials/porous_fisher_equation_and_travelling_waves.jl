@@ -47,7 +47,7 @@ tc = DisplayAs.withcontext(:displaysize => (15, 80), :limit => true); #hide
 # takes the solution some time to evolve towards the travelling wave solution.
 #
 # Now with this preamble out of the way, let us solve this problem.
-using DelaunayTriangulation, FiniteVolumeMethod, OrdinaryDiffEq, LinearSolve
+using DelaunayTriangulation, FiniteVolumeMethod, OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearSolve
 a, b, c, d, nx, ny = 0.0, 3.0, 0.0, 40.0, 60, 80
 tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary = false)
 mesh = FVMGeometry(tri)
@@ -81,10 +81,10 @@ c = sqrt(λ / (2D))
 cₘᵢₙ = sqrt(λ * D / 2)
 zᶜ = 0.0
 exact_solution(z) = ifelse(z ≤ zᶜ, 1 - exp(cₘᵢₙ * z), zero(z))
-travelling_wave_values = zeros(ny, length(sol) - large_time_idx + 1)
+travelling_wave_values = zeros(ny, length(sol.u) - large_time_idx + 1)
 z_vals = zero(travelling_wave_values)
 u_mat = [reshape(u, (nx, ny)) for u in sol.u]
-for (i, t_idx) in pairs(large_time_idx:lastindex(sol))
+for (i, t_idx) in pairs(large_time_idx:lastindex(sol.u))
     u = u_mat[t_idx]
     τ = sol.t[t_idx]
     for k in 1:ny
@@ -109,10 +109,10 @@ for (i, j) in zip(1:3, (1, 51, 101))
     tightlimits!(ax)
 end
 ax = Axis(fig[1, 4], width = 900, height = 600)
-colors = cgrad(:matter, length(sol) - large_time_idx + 1; categorical = false)
+colors = cgrad(:matter, length(sol.u) - large_time_idx + 1; categorical = false)
 [
     lines!(ax, z_vals[:, i], travelling_wave_values[:, i], color = colors[i], linewidth = 2)
-        for i in 1:(length(sol) - large_time_idx + 1)
+        for i in 1:(length(sol.u) - large_time_idx + 1)
 ]
 exact_z_vals = collect(LinRange(extrema(z_vals)..., 500))
 exact_travelling_wave_values = exact_solution.(exact_z_vals)

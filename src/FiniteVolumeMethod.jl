@@ -1,7 +1,7 @@
 module FiniteVolumeMethod
 
-using ChunkSplitters: ChunkSplitters, chunks
-using CommonSolve: CommonSolve
+using ChunkSplitters: ChunkSplitters, index_chunks
+using CommonSolve: CommonSolve, solve
 using DelaunayTriangulation: DelaunayTriangulation, Triangulation,
     add_ghost_triangles!,
     convert_boundary_points_to_indices,

@@ -246,7 +246,7 @@ function diffusion_equation(
 end
 
 # Let's now test the function. We use the same problem as in [this tutorial](../tutorials/diffusion_equation_on_a_square_plate.md).
-using DelaunayTriangulation, OrdinaryDiffEq, LinearAlgebra, SparseArrays
+using DelaunayTriangulation, OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearAlgebra, SparseArrays, SciMLOperators
 tri = triangulate_rectangle(0, 2, 0, 2, 50, 50, single_boundary = true)
 mesh = FVMGeometry(tri)
 BCs = BoundaryConditions(mesh, (x, y, t, u, p) -> zero(x), Dirichlet)
@@ -383,7 +383,7 @@ sol |> tc #hide
 
 #-
 fig = Figure(fontsize = 38)
-for j in eachindex(sol)
+for j in eachindex(sol.u)
     ax = Axis(
         fig[1, j], width = 600, height = 600,
         xlabel = "x", ylabel = "y",
@@ -416,7 +416,7 @@ fvm_prob = FVMProblem(
 fvm_sol = solve(fvm_prob, TRBDF2(linsolve = KLUFactorization()); saveat = 100.0)
 fvm_sol |> tc #hide
 
-for j in eachindex(fvm_sol)
+for j in eachindex(fvm_sol.u)
     ax = Axis(
         fig[2, j], width = 600, height = 600,
         xlabel = "x", ylabel = "y",

@@ -79,7 +79,7 @@ prob = FVMProblem(
 )
 
 #-
-using OrdinaryDiffEq, LinearSolve
+using OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearSolve
 sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.2)
 sol |> tc #hide
 

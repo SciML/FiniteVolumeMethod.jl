@@ -42,7 +42,7 @@ sol = solve(prob, Tsit5(), saveat = 0.001)
 u = Observable(sol.u[1])
 fig, ax, sc = tricontourf(tri, u, levels = 0:5:50, colormap = :matter)
 tightlimits!(ax)
-record(fig, "anim.gif", eachindex(sol)) do i
+record(fig, "anim.gif", eachindex(sol.u)) do i
     u[] = sol.u[i]
 end
 ```

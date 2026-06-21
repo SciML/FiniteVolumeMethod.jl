@@ -79,13 +79,13 @@ flux = (x, y, t, α, β, γ, p) -> (-α, -β)
 # We now solve the problem. We provide the solver for this problem.
 # In my experience, I've found that `TRBDF2(linsolve=KLUFactorization())` typically
 # has the best performance for these problems.
-using OrdinaryDiffEq, LinearSolve
+using OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearSolve
 sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.01, parallel = Val(false))
 ind = findall(DelaunayTriangulation.each_point_index(tri)) do i #hide
     !DelaunayTriangulation.has_vertex(tri, i) #hide
 end #hide
 using Test #hide
-@test sol[ind, :] ≈ reshape(repeat(initial_condition, length(sol)), :, length(sol))[ind, :] # make sure that missing vertices don't change #hide
+@test sol[ind, :] ≈ reshape(repeat(initial_condition, length(sol.u)), :, length(sol.u))[ind, :] # make sure that missing vertices don't change #hide
 sol |> tc #hide
 
 #-
@@ -151,12 +151,12 @@ function exact_solution(x, y, t, A, ζ, f, α) #src
 end #src
 function compare_solutions(sol, tri, α, f) #src
     n = DelaunayTriangulation.num_points(tri) #src
-    x = zeros(n, length(sol)) #src
-    y = zeros(n, length(sol)) #src
-    u = zeros(n, length(sol)) #src
+    x = zeros(n, length(sol.u)) #src
+    y = zeros(n, length(sol.u)) #src
+    u = zeros(n, length(sol.u)) #src
     ζ = get_ζ_terms(20, 20, α) #src
     A = get_sum_coefficients(20, 20, α, ζ) #src
-    for i in eachindex(sol) #src
+    for i in eachindex(sol.u) #src
         for j in each_solid_vertex(tri) #src
             x[j, i], y[j, i] = get_point(tri, j) #src
             u[j, i] = exact_solution(x[j, i], y[j, i], sol.t[i], A, ζ, f, α) #src
@@ -166,7 +166,7 @@ function compare_solutions(sol, tri, α, f) #src
 end #src
 x, y, u = compare_solutions(sol, tri, α, f) #src
 fig = Figure(fontsize = 64) #src
-for i in eachindex(sol) #src
+for i in eachindex(sol.u) #src
     local ax #src
     ax = Axis(fig[1, i], width = 600, height = 600) #src
     tricontourf!(ax, tri, sol.u[i], levels = 0:0.01:1, colormap = :matter) #src

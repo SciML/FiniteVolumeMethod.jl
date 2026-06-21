@@ -116,7 +116,7 @@ sol |> tc #hide
 ````@example linear_reaction_diffusion_equations
 using CairoMakie
 fig = Figure(fontsize = 38)
-for j in eachindex(sol)
+for j in eachindex(sol.u)
     ax = Axis(fig[1, j], width = 600, height = 600,
         xlabel = "x", ylabel = "y",
         title = "t = $(sol.t[j])")
@@ -248,7 +248,7 @@ sol = solve(prob, Tsit5(); saveat = 2)
 
 using CairoMakie
 fig = Figure(fontsize = 38)
-for j in eachindex(sol)
+for j in eachindex(sol.u)
     ax = Axis(fig[1, j], width = 600, height = 600,
         xlabel = "x", ylabel = "y",
         title = "t = $(sol.t[j])")
