@@ -1,14 +1,10 @@
-using FiniteVolumeMethod
-using Test
-using Aqua
-using ExplicitImports
+using SciMLTesting, FiniteVolumeMethod, Test
 
-@testset verbose = true "Aqua" begin
-    Aqua.test_all(FiniteVolumeMethod; ambiguities = false, project_extras = false) # don't care about julia < 1.2
-    Aqua.test_ambiguities(FiniteVolumeMethod) # don't pick up Base and Core...
-end
-
-@testset verbose = true "Explicit Imports" begin
-    @test check_no_implicit_imports(FiniteVolumeMethod) === nothing
-    @test check_no_stale_explicit_imports(FiniteVolumeMethod) === nothing
-end
+run_qa(
+    FiniteVolumeMethod;
+    explicit_imports = true,
+    # Root Project.toml carries only `Test` in [extras]/[targets]; the real test
+    # deps live in test/Project.toml under the grouped-tests folder model, so the
+    # root-vs-test consistency check does not apply here.
+    aqua_kwargs = (; project_extras = false),
+)
