@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Laplace&#39;s Equation with Internal Dirichlet Conditions · FiniteVolumeMethod.jl</title><meta name="title" content="Laplace&#39;s Equation with Internal Dirichlet Conditions · FiniteVolumeMethod.jl"/><meta property="og:title" content="Laplace&#39;s Equation with Internal Dirichlet Conditions · FiniteVolumeMethod.jl"/><meta property="twitter:title" content="Laplace&#39;s Equation with Internal Dirichlet Conditions · FiniteVolumeMethod.jl"/><meta name="description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="twitter:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:url" content="https://DanielVandH.github.io/FiniteVolumeMethod.jl/tutorials/laplaces_equation_with_internal_dirichlet_conditions/"/><meta property="twitter:url" content="https://DanielVandH.github.io/FiniteVolumeMethod.jl/tutorials/laplaces_equation_with_internal_dirichlet_conditions/"/><link rel="canonical" href="https://DanielVandH.github.io/FiniteVolumeMethod.jl/tutorials/laplaces_equation_with_internal_dirichlet_conditions/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li class="is-active"><a class="tocitem" href>Laplace&#39;s Equation with Internal Dirichlet Conditions</a><ul class="internal"><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../wyos/overview/">Section Overview</a></li><li><a class="tocitem" href="../../wyos/diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../../wyos/linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../../wyos/laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/DanielVandH/FiniteVolumeMethod.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/laplaces_equation_with_internal_dirichlet_conditions.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Laplace&#39;s-Equation-with-Internal-Dirichlet-Conditions"><a class="docs-heading-anchor" href="#Laplace&#39;s-Equation-with-Internal-Dirichlet-Conditions">Laplace&#39;s Equation with Internal Dirichlet Conditions</a><a id="Laplace&#39;s-Equation-with-Internal-Dirichlet-Conditions-1"></a><a class="docs-heading-anchor-permalink" href="#Laplace&#39;s-Equation-with-Internal-Dirichlet-Conditions" title="Permalink"></a></h1><p>In this tutorial, we consider Laplace&#39;s equation with some additional complexity put into the problem via internal Dirichlet conditions:</p><p class="math-container">\[\begin{equation}
+\begin{aligned}
+\grad^2 u &amp;= 0 &amp; \vb x \in [0, 1]^2, \\
+u(0, y) &amp;= 100y &amp; 0 \leq y \leq 1, \\
+u(1, y) &amp;= 100y &amp; 0 \leq y \leq 1, \\
+u(x, 0) &amp;= 0 &amp; 0 \leq x \leq 1, \\
+u(x, 1) &amp;= 100 &amp; 0 \leq x \leq 1, \\
+u(1/2, y) &amp;= 0 &amp; 0 \leq y \leq 2/5.
+\end{aligned}
+\end{equation}\]</p><p>To start with solving this problem, let us define an initial mesh.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod
+tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary=false)</code></pre><pre><code class="nohighlight hljs">Delaunay Triangulation.
+    Constrained: true
+    Has ghost triangles: true
+    Number of points: 2500
+    Number of triangles: 4998
+    Number of edges: 7501</code></pre><p>In this mesh, we don&#39;t have any points that lie exactly on the line <span>$\{x = 1/2, 0 \leq y \leq 2/5\}$</span>, so we cannot enforce this constraint exactly.<sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup> Instead, we need to add these points into <code>tri</code>. We do not need to add any constrained edges in this case, since these internal conditions are enforced only at points.</p><p>Let us now add in the points.</p><pre><code class="language-julia hljs">using CairoMakie
+new_points = LinRange(0, 2 / 5, 250)
+for y in new_points
+    add_point!(tri, 1 / 2, y)
+end
+fig, ax, sc = triplot(tri)
+fig</code></pre><p><img src="../laplaces_equation_with_internal_dirichlet_conditions-8.png" alt/></p><p>It may also help to refine the mesh slightly.</p><pre><code class="language-julia hljs">refine!(tri, max_area=1e-4)
+fig, ax, sc = triplot(tri)
+fig</code></pre><p><img src="../laplaces_equation_with_internal_dirichlet_conditions-10.png" alt/></p><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre><code class="nohighlight hljs">FVMGeometry with 10223 control volumes, 20042 triangles, and 30264 edges</code></pre><p>Now that we have the mesh, we can define the boundary conditions. Remember that the order of the boundary indices is the bottom wall, right wall, top wall, and then the left wall.</p><pre><code class="language-julia hljs">bc_bot = (x, y, t, u, p) -&gt; zero(u)
+bc_right = (x, y, t, u, p) -&gt; oftype(u, 100y) # helpful to have each bc return the same type
+bc_top = (x, y, t, u, p) -&gt; oftype(u, 100)
+bc_left = (x, y, t, u, p) -&gt; oftype(u, 100y)
+bcs = (bc_bot, bc_right, bc_top, bc_left)
+types = (Dirichlet, Dirichlet, Dirichlet, Dirichlet)
+BCs = BoundaryConditions(mesh, bcs, types)</code></pre><pre><code class="nohighlight hljs">BoundaryConditions with 4 boundary conditions with types (Dirichlet, Dirichlet, Dirichlet, Dirichlet)</code></pre><p>We now need to define the internal conditions. This is done using <code>InternalConditions</code>. First, we need to find all the vertices that lie on the line <span>$\{x = 1/2, 0 \leq y \leq 2/5\}$</span>. We could compute these manually, but let&#39;s find them programmatically instead for the sake of demonstration.</p><pre><code class="language-julia hljs">function find_all_points_on_line(tri)
+    vertices = Int[]
+    for i in each_solid_vertex(tri)
+        x, y = get_point(tri, i)
+        if x == 1 / 2 &amp;&amp; 0 ≤ y ≤ 2 / 5
+            push!(vertices, i)
+        end
+    end
+    return vertices
+end
+vertices = find_all_points_on_line(tri)
+fig, ax, sc = triplot(tri)
+points = [get_point(tri, i) for i in vertices]
+scatter!(ax, points, color=:red, markersize=10)
+fig</code></pre><p><img src="../laplaces_equation_with_internal_dirichlet_conditions-15.png" alt/></p><p>Now that we have the vertices, we can define the internal conditions. We need to provide <code>InternalConditions</code> with a <code>Dict</code> that maps each vertex in <code>vertices</code> to a function index that corresponds to the condition for that vertex. In this case, that function index is <code>1</code> as we only have a single function.</p><pre><code class="language-julia hljs">ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u),
+    dirichlet_nodes=Dict(vertices .=&gt; 1))</code></pre><pre><code class="nohighlight hljs">InternalConditions with 250 Dirichlet nodes and 0 Dudt nodes</code></pre><p>Now we can define the problem. As discussed in the <a href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz tutorial</a>, we are looking to define a steady state problem, and so the initial condition needs to be a suitable initial guess of what the solution could be. Looking to the boundary and internal conditions, one suitable guess is <span>$u(x, y) = 100y$</span> with <span>$u(1/2, y) = 0$</span> for <span>$0 \leq y \leq 2/5$</span>; in fact, <span>$u(x, y) = 100y$</span> is the solution of the problem without the internal condition. Let us now use this to define our initial condition.</p><pre><code class="language-julia hljs">initial_condition = zeros(DelaunayTriangulation.num_solid_vertices(tri))
+for i in each_solid_vertex(tri)
+    x, y = get_point(tri, i)
+    initial_condition[i] = ifelse(x == 1 / 2 &amp;&amp; 0 ≤ y ≤ 2 / 5, 0, 100y)
+end</code></pre><p>Now let&#39;s define the problem. The internal conditions are provided as the third argument of <code>FVMProblem</code>.</p><pre><code class="language-julia hljs">diffusion_function = (x, y, t, u, p) -&gt; one(u) # ∇²u = ∇⋅[D∇u], D = 1
+final_time = Inf
+prob = FVMProblem(mesh, BCs, ICs;
+    diffusion_function,
+    initial_condition,
+    final_time)</code></pre><pre><code class="nohighlight hljs">FVMProblem with 10223 nodes and time span (0.0, Inf)</code></pre><pre><code class="language-julia hljs">steady_prob = SteadyFVMProblem(prob)</code></pre><pre><code class="nohighlight hljs">SteadyFVMProblem with 10223 nodes</code></pre><p>Now let&#39;s solve the problem.</p><pre><code class="language-julia hljs">using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))</code></pre><pre><code class="nohighlight hljs">u: 10223-element Vector{Float64}:
+  0.0
+  0.0
+  0.0
+  0.0
+  0.0
+  ⋮
+ 52.99056010002759
+ 60.20408163265305
+ 82.65306122448979
+  0.0
+ 64.28571428571428</code></pre><pre><code class="language-julia hljs">fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 100, 28))
+tightlimits!(ax)
+fig</code></pre><p><img src="../laplaces_equation_with_internal_dirichlet_conditions-25.png" alt/></p><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/laplaces_equation_with_internal_dirichlet_conditions.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod
+tri = triangulate_rectangle(0, 1, 0, 1, 50, 50, single_boundary=false)
+
+using CairoMakie
+new_points = LinRange(0, 2 / 5, 250)
+for y in new_points
+    add_point!(tri, 1 / 2, y)
+end
+fig, ax, sc = triplot(tri)
+fig
+
+refine!(tri, max_area=1e-4)
+fig, ax, sc = triplot(tri)
+fig
+
+mesh = FVMGeometry(tri)
+
+bc_bot = (x, y, t, u, p) -&gt; zero(u)
+bc_right = (x, y, t, u, p) -&gt; oftype(u, 100y) # helpful to have each bc return the same type
+bc_top = (x, y, t, u, p) -&gt; oftype(u, 100)
+bc_left = (x, y, t, u, p) -&gt; oftype(u, 100y)
+bcs = (bc_bot, bc_right, bc_top, bc_left)
+types = (Dirichlet, Dirichlet, Dirichlet, Dirichlet)
+BCs = BoundaryConditions(mesh, bcs, types)
+
+function find_all_points_on_line(tri)
+    vertices = Int[]
+    for i in each_solid_vertex(tri)
+        x, y = get_point(tri, i)
+        if x == 1 / 2 &amp;&amp; 0 ≤ y ≤ 2 / 5
+            push!(vertices, i)
+        end
+    end
+    return vertices
+end
+vertices = find_all_points_on_line(tri)
+fig, ax, sc = triplot(tri)
+points = [get_point(tri, i) for i in vertices]
+scatter!(ax, points, color=:red, markersize=10)
+fig
+
+ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u),
+    dirichlet_nodes=Dict(vertices .=&gt; 1))
+
+initial_condition = zeros(DelaunayTriangulation.num_solid_vertices(tri))
+for i in each_solid_vertex(tri)
+    x, y = get_point(tri, i)
+    initial_condition[i] = ifelse(x == 1 / 2 &amp;&amp; 0 ≤ y ≤ 2 / 5, 0, 100y)
+end
+
+diffusion_function = (x, y, t, u, p) -&gt; one(u) # ∇²u = ∇⋅[D∇u], D = 1
+final_time = Inf
+prob = FVMProblem(mesh, BCs, ICs;
+    diffusion_function,
+    initial_condition,
+    final_time)
+
+steady_prob = SteadyFVMProblem(prob)
+
+using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq
+sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+
+fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 100, 28))
+tightlimits!(ax)
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>Of course, by defining the grid spacing appropriately we could have such points, but we just want to show here how we can add these points in if needed.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">« Helmholtz Equation with Inhomogeneous Boundary Conditions</a><a class="docs-footer-nextpage" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.1.2 on <span class="colophon-date" title="Monday 13 November 2023 04:23">Monday 13 November 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

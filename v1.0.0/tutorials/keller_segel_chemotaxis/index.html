@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Keller-Segel Model of Chemotaxis · FiniteVolumeMethod.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link rel="canonical" href="https://DanielVandH.github.io/FiniteVolumeMethod.jl/tutorials/keller_segel_chemotaxis/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li class="is-active"><a class="tocitem" href>Keller-Segel Model of Chemotaxis</a><ul class="internal"><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Keller-Segel Model of Chemotaxis</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Keller-Segel Model of Chemotaxis</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/blob/main/docs/src/tutorials/keller_segel_chemotaxis.md#" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Keller-Segel-Model-of-Chemotaxis"><a class="docs-heading-anchor" href="#Keller-Segel-Model-of-Chemotaxis">Keller-Segel Model of Chemotaxis</a><a id="Keller-Segel-Model-of-Chemotaxis-1"></a><a class="docs-heading-anchor-permalink" href="#Keller-Segel-Model-of-Chemotaxis" title="Permalink"></a></h1><p>In this tutorial, we consider the following Keller-Segel model of chemotaxis:</p><p class="math-container">\[\begin{equation*}
+\begin{aligned}
+\pdv{u}{t} &amp;= \grad^2u - \div \left(\frac{cu}{1+u^2}\grad v\right) + u(1-u), \\
+\pdv{v}{t} &amp;= D\grad^2 v + u - av,
+\end{aligned}
+\end{equation*}\]</p><p>inside the square <span>$[0, 100]^2$</span> with homogeneous Neumann boundary conditions. We  start by defining the problem, remembering that we need one problem for each variable <span>$u$</span> and <span>$v$</span>.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
+tri = triangulate_rectangle(0, 100, 0, 100, 250, 250, single_boundary=true)
+mesh = FVMGeometry(tri)
+bc_u = (x, y, t, (u, v), p) -&gt; zero(u)
+bc_v = (x, y, t, (u, v), p) -&gt; zero(v)
+BCs_u = BoundaryConditions(mesh, bc_u, Neumann)
+BCs_v = BoundaryConditions(mesh, bc_v, Neumann)
+q_u = (x, y, t, (αu, αv), (βu, βv), (γu, γv), p) -&gt; begin
+    u = αu * x + βu * y + γu
+    ∇u = (αu, βu)
+    ∇v = (αv, βv)
+    χu = p.c * u / (1 + u^2)
+    _q = χu .* ∇v .- ∇u
+    return _q
+end
+q_v = (x, y, t, (αu, αv), (βu, βv), (γu, γv), p) -&gt; begin
+    ∇v = (αv, βv)
+    _q = -p.D .* ∇v
+    return _q
+end
+S_u = (x, y, t, (u, v), p) -&gt; begin
+    return u * (1 - u)
+end
+S_v = (x, y, t, (u, v), p) -&gt; begin
+    return u - p.a * v
+end
+q_u_parameters = (c=4.0,)
+q_v_parameters = (D=1.0,)
+S_v_parameters = (a=0.1,)
+u_initial_condition = 0.01rand(num_points(tri))
+v_initial_condition = zeros(num_points(tri))
+final_time = 1000.0
+u_prob = FVMProblem(mesh, BCs_u;
+    flux_function=q_u, flux_parameters=q_u_parameters,
+    source_function=S_u,
+    initial_condition=u_initial_condition, final_time=final_time)
+v_prob = FVMProblem(mesh, BCs_v;
+    flux_function=q_v, flux_parameters=q_v_parameters,
+    source_function=S_v, source_parameters=S_v_parameters,
+    initial_condition=v_initial_condition, final_time=final_time)
+prob = FVMSystem(u_prob, v_prob);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMSystem with 2 equations and time span (0.0, 1000.0)</code></pre><p>Now let&#39;s solve and animate the problem.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, LinearSolve, CairoMakie
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=1.0) # very slow
+fig = Figure(fontsize=44)
+x = LinRange(0, 100, 250)
+y = LinRange(0, 100, 250)
+i = Observable(1)
+axu = Axis(fig[1, 1], width=600, height=600,
+    title=map(i -&gt; L&quot;u(x,~ y,~ %$(sol.t[i]))&quot;, i), xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;)
+axv = Axis(fig[1, 2], width=600, height=600,
+    title=map(i -&gt; L&quot;v(x,~ y,~ %$(sol.t[i]))&quot;, i), xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;)
+u = map(i -&gt; reshape(sol.u[i][1, :], 250, 250), i)
+v = map(i -&gt; reshape(sol.u[i][2, :], 250, 250), i)
+heatmap!(axu, x, y, u, colorrange=(0.0, 2.5), colormap=:turbo)
+heatmap!(axv, x, y, v, colorrange=(0.0, 10.0), colormap=:turbo)
+resize_to_layout!(fig)
+record(fig, joinpath(@__DIR__, &quot;../figures&quot;, &quot;keller_segel_chemotaxis.mp4&quot;), eachindex(sol);
+    framerate=60) do _i
+    i[] = _i
+end;</code></pre><p><video src="../../figures/keller_segel_chemotaxis.mp4" controls="true" title="Animation of the Gray-Scott model"><a href="../../figures/keller_segel_chemotaxis.mp4">Animation of the Gray-Scott model</a></video></p><p>Some pretty amazing patterns!</p><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, DelaunayTriangulation
+tri = triangulate_rectangle(0, 100, 0, 100, 250, 250, single_boundary=true)
+mesh = FVMGeometry(tri)
+bc_u = (x, y, t, (u, v), p) -&gt; zero(u)
+bc_v = (x, y, t, (u, v), p) -&gt; zero(v)
+BCs_u = BoundaryConditions(mesh, bc_u, Neumann)
+BCs_v = BoundaryConditions(mesh, bc_v, Neumann)
+q_u = (x, y, t, (αu, αv), (βu, βv), (γu, γv), p) -&gt; begin
+    u = αu * x + βu * y + γu
+    ∇u = (αu, βu)
+    ∇v = (αv, βv)
+    χu = p.c * u / (1 + u^2)
+    _q = χu .* ∇v .- ∇u
+    return _q
+end
+q_v = (x, y, t, (αu, αv), (βu, βv), (γu, γv), p) -&gt; begin
+    ∇v = (αv, βv)
+    _q = -p.D .* ∇v
+    return _q
+end
+S_u = (x, y, t, (u, v), p) -&gt; begin
+    return u * (1 - u)
+end
+S_v = (x, y, t, (u, v), p) -&gt; begin
+    return u - p.a * v
+end
+q_u_parameters = (c=4.0,)
+q_v_parameters = (D=1.0,)
+S_v_parameters = (a=0.1,)
+u_initial_condition = 0.01rand(num_points(tri))
+v_initial_condition = zeros(num_points(tri))
+final_time = 1000.0
+u_prob = FVMProblem(mesh, BCs_u;
+    flux_function=q_u, flux_parameters=q_u_parameters,
+    source_function=S_u,
+    initial_condition=u_initial_condition, final_time=final_time)
+v_prob = FVMProblem(mesh, BCs_v;
+    flux_function=q_v, flux_parameters=q_v_parameters,
+    source_function=S_v, source_parameters=S_v_parameters,
+    initial_condition=v_initial_condition, final_time=final_time)
+prob = FVMSystem(u_prob, v_prob);
+
+using OrdinaryDiffEq, LinearSolve, CairoMakie
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=1.0) # very slow
+fig = Figure(fontsize=44)
+x = LinRange(0, 100, 250)
+y = LinRange(0, 100, 250)
+i = Observable(1)
+axu = Axis(fig[1, 1], width=600, height=600,
+    title=map(i -&gt; L&quot;u(x,~ y,~ %$(sol.t[i]))&quot;, i), xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;)
+axv = Axis(fig[1, 2], width=600, height=600,
+    title=map(i -&gt; L&quot;v(x,~ y,~ %$(sol.t[i]))&quot;, i), xlabel=L&quot;x&quot;, ylabel=L&quot;y&quot;)
+u = map(i -&gt; reshape(sol.u[i][1, :], 250, 250), i)
+v = map(i -&gt; reshape(sol.u[i][2, :], 250, 250), i)
+heatmap!(axu, x, y, u, colorrange=(0.0, 2.5), colormap=:turbo)
+heatmap!(axv, x, y, v, colorrange=(0.0, 10.0), colormap=:turbo)
+resize_to_layout!(fig)
+record(fig, joinpath(@__DIR__, &quot;../figures&quot;, &quot;keller_segel_chemotaxis.mp4&quot;), eachindex(sol);
+    framerate=60) do _i
+    i[] = _i
+end;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../solving_mazes_with_laplaces_equation/">« Solving Mazes with Laplace&#39;s Equation</a><a class="docs-footer-nextpage" href="../../math/">Mathematical and Implementation Details »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Sunday 10 September 2023 07:35">Sunday 10 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Diffusion Equation in a Wedge with Mixed Boundary Conditions · FiniteVolumeMethod.jl</title><meta name="title" content="Diffusion Equation in a Wedge with Mixed Boundary Conditions · FiniteVolumeMethod.jl"/><meta property="og:title" content="Diffusion Equation in a Wedge with Mixed Boundary Conditions · FiniteVolumeMethod.jl"/><meta property="twitter:title" content="Diffusion Equation in a Wedge with Mixed Boundary Conditions · FiniteVolumeMethod.jl"/><meta name="description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="twitter:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/"/><meta property="twitter:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/"/><link rel="canonical" href="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li class="is-active"><a class="tocitem" href>Diffusion Equation in a Wedge with Mixed Boundary Conditions</a><ul class="internal"><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../wyos/overview/">Section Overview</a></li><li><a class="tocitem" href="../../wyos/diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../../wyos/linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../../wyos/laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/diffusion_equation_in_a_wedge_with_mixed_boundary_conditions.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Diffusion-Equation-in-a-Wedge-with-Mixed-Boundary-Conditions"><a class="docs-heading-anchor" href="#Diffusion-Equation-in-a-Wedge-with-Mixed-Boundary-Conditions">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a><a id="Diffusion-Equation-in-a-Wedge-with-Mixed-Boundary-Conditions-1"></a><a class="docs-heading-anchor-permalink" href="#Diffusion-Equation-in-a-Wedge-with-Mixed-Boundary-Conditions" title="Permalink"></a></h1><p>In this example, we consider a diffusion equation on a wedge with angle <span>$\alpha$</span> and mixed boundary conditions:</p><p class="math-container">\[\begin{equation*}
+\begin{aligned}
+\pdv{u(r, \theta, t)}{t} &amp;= \grad^2u(r,\theta,t), &amp; 0&lt;r&lt;1,\,0&lt;\theta&lt;\alpha,\,t&gt;0,\\[6pt]
+\pdv{u(r, 0, t)}{\theta} &amp; = 0 &amp; 0&lt;r&lt;1,\,t&gt;0,\\[6pt]
+u(1, \theta, t) &amp;= 0 &amp; 0&lt;\theta&lt;\alpha,\,t&gt;0,\\[6pt]
+\pdv{u(r,\alpha,t)}{\theta} &amp; = 0 &amp; 0&lt;\theta&lt;\alpha,\,t&gt;0,\\[6pt]
+u(r, \theta, 0) &amp;= f(r,\theta) &amp; 0&lt;r&lt;1,\,0&lt;\theta&lt;\alpha,
+\end{aligned}
+\end{equation*}\]</p><p>where we take <span>$f(r,\theta) = 1-r$</span> and <span>$\alpha=\pi/4$</span>.</p><p>Note that the PDE is provided in polar form, but Cartesian coordinates are assumed for the operators in our code. The conversion is easy, noting that the two Neumann conditions are just equations of the form <span>$\grad u \vdot \vu n = 0$</span>. Moreover, although the right-hand side of the PDE is given as a Laplacian, recall that <span>$\grad^2 = \div\grad$</span>, so we can write the PDE as <span>$\partial u/\partial t + \div \vb q = 0$</span>, where <span>$\vb q = -\grad u$</span>.</p><p>Let us now setup the problem. To define the geometry, we need to be careful that the <code>Triangulation</code> recognises that we need to split the boundary into three parts, one part for each boundary condition. This is accomplished by providing a single vector for each part of the boundary as follows (and as described in DelaunayTriangulation.jl&#39;s documentation), where we also <code>refine!</code> the mesh to get a better mesh. For the arc, we use the <code>CircularArc</code> so that the mesh knows that it is triangulating a certain arc in that area.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, ElasticArrays
+
+α = π / 4
+points = [(0.0, 0.0), (1.0, 0.0), (cos(α), sin(α))]
+bottom_edge = [1, 2]
+arc = CircularArc((1.0, 0.0), (cos(α), sin(α)), (0.0, 0.0))
+upper_edge = [3, 1]
+boundary_nodes = [bottom_edge, [arc], upper_edge]
+tri = triangulate(points; boundary_nodes)
+A = get_area(tri)
+refine!(tri; max_area=1e-4A)
+mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 8182 control volumes, 16000 triangles, and 24181 edges</code></pre><p>This is the mesh we&#39;ve constructed.</p><pre><code class="language-julia hljs">using CairoMakie
+fig, ax, sc = triplot(tri)
+fig</code></pre><img src="da32a87a.png" alt="Example block output"/><p>To confirm that the boundary is now in three parts, see:</p><pre><code class="language-julia hljs">get_boundary_nodes(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Vector{Int64}}:
+ [1, 6695, 4840, 6698, 2249, 6037, 4837, 6752, 1729, 6221  …  6030, 136, 6954, 591, 5911, 145, 5907, 2692, 5974, 2]
+ [2, 7115, 4735, 7587, 148, 7125, 4713, 7418, 140, 2658  …  940, 937, 3677, 99, 3657, 748, 7444, 3659, 7102, 3]
+ [3, 6014, 3662, 5778, 704, 5775, 3684, 4794, 85, 3689  …  4198, 1728, 7170, 4201, 4842, 2248, 6490, 4839, 6694, 1]</code></pre><p>We now need to define the boundary conditions. For this, we need to provide <code>Tuple</code>s, where the <code>i</code>th element of the <code>Tuple</code>s refers to the <code>i</code>th part of the boundary. The boundary conditions are thus:</p><pre><code class="language-julia hljs">lower_bc = arc_bc = upper_bc = (x, y, t, u, p) -&gt; zero(u)
+types = (Neumann, Dirichlet, Neumann)
+BCs = BoundaryConditions(mesh, (lower_bc, arc_bc, upper_bc), types)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 3 boundary conditions with types (Neumann, Dirichlet, Neumann)</code></pre><p>Now we can define the PDE. We use the reaction-diffusion formulation, specifying the diffusion function as a constant.</p><pre><code class="language-julia hljs">f = (x, y) -&gt; 1 - sqrt(x^2 + y^2)
+D = (x, y, t, u, p) -&gt; one(u)
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+final_time = 0.1
+prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 8182 nodes and time span (0.0, 0.1)</code></pre><p>If you did want to use the flux formulation, you would need to provide</p><pre><code class="language-julia hljs">flux = (x, y, t, α, β, γ, p) -&gt; (-α, -β)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">#9 (generic function with 1 method)</code></pre><p>which replaces <code>u</code> with <code>αx + βy + γ</code> so that we approximate <span>$\grad u$</span> by <span>$(\alpha,\beta)^{\mkern-1.5mu\mathsf{T}}$</span>, and the negative is needed since <span>$\vb q = -\grad u$</span>.</p><p>We now solve the problem. We provide the solver for this problem. In my experience, I&#39;ve found that <code>TRBDF2(linsolve=KLUFactorization())</code> typically has the best performance for these problems.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, LinearSolve
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.01, parallel=Val(false))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+Interpolation: 1st order linear
+t: 11-element Vector{Float64}:
+ 0.0
+ 0.01
+ 0.02
+ 0.03
+ 0.04
+ 0.05
+ 0.06
+ 0.07
+ 0.08
+ 0.09
+ 0.1
+u: 11-element Vector{Vector{Float64}}:
+ [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.2742608203909226, 0.25  …  0.3828620101208364, 0.1878740048316726, 0.20728390616453607, 0.20476038014063924, 0.10048659861178189, 0.16706715003895445, 0.059284463525689834, 0.05430179443515959, 0.09795726626318846, 0.32919245292215604]
+ [0.8216249822316779, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4795376800341007, 0.4795263196824577, 0.2742608203909226, 0.236802056503008  …  0.3664425308372729, 0.17622681179748584, 0.19511399079628597, 0.1926567288305954, 0.09221037293380081, 0.15604086556170674, 0.05361305164636726, 0.049009780811426824, 0.08981861023094989, 0.3141666099973106]
+ [0.7468307653332182, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4579352918475848, 0.45792420153376956, 0.2742608203909226, 0.22469257719666144  …  0.3497886178278579, 0.16655728275958975, 0.18463753720347972, 0.18228265154566967, 0.08672348960730938, 0.14728669387818302, 0.050345060785521166, 0.046015975781643084, 0.08446444754135381, 0.29934556858486255]
+ [0.6920541910829372, 0.0, 0.0, 0.0, 0.0, 0.0, 0.43546276752836605, 0.4354520523651176, 0.2742608203909226, 0.21363072597828497  …  0.333117393378372, 0.1581929224675853, 0.175420919185738, 0.17317636460897684, 0.08225903026773818, 0.13984337683610626, 0.047739742892005166, 0.04363473935060318, 0.08011384720476394, 0.2849576151842988]
+ [0.6445987472405098, 0.0, 0.0, 0.0, 0.0, 0.0, 0.41293156697696354, 0.4129213925843697, 0.2742608203909226, 0.2031412273572552  …  0.316634181005373, 0.15038989374521558, 0.1667823868772351, 0.16464659059265213, 0.07817284455468551, 0.13293278542617218, 0.04536207241030309, 0.04146086269654291, 0.07613354880363123, 0.2709607735040812]
+ [0.6029757788170901, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3907791091286678, 0.39076952632912815, 0.2742608203909226, 0.19307065634687584  …  0.30044823074278476, 0.1429783659993031, 0.1585513836381271, 0.15652263638353459, 0.07433420560743502, 0.12638945804439586, 0.04313509315224567, 0.03942530104216142, 0.07239523169847575, 0.2573249857011477]
+ [0.5650193975316224, 0.0, 0.0, 0.0, 0.0, 0.0, 0.36950931336471937, 0.3695002963144354, 0.2742608203909226, 0.18331107662703805  …  0.28477167128449987, 0.13581052246513603, 0.1505853558626224, 0.14866092696324257, 0.070631835557764, 0.12006604449372413, 0.040989614608507086, 0.03746453657609854, 0.06878985451225442, 0.24410073581563413]
+ [0.5301524175951087, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3491946794491056, 0.34918619440385007, 0.2742608203909226, 0.17386109310168013  …  0.2696576101953717, 0.12887097333543385, 0.1428720237753507, 0.14104870926125024, 0.06705047463521666, 0.11394518965961764, 0.03891522794550198, 0.03556885620028906, 0.06530240902984367, 0.23131759720499512]
+ [0.49813327388706474, 0.0, 0.0, 0.0, 0.0, 0.0, 0.32983921777278474, 0.32983123188758173, 0.2742608203909226, 0.16473255595104597  …  0.2551275738593837, 0.12216466425414828, 0.13541828066008382, 0.13369260823421908, 0.06359018901747407, 0.10803008934370431, 0.03691141927063945, 0.03373773059750837, 0.06193290202759141, 0.21899552719584223]
+ [0.46872040128700626, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3114469387267148, 0.31143942005583936, 0.2742608203909226, 0.15593731535537944  …  0.24120308866051926, 0.1156965408652309, 0.12823101980059368, 0.12659924883881044, 0.0602510448822173, 0.10232393934761211, 0.03497767469132859, 0.03197063045053181, 0.05868134028184542, 0.20715448311478674]
+ [0.4416679947146928, 0.0, 0.0, 0.0, 0.0, 0.0, 0.29402190107337056, 0.2940148185868041, 0.2742608203909226, 0.1474874400589865  …  0.22790605406816386, 0.10947165083891108, 0.12131726991670104, 0.11977538690943534, 0.05703311819123076, 0.09683000650725973, 0.033113477753159114, 0.03026702340612878, 0.0555477390956149, 0.19581477475739123]</code></pre><pre><code class="language-julia hljs">using CairoMakie
+fig = Figure(fontsize=38)
+for (i, j) in zip(1:3, (1, 6, 11))
+    local ax
+    ax = Axis(fig[1, i], width=600, height=600,
+        xlabel=&quot;x&quot;, ylabel=&quot;y&quot;,
+        title=&quot;t = $(sol.t[j])&quot;,
+        titlealign=:left)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.01:1, colormap=:matter)
+    tightlimits!(ax)
+end
+resize_to_layout!(fig)
+fig</code></pre><img src="20a9ef8d.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/diffusion_equation_in_a_wedge_with_mixed_boundary_conditions.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, ElasticArrays
+
+α = π / 4
+points = [(0.0, 0.0), (1.0, 0.0), (cos(α), sin(α))]
+bottom_edge = [1, 2]
+arc = CircularArc((1.0, 0.0), (cos(α), sin(α)), (0.0, 0.0))
+upper_edge = [3, 1]
+boundary_nodes = [bottom_edge, [arc], upper_edge]
+tri = triangulate(points; boundary_nodes)
+A = get_area(tri)
+refine!(tri; max_area=1e-4A)
+mesh = FVMGeometry(tri)
+
+using CairoMakie
+fig, ax, sc = triplot(tri)
+fig
+
+get_boundary_nodes(tri)
+
+lower_bc = arc_bc = upper_bc = (x, y, t, u, p) -&gt; zero(u)
+types = (Neumann, Dirichlet, Neumann)
+BCs = BoundaryConditions(mesh, (lower_bc, arc_bc, upper_bc), types)
+
+f = (x, y) -&gt; 1 - sqrt(x^2 + y^2)
+D = (x, y, t, u, p) -&gt; one(u)
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+final_time = 0.1
+prob = FVMProblem(mesh, BCs; diffusion_function=D, initial_condition, final_time)
+
+flux = (x, y, t, α, β, γ, p) -&gt; (-α, -β)
+
+using OrdinaryDiffEq, LinearSolve
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()), saveat=0.01, parallel=Val(false))
+
+using CairoMakie
+fig = Figure(fontsize=38)
+for (i, j) in zip(1:3, (1, 6, 11))
+    local ax
+    ax = Axis(fig[1, i], width=600, height=600,
+        xlabel=&quot;x&quot;, ylabel=&quot;y&quot;,
+        title=&quot;t = $(sol.t[j])&quot;,
+        titlealign=:left)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.01:1, colormap=:matter)
+    tightlimits!(ax)
+end
+resize_to_layout!(fig)
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../diffusion_equation_on_a_square_plate/">« Diffusion Equation on a Square Plate</a><a class="docs-footer-nextpage" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 25 September 2024 12:55">Wednesday 25 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

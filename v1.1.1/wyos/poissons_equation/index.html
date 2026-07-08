@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Poisson&#39;s Equation · FiniteVolumeMethod.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link rel="canonical" href="https://DanielVandH.github.io/FiniteVolumeMethod.jl/wyos/poissons_equation/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../tutorials/overview/">Section Overview</a></li><li><a class="tocitem" href="../../tutorials/diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../../tutorials/diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../../tutorials/reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../../tutorials/porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../../tutorials/porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../../tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../../tutorials/helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../../tutorials/laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../../tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../../tutorials/reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../../tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../../tutorials/diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../../tutorials/mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../../tutorials/solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../../tutorials/keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox" checked/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li class="is-active"><a class="tocitem" href>Poisson&#39;s Equation</a><ul class="internal"><li><a class="tocitem" href="#Mathematical-Details"><span>Mathematical Details</span></a></li><li><a class="tocitem" href="#Implementation"><span>Implementation</span></a></li><li><a class="tocitem" href="#Using-the-Provided-Template"><span>Using the Provided Template</span></a></li><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Solvers for Specific Problems, and Writing Your Own</a></li><li class="is-active"><a href>Poisson&#39;s Equation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Poisson&#39;s Equation</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/poissons_equation.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Poisson&#39;s-Equation"><a class="docs-heading-anchor" href="#Poisson&#39;s-Equation">Poisson&#39;s Equation</a><a id="Poisson&#39;s-Equation-1"></a><a class="docs-heading-anchor-permalink" href="#Poisson&#39;s-Equation" title="Permalink"></a></h1><ul><li><a href="#Poisson&#39;s-Equation">Poisson&#39;s Equation</a></li><li class="no-marker"><ul><li><a href="#Mathematical-Details">Mathematical Details</a></li><li><a href="#Implementation">Implementation</a></li><li><a href="#Using-the-Provided-Template">Using the Provided Template</a></li><li><a href="#Just-the-code">Just the code</a></li></ul></li></ul><p>We now write a solver for Poisson&#39;s equation. What we produce in this section can also be accessed in <code>FiniteVolumeMethod.PoissonsEquation</code>.</p><h2 id="Mathematical-Details"><a class="docs-heading-anchor" href="#Mathematical-Details">Mathematical Details</a><a id="Mathematical-Details-1"></a><a class="docs-heading-anchor-permalink" href="#Mathematical-Details" title="Permalink"></a></h2><p>We start by describing the mathematical details. The problems we will be solving take the form</p><p class="math-container">\[\div[D(\vb x)\grad u] = f(\vb x).\]</p><p>Note that this is very similar to a mean exit time problem, except <span>$f(\vb x) = -1$</span> for mean exit time problems. Note that this is actually a generalised Poisson equation - typically these equations look like <span>$\grad^2 u = f$</span>.<sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup></p><p>From these similarities, we already know that</p><p class="math-container">\[\frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} D(\vb x_\sigma)\left[\left(s_{k, 11}n_\sigma^x+s_{k,21}n_\sigma^y\right)u_{k1} + \left(s_{k,12}n_\sigma^x+s_{k,22}n_\sigma^y\right)u_{k2}+\left(s_{k,13}n_\sigma^x+s_{k,23}n_\sigma^y\right)u_{k3}\right]L_\sigma = f(\vb x_i),\]</p><p>and thus we can write this as <span>$\vb a_i^{\mkern-1.5mu\mathsf T}\vb u = b_i$</span> as usual, with <span>$b_i = f(\vb x_i)$</span>. The boundary conditions are handled in the same way as in <a href="../mean_exit_time/">mean exit time problems</a>.</p><h2 id="Implementation"><a class="docs-heading-anchor" href="#Implementation">Implementation</a><a id="Implementation-1"></a><a class="docs-heading-anchor-permalink" href="#Implementation" title="Permalink"></a></h2><p>Let us now implement our problem. For <a href="../mean_exit_time/">mean exit time problems</a>, we had a function <code>create_met_b</code> that we used for defining <span>$\vb b$</span>. We should generalise that function to now accept a source function:</p><pre><code class="language-julia hljs">function create_rhs_b(mesh, conditions, source_function, source_parameters)
+    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    for i in each_solid_vertex(mesh.triangulation)
+        if !FVM.is_dirichlet_node(conditions, i)
+            p = get_point(mesh, i)
+            x, y = getxy(p)
+            b[i] = source_function(x, y, source_parameters)
+        end
+    end
+    return b
+end</code></pre><pre><code class="nohighlight hljs">create_rhs_b (generic function with 1 method)</code></pre><p>We also need a function that applies the Dirichlet conditions.</p><pre><code class="language-julia hljs">function apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
+        x, y = get_point(mesh, i)
+        b[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+        A[i, i] = 1.0
+    end
+end</code></pre><pre><code class="nohighlight hljs">apply_steady_dirichlet_conditions! (generic function with 1 method)</code></pre><p>So, our problem can be defined by:</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
+const FVM = FiniteVolumeMethod
+function poissons_equation(mesh::FVMGeometry,
+    BCs::BoundaryConditions,
+    ICs::InternalConditions=InternalConditions();
+    diffusion_function=(x,y,p)-&gt;1.0,
+    diffusion_parameters=nothing,
+    source_function,
+    source_parameters=nothing)
+    conditions = Conditions(mesh, BCs, ICs)
+    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    A = zeros(n, n)
+    b = create_rhs_b(mesh, conditions, source_function, source_parameters)
+    FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    FVM.boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    return LinearProblem(sparse(A), b)
+end</code></pre><pre><code class="nohighlight hljs">poissons_equation (generic function with 2 methods)</code></pre><p>Now let&#39;s test this problem. We consider</p><p class="math-container">\[\begin{equation*}
+\begin{aligned}
+\grad^2 u &amp;= -\sin(\pi x)\sin(\pi y) &amp; \vb x \in [0,1]^2, \\
+u &amp;= 0 &amp; \vb x \in\partial[0,1]^2.
+\end{aligned}
+\end{equation*}\]</p><pre><code class="language-julia hljs">tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=true)
+mesh = FVMGeometry(tri)
+BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(x), Dirichlet)
+source_function = (x, y, p) -&gt; -sin(π * x) * sin(π * y)
+prob = poissons_equation(mesh, BCs;  source_function)</code></pre><pre><code class="nohighlight hljs">LinearProblem. In-place: true
+b: 10000-element Vector{Float64}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ ⋮
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0</code></pre><pre><code class="language-julia hljs">sol = solve(prob, KLUFactorization())</code></pre><pre><code class="nohighlight hljs">u: 10000-element Vector{Float64}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ ⋮
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0</code></pre><pre><code class="language-julia hljs">using CairoMakie
+fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 0.05, 10), colormap=:matter, extendhigh=:auto)
+tightlimits!(ax)
+fig</code></pre><p><img src="../poissons_equation-14.png" alt/></p><p>If we wanted to turn this into a <code>SteadyFVMProblem</code>, we use a similar call to <code>poissons_equation</code> above except with an <code>initial_condition</code> for the initial guess. Moreover, we need to change the sign of the source function, since above we are solving <span>$\div[D(\vb x)\grad u] = f(\vb x)$</span>, when <code>FVMProblem</code>s assume that we are solving <span>$0 = \div[D(\vb x)\grad u] + f(\vb x)$</span>.</p><pre><code class="language-julia hljs">initial_condition = zeros(num_points(tri))
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
+    diffusion_function= (x, y, t, u, p) -&gt; 1.0,
+    source_function=let S = source_function
+        (x, y, t, u, p) -&gt; -S(x, y, p)
+    end,
+    initial_condition,
+    final_time=Inf))</code></pre><pre><code class="nohighlight hljs">SteadyFVMProblem with 10000 nodes</code></pre><pre><code class="language-julia hljs">using SteadyStateDiffEq, OrdinaryDiffEq
+fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))</code></pre><pre><code class="nohighlight hljs">u: 10000-element Vector{Float64}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ ⋮
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0</code></pre><h2 id="Using-the-Provided-Template"><a class="docs-heading-anchor" href="#Using-the-Provided-Template">Using the Provided Template</a><a id="Using-the-Provided-Template-1"></a><a class="docs-heading-anchor-permalink" href="#Using-the-Provided-Template" title="Permalink"></a></h2><p>Let&#39;s now use the built-in <code>PoissonsEquation</code> which implements the above template inside FiniteVolumeMethod.jl. The above problem can be constructed as follows:</p><pre><code class="language-julia hljs">prob = PoissonsEquation(mesh, BCs; source_function=source_function)</code></pre><pre><code class="nohighlight hljs">PoissonsEquation with 10000 nodes</code></pre><pre><code class="language-julia hljs">sol = solve(prob, KLUFactorization())</code></pre><pre><code class="nohighlight hljs">u: 10000-element Vector{Float64}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ ⋮
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0</code></pre><p>Here is a benchmark comparison of the <code>PoissonsEquation</code> approach against the <code>FVMProblem</code> approach.</p><pre><code class="language-julia hljs">using BenchmarkTools
+@btime solve($prob, $KLUFactorization());</code></pre><pre><code class="nohighlight hljs">  15.442 ms (56 allocations: 15.21 MiB)</code></pre><pre><code class="language-julia hljs">@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));</code></pre><pre><code class="nohighlight hljs">  189.406 ms (185761 allocations: 93.63 MiB)</code></pre><p>Let&#39;s now also solve a generalised Poisson equation. Based on Section 7 of <a href="https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf">this paper</a> by Nagel (2012), we consider an equation of the form</p><p class="math-container">\[\div\left[\epsilon(\vb x)\grad V(\vb x)\right] = -\frac{\rho(\vb x)}{\epsilon_0}.\]</p><p>We consider this equation on the domain <span>$\Omega = [0, 10]^2$</span>. We put two parallel capacitor plates inside the domain, with the first in <span>$2 \leq x \leq 8$</span> along <span>$y = 3$</span>, and the other at <span>$2 \leq x \leq 8$</span> along <span>$y=7$</span>. We use <span>$V = 1$</span> on the top plate, and <span>$V = -1$</span> on the bottom plate. For the domain boundaries, <span>$\partial\Omega$</span>, we use homogeneous Dirichlet conditions on the top and bottom sides, and homogeneous Neumann conditions on the left and right sides. For the space-varying electric constant <span>$\epsilon(\vb x)$</span>, we use<sup class="footnote-reference"><a id="citeref-2" href="#footnote-2">[2]</a></sup></p><p class="math-container">\[\epsilon(\vb x) = 1 + \frac12(\epsilon_0 - 1)\left[1 + \erf\left(\frac{r}{\Delta}\right)\right],\]</p><p>where <span>$r$</span> is the distance between <span>$\vb x$</span> and the parallel plates, <span>$\Delta  = 4$</span>. The value of <span>$\epsilon_0$</span> is approximately <span>$\epsilon_0 = 8.8541878128 \times 10^{-12}$</span>. For the charge density <span>$\rho(\vb x)$</span>, we use a Gaussian density,</p><p class="math-container">\[\rho(\vb x) = \frac{Q}{2\pi}\mathrm{e}^{-r^2/2},\]</p><p>where, again, <span>$r$</span> is the distance between <span>$\vb x$</span> and the parallel plates, and <span>$Q = 10^{-6}$</span>.</p><p>To define this problem, let us first define the mesh. We will need to manually put in the capacitor plates so that we can enforce Dirichlet conditions on them.</p><pre><code class="language-julia hljs">a, b, c, d = 0.0, 10.0, 0.0, 10.0
+e, f = (2.0, 3.0), (8.0, 3.0)
+g, h = (2.0, 7.0), (8.0, 7.0)
+points = [(a, c), (b, c), (b, d), (a, d), e, f, g, h]
+boundary_nodes = [[1, 2], [2, 3], [3, 4], [4, 1]]
+edges = Set(((5, 6), (7, 8)))
+tri = triangulate(points; boundary_nodes, edges, delete_ghosts=false)
+refine!(tri; max_area=1e-4get_total_area(tri))
+fig, ax, sc = triplot(tri, show_constrained_edges=true, constrained_edge_linewidth=5)
+fig</code></pre><p><img src="../poissons_equation-25.png" alt/></p><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre><code class="nohighlight hljs">FVMGeometry with 8095 control volumes, 15868 triangles, and 23962 edges</code></pre><p>The boundary conditions are given by:</p><pre><code class="language-julia hljs">zero_f = (x, y, t, u, p) -&gt; zero(x)
+bc_f = (zero_f, zero_f, zero_f, zero_f)
+bc_types = (Dirichlet, Neumann, Dirichlet, Neumann) # bot, right, top, left
+BCs = BoundaryConditions(mesh, bc_f, bc_types)</code></pre><pre><code class="nohighlight hljs">BoundaryConditions with 4 boundary conditions with types (Dirichlet, Neumann, Dirichlet, Neumann)</code></pre><p>To define the internal conditions, we need to get the indices for the plates.</p><pre><code class="language-julia hljs">function find_vertices_on_plates(tri)
+    lower_plate = Int[]
+    upper_plate = Int[]
+    for i in each_solid_vertex(tri)
+        x, y = get_point(tri, i)
+        in_range = 2 ≤ x ≤ 8
+        if in_range
+            y == 3 &amp;&amp; push!(lower_plate, i)
+            y == 7 &amp;&amp; push!(upper_plate, i)
+        end
+    end
+    return lower_plate, upper_plate
+end
+lower_plate, upper_plate = find_vertices_on_plates(tri)
+dirichlet_nodes = Dict(
+    (lower_plate .=&gt; 1)...,
+    (upper_plate .=&gt; 2)...
+)
+internal_f = ((x, y, t, u, p) -&gt; -one(x), (x, y, t, u, p) -&gt; one(x))
+ICs = InternalConditions(internal_f, dirichlet_nodes=dirichlet_nodes)</code></pre><pre><code class="nohighlight hljs">InternalConditions with 98 Dirichlet nodes and 0 Dudt nodes</code></pre><p>Next, we define <span>$\epsilon(\vb x)$</span> and <span>$\rho(\vb x)$</span>. We need a function that computes the distance between a point and the plates. For the distance between a point and a line segment, we can use:<sup class="footnote-reference"><a id="citeref-3" href="#footnote-3">[3]</a></sup></p><pre><code class="language-julia hljs">using LinearAlgebra
+function dist_to_line(p, a, b)
+    ℓ² = norm(a .- b)^2
+    t = max(0.0, min(1.0, dot(p .- a, b .- a) / ℓ²))
+    pv = a .+ t .* (b .- a)
+    return norm(p .- pv)
+end</code></pre><pre><code class="nohighlight hljs">dist_to_line (generic function with 1 method)</code></pre><p>Thus, the distance between a point and the two plates is:</p><pre><code class="language-julia hljs">function dist_to_plates(x, y)
+    p = (x, y)
+    a1, b1 = (2.0, 3.0), (8.0, 3.0)
+    a2, b2 = (2.0, 7.0), (8.0, 7.0)
+    d1 = dist_to_line(p, a1, b1)
+    d2 = dist_to_line(p, a2, b2)
+    return min(d1, d2)
+end</code></pre><pre><code class="nohighlight hljs">dist_to_plates (generic function with 1 method)</code></pre><p>So, our function <span>$\epsilon(\vb x)$</span> is defined by:</p><pre><code class="language-julia hljs">using SpecialFunctions
+function dielectric_function(x, y, p)
+    r = dist_to_plates(x, y)
+    return 1 + (p.ϵ₀ - 1) * (1 + erf(r / p.Δ)) / 2
+end</code></pre><pre><code class="nohighlight hljs">dielectric_function (generic function with 1 method)</code></pre><p>The charge density is:</p><pre><code class="language-julia hljs">function charge_density(x, y, p)
+    r = dist_to_plates(x, y)
+    return p.Q / (2π) * exp(-r^2 / 2)
+end</code></pre><pre><code class="nohighlight hljs">charge_density (generic function with 1 method)</code></pre><p>Using this charge density, our source function is defined by:</p><pre><code class="language-julia hljs">function plate_source_function(x, y, p)
+    ρ = charge_density(x, y, p)
+    return -ρ / p.ϵ₀
+end</code></pre><pre><code class="nohighlight hljs">plate_source_function (generic function with 1 method)</code></pre><p>Now we can define our problem.</p><pre><code class="language-julia hljs">diffusion_parameters = (ϵ₀=8.8541878128e-12, Δ=4.0)
+source_parameters = (ϵ₀=8.8541878128e-12, Q=1e-6)
+prob = PoissonsEquation(mesh, BCs, ICs;
+    diffusion_function=dielectric_function,
+    diffusion_parameters=diffusion_parameters,
+    source_function=plate_source_function,
+    source_parameters=source_parameters)</code></pre><pre><code class="nohighlight hljs">PoissonsEquation with 8095 nodes</code></pre><pre><code class="language-julia hljs">sol = solve(prob, KLUFactorization())</code></pre><pre><code class="nohighlight hljs">u: 8095-element Vector{Float64}:
+     0.0
+     0.0
+     0.0
+     0.0
+    -1.0
+     ⋮
+ 18703.086663581802
+ 15295.306196832904
+ 19669.371453622545
+ 24121.120963360347
+ 34482.44783010809</code></pre><p>With this solution, we can also define the electric field <span>$\vb E$</span>, using <span>$\vb E = -\grad V$</span>. To compute the gradients, we use NaturalNeighbours.jl.</p><pre><code class="language-julia hljs">using NaturalNeighbours
+itp = interpolate(tri, sol.u; derivatives=true)
+E = map(.-, itp.gradient) # E = -∇V</code></pre><pre><code class="nohighlight hljs">8095-element Vector{Tuple{Float64, Float64}}:
+ (-56.46727151671887, -39094.905461698516)
+ (20.154277852429175, -39098.281963217865)
+ (-19.13546207867268, 38944.89706807829)
+ (90.07602992915731, 38499.326414214534)
+ (65615.79153936052, 2764.4093466813474)
+ ⋮
+ (-239.08607244264826, -15670.98878345598)
+ (1767.8409676501487, 39238.569928345445)
+ (-14350.337986858156, -50848.38957133452)
+ (-16868.673270866668, -46248.7965729825)
+ (9024.855302460346, 1226.2140546318856)</code></pre><p>For plotting the electric field, we will show the electric field intensity <span>$\|\vb E\|$</span>, and we can also show the arrows. Rather than showing all arrows, we will show them at a smaller grid of values, which requires differentiating <code>itp</code> so that we can get the gradients at arbitary points.</p><pre><code class="language-julia hljs">∂ = differentiate(itp, 1)
+x = LinRange(0, 10, 25)
+y = LinRange(0, 10, 25)
+x_vec = [x for x in x, y in y] |&gt; vec
+y_vec = [y for x in x, y in y] |&gt; vec
+E_itp = map(.-, ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2)))
+E_intensity = norm.(E_itp)
+fig = Figure(fontsize=38)
+ax = Axis(fig[1, 1], width=600, height=600, titlealign=:left,
+    xlabel=&quot;x&quot;, ylabel=&quot;y&quot;, title=&quot;Voltage&quot;)
+tricontourf!(ax, tri, sol.u, levels=15, colormap=:ocean)
+arrow_positions = [Point2f(x, y) for (x, y) in zip(x_vec, y_vec)]
+arrow_directions = [Point2f(e...) for e in E_itp]
+arrows!(ax, arrow_positions, arrow_directions,
+    lengthscale=0.3, normalize=true, arrowcolor=E_intensity, linecolor=E_intensity)
+    xlims!(ax,0,10)
+    ylims!(ax,0,10)
+ax = Axis(fig[1, 2], width=600, height=600, titlealign=:left,
+    xlabel=&quot;x&quot;, ylabel=&quot;y&quot;, title=&quot;Electric Field&quot;)
+tricontourf!(ax, tri, norm.(E), levels=15, colormap=:ocean)
+arrows!(ax, arrow_positions, arrow_directions,
+    lengthscale=0.3, normalize=true, arrowcolor=E_intensity, linecolor=E_intensity)
+xlims!(ax,0,10)
+ylims!(ax,0,10)
+resize_to_layout!(fig)
+fig</code></pre><p><img src="../poissons_equation-47.png" alt/></p><p>To finish, let us benchmark the <code>PoissonsEquation</code> approach against the <code>FVMProblem</code> approach.</p><pre><code class="language-julia hljs">fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
+    diffusion_function=let D = dielectric_function
+        (x, y, t, u, p) -&gt; D(x, y, p)
+    end,
+    source_function=let S = plate_source_function
+        (x, y, t, u, p) -&gt; -S(x, y, p)
+    end,
+    diffusion_parameters=diffusion_parameters,
+    source_parameters=source_parameters,
+    initial_condition=zeros(num_points(tri)),
+    final_time=Inf))</code></pre><pre><code class="nohighlight hljs">SteadyFVMProblem with 8095 nodes</code></pre><pre><code class="language-julia hljs">@btime solve($prob, $KLUFactorization());</code></pre><pre><code class="nohighlight hljs">  9.061 ms (56 allocations: 10.81 MiB)</code></pre><pre><code class="language-julia hljs">@btime solve($fvm_prob, $DynamicSS(TRBDF2(linsolve=KLUFactorization())));</code></pre><pre><code class="nohighlight hljs">  329.327 ms (201134 allocations: 93.70 MiB)</code></pre><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/DanielVandH/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/poissons_equation.jl">here</a>.</p><pre><code class="language-julia hljs">function create_rhs_b(mesh, conditions, source_function, source_parameters)
+    b = zeros(DelaunayTriangulation.num_solid_vertices(mesh.triangulation))
+    for i in each_solid_vertex(mesh.triangulation)
+        if !FVM.is_dirichlet_node(conditions, i)
+            p = get_point(mesh, i)
+            x, y = getxy(p)
+            b[i] = source_function(x, y, source_parameters)
+        end
+    end
+    return b
+end
+
+function apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    for (i, function_index) in FVM.get_dirichlet_nodes(conditions)
+        x, y = get_point(mesh, i)
+        b[i] = FVM.eval_condition_fnc(conditions, function_index, x, y, nothing, nothing)
+        A[i, i] = 1.0
+    end
+end
+
+using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
+const FVM = FiniteVolumeMethod
+function poissons_equation(mesh::FVMGeometry,
+    BCs::BoundaryConditions,
+    ICs::InternalConditions=InternalConditions();
+    diffusion_function=(x,y,p)-&gt;1.0,
+    diffusion_parameters=nothing,
+    source_function,
+    source_parameters=nothing)
+    conditions = Conditions(mesh, BCs, ICs)
+    n = DelaunayTriangulation.num_solid_vertices(mesh.triangulation)
+    A = zeros(n, n)
+    b = create_rhs_b(mesh, conditions, source_function, source_parameters)
+    FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    FVM.boundary_edge_contributions!(A, b, mesh, conditions, diffusion_function, diffusion_parameters)
+    apply_steady_dirichlet_conditions!(A, b, mesh, conditions)
+    return LinearProblem(sparse(A), b)
+end
+
+tri = triangulate_rectangle(0, 1, 0, 1, 100, 100, single_boundary=true)
+mesh = FVMGeometry(tri)
+BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(x), Dirichlet)
+source_function = (x, y, p) -&gt; -sin(π * x) * sin(π * y)
+prob = poissons_equation(mesh, BCs;  source_function)
+
+sol = solve(prob, KLUFactorization())
+
+using CairoMakie
+fig, ax, sc = tricontourf(tri, sol.u, levels=LinRange(0, 0.05, 10), colormap=:matter, extendhigh=:auto)
+tightlimits!(ax)
+fig
+
+initial_condition = zeros(num_points(tri))
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs;
+    diffusion_function= (x, y, t, u, p) -&gt; 1.0,
+    source_function=let S = source_function
+        (x, y, t, u, p) -&gt; -S(x, y, p)
+    end,
+    initial_condition,
+    final_time=Inf))
+
+using SteadyStateDiffEq, OrdinaryDiffEq
+fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2(linsolve=KLUFactorization())))
+
+prob = PoissonsEquation(mesh, BCs; source_function=source_function)
+
+sol = solve(prob, KLUFactorization())
+
+a, b, c, d = 0.0, 10.0, 0.0, 10.0
+e, f = (2.0, 3.0), (8.0, 3.0)
+g, h = (2.0, 7.0), (8.0, 7.0)
+points = [(a, c), (b, c), (b, d), (a, d), e, f, g, h]
+boundary_nodes = [[1, 2], [2, 3], [3, 4], [4, 1]]
+edges = Set(((5, 6), (7, 8)))
+tri = triangulate(points; boundary_nodes, edges, delete_ghosts=false)
+refine!(tri; max_area=1e-4get_total_area(tri))
+fig, ax, sc = triplot(tri, show_constrained_edges=true, constrained_edge_linewidth=5)
+fig
+
+mesh = FVMGeometry(tri)
+
+zero_f = (x, y, t, u, p) -&gt; zero(x)
+bc_f = (zero_f, zero_f, zero_f, zero_f)
+bc_types = (Dirichlet, Neumann, Dirichlet, Neumann) # bot, right, top, left
+BCs = BoundaryConditions(mesh, bc_f, bc_types)
+
+function find_vertices_on_plates(tri)
+    lower_plate = Int[]
+    upper_plate = Int[]
+    for i in each_solid_vertex(tri)
+        x, y = get_point(tri, i)
+        in_range = 2 ≤ x ≤ 8
+        if in_range
+            y == 3 &amp;&amp; push!(lower_plate, i)
+            y == 7 &amp;&amp; push!(upper_plate, i)
+        end
+    end
+    return lower_plate, upper_plate
+end
+lower_plate, upper_plate = find_vertices_on_plates(tri)
+dirichlet_nodes = Dict(
+    (lower_plate .=&gt; 1)...,
+    (upper_plate .=&gt; 2)...
+)
+internal_f = ((x, y, t, u, p) -&gt; -one(x), (x, y, t, u, p) -&gt; one(x))
+ICs = InternalConditions(internal_f, dirichlet_nodes=dirichlet_nodes)
+
+using LinearAlgebra
+function dist_to_line(p, a, b)
+    ℓ² = norm(a .- b)^2
+    t = max(0.0, min(1.0, dot(p .- a, b .- a) / ℓ²))
+    pv = a .+ t .* (b .- a)
+    return norm(p .- pv)
+end
+
+function dist_to_plates(x, y)
+    p = (x, y)
+    a1, b1 = (2.0, 3.0), (8.0, 3.0)
+    a2, b2 = (2.0, 7.0), (8.0, 7.0)
+    d1 = dist_to_line(p, a1, b1)
+    d2 = dist_to_line(p, a2, b2)
+    return min(d1, d2)
+end
+
+using SpecialFunctions
+function dielectric_function(x, y, p)
+    r = dist_to_plates(x, y)
+    return 1 + (p.ϵ₀ - 1) * (1 + erf(r / p.Δ)) / 2
+end
+
+function charge_density(x, y, p)
+    r = dist_to_plates(x, y)
+    return p.Q / (2π) * exp(-r^2 / 2)
+end
+
+function plate_source_function(x, y, p)
+    ρ = charge_density(x, y, p)
+    return -ρ / p.ϵ₀
+end
+
+diffusion_parameters = (ϵ₀=8.8541878128e-12, Δ=4.0)
+source_parameters = (ϵ₀=8.8541878128e-12, Q=1e-6)
+prob = PoissonsEquation(mesh, BCs, ICs;
+    diffusion_function=dielectric_function,
+    diffusion_parameters=diffusion_parameters,
+    source_function=plate_source_function,
+    source_parameters=source_parameters)
+
+sol = solve(prob, KLUFactorization())
+
+using NaturalNeighbours
+itp = interpolate(tri, sol.u; derivatives=true)
+E = map(.-, itp.gradient) # E = -∇V
+
+∂ = differentiate(itp, 1)
+x = LinRange(0, 10, 25)
+y = LinRange(0, 10, 25)
+x_vec = [x for x in x, y in y] |&gt; vec
+y_vec = [y for x in x, y in y] |&gt; vec
+E_itp = map(.-, ∂(x_vec, y_vec, interpolant_method=Hiyoshi(2)))
+E_intensity = norm.(E_itp)
+fig = Figure(fontsize=38)
+ax = Axis(fig[1, 1], width=600, height=600, titlealign=:left,
+    xlabel=&quot;x&quot;, ylabel=&quot;y&quot;, title=&quot;Voltage&quot;)
+tricontourf!(ax, tri, sol.u, levels=15, colormap=:ocean)
+arrow_positions = [Point2f(x, y) for (x, y) in zip(x_vec, y_vec)]
+arrow_directions = [Point2f(e...) for e in E_itp]
+arrows!(ax, arrow_positions, arrow_directions,
+    lengthscale=0.3, normalize=true, arrowcolor=E_intensity, linecolor=E_intensity)
+    xlims!(ax,0,10)
+    ylims!(ax,0,10)
+ax = Axis(fig[1, 2], width=600, height=600, titlealign=:left,
+    xlabel=&quot;x&quot;, ylabel=&quot;y&quot;, title=&quot;Electric Field&quot;)
+tricontourf!(ax, tri, norm.(E), levels=15, colormap=:ocean)
+arrows!(ax, arrow_positions, arrow_directions,
+    lengthscale=0.3, normalize=true, arrowcolor=E_intensity, linecolor=E_intensity)
+xlims!(ax,0,10)
+ylims!(ax,0,10)
+resize_to_layout!(fig)
+fig
+
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
+    diffusion_function=let D = dielectric_function
+        (x, y, t, u, p) -&gt; D(x, y, p)
+    end,
+    source_function=let S = plate_source_function
+        (x, y, t, u, p) -&gt; -S(x, y, p)
+    end,
+    diffusion_parameters=diffusion_parameters,
+    source_parameters=source_parameters,
+    initial_condition=zeros(num_points(tri)),
+    final_time=Inf))</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See, for example, <a href="https://my.ece.utah.edu/~ece6340/LECTURES/Feb1/Nagel%202012%20-%20Solving%20the%20Generalized%20Poisson%20Equation%20using%20FDM.pdf">this paper</a>.</li><li class="footnote" id="footnote-2"><a class="tag is-link" href="#citeref-2">2</a>This form of <span>$\epsilon(\vb x)$</span> is based on <a href="https://doi.org/10.1063/1.4939125">this paper</a> by Fisicaro et al. (2016).</li><li class="footnote" id="footnote-3"><a class="tag is-link" href="#citeref-3">3</a>Taken from <a href="https://stackoverflow.com/a/1501725">here</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../linear_reaction_diffusion_equations/">« Linear Reaction-Diffusion Equations</a><a class="docs-footer-nextpage" href="../laplaces_equation/">Laplace&#39;s Equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Saturday 16 September 2023 16:43">Saturday 16 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

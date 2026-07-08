@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Mean Exit Time Problems · FiniteVolumeMethod.jl</title><meta name="title" content="Mean Exit Time Problems · FiniteVolumeMethod.jl"/><meta property="og:title" content="Mean Exit Time Problems · FiniteVolumeMethod.jl"/><meta property="twitter:title" content="Mean Exit Time Problems · FiniteVolumeMethod.jl"/><meta name="description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="twitter:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/wyos/mean_exit_time/"/><meta property="twitter:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/wyos/mean_exit_time/"/><link rel="canonical" href="https://SciML.github.io/FiniteVolumeMethod.jl/wyos/mean_exit_time/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../tutorials/overview/">Section Overview</a></li><li><a class="tocitem" href="../../tutorials/diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../../tutorials/diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../../tutorials/reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../../tutorials/porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../../tutorials/porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../../tutorials/piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../../tutorials/helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../../tutorials/laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../../tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../../tutorials/reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../../tutorials/gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../../tutorials/diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../../tutorials/mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../../tutorials/solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../../tutorials/keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox" checked/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equations/">Diffusion Equations</a></li><li class="is-active"><a class="tocitem" href>Mean Exit Time Problems</a><ul class="internal"><li><a class="tocitem" href="#Mathematical-Details"><span>Mathematical Details</span></a></li><li><a class="tocitem" href="#Implementation"><span>Implementation</span></a></li><li><a class="tocitem" href="#Using-the-Provided-Template"><span>Using the Provided Template</span></a></li><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Solvers for Specific Problems, and Writing Your Own</a></li><li class="is-active"><a href>Mean Exit Time Problems</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Mean Exit Time Problems</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/mean_exit_time.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Mean-Exit-Time-Problems"><a class="docs-heading-anchor" href="#Mean-Exit-Time-Problems">Mean Exit Time Problems</a><a id="Mean-Exit-Time-Problems-1"></a><a class="docs-heading-anchor-permalink" href="#Mean-Exit-Time-Problems" title="Permalink"></a></h1><ul><li><a href="#Mean-Exit-Time-Problems">Mean Exit Time Problems</a></li><li class="no-marker"><ul><li><a href="#Mathematical-Details">Mathematical Details</a></li><li><a href="#Implementation">Implementation</a></li><li><a href="#Using-the-Provided-Template">Using the Provided Template</a></li><li><a href="#Just-the-code">Just the code</a></li></ul></li></ul><p>We now write a specialised solver for solving mean exit time problems. What we produce in this section can also be accessed in <code>FiniteVolumeMethod.MeanExitTimeProblem</code>.</p><h2 id="Mathematical-Details"><a class="docs-heading-anchor" href="#Mathematical-Details">Mathematical Details</a><a id="Mathematical-Details-1"></a><a class="docs-heading-anchor-permalink" href="#Mathematical-Details" title="Permalink"></a></h2><p>To start, we give the mathematical details. We will be solving mean exit time problems of the form</p><p class="math-container">\[\begin{equation}
+\div \left[D(\vb x)\grad T\right] = -1,
+\end{equation}\]</p><p>with homogeneous Neumann or Dirichlet conditions on parts of the boundary; homogeneous Neumann conditions represent reflecting parts of the boundary, while homogeneous Dirichlet conditions represent absorbing parts of the boundary.</p><p>The mathematical details for this section are similar to those from the diffusion equation discussion <a href="../diffusion_equations/">here</a>, except that the source term is <span>$1$</span> instead of <span>$0$</span>, and <span>$\mathrm dT_i/\mathrm dt = 0$</span> everywhere. In particular, we can reuse some details from the diffusion equation discussion to immediately write</p><p class="math-container">\[\frac{1}{V_i}\sum_{\sigma\in\mathcal E_i} D(\vb x_\sigma)\left[\left(s_{k, 11}n_\sigma^x+s_{k,21}n_\sigma^y\right)T_{k1} + \left(s_{k,12}n_\sigma^x+s_{k,22}n_\sigma^y\right)T_{k2}+\left(s_{k,13}n_\sigma^x+s_{k,23}n_\sigma^y\right)T_{k3}\right]L_\sigma = -1.\]</p><p>Equivalently, defining <span>$\vb a_i$</span> appropriately and <span>$b_i=-1$</span> (we don&#39;t normalise by <span>$V_i$</span> in <span>$b_i$</span> and instead keep it in <span>$\vb a_i$</span>, since we want to reuse some existing functions later), we can write</p><p class="math-container">\[\vb a_i^{\mkern-1.5mu\mathsf T}\vb T = b_i.\]</p><p>Since we have homogeneous Neumann boundary conditions (wherever a Neumann boundary condition is given, at least), we don&#39;t have to worry about looping over the boundary edges - they just get skipped. For the Dirichlet nodes <span>$i$</span>, we let <span>$\vb a_i = \vb e_i$</span> and <span>$b_i = 0$</span> (since the Dirichlet conditions should be homogeneous).</p><h2 id="Implementation"><a class="docs-heading-anchor" href="#Implementation">Implementation</a><a id="Implementation-1"></a><a class="docs-heading-anchor-permalink" href="#Implementation" title="Permalink"></a></h2><p>Let us now implement this. There is a lot that we can reuse from our diffusion equation template. The function that gets the contributions from each triangle can be reused exactly, which is available in <code>FiniteVolumeMethod.triangle_contributions!</code>. For applying the Dirichlet boundary conditions, we need to know that <code>FiniteVolumeMethod.triangle_contributions!</code> does not change <span>$\vb A$</span> for nodes with conditions. For this problem, though, we need <span>$a_{ii} = 1$</span> for Dirichlet nodes <span>$i$</span>. So, let&#39;s write a function that creates <span>$\vb b$</span> but also enforces Dirichlet constraints.</p><pre><code class="language-julia hljs">function create_met_b!(A, mesh, conditions)
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
+    for i in each_solid_vertex(mesh.triangulation)
+        if !FVM.is_dirichlet_node(conditions, i)
+            b[i] = -1
+        else
+            A[i, i] = 1.0 # b[i] = is already zero
+        end
+    end
+    return b
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">create_met_b! (generic function with 1 method)</code></pre><p>Let us now define the function which gives us our matrices <span>$\vb A$</span> and <span>$\vb b$</span>. We will return the problem as a <code>LinearProblem</code> from LinearSolve.jl.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
+const FVM = FiniteVolumeMethod
+function met_problem(mesh::FVMGeometry,
+    BCs::BoundaryConditions, # the actual implementation also checks that the types are only Dirichlet/Neumann
+    ICs::InternalConditions=InternalConditions();
+    diffusion_function,
+    diffusion_parameters=nothing)
+    conditions = Conditions(mesh, BCs, ICs)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
+    A = zeros(n, n)
+    FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    b = create_met_b!(A, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
+    return LinearProblem(sparse(A), b)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">met_problem (generic function with 2 methods)</code></pre><p>Now let us test this problem. To test, we will consider the last problem <a href="../../tutorials/mean_exit_time/">here</a> which includes mixed boundary conditions and also an internal condition.</p><pre><code class="language-julia hljs"># Define the triangulation
+R₁, R₂ = 2.0, 3.0
+ε = 0.05
+g = θ -&gt; sin(3θ) + cos(5θ)
+R1_f = let R₁ = R₁, ε = ε, g = g # use let for type stability
+    θ -&gt; R₁ * (1.0 + ε * g(θ))
+end
+ϵr = 0.25
+dirichlet = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
+neumann = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(ϵr), R₂ * sin(ϵr)), (0.0, 0.0))
+hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive=false)
+boundary_nodes = [[[dirichlet], [neumann]], [[hole]]]
+points = [(-2.0, 0.0), (0.0, 2.95)]
+tri = triangulate(points; boundary_nodes)
+θ = LinRange(0, 2π, 250)
+xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+add_point!(tri, xin[1], yin[1])
+for i in 2:length(xin)
+    add_point!(tri, xin[i], yin[i])
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
+end
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+pointhole_idxs = [1, 2]
+refine!(tri; max_area=1e-3get_area(tri));
+# Define the problem
+mesh = FVMGeometry(tri)
+zero_f = (x, y, t, u, p) -&gt; zero(u) # the function doesn&#39;t actually matter, but it still needs to be provided
+BCs = BoundaryConditions(mesh, (zero_f, zero_f, zero_f), (Neumann, Dirichlet, Dirichlet))
+ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u), dirichlet_nodes=Dict(pointhole_idxs .=&gt; 1))
+D₁, D₂ = 6.25e-4, 6.25e-5
+diffusion_function = (x, y, p) -&gt; begin
+    r = sqrt(x^2 + y^2)
+    ϕ = atan(y, x)
+    interface_val = p.R1_f(ϕ)
+    return r &lt; interface_val ? p.D₁ : p.D₂
+end
+diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
+prob = met_problem(mesh, BCs, ICs; diffusion_function, diffusion_parameters)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr38_2" style="color:#56b6c2">LinearProblem</span>. In-place: <span class="sgr38_2" style="color:#56b6c2">true</span>
+b: 1909-element Vector{Float64}:
+  0.0
+  0.0
+  0.0
+  0.0
+  0.0
+  ⋮
+ -1.0
+ -1.0
+ -1.0
+ -1.0
+ -1.0</code></pre><p>This problem can now be solved using the <code>solve</code> interface from LinearSolve.jl. Note that the matrix <span>$\vb A$</span> is very dense, but there is no structure to it:</p><pre><code class="language-julia hljs">prob.A</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1909×1909 SparseMatrixCSC{Float64, Int64} with 12549 stored entries:
+⎡⠳⣦⡀⠀⠀⠐⠀⠀⠀⠀⠀⠀⠀⠀⣖⣶⣦⣤⣲⡾⣧⠤⡖⢦⣴⠊⠄⢁⡴⢀⣤⡀⠙⠀⠈⠓⠐⠚⠓⠂⎤
+⎢⠀⠈⠻⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣾⢯⣯⡷⣗⢋⠂⢺⣧⣅⣯⡈⢍⠡⡸⣌⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⢀⠀⠀⠈⠻⣦⠀⠀⠀⠀⠀⠀⠀⠀⣷⣿⣟⣿⣣⡇⣚⢾⠄⢯⣙⡽⡭⠈⢪⠚⠁⡀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠑⢄⣴⣤⣄⢤⡀⠀⠀⠀⠀⠀⠀⢆⠴⠲⣾⢞⣀⣻⣲⡧⣵⣫⣳⣾⢯⣿⣿⣾⡿⣿⣿⣿⎥
+⎢⠀⠀⠀⠀⠀⠀⠐⣿⣿⣿⣿⣿⣿⣿⣴⠀⠀⠀⠀⢖⣮⣣⣽⣋⡈⢻⡖⣻⣏⣿⡿⣿⠲⠭⢹⢽⡭⣻⡺⠿⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⣝⣿⣿⣵⢟⢻⣿⣿⣷⣧⣶⣕⣞⣷⣯⠗⣟⣾⣿⣳⠻⣿⢽⡷⡷⠁⠁⠉⠁⠐⠉⡸⢏⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣿⣿⡿⣷⡿⣿⣻⡿⣺⣽⡟⣽⣿⣯⣿⢵⣻⣾⣷⡻⠀⠀⠀⠂⠐⠀⠀⠂⎥
+⎢⢻⣽⣿⣿⣽⣿⠀⠀⠐⠛⢿⣿⢿⣯⠻⢆⠙⠊⡻⣷⣾⣿⣁⣽⣜⡖⣧⠤⣜⣑⣵⡯⠀⠀⠂⠀⠀⠀⠦⠄⎥
+⎢⠈⣿⡾⣟⣿⣽⠀⠀⠀⠀⢩⣿⣿⣯⡳⠀⠑⢄⢨⠚⠻⢿⠃⢿⣿⣶⣾⣨⣿⣚⣷⣷⠀⠀⠄⠀⠄⠀⠄⠀⎥
+⎢⣽⡾⢯⡿⠭⠾⠠⢄⢠⢄⣱⢽⣿⡾⢿⣮⣢⠒⡟⣭⠈⡴⠦⢝⠯⠇⠳⣰⢲⠈⣻⠋⣠⠀⢀⡀⣀⢠⣤⣀⎥
+⎢⠏⡟⡽⢙⣺⣜⢰⡃⠮⣻⡽⣿⣞⣾⣾⣿⣿⣆⢂⡤⡻⢎⠂⠠⠗⠈⢋⠰⣍⠀⢽⣉⡄⢄⢼⠵⠒⠸⡞⣓⎥
+⎢⠸⣍⣨⣀⡤⣅⣺⢟⡷⢻⣽⢥⣟⣭⣅⣼⣭⣄⣌⢇⠈⡀⡛⢌⠦⡂⠂⠨⠩⢢⡞⣈⡎⠇⣳⢻⠥⡙⠟⠚⎥
+⎢⡳⠛⠍⢿⣗⡼⣤⣸⣦⣈⣾⣿⡿⣿⢲⠽⢻⣿⠯⠇⡙⠁⠨⠣⠑⢄⡒⠐⢇⣀⣃⠥⣓⣃⠨⣖⣾⢎⣨⣖⎥
+⎢⠤⢁⡋⠻⡃⠋⠼⡾⣼⣩⣽⡚⢟⣟⠉⡟⡚⣻⢙⣢⢋⡐⡈⡀⢘⠈⠻⣦⡉⡚⠌⡀⠐⠣⢥⠋⡖⢾⣦⡄⎥
+⎢⡒⢋⠇⡑⣪⠒⡵⣻⣯⣽⣟⣟⣻⣾⢖⢹⣻⢻⡘⠒⠃⠙⠣⣂⠉⢱⣣⠨⡻⣮⢐⢝⠝⡔⠒⠌⣛⡚⣸⢇⎥
+⎢⠆⠻⡒⢮⠁⠠⣹⣾⣿⣯⢽⡯⣽⡻⡵⡿⢽⣿⡿⠚⡗⢳⡚⢩⠍⡜⠂⠡⣔⢔⠟⣥⣤⡾⢒⢞⣒⠑⢹⢆⎥
+⎢⣟⠀⠀⠀⠀⠀⣯⣷⡜⡆⠅⠀⠀⠀⠀⠀⠀⠀⠀⠚⠀⢍⠮⠍⠽⢸⠴⡀⢓⠧⣨⡿⡿⣯⣽⢟⣿⣿⢷⡿⎥
+⎢⣷⠀⠀⠀⠀⠀⣻⣿⣗⣖⠇⠀⠠⠀⠈⠀⠀⠁⠀⠰⢖⡗⣽⣚⢢⢦⡥⠓⡙⠆⣸⢴⣷⢟⡿⣯⣷⣿⣿⣿⎥
+⎢⣿⠀⠀⠀⠀⠀⣿⣯⣧⣫⡔⠀⠐⠀⠀⠀⠀⠁⠀⣘⣘⡀⣅⠣⡺⢟⣸⣍⣻⠸⢜⠘⣿⣿⣽⣿⢻⣶⣽⣿⎥
+⎣⠿⠀⠀⠀⠀⠀⣿⣿⣾⡎⡶⢎⠠⠀⠈⠇⠀⠁⠀⢻⢾⢩⣻⠁⢢⢾⠈⠿⠶⢞⠳⢖⣽⡷⣿⣿⣷⣿⣿⣿⎦</code></pre><p>We will use <code>KLUFactorization</code>.</p><pre><code class="language-julia hljs">sol = solve(prob, KLUFactorization())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Default
+u: 1909-element Vector{Float64}:
+     0.0
+     0.0
+     0.0
+     0.0
+     0.0
+     ⋮
+ 11337.773501360343
+  9924.997858851162
+ 10945.135693706621
+ 11163.56366548069
+  1790.2014305208857</code></pre><p>We can easily visualise our solution:</p><pre><code class="language-julia hljs">using CairoMakie
+fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
+    axis=(width=600, height=600, title=&quot;Template&quot;))
+fig</code></pre><img src="6142b7b3.png" alt="Example block output"/><p>This result is a great match to what we found in the <a href="../../tutorials/mean_exit_time/">tutorial</a>. If we wanted to convert this mean exit time problem into the corresponding <a href="../../interface/#FiniteVolumeMethod.SteadyFVMProblem"><code>SteadyFVMProblem</code></a>, we can do:</p><pre><code class="language-julia hljs">function T_exact(x, y)
+    r = sqrt(x^2 + y^2)
+    if r &lt; R₁
+        return (R₁^2 - r^2) / (4D₁) + (R₂^2 - R₁^2) / (4D₂)
+    else
+        return (R₂^2 - r^2) / (4D₂)
+    end
+end
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)] # an initial guess
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
+    diffusion_function=let D = diffusion_function
+        (x, y, t, u, p) -&gt; D(x, y, p)
+    end,
+    diffusion_parameters,
+    source_function=(x, y, t, u, p) -&gt; one(u),
+    final_time=Inf,
+    initial_condition))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 1848 nodes</code></pre><p>Let&#39;s compare the two solutions.</p><pre><code class="language-julia hljs">using SteadyStateDiffEq, OrdinaryDiffEq
+fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+u: 1909-element Vector{Float64}:
+     0.0
+     0.0
+     0.0
+     0.0
+     0.0
+     ⋮
+ 11399.831093292993
+ 10060.042179094798
+ 11013.5944727345
+ 11213.693386340421
+  1799.019743815523</code></pre><pre><code class="language-julia hljs">ax = Axis(fig[1, 2], width=600, height=600, title=&quot;Template&quot;)
+tricontourf!(ax, tri, fvm_sol.u, levels=0:1000:15000, extendhigh=:auto)
+resize_to_layout!(fig)
+fig
+ind = findall(i -&gt; DelaunayTriangulation.has_vertex(tri, i), DelaunayTriangulation.each_point_index(tri))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1848-element Vector{Int64}:
+    1
+    2
+    3
+    4
+    5
+    6
+    7
+    8
+    9
+   10
+    ⋮
+ 1901
+ 1902
+ 1903
+ 1904
+ 1905
+ 1906
+ 1907
+ 1908
+ 1909</code></pre><h2 id="Using-the-Provided-Template"><a class="docs-heading-anchor" href="#Using-the-Provided-Template">Using the Provided Template</a><a id="Using-the-Provided-Template-1"></a><a class="docs-heading-anchor-permalink" href="#Using-the-Provided-Template" title="Permalink"></a></h2><p>Let&#39;s now use the built-in <code>MeanExitTimeProblem</code> which implements the above template inside FiniteVolumeMethod.jl.</p><pre><code class="language-julia hljs">prob = MeanExitTimeProblem(mesh, BCs, ICs;
+    diffusion_function,
+    diffusion_parameters)
+sol = solve(prob, KLUFactorization())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Default
+u: 1909-element Vector{Float64}:
+     0.0
+     0.0
+     0.0
+     0.0
+     0.0
+     ⋮
+ 11337.773501360343
+  9924.997858851162
+ 10945.135693706621
+ 11163.56366548069
+  1790.2014305208857</code></pre><pre><code class="language-julia hljs">fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
+    axis=(width=600, height=600))
+fig</code></pre><img src="fffaecb5.png" alt="Example block output"/><p>This matches what we have above. To finish, here is a benchmark comparing the approaches.</p><pre><code class="language-julia hljs">using BenchmarkTools
+@btime solve($prob, $KLUFactorization());</code></pre><pre><code class="nohighlight hljs">  2.559 ms (56 allocations: 3.72 MiB)</code></pre><pre><code class="language-julia hljs">@btime solve($fvm_prob, $DynamicSS($KenCarp47(linsolve=KLUFactorization())));</code></pre><pre><code class="nohighlight hljs">  221.851 ms (314440 allocations: 90.23 MiB)</code></pre><p>Very fast!</p><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_wyos/mean_exit_time.jl">here</a>.</p><pre><code class="language-julia hljs">function create_met_b!(A, mesh, conditions)
+    b = zeros(DelaunayTriangulation.num_points(mesh.triangulation))
+    for i in each_solid_vertex(mesh.triangulation)
+        if !FVM.is_dirichlet_node(conditions, i)
+            b[i] = -1
+        else
+            A[i, i] = 1.0 # b[i] = is already zero
+        end
+    end
+    return b
+end
+
+using FiniteVolumeMethod, SparseArrays, DelaunayTriangulation, LinearSolve
+const FVM = FiniteVolumeMethod
+function met_problem(mesh::FVMGeometry,
+    BCs::BoundaryConditions, # the actual implementation also checks that the types are only Dirichlet/Neumann
+    ICs::InternalConditions=InternalConditions();
+    diffusion_function,
+    diffusion_parameters=nothing)
+    conditions = Conditions(mesh, BCs, ICs)
+    n = DelaunayTriangulation.num_points(mesh.triangulation)
+    A = zeros(n, n)
+    FVM.triangle_contributions!(A, mesh, conditions, diffusion_function, diffusion_parameters)
+    b = create_met_b!(A, mesh, conditions)
+    FVM.fix_missing_vertices!(A, b, mesh)
+    return LinearProblem(sparse(A), b)
+end
+
+# Define the triangulation
+R₁, R₂ = 2.0, 3.0
+ε = 0.05
+g = θ -&gt; sin(3θ) + cos(5θ)
+R1_f = let R₁ = R₁, ε = ε, g = g # use let for type stability
+    θ -&gt; R₁ * (1.0 + ε * g(θ))
+end
+ϵr = 0.25
+dirichlet = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
+neumann = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (R₂ * cos(ϵr), R₂ * sin(ϵr)), (0.0, 0.0))
+hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive=false)
+boundary_nodes = [[[dirichlet], [neumann]], [[hole]]]
+points = [(-2.0, 0.0), (0.0, 2.95)]
+tri = triangulate(points; boundary_nodes)
+θ = LinRange(0, 2π, 250)
+xin = @views (@. R1_f(θ) * cos(θ))[begin:end-1]
+yin = @views (@. R1_f(θ) * sin(θ))[begin:end-1]
+add_point!(tri, xin[1], yin[1])
+for i in 2:length(xin)
+    add_point!(tri, xin[i], yin[i])
+    n = DelaunayTriangulation.num_points(tri)
+    add_segment!(tri, n - 1, n)
+end
+n = DelaunayTriangulation.num_points(tri)
+add_segment!(tri, n - 1, n)
+pointhole_idxs = [1, 2]
+refine!(tri; max_area=1e-3get_area(tri));
+# Define the problem
+mesh = FVMGeometry(tri)
+zero_f = (x, y, t, u, p) -&gt; zero(u) # the function doesn&#39;t actually matter, but it still needs to be provided
+BCs = BoundaryConditions(mesh, (zero_f, zero_f, zero_f), (Neumann, Dirichlet, Dirichlet))
+ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u), dirichlet_nodes=Dict(pointhole_idxs .=&gt; 1))
+D₁, D₂ = 6.25e-4, 6.25e-5
+diffusion_function = (x, y, p) -&gt; begin
+    r = sqrt(x^2 + y^2)
+    ϕ = atan(y, x)
+    interface_val = p.R1_f(ϕ)
+    return r &lt; interface_val ? p.D₁ : p.D₂
+end
+diffusion_parameters = (D₁=D₁, D₂=D₂, R1_f=R1_f)
+prob = met_problem(mesh, BCs, ICs; diffusion_function, diffusion_parameters)
+
+prob.A
+
+sol = solve(prob, KLUFactorization())
+
+using CairoMakie
+fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
+    axis=(width=600, height=600, title=&quot;Template&quot;))
+fig
+
+function T_exact(x, y)
+    r = sqrt(x^2 + y^2)
+    if r &lt; R₁
+        return (R₁^2 - r^2) / (4D₁) + (R₂^2 - R₁^2) / (4D₂)
+    else
+        return (R₂^2 - r^2) / (4D₂)
+    end
+end
+initial_condition = [T_exact(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)] # an initial guess
+fvm_prob = SteadyFVMProblem(FVMProblem(mesh, BCs, ICs;
+    diffusion_function=let D = diffusion_function
+        (x, y, t, u, p) -&gt; D(x, y, p)
+    end,
+    diffusion_parameters,
+    source_function=(x, y, t, u, p) -&gt; one(u),
+    final_time=Inf,
+    initial_condition))
+
+using SteadyStateDiffEq, OrdinaryDiffEq
+fvm_sol = solve(fvm_prob, DynamicSS(TRBDF2()))
+
+ax = Axis(fig[1, 2], width=600, height=600, title=&quot;Template&quot;)
+tricontourf!(ax, tri, fvm_sol.u, levels=0:1000:15000, extendhigh=:auto)
+resize_to_layout!(fig)
+fig
+ind = findall(i -&gt; DelaunayTriangulation.has_vertex(tri, i), DelaunayTriangulation.each_point_index(tri))
+
+prob = MeanExitTimeProblem(mesh, BCs, ICs;
+    diffusion_function,
+    diffusion_parameters)
+sol = solve(prob, KLUFactorization())
+
+fig, ax, sc = tricontourf(tri, sol.u, levels=0:1000:15000, extendhigh=:auto,
+    axis=(width=600, height=600))
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../diffusion_equations/">« Diffusion Equations</a><a class="docs-footer-nextpage" href="../linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 25 September 2024 12:55">Wednesday 25 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
