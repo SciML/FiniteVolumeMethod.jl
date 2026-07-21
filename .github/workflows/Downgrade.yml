@@ -18,4 +18,5 @@ jobs:
     uses: "SciML/.github/.github/workflows/downgrade.yml@v1"
     with:
       julia-version: "lts"
+      os: "ubuntu-24.04"
     secrets: "inherit"
