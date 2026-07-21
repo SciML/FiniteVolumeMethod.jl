@@ -3,6 +3,9 @@ using SciMLTesting, FiniteVolumeMethod, Test
 run_qa(
     FiniteVolumeMethod;
     explicit_imports = true,
+    # `solve` is reexported from CommonSolve; this package documents its
+    # methods but does not own the generic binding.
+    api_docs_kwargs = (; rendered = true, rendered_ignore = (:solve,)),
     # Root Project.toml carries only `Test` in [extras]/[targets]; the real test
     # deps live in test/Project.toml under the grouped-tests folder model, so the
     # root-vs-test consistency check does not apply here.
