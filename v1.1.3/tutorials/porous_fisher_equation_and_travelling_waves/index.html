@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Porous-Fisher Equation and Travelling Waves · FiniteVolumeMethod.jl</title><meta name="title" content="Porous-Fisher Equation and Travelling Waves · FiniteVolumeMethod.jl"/><meta property="og:title" content="Porous-Fisher Equation and Travelling Waves · FiniteVolumeMethod.jl"/><meta property="twitter:title" content="Porous-Fisher Equation and Travelling Waves · FiniteVolumeMethod.jl"/><meta name="description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="twitter:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/porous_fisher_equation_and_travelling_waves/"/><meta property="twitter:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/porous_fisher_equation_and_travelling_waves/"/><link rel="canonical" href="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/porous_fisher_equation_and_travelling_waves/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../porous_medium_equation/">Porous-Medium Equation</a></li><li class="is-active"><a class="tocitem" href>Porous-Fisher Equation and Travelling Waves</a><ul class="internal"><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li><a class="tocitem" href="../diffusion_equation_on_an_annulus/">Diffusion Equation on an Annulus</a></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../wyos/overview/">Section Overview</a></li><li><a class="tocitem" href="../../wyos/diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../../wyos/linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../../wyos/laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Porous-Fisher Equation and Travelling Waves</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Porous-Fisher Equation and Travelling Waves</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_fisher_equation_and_travelling_waves.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Porous-Fisher-Equation-and-Travelling-Waves"><a class="docs-heading-anchor" href="#Porous-Fisher-Equation-and-Travelling-Waves">Porous-Fisher Equation and Travelling Waves</a><a id="Porous-Fisher-Equation-and-Travelling-Waves-1"></a><a class="docs-heading-anchor-permalink" href="#Porous-Fisher-Equation-and-Travelling-Waves" title="Permalink"></a></h1><p>This tutorial considers a more involved example, where we discuss travelling wave solutions of a Porous-Fisher equation:</p><p class="math-container">\[\begin{equation*}
+\begin{aligned}
+\pdv{u(\vb x, t)}{t} &amp;= D \div[u\grad u] + \lambda u(1-u) &amp; 0&lt;x&lt;a,\,0&lt;y&lt;b,\,t&gt;0,\\[6pt]
+u(x, 0, t) &amp; =  1 &amp; 0&lt;x&lt;a,\,t&gt;0,\\[6pt]
+u(x, b, t) &amp; =  0 &amp; 0&lt;x&lt;a,\,t&gt;0,\\[6pt]
+\pdv{u(0, y, t)}{x} &amp;= 0 &amp; 0&lt;y&lt;b,\,t&gt;0,\\[6pt]
+\pdv{u(a, y, t)}{x} &amp;= 0 &amp; 0 &lt; y &lt; b,\,t&gt;0,\\[6pt]
+u(\vb x, 0) &amp; = f(y) &amp; 0 \leq x \leq a,\, 0 \leq  y\leq b.
+\end{aligned}
+\end{equation*}\]</p><p>This problem is defined on the rectangle <span>$[0, a] \times [0, b]$</span> and we assume that <span>$b \gg a$</span> so that the rectangle is much taller than it is wide. This problem has <span>$u$</span> ranging from <span>$u=1$</span> at the bottom of the rectangle down to <span>$u=0$</span> at the top on the rectangle, and with zero flux conditions on the two vertical walls. We take the initial condition <span>$f$</span> to be independent of <span>$x$</span>. This setup implies that the solution along each constant line <span>$x=x_0$</span> should be about the same, i.e. the problem is invariant in <span>$x$</span>. If indeed we have <span>$u(\vb x, t) = u(y, t)$</span> then the PDE becomes</p><p class="math-container">\[\begin{equation}\label{eq:onedproblem}
+\pdv{u(y, t)}{t} = D\pdv{y}\left(u\pdv{u}{y}\right) + \lambda u(1-u),
+\end{equation}\]</p><p>which has travelling wave solutions. Following the analysis given in Section 13.4 of the book <em>Mathematical biology I: An introduction</em> by J. D. Murray (2002), we can show that a travelling wave solution to the one-dimensional problem \eqref{eq:onedproblem} is given by</p><p class="math-container">\[\begin{equation}\label{eq:onedproblemexact}
+u(y, t) = \begin{cases} 1-\mathrm{e}^{c_{\min}z} &amp; z \leq 0, \\ 0 &amp; z &gt; 0, \end{cases}
+\end{equation}\]</p><p>where <span>$c_{\min} = \sqrt{\lambda/(2D)}$</span>, <span>$c = \sqrt{D\lambda/2}$</span>, and <span>$z = x-ct$</span> is the travelling wave coordinates. This travelling wave would mathc our problem exactly if the rectangle were instead <span>$[0, a] \times \mathbb R$</span>, but by choosing <span>$b$</span> large enough we can at least emulate the travelling wave behaviour closely; the homogeneous Neumann conditions are to ensure no energy is lost, thus allowing the travelling waves to exist. Moreover, note that the approximations of the solution with <span>$u(y, t)$</span> in \eqref{eq:onedproblemexact} will only be accurate for large time as it takes the solution some time to evolve towards the travelling wave solution.</p><p>Now with this preamble out of the way, let us solve this problem.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, OrdinaryDiffEq, LinearSolve
+a, b, c, d, nx, ny = 0.0, 3.0, 0.0, 40.0, 60, 80
+tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary=false)
+mesh = FVMGeometry(tri)
+one_bc = (x, y, t, u, p) -&gt; one(u)
+zero_bc = (x, y, t, u, p) -&gt; zero(u)
+bc_fncs = (one_bc, zero_bc, zero_bc, zero_bc) # bottom, right, top, left
+types = (Dirichlet, Neumann, Dirichlet, Neumann)
+BCs = BoundaryConditions(mesh, bc_fncs, types)
+f = (x, y) -&gt; zero(y)
+diffusion_function = (x, y, t, u, D) -&gt; D * u
+source_function = (x, y, t, u, λ) -&gt; λ * u * (1 - u)
+D, λ = 0.9, 0.99
+diffusion_parameters = D
+source_parameters = λ
+final_time = 50.0
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs;
+    diffusion_function, diffusion_parameters,
+    source_function, source_parameters,
+    initial_condition, final_time)
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=0.5)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+Interpolation: 1st order linear
+t: 101-element Vector{Float64}:
+  0.0
+  0.5
+  1.0
+  1.5
+  2.0
+  ⋮
+ 48.0
+ 48.5
+ 49.0
+ 49.5
+ 50.0
+u: 101-element Vector{Vector{Float64}}:
+ [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ ⋮
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]</code></pre><p>Let us now look at the travelling wave behaviour. We will plot the evolution over time, and also the travelling wave view of the solution. First, let us get these travelling wave values.</p><pre><code class="language-julia hljs">large_time_idx = findfirst(≥(10.0), sol.t)
+c = sqrt(λ / (2D))
+cₘᵢₙ = sqrt(λ * D / 2)
+zᶜ = 0.0
+exact_solution(z) = ifelse(z ≤ zᶜ, 1 - exp(cₘᵢₙ * z), zero(z))
+travelling_wave_values = zeros(ny, length(sol) - large_time_idx + 1)
+z_vals = zero(travelling_wave_values)
+u_mat = [reshape(u, (nx, ny)) for u in sol.u]
+for (i, t_idx) in pairs(large_time_idx:lastindex(sol))
+    u = u_mat[t_idx]
+    τ = sol.t[t_idx]
+    for k in 1:ny
+        y = c + (k - 1) * (d - c) / (ny - 1)
+        z = y - c * τ
+        z_vals[k, i] = z
+        travelling_wave_values[k, i] = u[nx÷2, k]
+    end
+end</code></pre><p>Now we are in a position to plot.</p><pre><code class="language-julia hljs">using CairoMakie
+fig = Figure(resolution=(3200.72f0, 800.64f0), fontsize=38)
+for (i, j) in zip(1:3, (1, 51, 101))
+    ax = Axis(fig[1, i], width=600, height=600,
+        xlabel=&quot;x&quot;, ylabel=&quot;y&quot;,
+        title=&quot;t = $(sol.t[j])&quot;,
+        titlealign=:left)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.05:1, colormap=:matter)
+    tightlimits!(ax)
+end
+ax = Axis(fig[1, 4], width=900, height=600)
+colors = cgrad(:matter, length(sol) - large_time_idx + 1; categorical=false)
+[lines!(ax, z_vals[:, i], travelling_wave_values[:, i], color=colors[i], linewidth=2) for i in 1:(length(sol)-large_time_idx+1)]
+exact_z_vals = collect(LinRange(extrema(z_vals)..., 500))
+exact_travelling_wave_values = exact_solution.(exact_z_vals)
+lines!(ax, exact_z_vals, exact_travelling_wave_values, color=:red, linewidth=4, linestyle=:dash)
+fig</code></pre><img src="e58f248b.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/porous_fisher_equation_and_travelling_waves.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, OrdinaryDiffEq, LinearSolve
+a, b, c, d, nx, ny = 0.0, 3.0, 0.0, 40.0, 60, 80
+tri = triangulate_rectangle(a, b, c, d, nx, ny; single_boundary=false)
+mesh = FVMGeometry(tri)
+one_bc = (x, y, t, u, p) -&gt; one(u)
+zero_bc = (x, y, t, u, p) -&gt; zero(u)
+bc_fncs = (one_bc, zero_bc, zero_bc, zero_bc) # bottom, right, top, left
+types = (Dirichlet, Neumann, Dirichlet, Neumann)
+BCs = BoundaryConditions(mesh, bc_fncs, types)
+f = (x, y) -&gt; zero(y)
+diffusion_function = (x, y, t, u, D) -&gt; D * u
+source_function = (x, y, t, u, λ) -&gt; λ * u * (1 - u)
+D, λ = 0.9, 0.99
+diffusion_parameters = D
+source_parameters = λ
+final_time = 50.0
+initial_condition = [f(x, y) for (x, y) in DelaunayTriangulation.each_point(tri)]
+prob = FVMProblem(mesh, BCs;
+    diffusion_function, diffusion_parameters,
+    source_function, source_parameters,
+    initial_condition, final_time)
+sol = solve(prob, TRBDF2(linsolve=KLUFactorization()); saveat=0.5)
+
+large_time_idx = findfirst(≥(10.0), sol.t)
+c = sqrt(λ / (2D))
+cₘᵢₙ = sqrt(λ * D / 2)
+zᶜ = 0.0
+exact_solution(z) = ifelse(z ≤ zᶜ, 1 - exp(cₘᵢₙ * z), zero(z))
+travelling_wave_values = zeros(ny, length(sol) - large_time_idx + 1)
+z_vals = zero(travelling_wave_values)
+u_mat = [reshape(u, (nx, ny)) for u in sol.u]
+for (i, t_idx) in pairs(large_time_idx:lastindex(sol))
+    u = u_mat[t_idx]
+    τ = sol.t[t_idx]
+    for k in 1:ny
+        y = c + (k - 1) * (d - c) / (ny - 1)
+        z = y - c * τ
+        z_vals[k, i] = z
+        travelling_wave_values[k, i] = u[nx÷2, k]
+    end
+end
+
+using CairoMakie
+fig = Figure(resolution=(3200.72f0, 800.64f0), fontsize=38)
+for (i, j) in zip(1:3, (1, 51, 101))
+    ax = Axis(fig[1, i], width=600, height=600,
+        xlabel=&quot;x&quot;, ylabel=&quot;y&quot;,
+        title=&quot;t = $(sol.t[j])&quot;,
+        titlealign=:left)
+    tricontourf!(ax, tri, sol.u[j], levels=0:0.05:1, colormap=:matter)
+    tightlimits!(ax)
+end
+ax = Axis(fig[1, 4], width=900, height=600)
+colors = cgrad(:matter, length(sol) - large_time_idx + 1; categorical=false)
+[lines!(ax, z_vals[:, i], travelling_wave_values[:, i], color=colors[i], linewidth=2) for i in 1:(length(sol)-large_time_idx+1)]
+exact_z_vals = collect(LinRange(extrema(z_vals)..., 500))
+exact_travelling_wave_values = exact_solution.(exact_z_vals)
+lines!(ax, exact_z_vals, exact_travelling_wave_values, color=:red, linewidth=4, linestyle=:dash)
+fig</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../porous_medium_equation/">« Porous-Medium Equation</a><a class="docs-footer-nextpage" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.4.1 on <span class="colophon-date" title="Saturday 11 May 2024 11:40">Saturday 11 May 2024</span>. Using Julia version 1.10.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
