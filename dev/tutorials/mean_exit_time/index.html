@@ -79,11 +79,11 @@ u: 2044-element Vector{Float64}:
      0.0
      0.0
      ⋮
- 21770.96485607253
-  7748.01304047196
- 21223.341286240593
- 21931.36026103022
- 21930.581181160447</code></pre><pre><code class="language-julia hljs">fig = Figure(fontsize = 33)
+ 21770.964856072533
+  7748.013040471962
+ 21223.341286240582
+ 21931.360261030222
+ 21930.58118116044</code></pre><pre><code class="language-julia hljs">fig = Figure(fontsize = 33)
 ax = Axis(fig[1, 1], xlabel = &quot;x&quot;, ylabel = &quot;y&quot;)
 tricontourf!(ax, tri, sol.u, levels = 0:500:20000, extendhigh = :auto)
 fig</code></pre><img src="09c60812.png" alt="Example block output"/><h2 id="Perturbed-interface"><a class="docs-heading-anchor" href="#Perturbed-interface">Perturbed interface</a><a id="Perturbed-interface-1"></a><a class="docs-heading-anchor-permalink" href="#Perturbed-interface" title="Permalink"></a></h2><p>Let us now solve the problem with a perturbed interface. The mesh is defined as follows.</p><pre><code class="language-julia hljs">g = θ -&gt; sin(3θ) + cos(5θ)
@@ -103,7 +103,7 @@ end
 n = DelaunayTriangulation.num_points(tri)
 add_segment!(tri, n - 1, n)
 refine!(tri; max_area = 1e-3get_area(tri))
-triplot(tri)</code></pre><img src="868ca4a1.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 1865 control volumes, 3624 triangles, and 5488 edges</code></pre><p>The boundary conditions are simple absorbing conditions.</p><pre><code class="language-julia hljs">BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 1 boundary condition with type Dirichlet</code></pre><p>Now we define the problem. For the initial condition that we use, we will use the exact solution for the problem with an unperturbed interface.</p><pre><code class="language-julia hljs">function T_exact(x, y)
+triplot(tri)</code></pre><img src="6b17853f.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 1865 control volumes, 3624 triangles, and 5488 edges</code></pre><p>The boundary conditions are simple absorbing conditions.</p><pre><code class="language-julia hljs">BCs = BoundaryConditions(mesh, (x, y, t, u, p) -&gt; zero(u), Dirichlet)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 1 boundary condition with type Dirichlet</code></pre><p>Now we define the problem. For the initial condition that we use, we will use the exact solution for the problem with an unperturbed interface.</p><pre><code class="language-julia hljs">function T_exact(x, y)
     r = sqrt(x^2 + y^2)
     if r &lt; R₁
         return (R₁^2 - r^2) / (4D₁) + (R₂^2 - R₁^2) / (4D₂)
@@ -130,15 +130,15 @@ u: 1898-element Vector{Float64}:
     0.0
     0.0
     ⋮
- 8243.173988395378
- 6821.155388091608
- 3384.6848586245405
- 3707.256905191586
- 3466.7405554908482</code></pre><pre><code class="language-julia hljs">fig = Figure(fontsize = 33)
+ 8263.947912661002
+ 6821.154037335013
+ 6560.659072672005
+ 3707.2567293990337
+ 3466.740089570172</code></pre><pre><code class="language-julia hljs">fig = Figure(fontsize = 33)
 ax = Axis(fig[1, 1], xlabel = &quot;x&quot;, ylabel = &quot;y&quot;)
 tricontourf!(ax, tri, sol.u, levels = 0:500:20000, extendhigh = :auto)
 lines!(ax, [xin; xin[1]], [yin; yin[1]], color = :magenta, linewidth = 5)
-fig</code></pre><img src="efc56fcc.png" alt="Example block output"/><h2 id="Adding-obstacles"><a class="docs-heading-anchor" href="#Adding-obstacles">Adding obstacles</a><a id="Adding-obstacles-1"></a><a class="docs-heading-anchor-permalink" href="#Adding-obstacles" title="Permalink"></a></h2><p>Let us now add some obstacles into the problem. We add in components one at a time, exploring the impact of each component individually. When we update the triangulation, we do need to update the <code>mesh</code> since it is constructed from the initial <code>tri</code>.</p><p>The first obstacle we consider adding is a single hole at the origin, which we accomplish by adding a point at the origin and then using <code>InternalConditions</code>. This point will be used to absorb any nearby particles, i.e. <span>$T(0,0)=0$</span>.</p><pre><code class="language-julia hljs">add_point!(tri, 0.0, 0.0)
+fig</code></pre><img src="a48ee99a.png" alt="Example block output"/><h2 id="Adding-obstacles"><a class="docs-heading-anchor" href="#Adding-obstacles">Adding obstacles</a><a id="Adding-obstacles-1"></a><a class="docs-heading-anchor-permalink" href="#Adding-obstacles" title="Permalink"></a></h2><p>Let us now add some obstacles into the problem. We add in components one at a time, exploring the impact of each component individually. When we update the triangulation, we do need to update the <code>mesh</code> since it is constructed from the initial <code>tri</code>.</p><p>The first obstacle we consider adding is a single hole at the origin, which we accomplish by adding a point at the origin and then using <code>InternalConditions</code>. This point will be used to absorb any nearby particles, i.e. <span>$T(0,0)=0$</span>.</p><pre><code class="language-julia hljs">add_point!(tri, 0.0, 0.0)
 mesh = FVMGeometry(tri)
 ICs = InternalConditions((x, y, t, u, p) -&gt; zero(u),
     dirichlet_nodes = Dict(DelaunayTriangulation.num_points(tri) =&gt; 1))
@@ -154,7 +154,7 @@ fig = Figure(fontsize = 33)
 ax = Axis(fig[1, 1], xlabel = &quot;x&quot;, ylabel = &quot;y&quot;)
 tricontourf!(ax, tri, sol.u, levels = 0:500:10000, extendhigh = :auto)
 lines!(ax, [xin; xin[1]], [yin; yin[1]], color = :magenta, linewidth = 5)
-fig</code></pre><img src="d266b9f7.png" alt="Example block output"/><p>We see that the hole has changed the interior significantly. For the next constraint, let us change the boundary so that we only allow particles to exit through a small part of the boundary, reflecting off all other parts. For the reflecting boundary condition, this is enforced by using Neumann boundary conditions.</p><pre><code class="language-julia hljs">ϵr = 0.25
+fig</code></pre><img src="82c14ce4.png" alt="Example block output"/><p>We see that the hole has changed the interior significantly. For the next constraint, let us change the boundary so that we only allow particles to exit through a small part of the boundary, reflecting off all other parts. For the reflecting boundary condition, this is enforced by using Neumann boundary conditions.</p><pre><code class="language-julia hljs">ϵr = 0.25
 dirichlet_circle = CircularArc((R₂ * cos(ϵr), R₂ * sin(ϵr)), (
     R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (0.0, 0.0))
 neumann_circle = CircularArc((R₂ * cos(2π - ϵr), R₂ * sin(2π - ϵr)), (
@@ -190,7 +190,7 @@ fig = Figure(fontsize = 33)
 ax = Axis(fig[1, 1], xlabel = &quot;x&quot;, ylabel = &quot;y&quot;)
 tricontourf!(ax, tri, sol.u, levels = 0:2500:35000, extendhigh = :auto)
 lines!(ax, [xin; xin[1]], [yin; yin[1]], color = :magenta, linewidth = 5)
-fig</code></pre><img src="df3522f1.png" alt="Example block output"/><p>Now, as a last constraint, let&#39;s add a hole. We&#39;ll put hole at the origin,  and we&#39;ll move the point hole to <span>$(-2, 0)$</span> rather than at the origin, and we&#39;ll also put a hole at <span>$(0, 2.95)$</span>.</p><pre><code class="language-julia hljs">hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive = false)
+fig</code></pre><img src="cbaefcfe.png" alt="Example block output"/><p>Now, as a last constraint, let&#39;s add a hole. We&#39;ll put hole at the origin,  and we&#39;ll move the point hole to <span>$(-2, 0)$</span> rather than at the origin, and we&#39;ll also put a hole at <span>$(0, 2.95)$</span>.</p><pre><code class="language-julia hljs">hole = CircularArc((0.0, 1.0), (0.0, 1.0), (0.0, 0.0), positive = false)
 boundary_nodes = [[[dirichlet_circle], [neumann_circle]], [[hole]]]
 points = NTuple{2, Float64}[]
 tri = triangulate(points; boundary_nodes)
@@ -224,7 +224,7 @@ fig = Figure(fontsize = 33)
 ax = Axis(fig[1, 1], xlabel = &quot;x&quot;, ylabel = &quot;y&quot;)
 tricontourf!(ax, tri, sol.u, levels = 0:1000:15000, extendhigh = :auto)
 lines!(ax, [xin; xin[1]], [yin; yin[1]], color = :magenta, linewidth = 5)
-fig</code></pre><img src="6cb0c885.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/mean_exit_time.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
+fig</code></pre><img src="ab3edd84.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/mean_exit_time.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
 R₁, R₂ = 2.0, 3.0
 circle = CircularArc((0.0, R₂), (0.0, R₂), (0.0, 0.0))
 points = NTuple{2, Float64}[]
@@ -420,4 +420,4 @@ fig = Figure(fontsize = 33)
 ax = Axis(fig[1, 1], xlabel = &quot;x&quot;, ylabel = &quot;y&quot;)
 tricontourf!(ax, tri, sol.u, levels = 0:1000:15000, extendhigh = :auto)
 lines!(ax, [xin; xin[1]], [yin; yin[1]], color = :magenta, linewidth = 5)
-fig</code></pre><ul><li><ul><li><ul><li></li></ul></li></ul></li></ul><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See <a href="https://iopscience.iop.org/article/10.1088/1367-2630/abe60d">Simpson et al. (2021)</a> and <a href="https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d">Carr et al. (2022)</a>. In this previous work, we also use the finite volume method, but the problems are instead formulated as linear problems, which makes the solution significantly simpler to implement. The approach we give here is more generally applicable for other nonlinear problems, though.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../diffusion_equation_on_an_annulus/">« Diffusion Equation on an Annulus</a><a class="docs-footer-nextpage" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 12 September 2026 06:32">Saturday 12 September 2026</span>. Using Julia version 1.13.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+fig</code></pre><ul><li><ul><li><ul><li></li></ul></li></ul></li></ul><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See <a href="https://iopscience.iop.org/article/10.1088/1367-2630/abe60d">Simpson et al. (2021)</a> and <a href="https://iopscience.iop.org/article/10.1088/1751-8121/ac4a1d">Carr et al. (2022)</a>. In this previous work, we also use the finite volume method, but the problems are instead formulated as linear problems, which makes the solution significantly simpler to implement. The approach we give here is more generally applicable for other nonlinear problems, though.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../diffusion_equation_on_an_annulus/">« Diffusion Equation on an Annulus</a><a class="docs-footer-nextpage" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Wednesday 16 September 2026 23:28">Wednesday 16 September 2026</span>. Using Julia version 1.13.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
