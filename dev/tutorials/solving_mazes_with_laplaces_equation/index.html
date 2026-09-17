@@ -34,7 +34,7 @@ fig, ax, sc, = triplot(tri,
     show_constrained_edges = false)
 lines!(ax, [get_point(tri, get_boundary_nodes(tri, 1)...)...], color = :blue, linewidth = 6)
 lines!(ax, [get_point(tri, get_boundary_nodes(tri, 3)...)...], color = :red, linewidth = 6)
-fig</code></pre><img src="8f32df46.png" alt="Example block output"/><p>Now we can solve the problem.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, StableRNGs
+fig</code></pre><img src="e4bc5191.png" alt="Example block output"/><p>Now we can solve the problem.</p><pre><code class="language-julia hljs">using FiniteVolumeMethod, StableRNGs
 mesh = FVMGeometry(tri)
 start_bc = (x, y, t, u, p) -&gt; zero(u)
 start_to_finish_bc = (x, y, t, u, p) -&gt; zero(u)
@@ -50,24 +50,24 @@ prob = FVMProblem(mesh, BCs;
     diffusion_function = diffusion_function,
     initial_condition = initial_condition,
     final_time = final_time)
-steady_prob = SteadyFVMProblem(prob)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 3826 nodes</code></pre><pre><code class="language-julia hljs">using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq, OrdinaryDiffEqSDIRK
+steady_prob = SteadyFVMProblem(prob)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 3828 nodes</code></pre><pre><code class="language-julia hljs">using SteadyStateDiffEq, LinearSolve, OrdinaryDiffEq, OrdinaryDiffEqSDIRK
 sol = solve(steady_prob, DynamicSS(TRBDF2(linsolve = KLUFactorization(), autodiff = AutoFiniteDiff())))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
-u: 3826-element Vector{Float64}:
+u: 3829-element Vector{Float64}:
  0.0
  0.0
- 0.000509529708051796
- 0.0010925163011856497
- 0.0017105612405111533
+ 0.0004873365710200035
+ 0.0010449429892204717
+ 0.0016361206360162757
  ⋮
- 0.22356876784431703
- 0.22359938912635655
- 0.22382361158067154
- 0.22419632086929212
- 0.054128672903489106</code></pre><p>We now have our solution.</p><pre><code class="language-julia hljs">tricontourf(tri, sol.u, colormap = :matter)</code></pre><img src="7aeab959.png" alt="Example block output"/><p>This is not what we use to compute the solution to the maze, instead we need <span>$\grad\phi$</span>. We compute the gradient at each point using NaturalNeighbours.jl.</p><pre><code class="language-julia hljs">using NaturalNeighbours, LinearAlgebra
+ 0.2223643265602603
+ 0.22239516593675812
+ 0.2226209818881796
+ 0.22299633711719719
+ 0.051919221349531496</code></pre><p>We now have our solution.</p><pre><code class="language-julia hljs">tricontourf(tri, sol.u, colormap = :matter)</code></pre><img src="b50b57c9.png" alt="Example block output"/><p>This is not what we use to compute the solution to the maze, instead we need <span>$\grad\phi$</span>. We compute the gradient at each point using NaturalNeighbours.jl.</p><pre><code class="language-julia hljs">using NaturalNeighbours, LinearAlgebra
 itp = interpolate(tri, sol.u; derivatives = true)
 ∇ = NaturalNeighbours.get_gradient(itp)
 ∇norms = norm.(∇)
-tricontourf(tri, ∇norms, colormap = :matter)</code></pre><img src="708b4c4c.png" alt="Example block output"/><p>The solution to the maze is now extremely clear from this plot!</p><p>An alternative way to look at this solution is to consider the transient problem, where we do not solve the steady state problem and instead view the solution over time.</p><pre><code class="language-julia hljs">using Accessors
+tricontourf(tri, ∇norms, colormap = :matter)</code></pre><img src="3958eb07.png" alt="Example block output"/><p>The solution to the maze is now extremely clear from this plot!</p><p>An alternative way to look at this solution is to consider the transient problem, where we do not solve the steady state problem and instead view the solution over time.</p><pre><code class="language-julia hljs">using Accessors
 prob = @set prob.final_time = 1e8
 LogRange(a, b, n) = exp10.(LinRange(log10(a), log10(b), n))
 sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = LogRange(1e2, prob.final_time, 24 *
@@ -169,4 +169,4 @@ tightlimits!(ax)
 record(fig, joinpath(@__DIR__, &quot;../figures&quot;, &quot;maze_solution_1.mp4&quot;), eachindex(sol.u);
     framerate = 24) do _i
     i[] = _i
-end;</code></pre><ul><li><ul><li><ul><li></li></ul></li></ul></li></ul><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../mean_exit_time/">« Mean Exit Time</a><a class="docs-footer-nextpage" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Wednesday 16 September 2026 23:28">Wednesday 16 September 2026</span>. Using Julia version 1.13.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end;</code></pre><ul><li><ul><li><ul><li></li></ul></li></ul></li></ul><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../mean_exit_time/">« Mean Exit Time</a><a class="docs-footer-nextpage" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Thursday 17 September 2026 00:29">Thursday 17 September 2026</span>. Using Julia version 1.13.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -28,7 +28,7 @@ bn = [bn1, bn2, bn3, bn4]
 boundary_nodes, points = convert_boundary_points_to_indices(bn)
 tri = triangulate(points; boundary_nodes)
 refine!(tri; max_area = 1e-4get_area(tri))
-triplot(tri)</code></pre><img src="35d06526.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 8128 control volumes, 15923 triangles, and 24050 edges</code></pre><p>For the boundary conditions, the parameters that we use are <span>$k = 3$</span>, <span>$h = 20$</span>, and <span>$T_{\infty} = 20$</span> for thermal conductivity, heat transfer coefficient, and ambient temperature, respectively.</p><pre><code class="language-julia hljs">k = 3.0
+triplot(tri)</code></pre><img src="d690a945.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 8171 control volumes, 16007 triangles, and 24177 edges</code></pre><p>For the boundary conditions, the parameters that we use are <span>$k = 3$</span>, <span>$h = 20$</span>, and <span>$T_{\infty} = 20$</span> for thermal conductivity, heat transfer coefficient, and ambient temperature, respectively.</p><pre><code class="language-julia hljs">k = 3.0
 h = 20.0
 T∞ = 20.0
 bc1 = (x, y, t, T, p) -&gt; zero(T) # ∇T⋅n=0
@@ -45,21 +45,21 @@ final_time = Inf
 prob = FVMProblem(mesh, BCs;
     diffusion_function,
     initial_condition,
-    final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 8128 nodes and time span (0.0, Inf)</code></pre><pre><code class="language-julia hljs">steady_prob = SteadyFVMProblem(prob)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 8128 nodes</code></pre><p>Now we can solve.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, SteadyStateDiffEq
+    final_time)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 8171 nodes and time span (0.0, Inf)</code></pre><pre><code class="language-julia hljs">steady_prob = SteadyFVMProblem(prob)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SteadyFVMProblem with 8171 nodes</code></pre><p>Now we can solve.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, SteadyStateDiffEq
 sol = solve(steady_prob, DynamicSS(Rosenbrock23()))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
-u: 8257-element Vector{Float64}:
+u: 8294-element Vector{Float64}:
  70.0
- 53.10279914167885
+ 53.1028747910483
  40.0
  40.0
- 44.13711659060153
+ 44.13716254429235
   ⋮
- 46.93126135090012
- 54.44164350935301
- 58.00249477705731
- 51.45231342162415
- 48.42370275595787</code></pre><pre><code class="language-julia hljs">fig, ax, sc = tricontourf(tri, sol.u, levels = 40:70, axis = (xlabel = &quot;x&quot;, ylabel = &quot;y&quot;))
-fig</code></pre><img src="be87c5b2.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
+ 54.90329846077112
+ 46.93132169758336
+ 51.45239534526334
+ 54.18690057435016
+ 48.42376737928869</code></pre><pre><code class="language-julia hljs">fig, ax, sc = tricontourf(tri, sol.u, levels = 40:70, axis = (xlabel = &quot;x&quot;, ylabel = &quot;y&quot;))
+fig</code></pre><img src="be3b9cbd.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
 A, B,
 C,
 D,
@@ -111,4 +111,4 @@ using OrdinaryDiffEq, SteadyStateDiffEq
 sol = solve(steady_prob, DynamicSS(Rosenbrock23()))
 
 fig, ax, sc = tricontourf(tri, sol.u, levels = 40:70, axis = (xlabel = &quot;x&quot;, ylabel = &quot;y&quot;))
-fig</code></pre><ul><li><ul><li><ul><li></li></ul></li></ul></li></ul><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../laplaces_equation_with_internal_dirichlet_conditions/">« Laplace&#39;s Equation with Internal Dirichlet Conditions</a><a class="docs-footer-nextpage" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Wednesday 16 September 2026 23:28">Wednesday 16 September 2026</span>. Using Julia version 1.13.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+fig</code></pre><ul><li><ul><li><ul><li></li></ul></li></ul></li></ul><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../laplaces_equation_with_internal_dirichlet_conditions/">« Laplace&#39;s Equation with Internal Dirichlet Conditions</a><a class="docs-footer-nextpage" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Thursday 17 September 2026 00:29">Thursday 17 September 2026</span>. Using Julia version 1.13.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
