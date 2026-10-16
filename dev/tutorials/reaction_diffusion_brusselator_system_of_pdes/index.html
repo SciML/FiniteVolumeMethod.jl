@@ -74,24 +74,24 @@ t: 6-element Vector{Float64}:
  5.0
 u: 6-element Vector{Matrix{Float64}}:
  [1.0 0.9899498337660453 … 0.13670923376163366 0.1353352832366127; 1.0 1.0101521975065353 … 7.314794856824381 7.38905609893065]
- [0.6020490620653826 0.5959561514585362 … 0.08356909914702784 0.08272921580857838; 1.6358825828804664 1.65249038595937 … 12.033052850008032 12.155386653958066]
- [0.36303943561877616 0.3593433879263587 … 0.05216378586711278 0.051639531147755886; 2.6207690160737256 2.647375580743914 … 19.80154822408068 20.003241749944273]
- [0.21895496734821437 0.2167145015874183 … 0.032206090897825786 0.03188241433055678; 4.244825433653075 4.287919739836285 … 32.630936119020824 32.963472041100225]
- [0.13229976473701374 0.13093992063721185 … 0.018714435776083477 0.018526352585559173; 7.305014984012728 7.3791769389186275 … 53.79319398397464 54.34145107929472]
- [0.07997720367628457 0.07915303153543901 … 0.011694054955498849 0.01157652775924708; 11.69049010645785 11.809174270966805 … 88.68892470884653 89.59284713270988]</code></pre><p>For this solution, note that the <code>u</code> values are matrices. For example:</p><pre><code class="language-julia hljs">sol.u[3]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2×10000 Matrix{Float64}:
+ [0.6020490620653579 0.5959561514585362 … 0.08356909914702784 0.08272921580857834; 1.6358825828804666 1.6524903859593703 … 12.033052850008097 12.155386653958274]
+ [0.3630394356187826 0.3593433879263588 … 0.0521637858671128 0.05163953114775593; 2.620769016073724 2.6473755807439123 … 19.80154822408125 20.0032417499433]
+ [0.2189549673482147 0.21671450158741812 … 0.03220609089782584 0.03188241433055684; 4.244825433653067 4.287919739836278 … 32.63093611902085 32.963472041100175]
+ [0.13229976473702665 0.13093992063720825 … 0.018714435776083546 0.018526352585559243; 7.3050149840127006 7.379176938918599 … 53.793193983975186 54.34145107929528]
+ [0.07997720367628451 0.07915303153543896 … 0.01169405495549889 0.011576527759247132; 11.690490106457801 11.809174270966757 … 88.68892470884656 89.59284713270989]</code></pre><p>For this solution, note that the <code>u</code> values are matrices. For example:</p><pre><code class="language-julia hljs">sol.u[3]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2×10000 Matrix{Float64}:
  0.363039  0.359343  0.355685  …   0.0526934   0.0521638   0.0516395
  2.62077   2.64738   2.67425      19.6018     19.8015     20.0032</code></pre><p>The <code>i</code>th row is the <code>i</code>th variable, so</p><pre><code class="language-julia hljs">sol.u[3][1, :]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">10000-element Vector{Float64}:
- 0.36303943561877616
- 0.3593433879263587
- 0.355684888890777
+ 0.3630394356187826
+ 0.3593433879263588
+ 0.35568488889077504
  0.3520644120181916
- 0.3484817519461788
+ 0.348481751946181
  ⋮
- 0.05376870073215346
- 0.053228316351611564
- 0.05269336292392432
- 0.05216378586711278
- 0.051639531147755886</code></pre><p>are the value of <span>$\Phi$</span> at the third time, and similarly <code>sol.u[3][2, :]</code> are the values of <span>$\Psi$</span> at the third time. We can visualise the solutions as follows:</p><pre><code class="language-julia hljs">using CairoMakie
+ 0.053768700732153486
+ 0.05322831635161161
+ 0.05269336292392437
+ 0.0521637858671128
+ 0.05163953114775593</code></pre><p>are the value of <span>$\Phi$</span> at the third time, and similarly <code>sol.u[3][2, :]</code> are the values of <span>$\Psi$</span> at the third time. We can visualise the solutions as follows:</p><pre><code class="language-julia hljs">using CairoMakie
 fig = Figure(fontsize = 38)
 for i in eachindex(sol.u)
     ax1 = Axis(fig[1, i], xlabel = L&quot;x&quot;, ylabel = L&quot;y&quot;,
@@ -162,4 +162,4 @@ for i in eachindex(sol.u)
     tricontourf!(ax2, tri, sol.u[i][2, :], levels = 1:10:100, colormap = :matter)
 end
 resize_to_layout!(fig)
-fig</code></pre><ul><li><ul><li><ul><li></li></ul></li></ul></li></ul><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See <a href="https://doi.org/10.1016/j.apm.2010.03.028">Islam, Ali, and Haq (2010)</a>. We can use these exact solutions \eqref{eq:brusleexct} to also show how we can mix boundary conditions. We use:</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">« Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a><a class="docs-footer-nextpage" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Thursday 17 September 2026 00:29">Thursday 17 September 2026</span>. Using Julia version 1.13.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+fig</code></pre><ul><li><ul><li><ul><li></li></ul></li></ul></li></ul><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>See <a href="https://doi.org/10.1016/j.apm.2010.03.028">Islam, Ali, and Haq (2010)</a>. We can use these exact solutions \eqref{eq:brusleexct} to also show how we can mix boundary conditions. We use:</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">« Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a><a class="docs-footer-nextpage" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Friday 16 October 2026 05:38">Friday 16 October 2026</span>. Using Julia version 1.13.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
