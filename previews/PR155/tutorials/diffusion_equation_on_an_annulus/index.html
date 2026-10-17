@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Diffusion Equation on an Annulus · FiniteVolumeMethod.jl</title><meta name="title" content="Diffusion Equation on an Annulus · FiniteVolumeMethod.jl"/><meta property="og:title" content="Diffusion Equation on an Annulus · FiniteVolumeMethod.jl"/><meta property="twitter:title" content="Diffusion Equation on an Annulus · FiniteVolumeMethod.jl"/><meta name="description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="twitter:description" content="Documentation for FiniteVolumeMethod.jl."/><meta property="og:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/diffusion_equation_on_an_annulus/"/><meta property="twitter:url" content="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/diffusion_equation_on_an_annulus/"/><link rel="canonical" href="https://SciML.github.io/FiniteVolumeMethod.jl/tutorials/diffusion_equation_on_an_annulus/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">FiniteVolumeMethod.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Section Overview</a></li><li><a class="tocitem" href="../diffusion_equation_on_a_square_plate/">Diffusion Equation on a Square Plate</a></li><li><a class="tocitem" href="../diffusion_equation_in_a_wedge_with_mixed_boundary_conditions/">Diffusion Equation in a Wedge with Mixed Boundary Conditions</a></li><li><a class="tocitem" href="../reaction_diffusion_equation_with_a_time_dependent_dirichlet_boundary_condition_on_a_disk/">Reaction-Diffusion Equation with a Time-dependent Dirichlet Boundary Condition on a Disk</a></li><li><a class="tocitem" href="../porous_medium_equation/">Porous-Medium Equation</a></li><li><a class="tocitem" href="../porous_fisher_equation_and_travelling_waves/">Porous-Fisher Equation and Travelling Waves</a></li><li><a class="tocitem" href="../piecewise_linear_and_natural_neighbour_interpolation_for_an_advection_diffusion_equation/">Piecewise Linear and Natural Neighbour Interpolation for an Advection-Diffusion Equation</a></li><li><a class="tocitem" href="../helmholtz_equation_with_inhomogeneous_boundary_conditions/">Helmholtz Equation with Inhomogeneous Boundary Conditions</a></li><li><a class="tocitem" href="../laplaces_equation_with_internal_dirichlet_conditions/">Laplace&#39;s Equation with Internal Dirichlet Conditions</a></li><li><a class="tocitem" href="../equilibrium_temperature_distribution_with_mixed_boundary_conditions_and_using_ensembleproblems/">Equilibrium Temperature Distribution with Mixed Boundary Conditions and using EnsembleProblems</a></li><li><a class="tocitem" href="../reaction_diffusion_brusselator_system_of_pdes/">A Reaction-Diffusion Brusselator System of PDEs</a></li><li><a class="tocitem" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a></li><li class="is-active"><a class="tocitem" href>Diffusion Equation on an Annulus</a><ul class="internal"><li><a class="tocitem" href="#Just-the-code"><span>Just the code</span></a></li></ul></li><li><a class="tocitem" href="../mean_exit_time/">Mean Exit Time</a></li><li><a class="tocitem" href="../solving_mazes_with_laplaces_equation/">Solving Mazes with Laplace&#39;s Equation</a></li><li><a class="tocitem" href="../keller_segel_chemotaxis/">Keller-Segel Model of Chemotaxis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Solvers for Specific Problems, and Writing Your Own</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../wyos/overview/">Section Overview</a></li><li><a class="tocitem" href="../../wyos/diffusion_equations/">Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/mean_exit_time/">Mean Exit Time Problems</a></li><li><a class="tocitem" href="../../wyos/linear_reaction_diffusion_equations/">Linear Reaction-Diffusion Equations</a></li><li><a class="tocitem" href="../../wyos/poissons_equation/">Poisson&#39;s Equation</a></li><li><a class="tocitem" href="../../wyos/laplaces_equation/">Laplace&#39;s Equation</a></li></ul></li><li><a class="tocitem" href="../../math/">Mathematical and Implementation Details</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Diffusion Equation on an Annulus</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Diffusion Equation on an Annulus</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/diffusion_equation_on_an_annulus.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Diffusion-Equation-on-an-Annulus"><a class="docs-heading-anchor" href="#Diffusion-Equation-on-an-Annulus">Diffusion Equation on an Annulus</a><a id="Diffusion-Equation-on-an-Annulus-1"></a><a class="docs-heading-anchor-permalink" href="#Diffusion-Equation-on-an-Annulus" title="Permalink"></a></h1><p>In this tutorial, we consider a diffusion equation on an annulus:</p><p class="math-container">\[\begin{equation}
+\begin{aligned}
+\pdv{u(\vb x, t)}{t} &amp;= \grad^2 u(\vb x, t) &amp; \vb x \in \Omega, \\
+\grad u(\vb x, t) \vdot \vu n(\vb x) &amp;= 0 &amp; \vb x \in \mathcal D(0, 1), \\
+u(\vb x, t) &amp;= c(t) &amp; \vb x \in \mathcal D(0,0.2), \\
+u(\vb x, t) &amp;= u_0(\vb x),
+\end{aligned}
+\end{equation}\]</p><p>demonstrating how we can solve PDEs over multiply-connected domains. Here, <span>$\mathcal D(0, r)$</span> is a circle of radius <span>$r$</span> centred at the origin, <span>$\Omega$</span> is the annulus between <span>$\mathcal D(0,0.2)$</span> and <span>$\mathcal D(0, 1)$</span>, <span>$c(t) = 50[1-\mathrm{e}^{-t/2}]$</span>, and</p><p class="math-container">\[u_0(x) = 10\mathrm{e}^{-25\left[\left(x+\frac12\right)^2+\left(y+\frac12\right)^2\right]} - 10\mathrm{e}^{-45\left[\left(x-\frac12\right)^2+\left(y-\frac12\right)^2\right]} - 5\mathrm{e}^{-50\left[\left(x+\frac{3}{10}\right)^2+\left(y+\frac12\right)^2\right]}.\]</p><p>For the mesh, we use two <code>CircularArc</code>s to define the annulus.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
+R₁, R₂ = 0.2, 1.0
+inner = CircularArc((R₁, 0.0), (R₁, 0.0), (0.0, 0.0), positive = false)
+outer = CircularArc((R₂, 0.0), (R₂, 0.0), (0.0, 0.0))
+boundary_nodes = [[[outer]], [[inner]]]
+points = NTuple{2, Float64}[]
+tri = triangulate(points; boundary_nodes)
+A = get_area(tri)
+refine!(tri; max_area = 1e-4A)
+triplot(tri)</code></pre><img src="d01d232f.png" alt="Example block output"/><pre><code class="language-julia hljs">mesh = FVMGeometry(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMGeometry with 8961 control volumes, 17603 triangles, and 26564 edges</code></pre><p>Now let us define the boundary conditions. Remember, the order of the boundary conditions follows the order of the boundaries in the mesh. The outer boundary came first, and then came the inner boundary. We can verify that this is the order of the boundary indices as follows:</p><pre><code class="language-julia hljs">fig = Figure()
+ax = Axis(fig[1, 1])
+outer = [get_point(tri, i) for i in get_neighbours(tri, -1)]
+inner = [get_point(tri, i) for i in get_neighbours(tri, -2)]
+triplot!(ax, tri)
+scatter!(ax, outer, color = :red)
+scatter!(ax, inner, color = :blue)
+fig</code></pre><img src="63e5f0ce.png" alt="Example block output"/><p>So, the boundary conditions are:</p><pre><code class="language-julia hljs">outer_bc = (x, y, t, u, p) -&gt; zero(u)
+inner_bc = (x, y, t, u, p) -&gt; oftype(u, 50(1 - exp(-t / 2)))
+types = (Neumann, Dirichlet)
+BCs = BoundaryConditions(mesh, (outer_bc, inner_bc), types)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BoundaryConditions with 2 boundary conditions with types (Neumann, Dirichlet)</code></pre><p>Finally, let&#39;s define the problem and solve it.</p><pre><code class="language-julia hljs">initial_condition_f = (x,
+    y) -&gt; begin
+    10 * exp(-25 * ((x + 0.5) * (x + 0.5) + (y + 0.5) * (y + 0.5))) -
+    5 * exp(-50 * ((x + 0.3) * (x + 0.3) + (y + 0.5) * (y + 0.5))) -
+    10 * exp(-45 * ((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)))
+end
+diffusion_function = (x, y, t, u, p) -&gt; one(u)
+initial_condition = [initial_condition_f(x, y)
+                     for (x, y) in DelaunayTriangulation.each_point(tri)]
+final_time = 2.0
+prob = FVMProblem(mesh, BCs;
+    diffusion_function,
+    final_time,
+    initial_condition)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">FVMProblem with 8961 nodes and time span (0.0, 2.0)</code></pre><pre><code class="language-julia hljs">using OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearSolve
+sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">retcode: Success
+Interpolation: 1st order linear
+t: 11-element Vector{Float64}:
+ 0.0
+ 0.2
+ 0.4
+ 0.6
+ 0.8
+ 1.0
+ 1.2
+ 1.4
+ 1.6
+ 1.8
+ 2.0
+u: 11-element Vector{Vector{Float64}}:
+ [-1.6918979226151304e-9, -2.1738750708653327e-6, 3.726653172035993e-5, -1.6918979226151364e-9, 3.705953483484758e-5, -0.2105979106615764, 5.175555005801385e-16, 1.1709299175694265, 5.1755544523350865e-16, 0.0020233820430370225  …  9.430626461065904e-12, 1.2081977479593993e-11, 0.038326015970544525, 0.015440944177375293, -3.6462691425881386e-7, 2.3780690704307767e-7, -2.272663050979732, -1.0488734623572773e-8, -0.6921953063218476, -9.831876317973608e-6]
+ [0.04086784318538206, 4.0196026273933985, 0.8991012139661333, 0.05089704320123564, 0.8306083238550057, -0.16776810533241326, 0.4446516184714894, 1.1469233714562383, 0.4026324205728254, 4.0196026273933985  …  0.6175235026047858, 0.7576381437966375, 2.412962612697462, 2.5199112507232124, 0.37011185825266146, 1.3242200404936304, 0.7971351525252033, 0.3588275703990728, 2.0024426517129426, 0.18207766366682868]
+ [1.8420084351375552, 8.468095887999405, 2.250718562896666, 1.8531500230666793, 2.230866339151524, 1.7689212298383856, 2.050085018366786, 2.328987115245568, 2.028469092408994, 8.468095887999405  …  2.4295415930841373, 2.82254723824404, 5.179485240364788, 5.379907712959227, 2.3540752108525815, 3.6827896988945485, 3.2884277833581583, 2.2900154978409515, 4.405612775598624, 2.1096660798408933]
+ [4.360306631277697, 11.852545810131982, 4.545037685030744, 4.366341417370841, 4.537729973608455, 4.327017224890333, 4.456399425029332, 4.578724222774237, 4.446893524204568, 11.852545810131982  …  4.955239940272706, 5.493978337699307, 8.273884333188276, 8.52758393838839, 4.973324102874278, 6.517468287308527, 6.177525705467416, 4.88152136833015, 7.297498338688252, 4.697396133767669]
+ [7.256645443573037, 15.64363961131855, 7.339773368563286, 7.259273140378323, 7.336966356419762, 7.2412945540465925, 7.300046594264313, 7.354778727734281, 7.296114559696027, 15.64363961131855  …  7.856150853329344, 8.463914027275958, 11.431323908731065, 11.706099107980393, 7.917574947146505, 9.56319221116532, 9.248727569822147, 7.812604979665072, 10.36956407469871, 7.627166750485196]
+ [10.311294152212886, 18.313904047051455, 10.348615543130169, 10.31221174675719, 10.347674851846525, 10.304112056764264, 10.330660306451449, 10.355332888967757, 10.329254099305428, 18.313904047051455  …  10.90425521524015, 11.532457691396397, 14.491890209248734, 14.76188567100635, 10.983822538332614, 12.641441895651198, 12.345647463313254, 10.87463341172597, 13.436147944869028, 10.691509942623545]
+ [13.375515904202949, 22.463183717313196, 13.39221367331309, 13.375642723572122, 13.392084047663001, 13.372032205439746, 13.384021841060642, 13.395221350012696, 13.383749389881409, 22.463183717313196  …  13.950410320194253, 14.570020564377256, 17.40438122441954, 17.655470913460935, 14.035641764328792, 15.647459100329902, 15.36989067029067, 13.927545969422088, 16.405648494612706, 13.750239511886114]
+ [16.35771645465423, 23.857507090721942, 16.365135023395652, 16.357494484751623, 16.365355662835164, 16.355910117851217, 16.361335683317154, 16.366479267313547, 16.361560892800195, 23.857507090721942  …  16.907339269271898, 17.50636879906974, 20.2998825679344, 20.5586499063489, 16.992502644575648, 18.55111746057066, 18.284659266750793, 16.888024138090913, 19.293960002079274, 16.718504953778233]
+ [19.19890339836046, 26.645694979268846, 19.202159697235675, 19.19853946930561, 19.20252168040454, 19.197864494603092, 19.20033806507999, 19.202760079498763, 19.200768330784985, 26.645694979268846  …  19.716995254862322, 20.28393851295602, 22.924426626798514, 23.169560230892575, 19.798838086707853, 21.27106361246102, 21.020936409565998, 19.69990733781703, 21.972243478993565, 19.540153604879936]
+ [21.868770166924072, 29.381862588938098, 21.870166015558844, 21.868360227033296, 21.87057315825154, 21.86809121356823, 21.869238176227963, 21.870435538454892, 21.869738682763177, 29.381862588938098  …  22.348813937186684, 22.87062033056981, 25.16382479135781, 25.35861324757216, 22.425005775527836, 23.760628437329938, 23.538459756334227, 22.33352095744441, 24.372104586793593, 22.185826222281953]
+ [24.36131686672639, 30.71872838486164, 24.361880578404474, 24.36090103938361, 24.36229502132467, 24.36081159742825, 24.361360811111417, 24.36199882339497, 24.36187443122311, 30.71872838486164  …  24.81937128149146, 25.324994100874832, 27.68552155208724, 27.901820545693543, 24.892954571803315, 26.20913308439585, 25.985811919847652, 24.8049126875382, 26.837186679579695, 24.663423681942064]</code></pre><pre><code class="language-julia hljs">fig = Figure(fontsize = 38)
+for (i, j) in zip(1:3, (1, 6, 11))
+    local ax
+    ax = Axis(fig[1, i], width = 600, height = 600,
+        xlabel = &quot;x&quot;, ylabel = &quot;y&quot;,
+        title = &quot;t = $(sol.t[j])&quot;,
+        titlealign = :left)
+    tricontourf!(ax, tri, sol.u[j], levels = -10:2:40, colormap = :matter)
+    tightlimits!(ax)
+end
+resize_to_layout!(fig)
+fig</code></pre><img src="b0e78de1.png" alt="Example block output"/><p>To finish this example, let us consider how natural neighbour interpolation can be applied here. The application is more complicated for this problem since the mesh has holes. Before we do that, though, let us show how we could use <code>pl_interpolate</code>, which could be useful if we did not need a higher quality interpolant. Let us interpolate the solution at <span>$t = 1$</span>, which is <code>sol.t[6]</code>. For this, we need to put the ghost triangles back into <code>tri</code> so that we can safely apply <code>jump_and_march</code>. This is done with <code>add_ghost_triangles!</code>.</p><pre><code class="language-julia hljs">add_ghost_triangles!(tri)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Delaunay Triangulation.
+   Number of vertices: 8961
+   Number of triangles: 17603
+   Number of edges: 26564
+   Has boundary nodes: true
+   Has ghost triangles: true
+   Curve-bounded: true
+   Weighted: false
+   Constrained: true</code></pre><p>(Actually, <code>tri</code> already had these ghost triangles, but we are just showing how you would add them back in if needed.)</p><p>Now let&#39;s interpolate.</p><pre><code class="language-julia hljs">x = LinRange(-R₂, R₂, 400)
+y = LinRange(-R₂, R₂, 400)
+interp_vals = zeros(length(x), length(y))
+u = sol.u[6]
+last_triangle = Ref((1, 1, 1))
+for (j, _y) in enumerate(y)
+    for (i, _x) in enumerate(x)
+        T = jump_and_march(tri, (_x, _y), try_points = last_triangle[])
+        last_triangle[] = triangle_vertices(T) # used to accelerate jump_and_march, since the points we&#39;re looking for are close to each other
+        if DelaunayTriangulation.is_ghost_triangle(T) # don&#39;t extrapolate
+            interp_vals[i, j] = NaN
+        else
+            interp_vals[i, j] = pl_interpolate(prob, T, sol.u[6], _x, _y)
+        end
+    end
+end
+fig, ax, sc = contourf(x, y, interp_vals, levels = -10:2:40, colormap = :matter)
+fig</code></pre><img src="848c20fa.png" alt="Example block output"/><p>Let&#39;s now consider applying NaturalNeighbours.jl. We apply it naively first to highlight some complications.</p><pre><code class="language-julia hljs">using NaturalNeighbours
+_x = vec([x for x in x, y in y]) # NaturalNeighbours.jl needs vector data
+_y = vec([y for x in x, y in y])
+itp = interpolate(tri, u, derivatives = true)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Natural Neighbour Interpolant
+    z: [10.311294152212886, 18.313904047051455, 10.348615543130169, 10.31221174675719, 10.347674851846525, 10.304112056764264, 10.330660306451449, 10.355332888967757, 10.329254099305428, 18.313904047051455  …  10.90425521524015, 11.532457691396397, 14.491890209248734, 14.76188567100635, 10.983822538332614, 12.641441895651198, 12.345647463313254, 10.87463341172597, 13.436147944869028, 10.691509942623545]
+    ∇: [(0.012292403631123829, -0.02039968606193391), (-15.16345568096172, -0.2592215893043927), (7.603523136137331e-5, -0.013650266880581194), (-0.021662666169758926, -0.002510612033880092), (-0.024619116370314918, -0.006341916201020141), (0.002335718615924988, -0.0076532016434600805), (-0.031087844301896615, -0.01131239235301164), (0.032995541897356935, 0.04178158275933319), (-0.020608155991909006, -0.023541004999603196), (14.179623160790063, 0.1760224085067603)  …  (3.0985123400888206, -3.518931699360827), (-6.142824766985644, 3.849113634869105), (9.986744922316573, 13.398692238896063), (10.077864282887457, 14.338414865193455), (0.5190154093043362, -5.093331884735261), (-7.1152274639696085, 8.340303292318076), (-7.82350017447781, -6.377530924803896), (0.8180637090952757, -4.5431567710185075), (7.181257825423535, 11.322397327892036), (-3.72716935554705, -0.1275116511648501)]
+    H: [(16.727139047996797, -0.012667936929141444, -0.18038287478734502), (-927.4439278710454, -79.29821899358039, 4.381897180849396), (16.00629336668638, 0.09621442333975984, 0.006567545408281326), (-0.043920100611048854, 15.203882611695128, 0.10030784620321649), (-0.1408853677667161, 14.705644415292882, 0.17791237509805463), (7.417308996280269, 7.695940923841019, 7.485614090148752), (8.295508282678117, 8.210393892737171, -8.195427929691952), (6.0275378652730005, 5.728571299506986, 5.658309999340257), (7.578158585935845, 7.660603213032335, -7.676926222045266), (-938.2470892947007, -74.58320679559058, -35.51976147938641)  …  (5.735994753353635, 9.046329108939219, -13.778932135312989), (15.564466687759422, -0.7195307831713732, -17.178482880522385), (-10.869956442065307, 16.292163194981686, 45.80905522750312), (-14.622215566754985, 19.68892877916471, 48.36432508596697), (-6.857304127697358, 21.683822969380373, -3.050035407610323), (2.136523653921827, 11.262723185441883, -28.084601600669544), (11.969403334084248, 1.5924462982395653, 25.37945061168283), (-5.161951313384439, 20.501313481114682, -5.066944151427171), (-9.405126325852919, 21.21591173251878, 32.706415887955586), (19.98446911623849, -4.542456688339627, 0.7859482702216676)]</code></pre><pre><code class="language-julia hljs">itp_vals = itp(_x, _y; method = Farin())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">160000-element Vector{Float64}:
+ 10.355290254516017
+ 10.35532034604
+ 10.355350437563981
+ 10.355380529087963
+ 10.355410620611945
+  ⋮
+ 10.304068666124707
+ 10.30408546353694
+ 10.30410226094917
+ 10.304119058361401
+ 10.30413585577363</code></pre><pre><code class="language-julia hljs">fig, ax,
+sc = contourf(
+    x, y, reshape(itp_vals, length(x), length(y)), colormap = :matter, levels = -10:2:40)
+fig</code></pre><img src="ed1bf000.png" alt="Example block output"/><p>The issue here is that the interpolant is trying to extrapolate inside the hole and outside of the annulus. To avoid this, you need to pass <code>project=false</code>.</p><pre><code class="language-julia hljs">itp_vals = itp(_x, _y; method = Farin(), project = false)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">160000-element Vector{Float64}:
+ Inf
+ Inf
+ Inf
+ Inf
+ Inf
+  ⋮
+ Inf
+ Inf
+ Inf
+ Inf
+ Inf</code></pre><pre><code class="language-julia hljs">fig, ax,
+sc = contourf(
+    x, y, reshape(itp_vals, length(x), length(y)), colormap = :matter, levels = -10:2:40)
+fig</code></pre><img src="a6ec6b21.png" alt="Example block output"/><h2 id="Just-the-code"><a class="docs-heading-anchor" href="#Just-the-code">Just the code</a><a id="Just-the-code-1"></a><a class="docs-heading-anchor-permalink" href="#Just-the-code" title="Permalink"></a></h2><p>An uncommented version of this example is given below. You can view the source code for this file <a href="https://github.com/SciML/FiniteVolumeMethod.jl/tree/main/docs/src/literate_tutorials/diffusion_equation_on_an_annulus.jl">here</a>.</p><pre><code class="language-julia hljs">using DelaunayTriangulation, FiniteVolumeMethod, CairoMakie
+R₁, R₂ = 0.2, 1.0
+inner = CircularArc((R₁, 0.0), (R₁, 0.0), (0.0, 0.0), positive = false)
+outer = CircularArc((R₂, 0.0), (R₂, 0.0), (0.0, 0.0))
+boundary_nodes = [[[outer]], [[inner]]]
+points = NTuple{2, Float64}[]
+tri = triangulate(points; boundary_nodes)
+A = get_area(tri)
+refine!(tri; max_area = 1e-4A)
+triplot(tri)
+
+mesh = FVMGeometry(tri)
+
+fig = Figure()
+ax = Axis(fig[1, 1])
+outer = [get_point(tri, i) for i in get_neighbours(tri, -1)]
+inner = [get_point(tri, i) for i in get_neighbours(tri, -2)]
+triplot!(ax, tri)
+scatter!(ax, outer, color = :red)
+scatter!(ax, inner, color = :blue)
+fig
+
+outer_bc = (x, y, t, u, p) -&gt; zero(u)
+inner_bc = (x, y, t, u, p) -&gt; oftype(u, 50(1 - exp(-t / 2)))
+types = (Neumann, Dirichlet)
+BCs = BoundaryConditions(mesh, (outer_bc, inner_bc), types)
+
+initial_condition_f = (x,
+    y) -&gt; begin
+    10 * exp(-25 * ((x + 0.5) * (x + 0.5) + (y + 0.5) * (y + 0.5))) -
+    5 * exp(-50 * ((x + 0.3) * (x + 0.3) + (y + 0.5) * (y + 0.5))) -
+    10 * exp(-45 * ((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)))
+end
+diffusion_function = (x, y, t, u, p) -&gt; one(u)
+initial_condition = [initial_condition_f(x, y)
+                     for (x, y) in DelaunayTriangulation.each_point(tri)]
+final_time = 2.0
+prob = FVMProblem(mesh, BCs;
+    diffusion_function,
+    final_time,
+    initial_condition)
+
+using OrdinaryDiffEq, OrdinaryDiffEqSDIRK, LinearSolve
+sol = solve(prob, TRBDF2(linsolve = KLUFactorization()), saveat = 0.2)
+
+fig = Figure(fontsize = 38)
+for (i, j) in zip(1:3, (1, 6, 11))
+    local ax
+    ax = Axis(fig[1, i], width = 600, height = 600,
+        xlabel = &quot;x&quot;, ylabel = &quot;y&quot;,
+        title = &quot;t = $(sol.t[j])&quot;,
+        titlealign = :left)
+    tricontourf!(ax, tri, sol.u[j], levels = -10:2:40, colormap = :matter)
+    tightlimits!(ax)
+end
+resize_to_layout!(fig)
+fig
+
+add_ghost_triangles!(tri)
+
+x = LinRange(-R₂, R₂, 400)
+y = LinRange(-R₂, R₂, 400)
+interp_vals = zeros(length(x), length(y))
+u = sol.u[6]
+last_triangle = Ref((1, 1, 1))
+for (j, _y) in enumerate(y)
+    for (i, _x) in enumerate(x)
+        T = jump_and_march(tri, (_x, _y), try_points = last_triangle[])
+        last_triangle[] = triangle_vertices(T) # used to accelerate jump_and_march, since the points we&#39;re looking for are close to each other
+        if DelaunayTriangulation.is_ghost_triangle(T) # don&#39;t extrapolate
+            interp_vals[i, j] = NaN
+        else
+            interp_vals[i, j] = pl_interpolate(prob, T, sol.u[6], _x, _y)
+        end
+    end
+end
+fig, ax, sc = contourf(x, y, interp_vals, levels = -10:2:40, colormap = :matter)
+fig
+
+using NaturalNeighbours
+_x = vec([x for x in x, y in y]) # NaturalNeighbours.jl needs vector data
+_y = vec([y for x in x, y in y])
+itp = interpolate(tri, u, derivatives = true)
+
+itp_vals = itp(_x, _y; method = Farin())
+
+fig, ax,
+sc = contourf(
+    x, y, reshape(itp_vals, length(x), length(y)), colormap = :matter, levels = -10:2:40)
+fig
+
+itp_vals = itp(_x, _y; method = Farin(), project = false)
+
+fig, ax,
+sc = contourf(
+    x, y, reshape(itp_vals, length(x), length(y)), colormap = :matter, levels = -10:2:40)
+fig</code></pre><ul><li><ul><li><ul><li></li></ul></li></ul></li></ul><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gray_scott_model_turing_patterns_from_a_coupled_reaction_diffusion_system/">« Gray-Scott Model: Turing Patterns from a Coupled Reaction-Diffusion System</a><a class="docs-footer-nextpage" href="../mean_exit_time/">Mean Exit Time »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 17 October 2026 15:06">Saturday 17 October 2026</span>. Using Julia version 1.13.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
